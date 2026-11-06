@@ -1,0 +1,79 @@
+# Decisions
+
+Each entry records a choice that was not fixed by the brief, or a place where the brief left two requirements in tension. The simple option that keeps the application working and passes an acceptance check was preferred.
+
+## Builds and test controls
+
+1. **Test overrides are gated at build time, not only at runtime.** `__MOSS_TEST_BUILD__` is embedded by `electron.vite.config.ts`. A normal packaged release ignores `MOSS_MUSE_BASE_URL`, `MOSS_LICENSE_API_BASE`, `MOSS_E2E`, `MOSS_DEV_UNLOCK`, `MOSS_USER_DATA_DIR`, and every other override even if someone launches it with those variables. `npm run build:test` is the separate test build. This is slightly stronger than a runtime guard and means the release cannot be pointed at another host.
+2. **The test build is still an unpackaged build for day-to-day Playwright runs.** The E2E suite runs `electron-vite` output directly and uses the override variables. That keeps the test loop fast while the packaged smoke check proves the release ignores the same variables.
+3. **`MOSS_RELEASE=1` is the release gate trigger.** `npm run release:gate` refuses while `LICENSE_STORE_URL` still points at `example.com`. The placeholder URL is not invented over. The Buy a License button stays hidden while the URL is a placeholder.
+4. **The app has no auto-updater.** Updates are manual. This avoids an unsigned background update channel.
+5. **The deb is assembled with `dpkg-deb` in `scripts/make-deb.mjs`.** electron-builder's bundled fpm calls `lchown` on staged files. This build filesystem maps new files to `nobody:nogroup` and returns EINVAL for that operation. electron-builder's deb target remains configured for a normal filesystem, but `npm run build:linux` uses the deterministic dpkg-deb path so both artifacts can be produced here. The resulting package has the normal `/opt` layout, desktop file, icons, setuid sandbox helper, and maintainer scripts.
+
+## Data, secrets, and paths
+
+6. **A local encryption fallback exists for machines without a system keyring.** Electron `safeStorage` reports `basic_text` and encryption unavailable on the headless Linux build host. Blocking setup there would make the app unusable on some minimal desktops. The fallback AES-256-GCM key is mode `0600`, the encrypted key file is separate, and Settings shows the approved keyring warning. The `backend` field reports `basic_text` so the warning is truthful.
+7. **The renderer sees display paths but never sends them back.** Settings and About must show the library path, and “Copy path” must work. These paths are display data. The only path the renderer returns is a path that came from a main-process folder picker and is held in the main-side export-folder registry. File import, export, open, and clipboard work all cross named IPC methods.
+8. **The license key is encrypted in both `license.json` and the SQLite row.** A lost or partially backed up database can still recover the license file. The renderer receives only the last four characters. The Muse key is only in `secrets.bin`.
+9. **The machine label is a random per-installation suffix, not a hardware serial.** It is enough to tell two activated computers apart and does not collect a hostname, MAC address, or disk serial. Machine identity uses the OS machine id only for the fallback fingerprint and never leaves the computer except as the store's `instance_name`.
+10. **One window only.** A second launch focuses the existing window. This is the simplest correct desktop behavior for a single-library app.
+
+## Plans, jobs, and images
+
+11. **The user's words are never truncated.** The interface blocks text above 2,000 characters. The main process may still reject a composed request over 2,000 because a guard was appended. Guard text is never shortened or dropped to make room. If the palette clause does not fit, it is dropped. The reference guard has priority. Set directions are limited to 400 characters, so the normal plan path cannot hit the upper limit.
+12. **Set review uses the latest attempt for each shot.** A newer failed retry means the shot is shown as failed even when an older ready image exists. Older ready images remain available for export. This matches the per-shot status the seller actually saw and prevents a failed retry from being hidden behind an old image.
+13. **A remake adds versions.** “Make More” only fills missing shots. It only becomes a remake when every enabled shot already has a latest ready image. The confirmation names the extra images and the price.
+14. **Set export includes every ready version when asked.** The newest version of each shot gets the unsuffixed filename, older versions get `-v2`, `-v3`, and so on. The numbering starts at the newest. `set.txt` still records the unsuffixed path.
+15. **Format is selectable per project and per export.** The plan panel, photo version panel, Create panel, and set export dialog all save a format. Single-image export still remembers its own choices globally. This is slightly more control than the minimum, but it removes a hidden default.
+16. **Local Adjust “Reset all” returns to the version's stored transform, not the original import.** The stored transform is what that version represents. A new local adjustment can be applied to any version without destroying its history.
+17. **Crop “Free” is an explicit preset.** It starts from the existing crop or a four percent inset. Rotation and crop are applied in the main process before encoding. The preview is an approximation because CSS cannot exactly reproduce sharp's resampling, but the stored version is rendered by sharp.
+18. **The badge is applied locally after each image is saved.** A missing or unreadable logo skips the badge and keeps the image. Badge opacity is clamped to 60 through 100 percent. The badge is never upscaled past the logo's native width.
+19. **More images than requested are discarded.** The provider may return extra images. The client keeps only the requested number, stores them, and bills for every returned image in the response. This is visible in the job's actual cost and the usage row.
+20. **A timeout is not aborted and can still be billed.** The client marks billing uncertain. The usage row stores a zero counted cost plus the error code, the ledger shows **Unknown**, the CSV leaves the cost blank, and monthly totals exclude it. The interface tells the seller that a request that timed out may still appear on the Meta bill. Aborting the local request would not undo a server-side charge.
+21. **Only 429 is retried, twice after the first attempt.** `Retry-After` is honoured. A 401, 402, 403, policy refusal, or 5xx is final. A manual “Try Again” is the only retry for those cases.
+22. **The queue default concurrency is two, configurable from one to four.** Queued items are cancelled cleanly. A request already in flight is allowed to finish and is billed once.
+23. **The project format and shape are request settings, not a promise about every version.** A set's plan shape is shared, but imported source images and previous versions can have other aspect ratios. The interface shows the selected version's dimensions.
+
+## Interface choices
+
+24. **The app opens directly to the activation screen when no valid license is present.** The library is still reachable through Browse My Library when projects exist. This preserves the promise that a lapsed license never hides files.
+25. **Grace is shown as a banner.** During the 14 day grace window, images can still be made. After grace, generation controls disappear and local adjustment and export remain available through the read-only library.
+26. **“Add Your Key” in onboarding step four returns to the key step, not Settings.** The seller is still inside onboarding and has not completed a license or onboarding flow that would make the Settings route a natural detour. The key step does the same work as Settings.
+27. **“Raise the Limit” opens Usage, not Settings, Usage.** The warning already links to the budget field. This is the shortest path to the control that resolves the warning. The discrepancy from the brief's wording is intentional.
+28. **A dismissed keyring warning lasts for the session.** It is not another permanently hidden warning. The underlying basic-protection status remains visible in Studio when expanded.
+29. **Got It on the first-run confirmation is remembered.** It dismisses the information without creating a paid run. A seller who dismisses it will still see the price on the primary button before any paid action.
+30. **“Skip” on onboarding marks onboarding incomplete.** The setup card remains. The next launch offers onboarding again if the seller did not finish. It does not pretend the studio was configured.
+31. **The setup card's brand check accepts a name and a description of the shop.** Colors, logo, and badge are optional. A seller can be “set up” without designing a badge.
+32. **Search and filters show a count of matching projects.** The library total is still the full project count. The month chip is a navigation control to Usage.
+33. **Library pagination is 200 projects per request with a Show More control.** This avoids an unbounded first query while still allowing a 2,000 project library to be reached. Cards use CSS `content-visibility` to skip painting offscreen work. This is not the same as a virtualized DOM.
+34. **Sample product images in empty states are clearly labeled examples.** They are static reference files, not fake user projects. The starter tiles show a sample render and the label “Example.”
+35. **A photo import below 800 pixels on its long edge is allowed with a warning.** The warning uses the approved copy. The product requirement was to warn, not block.
+36. **The comparison view is a CSS clip.** It shows the parent version on the left and the selected version on the right. It is deliberately not a pixel-difference view, because the seller is comparing appearance, not measuring it.
+37. **The top bar back button returns to the library.** The rail also has a Back to Library button. The previous route is not used because the library is the stable home for a project.
+38. **The rail collapses by viewport tier.** It is expanded only at desktop widths. The brief's 1024 pixel minimum and its narrow layout are both kept. The right panel becomes a sheet below 840 CSS pixels so the canvas never drops below its practical minimum.
+39. **The 150% zoom snapshots use raw screenshots.** Playwright's `toHaveScreenshot` rescales the live viewport under Electron zoom, so those two images are captured but not compared. All other screenshots use the 0.01 pixel-diff baseline.
+
+## Packaging and platform
+
+40. **The app is packaged without rebuilding native modules.** `npmRebuild` is false. `better-sqlite3` and `sharp` use N-API prebuilds, which are loaded from the unpacked `app.asar` directories. This keeps builds reproducible and avoids requiring a compiler on the owner's machine.
+41. **The deb targets `libgtk-3-0` because Ubuntu 22.04 is a release target.** Newer Ubuntu releases resolve it through the t64 transition. The AppImage needs the distribution's FUSE package. Both notes are in the README.
+42. **Windows and macOS are configured but not signed or built here.** The title bar overlay has a standard-frame fallback if a Windows shell rejects it. The DMG and NSIS artifacts still need their native build hosts and signing identities.
+43. **Licenses are listed rather than copied in full.** The packaged app carries Electron's license files and every dependency's own package license. Font OFL files are in `resources/licenses`. `LICENSES.md` records the provenance of the reference people and tile samples.
+
+## Testing
+
+44. **The E2E suite is one serial journey.** It avoids hundreds of fresh activations and proves state transitions that a set of isolated tests would miss. It does not run in parallel.
+45. **Axe is injected through the Chrome DevTools Protocol.** The production CSP refuses inline scripts, so `page.addScriptTag` cannot work. The source is evaluated through CDP and then removed with the page.
+46. **The screenshot baseline lives in `tests/screenshots` and has no platform suffix.** This makes the deliverable screenshots the baseline. On a different font stack or display scale the owner can regenerate with `MOSS_UPDATE_SCREENS=1`.
+47. **Fake servers are real HTTP servers on loopback.** The Muse and license tests exercise the real client code and the real error mapping, not a mocked fetch.
+48. **The initial import cap is 40 MB and 5,000 pixels on the long edge.** The brief allowed a documented cap. The limits are constants and shown in the error copy. A 40 MB file is read into memory once. It is not chunked.
+
+## Known departures
+
+49. **Not every screen has a screenshot in every requested matrix cell.** The capture set covers all main screens at 1440 by 900 in light mode, dark mode for activation, onboarding, library, set, photo, create, people, usage, and settings, and 1024 by 700 at 100% for the library plus 150% zoom for the library and set. Set running and export dialogs are light only. The functional and axe coverage is broader than the image matrix.
+50. **The library uses pagination and `content-visibility`, not a virtualized DOM.** A real 2,000 image scroll performance run was not completed on this host. The acceptance owner should run that performance check with a repeated-seed test.
+51. **Menu items are not dynamically disabled by editor context.** Undo and Redo always send a command and do nothing outside a local adjustment. Toggle Panel, Copy Image, and Paste Image also no-op when they do not apply. The shortcuts that matter to the acceptance path are keyboard reachable.
+52. **The visual matrix and axe sweep cover representative states, not every dialog and every dark variant.** Dialogs are Radix components with focus trapping and labeled titles. A dialog-specific screenshot pass was not added.
+53. **The real Meta key, real Meta invoice, real Lemon Squeezy license, two-machine activation, and Windows and macOS builds are unverified.** The code paths use the documented request shapes and fake HTTP hosts. This is the largest remaining verification gap.
+54. **Native window chrome and generated-image colors are the only raw color literals outside `tokens.css`.** BrowserWindow background, Windows title-bar overlay, the fake Muse placeholder, and the vignette SVG cannot consume a CSS variable. Every renderer style color uses a token. The native colors mirror the canvas and surface tokens.
+55. **The app guards a window close while images are in progress, then flushes a pending plan.** Closing the window with running items asks Quit or Stay before the close proceeds. After the user agrees, the main process asks the renderer to save a dirty plan and waits up to 450 ms. This is a small asynchronous close path, tested indirectly by every Playwright launch and close.
