@@ -203,6 +203,8 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.getByRole('button', { name: 'Set Up the Studio' }).click()
     await page.getByLabel('Muse key').fill('LLM|e2e-muse-key')
     await page.getByRole('button', { name: 'Test and Save' }).click()
+    await expect(page.getByRole('heading', { name: 'Make it yours' })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Save and Continue' }).click()
     await expect(page.getByRole('heading', { name: 'What are you making first?' })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Continue' }).click()
     await expect(page.getByRole('heading', { name: 'Make your first set' })).toBeVisible()

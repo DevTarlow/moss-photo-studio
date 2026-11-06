@@ -62,6 +62,7 @@ const api: MossApi = {
   },
   brand: {
     get: invokeVoid('brand:get'),
+    logoData: invokeVoid('brand:logoData'),
     update: invoke('brand:update'),
     setLogo: invoke('brand:setLogo'),
     clearLogo: invokeVoid('brand:clearLogo'),

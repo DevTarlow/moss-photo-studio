@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react'
-import type { JobState, ProjectDetail } from '@shared/types'
+import type { Brand, JobState, ProjectDetail } from '@shared/types'
 import { CATEGORY_CHIPS, recipeById } from '@shared/prompts/recipes'
 import { shotDefinition } from '@shared/prompts/shots'
 import { createDefaultPlan } from '@shared/plans'
@@ -18,22 +18,35 @@ import { Button } from '../components/ui/Button'
 import { Field } from '../components/ui/Field'
 import { Chip } from '../components/ui/Chip'
 import { Dropzone } from '../components/ui/Dropzone'
+import { BrandFields } from '../components/brand/BrandFields'
 import { FirstRunConfirm } from '../components/ui/FirstRunConfirm'
 import { Progress } from '../components/ui/Progress'
 import { Spinner } from '../components/ui/Spinner'
 
+const emptyBrand: Brand = {
+  colors: [],
+  logoUrl: null,
+  badgeEnabled: false,
+  badgeCorner: 'br',
+  badgeScale: 'm',
+  badgeOpacity: 100
+}
+
 export function Onboarding(): React.JSX.Element {
   const navigate = useNavigate()
   const settings = useAppStore((state) => state.settings)
+  const brand = useAppStore((state) => state.brand)
   const secrets = useAppStore((state) => state.secrets)
   const refreshSettings = useAppStore((state) => state.refreshSettings)
+  const refreshBrand = useAppStore((state) => state.refreshBrand)
   const refreshSecrets = useAppStore((state) => state.refreshSecrets)
   const setOnboardingBypass = useAppStore((state) => state.setOnboardingBypass)
-  const [step, setStep] = useState(() => Math.min(4, Math.max(0, settings?.onboardingStep ?? 0)))
+  const [step, setStep] = useState(() => Math.min(5, Math.max(0, settings?.onboardingStep ?? 0)))
   const [keyValue, setKeyValue] = useState('')
   const [revealKey, setRevealKey] = useState(false)
   const [keyError, setKeyError] = useState<string | null>(null)
   const [keyBusy, setKeyBusy] = useState(false)
+  const [localBrand, setLocalBrand] = useState<Brand>(brand ?? emptyBrand)
   const [category, setCategory] = useState('other')
   const [photoProject, setPhotoProject] = useState<ProjectDetail | null>(null)
   const [photoBusy, setPhotoBusy] = useState(false)
@@ -45,9 +58,13 @@ export function Onboarding(): React.JSX.Element {
   const pollRef = useRef<number | null>(null)
 
   useEffect(() => {
+    if (brand) setLocalBrand(brand)
+  }, [brand])
+
+  useEffect(() => {
     if (!settings) return
     if (secrets) void refreshSecrets()
-    const savedStep = Math.min(4, Math.max(0, settings.onboardingStep))
+    const savedStep = Math.min(5, Math.max(0, settings.onboardingStep))
     if (savedStep > step && step === 0) setStep(savedStep)
     // Resume only when the user had deliberately moved forward.
   }, [])
@@ -128,6 +145,16 @@ export function Onboarding(): React.JSX.Element {
       setKeyError(messageOf(caught))
     } finally {
       setKeyBusy(false)
+    }
+  }
+
+  const saveBrand = async (): Promise<void> => {
+    try {
+      await unwrap(window.moss.brand.update(localBrand))
+      await refreshBrand()
+      await goTo(3)
+    } catch (caught) {
+      toast.error(messageOf(caught))
     }
   }
 
@@ -256,9 +283,9 @@ export function Onboarding(): React.JSX.Element {
     setFinishing(true)
     try {
       await unwrap(window.moss.settings.set({ key: 'onboardingDone', value: true }))
-      await unwrap(window.moss.settings.set({ key: 'onboardingStep', value: 4 }))
+      await unwrap(window.moss.settings.set({ key: 'onboardingStep', value: 5 }))
       await refreshSettings()
-      setStep(4)
+      setStep(5)
     } catch {
       toast.error('The setup could not be saved.')
     } finally {
@@ -277,8 +304,8 @@ export function Onboarding(): React.JSX.Element {
     }
   }
 
-  const dots = [0, 1, 2, 3, 4]
-  const showNav = step > 0 && step < 4
+  const dots = [0, 1, 2, 3, 4, 5]
+  const showNav = step > 0 && step < 5
 
   return (
     <div className="flex h-full flex-col overflow-y-auto" style={{ background: 'var(--bg)' }}>
@@ -308,7 +335,7 @@ export function Onboarding(): React.JSX.Element {
 
         {step === 1 && (
           <div className="my-auto">
-            <p className="section-label">Step 2 of 5</p>
+            <p className="section-label">Step 2 of 6</p>
             <h1 className="page-title mt-2 text-[24px]">Connect Meta Muse</h1>
             <p className="mt-3 max-w-[560px] text-[13px]" style={{ color: 'var(--text-muted)' }}>
               Moss Photo Studio uses your own Meta key. Meta charges your account one cent for every image it makes. The app shows the price before every run.
@@ -342,7 +369,21 @@ export function Onboarding(): React.JSX.Element {
 
         {step === 2 && (
           <div className="py-8">
-            <p className="section-label">Step 3 of 5</p>
+            <p className="section-label">Step 3 of 6</p>
+            <h1 className="page-title mt-2 text-[24px]">Make it yours</h1>
+            <p className="mt-2 text-[13px]" style={{ color: 'var(--text-muted)' }}>Add your logo and colors. Optional; you can change them in Settings later.</p>
+            <div className="mt-6">
+              <BrandFields value={localBrand} onChange={setLocalBrand} maxColors={3} />
+            </div>
+            <div className="mt-7 flex items-center gap-3">
+              <Button variant="primary" onClick={() => void saveBrand()}>Save and Continue</Button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="py-8">
+            <p className="section-label">Step 4 of 6</p>
             <h1 className="page-title mt-2 text-[24px]">What are you making first?</h1>
             <p className="mt-2 text-[13px]" style={{ color: 'var(--text-muted)' }}>This picks the recipe for your first set. You can change it later.</p>
             <div className="mt-6 flex flex-wrap gap-1.5">
@@ -351,14 +392,14 @@ export function Onboarding(): React.JSX.Element {
               ))}
             </div>
             <div className="mt-7 flex items-center gap-3">
-              <Button variant="primary" onClick={() => void goTo(3)}>Continue</Button>
+              <Button variant="primary" onClick={() => void goTo(4)}>Continue</Button>
             </div>
           </div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <div className="py-8">
-            <p className="section-label">Step 4 of 5</p>
+            <p className="section-label">Step 5 of 6</p>
             <h1 className="page-title mt-2 text-[24px]">Make your first set</h1>
             <p className="mt-2 text-[13px]" style={{ color: 'var(--text-muted)' }}>
               Drop one photo of a product. The studio plans six images and tells you the cost before it starts.
@@ -418,7 +459,7 @@ export function Onboarding(): React.JSX.Element {
           </div>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <div className="my-auto">
             <p className="section-label">Done</p>
             <h1 className="display-xl mt-2">You're set up.</h1>
@@ -433,7 +474,7 @@ export function Onboarding(): React.JSX.Element {
         )}
       </main>
       <footer className="flex items-center justify-between px-8 pb-6">
-        <div className="flex items-center gap-2" role="group" aria-label={`Step ${step + 1} of 5`}>
+        <div className="flex items-center gap-2" role="group" aria-label={`Step ${step + 1} of 6`}>
           {dots.map((dot) => (
             <span
               key={dot}

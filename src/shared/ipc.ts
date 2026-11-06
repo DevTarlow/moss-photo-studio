@@ -66,6 +66,7 @@ export interface IpcChannels {
   'license:validate': { request: undefined; response: LicenseState }
   'license:deactivate': { request: undefined; response: LicenseState }
   'brand:get': { request: undefined; response: Brand }
+  'brand:logoData': { request: undefined; response: { dataUrl: string | null } }
   'brand:update': { request: Partial<Brand>; response: Brand }
   'brand:setLogo': { request: { bytes: Uint8Array; mime: string }; response: { logoFile: string } }
   'brand:clearLogo': { request: undefined; response: { ok: true } }
@@ -213,6 +214,7 @@ export interface MossApi {
   }
   brand: {
     get: CallVoid<'brand:get'>
+    logoData: CallVoid<'brand:logoData'>
     update: Call<'brand:update'>
     setLogo: Call<'brand:setLogo'>
     clearLogo: CallVoid<'brand:clearLogo'>
