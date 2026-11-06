@@ -8,7 +8,7 @@ import { SHOT_TYPES, shotDefinition, directionForPrompt } from '@shared/prompts/
 import { STARTERS } from '@shared/starters'
 import { BUNDLED_PEOPLE } from '@shared/people'
 import { wrapScenePrompt, wrapModelPrompt, PROMPT_MAX } from '@shared/prompts/guards'
-import { makeShots } from '@shared/plans'
+import { createDefaultPlan, makeShots, normalisePlan } from '@shared/plans'
 import { nextCountedLabel, setImageLabel } from '@shared/labels'
 import { shapeForImage, sizeForShape } from '@shared/shapes'
 import { safeBaseName, uniqueFileName, numberedFileName } from '@shared/files'
@@ -96,6 +96,25 @@ describe('shot directions', () => {
     expect(directionForPrompt('hero', '  ')).toBe(shotDefinition('hero').defaultDirection)
     expect(directionForPrompt('hero', 'on a chair')).toBe('on a chair')
     expect(directionForPrompt('feature', '', 'Keeps tea hot')).toContain('Keeps tea hot')
+  })
+
+  it('starts every new shot with the studio direction filled in', () => {
+    for (const shot of makeShots('other')) {
+      expect(shot.direction).toBe(shotDefinition(shot.type).defaultDirection)
+    }
+  })
+
+  it('fills an empty saved direction when a plan is loaded', () => {
+    const plan = createDefaultPlan({
+      category: 'other',
+      productName: 'Mug',
+      shape: 'square',
+      format: 'webp'
+    })
+    plan.shots[0]!.direction = '   '
+    expect(normalisePlan(plan).shots[0]!.direction).toBe(
+      shotDefinition(plan.shots[0]!.type).defaultDirection
+    )
   })
 })
 

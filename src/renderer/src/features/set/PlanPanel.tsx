@@ -47,28 +47,28 @@ function DirectionEditor({
   onBlur: () => void
 }): React.JSX.Element {
   const definition = shotDefinition(shot.type)
+  const trimmed = shot.direction.trim()
+  const isStudio = !trimmed || trimmed === definition.defaultDirection
   return (
-    <details className="mt-2 group">
-      <summary className="cursor-pointer list-none text-[11px] font-medium" style={{ color: 'var(--text-faint)' }}>
-        <span className="inline-flex items-center gap-1">
-          Direction <span style={{ color: shot.direction.trim() ? 'var(--accent)' : 'var(--text-faint)' }}>{shot.direction.trim() ? 'Your words' : 'Studio words'}</span>
+    <div className="mt-2">
+      <div className="flex items-center justify-between gap-2">
+        <label className="field-label text-[11px]" htmlFor={`direction-${shot.id}`}>Direction</label>
+        <span className="text-[11px]" style={{ color: isStudio ? 'var(--text-faint)' : 'var(--accent)' }}>
+          {isStudio ? 'Studio default' : 'Edited'}
         </span>
-      </summary>
-      <div className="mt-2">
-        <label className="sr-only" htmlFor={`direction-${shot.id}`}>Direction for {definition.label}</label>
-        <textarea
-          id={`direction-${shot.id}`}
-          className="field min-h-[74px] text-[12px]"
-          maxLength={400}
-          disabled={readOnly}
-          value={shot.direction}
-          placeholder={definition.defaultDirection}
-          onChange={(event) => onChange(event.target.value)}
-          onBlur={onBlur}
-        />
-        <p className="mt-1 text-[11px]" style={{ color: 'var(--text-faint)' }}>Leave it empty to use the studio's direction.</p>
       </div>
-    </details>
+      <textarea
+        id={`direction-${shot.id}`}
+        className="field min-h-[60px] text-[11px]"
+        maxLength={400}
+        disabled={readOnly}
+        value={shot.direction}
+        placeholder={definition.defaultDirection}
+        onChange={(event) => onChange(event.target.value)}
+        onBlur={onBlur}
+      />
+      <p className="mt-1 text-[11px]" style={{ color: 'var(--text-faint)' }}>Edit the direction to change what this shot shows.</p>
+    </div>
   )
 }
 
@@ -95,6 +95,18 @@ function ShotCard({
   const Glyph = glyphs[shot.type]
   const usedElsewhere = new Set(plan.shots.filter((entry) => entry.id !== shot.id).map((entry) => entry.type))
   const noPeople = people.length === 0
+  const changeType = (type: PlanShot['type']): void => {
+    const next = shotDefinition(type)
+    onChange({
+      ...shot,
+      type,
+      label: next.label,
+      direction: next.defaultDirection,
+      personId: type === 'onmodel' ? (shot.personId ?? 'maya') : null,
+      ...(type === 'feature' ? { featureText: shot.featureText ?? '' } : {})
+    })
+    onSaveBlur()
+  }
   return (
     <div className="plan-card" data-made={made > 0}>
       <div className="flex items-center gap-2">
@@ -118,11 +130,7 @@ function ShotCard({
           className="field h-7 flex-1 text-[11px]"
           value={shot.type}
           disabled={readOnly}
-          onChange={(event) => {
-            const type = event.target.value as PlanShot['type']
-            onChange({ ...shot, type, label: shotDefinition(type).label, personId: type === 'onmodel' ? (shot.personId ?? 'maya') : null })
-            onSaveBlur()
-          }}
+          onChange={(event) => changeType(event.target.value as PlanShot['type'])}
         >
           {SHOT_TYPES.map((entry) => (
             <option key={entry.type} value={entry.type} disabled={usedElsewhere.has(entry.type)}>
