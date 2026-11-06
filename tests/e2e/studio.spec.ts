@@ -1,0 +1,536 @@
+import { test, expect, _electron as electron } from '@playwright/test'
+import type { ElectronApplication, Page } from '@playwright/test'
+import type { AxeResults } from 'axe-core'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import Database from 'better-sqlite3'
+import { startFakeMuse } from '../fake-muse/server'
+import { startFakeLicense } from '../fake-license/server'
+
+const productPhoto = path.resolve(__dirname, '../../resources/tiles/examples/product.webp')
+const screenshots = path.resolve(__dirname, '../screenshots')
+let muse: Awaited<ReturnType<typeof startFakeMuse>>
+let license: Awaited<ReturnType<typeof startFakeLicense>>
+let userData = ''
+let exportFolder = ''
+let app: ElectronApplication
+let page: Page
+let pageErrors: string[] = []
+const requestHosts = new Set<string>()
+
+async function launch(): Promise<void> {
+  app = await electron.launch({
+    args: ['.', '--no-sandbox'],
+    env: {
+      ...process.env,
+      MOSS_USER_DATA_DIR: userData,
+      MOSS_MUSE_BASE_URL: muse.baseUrl,
+      MOSS_LICENSE_API_BASE: license.baseUrl,
+      MOSS_E2E: '1'
+    },
+    timeout: 60_000
+  })
+  page = await app.firstWindow()
+  pageErrors = []
+  page.on('pageerror', (error) => pageErrors.push(error.message))
+  page.on('request', (request) => {
+    try {
+      requestHosts.add(new URL(request.url()).hostname)
+    } catch {
+      // data: URLs have no host.
+    }
+  })
+  await page.waitForLoadState('domcontentloaded')
+  await stubDialogs()
+}
+
+async function screenshot(name: string, compare = true): Promise<void> {
+  fs.mkdirSync(screenshots, { recursive: true })
+  await page.waitForTimeout(200)
+  const file = path.join(screenshots, `${name}.png`)
+  for (let wait = 0; wait < 20 && (await page.locator('.toast').count()) > 0; wait += 1) {
+    await page.waitForTimeout(150)
+  }
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      if (!compare || !fs.existsSync(file) || process.env.MOSS_UPDATE_SCREENS === '1') {
+        await page.screenshot({ path: file, animations: 'disabled' })
+      } else {
+        await expect(page).toHaveScreenshot(`${name}.png`, { maxDiffPixelRatio: 0.01, animations: 'disabled' })
+      }
+      return
+    } catch (error) {
+      if (attempt === 3) {
+        if (process.env.MOSS_UPDATE_SCREENS === '1') {
+          console.warn(`Screenshot ${name} could not be captured: ${error instanceof Error ? error.message : 'unknown'}`)
+          return
+        }
+        throw error
+      }
+      await page.waitForTimeout(400)
+    }
+  }
+}
+
+async function gotoLibrary(): Promise<void> {
+  await page.getByRole('link', { name: 'Library', exact: true }).first().click()
+  await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
+}
+
+async function newSetFromLibrary(): Promise<void> {
+  await gotoLibrary()
+  await page.getByRole('button', { name: 'New project' }).click()
+  await page.getByRole('menuitem', { name: /^Set/ }).first().click()
+  const dialog = page.getByRole('dialog')
+  await dialog.locator('input[type=file]').setInputFiles(productPhoto)
+  await expect(page.getByRole('heading', { name: 'What do you sell?' })).toBeVisible({ timeout: 20_000 })
+  await page.getByRole('button', { name: 'Ceramics and pottery' }).click()
+  await expect(page.getByRole('button', { name: /Make \d+ Images/ })).toBeVisible({ timeout: 10_000 })
+}
+
+async function stubDialogs(): Promise<void> {
+  await app.evaluate(({ dialog }, folder) => {
+    dialog.showOpenDialog = (async () => ({ canceled: false, filePaths: [folder] })) as typeof dialog.showOpenDialog
+    dialog.showSaveDialog = (async (...args: unknown[]) => {
+      const options = (args.length > 1 ? args[1] : args[0]) as { defaultPath?: string }
+      const base = options.defaultPath?.split('/').pop() ?? 'export.webp'
+      return { canceled: false, filePath: `${folder}/${base}` }
+    }) as typeof dialog.showSaveDialog
+  }, exportFolder)
+}
+
+async function assertNoSeriousA11y(where: string): Promise<void> {
+  const source = fs.readFileSync(path.resolve('node_modules/axe-core/axe.min.js'), 'utf8')
+  const cdp = await page.context().newCDPSession(page)
+  const injected = await cdp.send('Runtime.evaluate', {
+    expression: `(async () => { ${source}\nreturn JSON.stringify(await axe.run(document)) })()`,
+    awaitPromise: true,
+    returnByValue: true
+  })
+  const raw = (injected as { result?: { value?: unknown } }).result?.value
+  expect(typeof raw, `${where}: axe did not return a result`).toBe('string')
+  const result = JSON.parse(String(raw)) as AxeResults
+  const serious = result.violations.filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
+  expect(serious, `${where}: ${serious.map((violation) => violation.id).join(', ')}`).toEqual([])
+}
+
+async function spendCents(): Promise<number> {
+  return page.evaluate(async () => {
+    const now = new Date()
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const result = await window.moss.usage.summary({ month })
+    return result.ok ? result.data.spendCents : -1
+  })
+}
+
+test.describe.serial('Moss Photo Studio journey', () => {
+  test.beforeAll(async () => {
+    userData = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-e2e-'))
+    exportFolder = path.join(userData, 'exports')
+    fs.mkdirSync(exportFolder, { recursive: true })
+    muse = await startFakeMuse({ delayMs: 350 })
+    license = await startFakeLicense()
+    await launch()
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1440, 900))
+  })
+
+  test.afterAll(async () => {
+    await app.close().catch(() => undefined)
+    await muse.close()
+    await license.close()
+    fs.rmSync(userData, { recursive: true, force: true })
+  })
+
+  test('activation, onboarding, and the first set', async () => {
+    await expect(page.getByRole('heading', { name: 'Activate Moss Photo Studio' })).toBeVisible({ timeout: 20_000 })
+    await screenshot('activation')
+    await assertNoSeriousA11y('activation')
+    await page.emulateMedia({ colorScheme: 'dark' })
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+    await screenshot('activation-dark')
+    await assertNoSeriousA11y('activation-dark')
+    await page.emulateMedia({ colorScheme: 'light' })
+    await page.getByLabel('License key').fill('bad')
+    await page.getByRole('button', { name: 'Activate', exact: true }).click()
+    await expect(page.getByText("That key wasn't accepted. Check it and try again.")).toBeVisible()
+    await page.getByLabel('License key').fill('MOSS-E2E-VALID-KEY')
+    await page.getByRole('button', { name: 'Activate', exact: true }).click()
+    await expect(page.getByRole('heading', { name: "Your shop's photo studio." })).toBeVisible({ timeout: 20_000 })
+    await screenshot('onboarding')
+    await assertNoSeriousA11y('onboarding')
+    await page.emulateMedia({ colorScheme: 'dark' })
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+    await screenshot('onboarding-dark')
+    await assertNoSeriousA11y('onboarding-dark')
+    await page.emulateMedia({ colorScheme: 'light' })
+    await page.getByRole('button', { name: 'Set Up the Studio' }).click()
+    await page.getByLabel('Muse key').fill('LLM|e2e-muse-key')
+    await page.getByRole('button', { name: 'Test and Save' }).click()
+    await expect(page.getByRole('heading', { name: 'Tell the studio about your shop' })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Save and Continue' }).click()
+    await expect(page.getByRole('heading', { name: 'Make your first set' })).toBeVisible()
+    await page.locator('input[type=file]').first().setInputFiles(productPhoto)
+    const make = page.getByRole('button', { name: /Make 6 Images · \$0\.06/ }).first()
+    await expect(make).toBeVisible({ timeout: 20_000 })
+    await make.focus()
+    await page.keyboard.press('Space')
+    const firstDialog = page.getByRole('dialog')
+    await expect(firstDialog).toContainText('Meta charges your key $0.01')
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const focusedText = await page.evaluate(() => document.activeElement?.textContent ?? '')
+      if (focusedText.includes('Make 6 Images')) break
+      await page.keyboard.press('Tab')
+    }
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('heading', { name: "You're set up." })).toBeVisible({ timeout: 30_000 })
+    await page.getByRole('button', { name: 'Open My Library' }).click()
+    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
+    await screenshot('library-light')
+    await page.getByRole('link', { name: /Open product/ }).first().click()
+    await expect(page.getByText('Your set is ready. 6 images.')).toBeVisible({ timeout: 20_000 })
+    await screenshot('set-review')
+    await assertNoSeriousA11y('set-review')
+    expect(muse.requests().length).toBeGreaterThanOrEqual(6)
+    expect(pageErrors).toEqual([])
+  })
+
+  test('a five-shot set costs five cents and makes five images', async () => {
+    await newSetFromLibrary()
+    const gift = page.getByRole('switch', { name: 'Gift-ready on' })
+    await gift.click()
+    const primary = page.getByRole('button', { name: /Make 5 Images · \$0\.05/ })
+    await expect(primary).toBeVisible()
+    await page.locator('.ws-left .scroll-area').evaluate((el) => { el.scrollTop = 0 })
+    await screenshot('set-plan')
+    await assertNoSeriousA11y('set-plan')
+    await primary.click()
+    await expect(page.getByText('Stop After This Image')).toBeVisible({ timeout: 10_000 })
+    await screenshot('set-running')
+    await expect(page.getByText('Your set is ready. 5 images.')).toBeVisible({ timeout: 30_000 })
+    await screenshot('set-five')
+    expect(pageErrors).toEqual([])
+  })
+
+  test('a failed set shows the retry price and retries only the missing images', async () => {
+    await newSetFromLibrary()
+    muse.reset()
+    muse.control('fail-indexes:2,5')
+    await page.getByRole('button', { name: /Make 6 Images · \$0\.06/ }).click()
+    await expect(page.getByText(/4 images made\. 2 did not come through\./)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByRole('button', { name: /Try the 2 Again · \$0\.02/ })).toBeVisible()
+    await screenshot('set-partial')
+    muse.control('normal')
+    await page.getByRole('button', { name: /Try the 2 Again · \$0\.02/ }).click()
+    await expect(page.getByText('Your set is ready. 6 images.')).toBeVisible({ timeout: 30_000 })
+    expect(muse.requests()).toHaveLength(8)
+    await screenshot('set-full')
+    expect(pageErrors).toEqual([])
+  })
+
+  test('the editor makes a new version, compares, and applies a free local adjust', async () => {
+    await page.getByRole('button', { name: /Main shot of the product/ }).first().click()
+    await page.getByRole('button', { name: /Open in Editor/ }).click()
+    await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 15_000 })
+    await screenshot('photo-editor')
+    await assertNoSeriousA11y('photo-editor')
+    await page.getByRole('button', { name: /Kitchen table/ }).first().click()
+    await expect(page.getByLabel('Describe the change')).toHaveValue(/warm wooden kitchen table/)
+    await page.getByRole('button', { name: /Make This Change · \$0\.01/ }).click()
+    await expect(page.getByText('Scene 01', { exact: true }).first()).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText('Cost: $0.01').first()).toBeVisible()
+    await page.getByRole('button', { name: 'Compare', exact: true }).click()
+    const slider = page.getByRole('slider', { name: 'Compare before and after' })
+    const track = await slider.boundingBox()
+    expect(track).not.toBeNull()
+    if (track) await page.mouse.click(track.x + track.width * 0.3, track.y + track.height / 2)
+    expect(Number(await slider.inputValue())).toBeGreaterThan(0)
+    await slider.focus()
+    await page.keyboard.press('Home')
+    expect(Number(await slider.inputValue())).toBe(0)
+    await page.keyboard.press('ArrowRight')
+    expect(Number(await slider.inputValue())).toBe(5)
+    await page.keyboard.press('End')
+    expect(Number(await slider.inputValue())).toBe(100)
+    await screenshot('photo-compare')
+    await page.getByRole('button', { name: 'Done Comparing' }).click()
+    const canvas = page.getByRole('group', { name: /Photo canvas/ })
+    await canvas.focus()
+    await page.keyboard.down('Space')
+    await expect(page.locator('.canvas-stage').getByText('Original', { exact: true })).toBeVisible()
+    await page.keyboard.up('Space')
+    await page.getByRole('button', { name: /Local Adjust/ }).click()
+    await page.getByRole('button', { name: '1:1', exact: true }).click()
+    await page.getByRole('button', { name: /Right/, exact: true }).click()
+    const brightness = page.getByRole('slider', { name: 'Brightness' })
+    await brightness.focus()
+    await page.keyboard.press('ArrowRight')
+    const sharpen = page.getByRole('slider', { name: 'Sharpen' })
+    await sharpen.focus()
+    await page.keyboard.press('ArrowRight')
+    await page.getByRole('button', { name: /Apply Locally · Free/ }).click()
+    await expect(page.getByText('Adjust 01', { exact: true }).first()).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByText('Cost: Free').first()).toBeVisible()
+    await screenshot('photo-adjusted')
+    await assertNoSeriousA11y('photo-adjusted')
+    expect(pageErrors).toEqual([])
+  })
+
+  test('create makes four images and opens one in the editor', async () => {
+    await page.keyboard.press('Control+3')
+    await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
+    await screenshot('create-empty')
+    await assertNoSeriousA11y('create-empty')
+    await page.locator('textarea').first().fill('A ceramic mug alone on a pure white background, centred and filling most of the frame, soft even lighting, product photo.')
+    await page.getByRole('button', { name: /Create 4 Images · \$0\.04/ }).click()
+    await expect(page.getByText('Newest')).toBeVisible({ timeout: 30_000 })
+    await screenshot('create-results')
+    await assertNoSeriousA11y('create-results')
+    await page.getByRole('button', { name: 'Edit', exact: true }).first().click()
+    await expect(page.getByRole('button', { name: 'Back to Create' })).toBeVisible({ timeout: 20_000 })
+    await screenshot('create-photo')
+    expect(pageErrors).toEqual([])
+  })
+
+  test('export set writes six named files and a plain set.txt', async () => {
+    await gotoLibrary()
+    const card = page.locator('article.lib-card').filter({ hasText: '6 images' }).first()
+    await card.getByRole('link', { name: /Open/ }).click()
+    await expect(page.getByRole('button', { name: 'Export Set', exact: true })).toBeVisible({ timeout: 20_000 })
+    await stubDialogs()
+    await page.getByRole('button', { name: 'Export Set', exact: true }).click()
+    const dialog = page.getByRole('dialog')
+    await dialog.getByRole('button', { name: 'Export', exact: true }).click()
+    await expect.poll(() => fs.existsSync(path.join(exportFolder, 'set.txt')), { timeout: 20_000 }).toBe(true)
+    const files = fs.readdirSync(exportFolder)
+    const images = files.filter((file) => file.endsWith('.webp'))
+    expect(images.length).toBe(6)
+    expect(files).not.toContain('source.jpg')
+    expect(images.sort()).toEqual([
+      '01-main-shot.webp',
+      '02-in-use.webp',
+      '03-close-up.webp',
+      '04-size-reference.webp',
+      '05-flat-lay.webp',
+      '06-gift-ready.webp'
+    ])
+    const manifest = fs.readFileSync(path.join(exportFolder, 'set.txt'), 'utf8')
+    expect(manifest).toContain('Shot:')
+    expect(manifest).toContain('Direction:')
+    await screenshot('export-done')
+    expect(pageErrors).toEqual([])
+  })
+
+  test('usage totals, CSV, and the budget card', async () => {
+    await page.getByRole('link', { name: 'Usage', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'Usage', exact: true })).toBeVisible()
+    await expect(page.getByText('Images made', { exact: true })).toBeVisible()
+    await screenshot('usage')
+    await assertNoSeriousA11y('usage')
+    const before = await spendCents()
+    expect(before).toBeGreaterThan(0)
+    await stubDialogs()
+    await page.getByRole('button', { name: /Export CSV/ }).click()
+    await expect.poll(() => fs.readdirSync(exportFolder).some((file) => file.endsWith('.csv')), { timeout: 15_000 }).toBe(true)
+    const csv = fs.readdirSync(exportFolder).find((file) => file.endsWith('.csv'))!
+    const contents = fs.readFileSync(path.join(exportFolder, csv), 'utf8')
+    const rows = contents.trim().split('\n')
+    expect(rows[0]).toBe('date,project,action,requested,returned,cost_usd,duration_ms,result,error')
+    expect(rows.length).toBeGreaterThan(2)
+    const csvCents = rows.slice(1).reduce((sum, row) => sum + Math.round(Number(row.split(',')[5]) * 100), 0)
+    expect(csvCents).toBe(before)
+    await page.locator('#budget').fill('0.01')
+    await page.getByRole('button', { name: 'Save Limit' }).click()
+    await expect(page.getByText('Monthly limit saved.').last()).toBeVisible()
+    await gotoLibrary()
+    await page.locator('article.lib-card').filter({ hasText: '6 images' }).first().getByRole('link', { name: /Open/ }).click()
+    await expect(page.getByRole('button', { name: 'Make More' })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Make More' }).click()
+    await expect(page.getByText(/This run would pass your \$0\.01 monthly limit/)).toBeVisible()
+    await page.getByRole('link', { name: 'Usage', exact: true }).first().click()
+    await page.locator('#budget').fill('10.00')
+    await page.getByRole('button', { name: 'Save Limit' }).click()
+    await expect(page.getByText('Monthly limit saved.').last()).toBeVisible()
+    expect(pageErrors).toEqual([])
+  })
+
+  test('people, settings, dark theme, persistence, keyboard zoom, and accessibility', async () => {
+    await page.getByRole('link', { name: 'People', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'People', exact: true })).toBeVisible()
+    await expect(page.getByText('Maya · 20s')).toBeVisible()
+    await screenshot('people')
+    await assertNoSeriousA11y('people')
+    await page.getByRole('link', { name: 'Settings', exact: true }).first().click()
+    await screenshot('settings-light')
+    await assertNoSeriousA11y('settings-light')
+    await page.getByRole('link', { name: 'Appearance', exact: true }).click()
+    await page.getByRole('button', { name: 'Dark', exact: true }).click()
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+    await screenshot('settings-dark')
+    await gotoLibrary()
+    await screenshot('library-dark')
+    await assertNoSeriousA11y('library-dark')
+    await page.locator('article.lib-card').filter({ hasText: '6 images' }).first().getByRole('link', { name: /Open/ }).click()
+    await expect(page.getByRole('button', { name: /Main shot of the product/ }).first()).toBeVisible()
+    await screenshot('set-dark')
+    await assertNoSeriousA11y('set-dark')
+    await page.getByRole('button', { name: /Main shot of the product/ }).first().click()
+    await page.getByRole('button', { name: /Open in Editor/ }).click()
+    await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 15_000 })
+    await screenshot('photo-dark')
+    await assertNoSeriousA11y('photo-dark')
+    await gotoLibrary()
+    await page.locator('article.lib-card').filter({ has: page.getByText('Image', { exact: true }) }).first().getByRole('link', { name: /Open/ }).click()
+    await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
+    await screenshot('create-dark')
+    await assertNoSeriousA11y('create-dark')
+    await page.getByRole('link', { name: 'Usage', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'Usage', exact: true })).toBeVisible()
+    await screenshot('usage-dark')
+    await assertNoSeriousA11y('usage-dark')
+    await page.getByRole('link', { name: 'People', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'People', exact: true })).toBeVisible()
+    await screenshot('people-dark')
+    await assertNoSeriousA11y('people-dark')
+    await gotoLibrary()
+    const bounds = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.getBounds())
+    await app.close()
+    await launch()
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+    const reopenedBounds = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.getBounds())
+    expect(reopenedBounds?.width).toBe(bounds?.width)
+    expect(reopenedBounds?.height).toBe(bounds?.height)
+    await gotoLibrary()
+    await assertNoSeriousA11y('library-after-restart')
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1024, 700))
+    await page.waitForTimeout(300)
+    await page.getByRole('link', { name: 'Settings', exact: true }).first().click()
+    await page.getByRole('link', { name: 'Appearance', exact: true }).click()
+    await page.getByRole('button', { name: 'Light', exact: true }).click()
+    await gotoLibrary()
+    await screenshot('library-1024-light')
+    await assertNoSeriousA11y('library-1024-light')
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.setZoomFactor(1.5))
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.setZoomFactor(1.5))
+    await page.waitForTimeout(400)
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+    expect(overflow).toBeLessThanOrEqual(1)
+    await screenshot('library-zoom-150', false)
+    await assertNoSeriousA11y('library-zoom-150')
+    await page.locator('article.lib-card').first().getByRole('link', { name: /Open/ }).click()
+    await page.waitForTimeout(400)
+    const workspaceOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+    expect(workspaceOverflow).toBeLessThanOrEqual(1)
+    await expect(page.locator('.ws-bottom .btn-primary')).toBeVisible()
+    await screenshot('set-zoom-150', false)
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.setZoomFactor(1))
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1440, 900))
+    expect(pageErrors).toEqual([])
+  })
+
+  test('generation goes offline in plain words without a cost, and the library still works', async () => {
+    muse.control('offline')
+    await gotoLibrary()
+    await page.locator('article.lib-card').filter({ hasText: '6 images' }).first().getByRole('link', { name: /Open/ }).click()
+    await page.getByRole('button', { name: /Main shot of the product/ }).first().click()
+    await page.getByRole('button', { name: /Open in Editor/ }).click()
+    await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 15_000 })
+    const before = await spendCents()
+    await page.getByRole('button', { name: /Quick fix/ }).click()
+    await page.getByRole('button', { name: /Make This Change/ }).click()
+    await expect(page.getByText(/The request timed out\./)).toBeVisible({ timeout: 20_000 })
+    expect(await spendCents()).toBe(before)
+    await page.getByRole('link', { name: 'Library', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
+    muse.control('normal')
+    expect(pageErrors).toEqual([])
+  })
+
+  test('no unexpected renderer network hosts were used', async () => {
+    const allowed = new Set(['', 'moss-media', 'bundled', 'library', '127.0.0.1'])
+    const unexpected = [...requestHosts].filter((host) => host && !allowed.has(host) && !host.endsWith('127.0.0.1'))
+    expect(unexpected).toEqual([])
+    expect(muse.requests().length).toBeGreaterThan(0)
+    expect(license.requests().length).toBeGreaterThan(0)
+  })
+
+  test('the Muse key can be tested, replaced, and removed without exposing it', async () => {
+    muse.control('normal')
+    await page.getByRole('link', { name: 'Settings', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'Studio', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Test Connection' }).click()
+    await expect(page.getByText('Connection checked.')).toBeVisible({ timeout: 15_000 })
+    await page.getByRole('button', { name: 'Replace', exact: true }).click()
+    await page.getByLabel('Muse key').fill('LLM|e2e-replacement-key-WXYZ')
+    await page.getByRole('button', { name: 'Test and Save' }).click()
+    await expect(page.getByText(/WXYZ/).first()).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Remove', exact: true }).click()
+    const confirm = page.getByRole('dialog')
+    await expect(confirm).toContainText('Remove the Muse key?')
+    await confirm.getByRole('button', { name: 'Remove Key' }).click()
+    await expect(page.getByLabel('Muse key')).toBeVisible({ timeout: 15_000 })
+    const secretStatus = await page.evaluate(async () => {
+      const result = await window.moss.secrets.status()
+      return result.ok ? result.data : { hasKey: true, last4: null, validatedAt: null, backend: 'unknown' }
+    })
+    expect(secretStatus.hasKey).toBe(false)
+    expect(await page.locator('body').innerText()).not.toContain('e2e-replacement-key-WXYZ')
+    expect(pageErrors).toEqual([])
+  })
+
+  test('license grace and expiry keep the library readable', async () => {
+    await app.close()
+    const dbPath = path.join(userData, 'library.sqlite')
+    const day = 24 * 60 * 60 * 1000
+    const updateValidation = (daysAgo: number): void => {
+      const db = new Database(dbPath)
+      db.prepare('UPDATE license SET last_validated_at = ?, status = ?').run(Date.now() - daysAgo * day, 'licensed')
+      db.close()
+    }
+    updateValidation(13)
+    license.control('down')
+    await launch()
+    await page.getByRole('link', { name: 'Library', exact: true }).first().click()
+    await expect(page.getByText(/Working offline\. License checks resume when you're connected\./)).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
+    await screenshot('license-grace')
+    await app.close()
+    updateValidation(15)
+    license.control('down')
+    await launch()
+    await expect(page.getByRole('heading', { name: 'Activate Moss Photo Studio' })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Browse My Library' }).click()
+    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
+    await screenshot('license-expired-readonly')
+    await page.locator('article.lib-card').first().getByRole('link', { name: /Open/ }).click()
+    await expect(page.getByText(/Reactivate to make images/).first()).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole('button', { name: /Export/ }).first()).toBeVisible()
+    const projectId = new URL(page.url()).hash.split('/')[2]!
+    const detail = await page.evaluate(async (id) => {
+      const result = await window.moss.projects.get({ id })
+      return result.ok ? result.data : null
+    }, projectId)
+    const source = detail?.images.find((image) => image.status === 'ready')
+    expect(source).toBeTruthy()
+    const adjusted = await page.evaluate(async (imageId) => {
+      const result = await window.moss.adjust.apply({
+        imageId,
+        transform: { rotate: 0, flipH: false, flipV: false, brightness: 10, contrast: 0, saturation: 0, warmth: 0, sharpen: 0, vignette: 0 }
+      })
+      return result.ok ? result.data : null
+    }, source!.id)
+    expect(adjusted?.imageId).toBeTruthy()
+    const exported = await page.evaluate(async ({ id, imageId }) => {
+      const result = await window.moss.exports.images({
+        projectId: id,
+        imageIds: [imageId],
+        options: { format: 'webp', quality: 90, maxDimension: null }
+      })
+      return result.ok ? result.data : null
+    }, { id: projectId, imageId: adjusted!.imageId })
+    expect(exported?.paths.length).toBe(1)
+    expect(fs.existsSync(exported!.paths[0]!)).toBe(true)
+    license.control('active')
+    expect(pageErrors).toEqual([])
+  })
+})

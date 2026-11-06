@@ -1,0 +1,185 @@
+import { describe, expect, it } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
+import { SCENES, SCENE_CATEGORIES } from '@shared/prompts/scenes'
+import { ALL_TEMPLATES, TEMPLATE_GROUPS, QUICK_FIX, templateAsset, templateById } from '@shared/prompts/templates'
+import { RECIPES, recipeById, CATEGORY_CHIPS, recipeShotTypes } from '@shared/prompts/recipes'
+import { SHOT_TYPES, shotDefinition, directionForPrompt } from '@shared/prompts/shots'
+import { STARTERS } from '@shared/starters'
+import { BUNDLED_PEOPLE } from '@shared/people'
+import { wrapScenePrompt, wrapModelPrompt, PROMPT_MAX } from '@shared/prompts/guards'
+import { makeShots } from '@shared/plans'
+import { nextCountedLabel, setImageLabel } from '@shared/labels'
+import { shapeForImage, sizeForShape } from '@shared/shapes'
+import { safeBaseName, uniqueFileName, numberedFileName } from '@shared/files'
+import { usd, estimateCents, monthBounds, monthKey } from '@shared/cost'
+
+const root = path.resolve(__dirname, '../..')
+
+describe('scenes', () => {
+  it('has eight unique scenes in four categories', () => {
+    expect(SCENES).toHaveLength(8)
+    expect(new Set(SCENES.map((scene) => scene.id)).size).toBe(8)
+    for (const scene of SCENES) expect(SCENE_CATEGORIES).toContain(scene.category)
+    expect(new Set(SCENES.map((scene) => scene.category))).toEqual(new Set(SCENE_CATEGORIES))
+  })
+
+  it('wraps under the prompt cap and has an asset', () => {
+    for (const scene of SCENES) {
+      expect(wrapScenePrompt(scene.prompt).length).toBeLessThanOrEqual(PROMPT_MAX)
+      expect(fs.existsSync(path.join(root, 'resources', scene.tile))).toBe(true)
+    }
+  })
+})
+
+describe('the 32 change tiles', () => {
+  it('has 32 unique tiles in six groups', () => {
+    expect(ALL_TEMPLATES).toHaveLength(32)
+    expect(TEMPLATE_GROUPS).toHaveLength(6)
+    expect(new Set(ALL_TEMPLATES.map((template) => template.id)).size).toBe(32)
+    for (const template of ALL_TEMPLATES) {
+      expect(TEMPLATE_GROUPS.some((group) => group.id === template.group)).toBe(true)
+      expect(['scene', 'model', 'edit']).toContain(template.kind)
+      expect(template.prompt.trim().length).toBeGreaterThan(0)
+    }
+  })
+
+  it('has an asset for every tile under its default person', () => {
+    for (const template of ALL_TEMPLATES) {
+      const asset = templateAsset(template, 'maya')
+      expect(fs.existsSync(path.join(root, 'resources', asset))).toBe(true)
+    }
+  })
+
+  it('keeps quick fix outside the 32', () => {
+    expect(QUICK_FIX.id).toBe('quick-fix')
+    expect(templateById(QUICK_FIX.id)).toBeUndefined()
+  })
+
+  it('keeps all model prompts able to fit under the cap', () => {
+    for (const template of ALL_TEMPLATES.filter((entry) => entry.kind === 'model')) {
+      expect(wrapModelPrompt(template.prompt).length).toBeLessThan(PROMPT_MAX)
+    }
+  })
+})
+
+describe('recipes', () => {
+  it('maps every category to four to eight valid shots', () => {
+    for (const recipe of RECIPES) {
+      expect(recipe.shots.length).toBeGreaterThanOrEqual(4)
+      expect(recipe.shots.length).toBeLessThanOrEqual(8)
+      for (const type of recipe.shots) expect(SHOT_TYPES.some((shot) => shot.type === type)).toBe(true)
+    }
+    expect(RECIPES).toHaveLength(CATEGORY_CHIPS.length)
+  })
+
+  it('never includes feature and only puts on a person in clothing and bags', () => {
+    for (const recipe of RECIPES) expect(recipe.shots).not.toContain('feature')
+    const withPerson = RECIPES.filter((recipe) => recipe.shots.includes('onmodel')).map((recipe) => recipe.id)
+    expect(withPerson.sort()).toEqual(['bags', 'clothing'])
+  })
+
+  it('falls back to other', () => {
+    expect(recipeById('missing').id).toBe('other')
+    expect(recipeShotTypes('clothing')).toContain('onmodel')
+  })
+
+  it('plans one default person for an onmodel shot', () => {
+    const shots = makeShots('clothing')
+    const personShot = shots.find((shot) => shot.type === 'onmodel')
+    expect(personShot?.personId).toBe('maya')
+  })
+})
+
+describe('shot directions', () => {
+  it('uses the studio default only when the direction is empty', () => {
+    expect(directionForPrompt('hero', '  ')).toBe(shotDefinition('hero').defaultDirection)
+    expect(directionForPrompt('hero', 'on a chair')).toBe('on a chair')
+    expect(directionForPrompt('feature', '', 'Keeps tea hot')).toContain('Keeps tea hot')
+  })
+})
+
+describe('starters and people', () => {
+  it('ships 24 starters, each under 240 characters', () => {
+    expect(STARTERS).toHaveLength(24)
+    for (const starter of STARTERS) expect(starter.text.length).toBeLessThanOrEqual(240)
+  })
+
+  it('ships twelve adults with stable ids and descriptions', () => {
+    expect(BUNDLED_PEOPLE).toHaveLength(12)
+    expect(BUNDLED_PEOPLE[0]).toEqual({ id: 'maya', name: 'Maya', ageBand: '20s', blurb: 'A woman in her twenties with dark shoulder-length hair.' })
+    for (const person of BUNDLED_PEOPLE) {
+      expect(fs.existsSync(path.join(root, 'resources', 'people', `${person.id}.webp`))).toBe(true)
+      expect(fs.existsSync(path.join(root, 'resources', 'people', `${person.id}-portrait.webp`))).toBe(true)
+    }
+  })
+})
+
+describe('labels', () => {
+  it('numbers one hundred edits without gaps or renumbering', () => {
+    const labels: string[] = []
+    for (let index = 0; index < 100; index += 1) labels.push(nextCountedLabel('Edit', labels))
+    expect(labels[0]).toBe('Edit 01')
+    expect(labels[9]).toBe('Edit 10')
+    expect(labels[99]).toBe('Edit 100')
+    labels.splice(1, 1)
+    expect(nextCountedLabel('Edit', labels)).toBe('Edit 101')
+    expect(labels[1]).toBe('Edit 03')
+  })
+
+  it('labels set remakes and other words', () => {
+    expect(setImageLabel('hero', [])).toBe('Main shot')
+    expect(setImageLabel('hero', ['Main shot'])).toBe('Main shot 2')
+    expect(setImageLabel('hero', ['Main shot', 'Main shot 2'])).toBe('Main shot 3')
+    expect(nextCountedLabel('Scene', ['Scene 01', 'Scene 03'])).toBe('Scene 04')
+    expect(nextCountedLabel('Created', [])).toBe('Created 01')
+    expect(nextCountedLabel('Adjust', [])).toBe('Adjust 01')
+  })
+})
+
+describe('shapes', () => {
+  it('maps the three presets', () => {
+    expect(sizeForShape('square')).toBe('1024x1024')
+    expect(sizeForShape('portrait')).toBe('1024x1536')
+    expect(sizeForShape('landscape')).toBe('1536x1024')
+  })
+
+  it('matches by log-space nearest ratio', () => {
+    expect(shapeForImage(1000, 1000)).toBe('square')
+    expect(shapeForImage(2000, 3000)).toBe('portrait')
+    expect(shapeForImage(3000, 2000)).toBe('landscape')
+    expect(shapeForImage(1200, 1500)).toBe('portrait')
+    expect(shapeForImage(0, 0)).toBe('square')
+  })
+})
+
+describe('cost and file naming', () => {
+  it('renders dollars and cents from one constant', () => {
+    expect(usd(0)).toBe('$0.00')
+    expect(usd(1)).toBe('$0.01')
+    expect(usd(6)).toBe('$0.06')
+    expect(usd(124)).toBe('$1.24')
+    expect(estimateCents(4)).toBe(4)
+  })
+
+  it('computes local month bounds and keys', () => {
+    const bounds = monthBounds('2026-11')
+    expect(new Date(bounds.start).getMonth()).toBe(10)
+    expect(new Date(bounds.end).getMonth()).toBe(11)
+    expect(monthKey(new Date(2026, 10, 5))).toBe('2026-11')
+  })
+
+  it('strips unsafe characters, collapses spaces and limits length', () => {
+    expect(safeBaseName('  My / lovely: mug?.  ')).toBe('My-lovely-mug')
+    expect(safeBaseName('')).toBe('image')
+    expect(safeBaseName('x'.repeat(120)).length).toBe(80)
+    expect(numberedFileName(1, 'main-shot', 'webp')).toBe('01-main-shot.webp')
+  })
+
+  it('adds collision suffixes rather than overwriting', () => {
+    const taken = new Set<string>()
+    expect(uniqueFileName('mug', 'webp', taken)).toBe('mug.webp')
+    expect(uniqueFileName('mug', 'webp', taken)).toBe('mug-2.webp')
+    expect(uniqueFileName('mug', 'webp', taken)).toBe('mug-3.webp')
+  })
+})
