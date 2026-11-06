@@ -1,0 +1,79 @@
+{
+  "name": "moss-photo-studio",
+  "version": "1.0.0",
+  "description": "A photo studio for people who sell things.",
+  "main": "./out/main/index.js",
+  "author": {
+    "name": "Moss Toolbox",
+    "email": "support@mosstoolbox.com"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "electron-vite dev",
+    "start": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "npm run build && playwright test",
+    "build": "npm run typecheck && electron-vite build",
+    "build:linux": "npm run build && electron-builder --linux AppImage && node scripts/make-deb.mjs",
+    "build:win": "npm run build && electron-builder --win nsis",
+    "build:mac": "npm run build && electron-builder --mac dmg",
+    "postinstall": "node scripts/postinstall.mjs",
+    "assets": "node scripts/copy-assets.mjs",
+    "icons": "node scripts/make-icons.mjs",
+    "audit:tokens": "node scripts/audit-tokens.mjs",
+    "lint": "eslint src tests",
+    "build:test": "MOSS_TEST_BUILD=1 npm run typecheck && MOSS_TEST_BUILD=1 electron-vite build",
+    "release:gate": "node scripts/release-gate.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-virtual": "^3.14.26",
+    "better-sqlite3": "^13.0.3",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.70.0",
+    "radix-ui": "^1.8.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.5",
+    "sharp": "^0.35.5",
+    "zod": "^4.6.7",
+    "zustand": "^5.1.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.0",
+    "@tailwindcss/vite": "^4.3.5",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "axe-core": "^4.14.0",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0",
+    "electron-vite": "^6.0.0",
+    "eslint": "^10.14.0",
+    "jsdom": "^31.0.0",
+    "png-to-ico": "^3.0.2",
+    "png2icons": "^2.0.1",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  },
+  "allowScripts": {
+    "better-sqlite3@13.0.3": true,
+    "electron-winstaller@5.4.0": true
+  },
+  "homepage": "https://example.com/moss-photo-studio",
+  "desktopName": "moss-photo-studio.desktop"
+}

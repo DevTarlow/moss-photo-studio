@@ -1,0 +1,430 @@
+import { useEffect, useRef, useState } from 'react'
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { ArrowDownToLine } from 'lucide-react'
+import type { JobState } from '@shared/types'
+import { useAppStore } from './store/app'
+import { useJobsStore } from './store/jobs'
+import { useUiStore } from './store/ui'
+import { useWorkspaceStore } from './store/workspace'
+import { markUrl } from './lib/assets'
+import { unwrap } from './lib/ipc'
+import { fileToBytes } from './lib/files'
+import { warnIfSmallPhoto } from './lib/photoWarnings'
+import { toast } from './lib/toast'
+import { emitCommand } from './lib/commands'
+import { useConfirm } from './components/ui/ConfirmProvider'
+import { Button } from './components/ui/Button'
+import { ToastViewport } from './components/ui/Toast'
+import { CommandPalette } from './components/ui/CommandPalette'
+import { ShortcutsSheet } from './components/ui/ShortcutsSheet'
+import { GuideDialog } from './components/ui/GuideDialog'
+
+const TWELVE_HOURS = 12 * 60 * 60 * 1000
+
+function Splash(): React.JSX.Element {
+  return (
+    <div className="flex h-full items-center justify-center" style={{ background: 'var(--canvas)' }}>
+      <div className="flex flex-col items-center gap-3">
+        <img src={markUrl()} alt="" width={36} height={36} className="h-9 w-9 object-contain" />
+        <p className="wordmark" style={{ color: 'var(--canvas-text)' }}>Moss Photo Studio</p>
+      </div>
+    </div>
+  )
+}
+
+function BootError(): React.JSX.Element {
+  return (
+    <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+      <h1 className="page-title">Could not open the studio.</h1>
+      <p className="meta mt-2">Nothing is lost. Your images stay in the library folder.</p>
+      <Button variant="primary" className="mt-5" onClick={() => window.location.reload()}>Try Again</Button>
+    </div>
+  )
+}
+
+function useJobCompletionToast(): void {
+  const navigate = useNavigate()
+  useEffect(() => {
+    return window.moss.onJobUpdate((job: JobState) => {
+      if (job.status === 'running') return
+      if (window.location.hash.includes(job.projectId)) return
+      if (window.location.hash.includes('/onboarding')) return
+      if (job.status === 'cancelled') return
+      if (job.done > 0) {
+        const message = job.kind === 'set'
+          ? `Your set finished with ${job.done} ${job.done === 1 ? 'image' : 'images'}.`
+          : job.kind === 'create'
+            ? `${job.done} ${job.done === 1 ? 'image is' : 'images are'} ready.`
+            : 'Your change is ready.'
+        toast.status(message, { label: 'Open project', onClick: () => navigate(`/project/${job.projectId}`) })
+      } else {
+        toast.error('That run finished without an image. Nothing is lost. Open the project to try again.')
+      }
+    })
+  }, [navigate])
+}
+
+function useGlobalDrop(): { dragOver: boolean } {
+  const [dragOver, setDragOver] = useState(false)
+  const depth = useRef(0)
+  const confirm = useConfirm()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    const hasFiles = (event: DragEvent): boolean => Boolean(event.dataTransfer?.types.includes('Files'))
+    const onDragEnter = (event: DragEvent): void => {
+      if (!hasFiles(event)) return
+      event.preventDefault()
+      depth.current += 1
+      if (!location.pathname.startsWith('/library')) setDragOver(true)
+    }
+    const onDragOver = (event: DragEvent): void => {
+      if (!hasFiles(event)) return
+      event.preventDefault()
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
+    }
+    const onDragLeave = (): void => {
+      depth.current = Math.max(0, depth.current - 1)
+      if (depth.current === 0) setDragOver(false)
+    }
+    const onDrop = async (event: DragEvent): Promise<void> => {
+      event.preventDefault()
+      depth.current = 0
+      setDragOver(false)
+      const file = [...(event.dataTransfer?.files ?? [])].find((entry) =>
+        ['image/jpeg', 'image/png', 'image/webp'].includes(entry.type)
+      )
+      if (!file) {
+        toast.error('That file is not a JPEG, PNG, or WebP photo.')
+        return
+      }
+      const bytes = await fileToBytes(file)
+      const pathMatch = /\/project\/([^/?#]+)/.exec(location.pathname)
+      if (pathMatch?.[1]) {
+        const projectId = pathMatch[1]
+        const workspace = useWorkspaceStore.getState()
+        const project = workspace.project?.id === projectId ? workspace.project : null
+        const ok = await confirm({
+          title: project?.type === 'photo' ? 'Add this photo?' : project?.type === 'set' ? 'Replace the product photo?' : 'Add this photo?',
+          body: project?.type === 'set'
+            ? 'Images already made stay. New images use this photo.'
+            : 'It becomes a new version source. The versions you have stay.',
+          confirmLabel: 'Add Photo'
+        })
+        if (!ok) return
+        try {
+          const result = await unwrap(window.moss.media.importBytes({
+            projectId,
+            kind: 'source',
+            bytes,
+            mime: file.type,
+            name: file.name
+          }))
+          warnIfSmallPhoto(result)
+          if (result?.imageId) await useWorkspaceStore.getState().refresh(result.imageId)
+          toast.status('Photo added.')
+        } catch {
+          toast.error('That photo could not be added. Try another one.')
+        }
+        return
+      }
+      try {
+        const result = await unwrap(window.moss.media.importBytes({
+          kind: 'source',
+          type: event.shiftKey ? 'set' : 'photo',
+          bytes,
+          mime: file.type,
+          name: file.name
+        }))
+        warnIfSmallPhoto(result)
+        if (result?.projectId) navigate(`/project/${result.projectId}`)
+      } catch {
+        toast.error('That photo could not be opened. Try another one.')
+      }
+    }
+    window.addEventListener('dragenter', onDragEnter)
+    window.addEventListener('dragover', onDragOver)
+    window.addEventListener('dragleave', onDragLeave)
+    window.addEventListener('drop', onDrop)
+    return () => {
+      window.removeEventListener('dragenter', onDragEnter)
+      window.removeEventListener('dragover', onDragOver)
+      window.removeEventListener('dragleave', onDragLeave)
+      window.removeEventListener('drop', onDrop)
+    }
+  }, [confirm, location.pathname, navigate])
+
+  return { dragOver }
+}
+
+export function RootLayout(): React.JSX.Element {
+  const booted = useAppStore((state) => state.booted)
+  const bootError = useAppStore((state) => state.bootError)
+  const boot = useAppStore((state) => state.boot)
+  const license = useAppStore((state) => state.license)
+  const settings = useAppStore((state) => state.settings)
+  const onboardingBypass = useAppStore((state) => state.onboardingBypass)
+  const initialLicenseValid = useAppStore((state) => state.initialLicenseValid)
+  const readonlyBypass = useAppStore((state) => state.readonlyBypass)
+  const applyLicense = useAppStore((state) => state.applyLicense)
+  const refreshLicense = useAppStore((state) => state.refreshLicense)
+  const setTheme = useAppStore((state) => state.setTheme)
+  const setPalette = useUiStore((state) => state.setPalette)
+  const toggleRail = useUiStore((state) => state.toggleRail)
+  const setShortcuts = useUiStore((state) => state.setShortcuts)
+  const setGuide = useUiStore((state) => state.setGuide)
+  const jobsRevision = useJobsStore((state) => state.revision)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const previousLicense = useRef<string | null>(null)
+  const { dragOver } = useGlobalDrop()
+  useJobCompletionToast()
+
+  useEffect(() => {
+    document.body.classList.add(`platform-${window.moss.platform}`)
+    if (!useAppStore.getState().booted) void boot()
+  }, [])
+
+  useEffect(() => {
+    if (!booted) return
+    return window.moss.onFlushRequest(() => {
+      void useWorkspaceStore.getState().savePlan().finally(() => window.moss.flushComplete())
+    })
+  }, [booted])
+
+  useEffect(() => {
+    if (!booted) return
+    const unsubscribeJobs = useJobsStore.getState().subscribe()
+    void useJobsStore.getState().loadActive()
+    const unsubscribeLicense = window.moss.onLicenseChanged((state) => {
+      const previous = previousLicense.current
+      applyLicense(state)
+      if (state.status === 'grace' && previous !== 'grace') {
+        toast.status("Working offline. License checks resume when you're connected.")
+      } else if (state.status === 'expired' && previous !== 'expired') {
+        toast.error('The license needs attention. Your library, edits and exports still work.')
+      }
+      previousLicense.current = state.status
+    })
+    previousLicense.current = useAppStore.getState().license?.status ?? null
+    return () => {
+      unsubscribeJobs()
+      unsubscribeLicense()
+    }
+  }, [applyLicense, booted])
+
+  useEffect(() => {
+    if (!booted) return
+    const onKey = (event: KeyboardEvent): void => {
+      const target = event.target as HTMLElement
+      const typing = target.matches('input, textarea, select, [contenteditable="true"]')
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setPalette(true)
+        return
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f') {
+        event.preventDefault()
+        if (location.pathname.startsWith('/library')) emitCommand('focus-search')
+        else navigate('/library?focus=search')
+        return
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'n') {
+        event.preventDefault()
+        navigate('/library?new=set')
+        return
+      }
+      if ((event.metaKey || event.ctrlKey) && ['1', '2', '3'].includes(event.key)) {
+        event.preventDefault()
+        const type = event.key === '1' ? 'set' : event.key === '2' ? 'photo' : 'image'
+        if (type === 'image') {
+          void unwrap(window.moss.projects.create({ type: 'image' })).then((detail) => navigate(`/project/${detail.project.id}`)).catch(() => toast.error('A new project could not be opened.'))
+        } else {
+          navigate(`/library?new=${type}`)
+        }
+        return
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'e') {
+        event.preventDefault()
+        emitCommand('export')
+        return
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+        event.preventDefault()
+        document.querySelector<HTMLButtonElement>('.ws-bottom .btn-primary:not([disabled])')?.click()
+        return
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'b') {
+        event.preventDefault()
+        toggleRail()
+        return
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key === '/') {
+        event.preventDefault()
+        setShortcuts(true)
+        return
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'v' && !typing) {
+        event.preventDefault()
+        void pasteAsPhoto()
+        return
+      }
+      if (event.key === '?' && !typing) {
+        event.preventDefault()
+        setShortcuts(true)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [booted, location.pathname, navigate, setPalette, setShortcuts, toggleRail])
+
+  const pasteAsPhoto = async (): Promise<void> => {
+    try {
+      const clipboard = await unwrap(window.moss.app.readClipboardImage())
+      if (!clipboard.bytes || !clipboard.mime) {
+        toast.error('There is no image on the clipboard.')
+        return
+      }
+      const result = await unwrap(window.moss.media.importBytes({
+        kind: 'source',
+        type: 'photo',
+        bytes: clipboard.bytes,
+        mime: clipboard.mime,
+        name: 'Pasted photo'
+      }))
+      if (result?.projectId) navigate(`/project/${result.projectId}`)
+    } catch {
+      toast.error('That image could not be pasted.')
+    }
+  }
+
+  useEffect(() => {
+    if (!booted) return
+    return window.moss.onMenuAction((event) => {
+      switch (event.action) {
+        case 'new-set':
+          navigate('/library?new=set')
+          break
+        case 'new-photo':
+          navigate('/library?new=photo')
+          break
+        case 'new-image':
+          void unwrap(window.moss.projects.create({ type: 'image' })).then((detail) => navigate(`/project/${detail.project.id}`)).catch(() => toast.error('A new project could not be opened.'))
+          break
+        case 'open-project':
+          if (event.projectId) navigate(`/project/${event.projectId}`)
+          break
+        case 'export':
+          emitCommand('export')
+          break
+        case 'find':
+          if (location.pathname.startsWith('/library')) emitCommand('focus-search')
+          else navigate('/library?focus=search')
+          break
+        case 'toggle-rail':
+          toggleRail()
+          break
+        case 'toggle-panel':
+          emitCommand('toggle-panel')
+          break
+        case 'open-settings':
+          navigate('/settings/studio')
+          break
+        case 'open-usage':
+          navigate('/usage')
+          break
+        case 'open-privacy':
+          navigate('/settings/privacy')
+          break
+        case 'open-about':
+          navigate('/settings/about')
+          break
+        case 'open-guide':
+          setGuide(true)
+          break
+        case 'open-shortcuts':
+          setShortcuts(true)
+          break
+        case 'theme-system':
+        case 'theme-light':
+        case 'theme-dark':
+          void setTheme(event.action === 'theme-system' ? 'system' : event.action === 'theme-light' ? 'light' : 'dark').catch(() => toast.error('The theme could not be changed.'))
+          break
+        case 'undo':
+          emitCommand('undo')
+          break
+        case 'redo':
+          emitCommand('redo')
+          break
+        case 'copy-image':
+          emitCommand('copy-image')
+          break
+        case 'paste-image':
+          void pasteAsPhoto()
+          break
+        case 'zoom-in':
+          emitCommand('zoom-in')
+          break
+        case 'zoom-out':
+          emitCommand('zoom-out')
+          break
+        case 'zoom-reset':
+        case 'actual-size':
+          emitCommand('zoom-reset')
+          break
+        case 'toggle-theme':
+          void setTheme(settings?.theme === 'dark' ? 'light' : 'dark').catch(() => toast.error('The theme could not be changed.'))
+          break
+        default:
+          break
+      }
+    })
+  }, [booted, location.pathname, navigate, setGuide, setShortcuts, setTheme, settings?.theme, toggleRail])
+
+  useEffect(() => {
+    if (location.pathname === '/' && booted) {
+      // BootRedirect handles root. A license check result can arrive late.
+      if (license?.status === 'licensed' || license?.status === 'grace') void refreshLicense()
+    }
+  }, [booted, license?.status, location.pathname, refreshLicense])
+  void jobsRevision
+
+  if (!booted) return <Splash />
+  if (bootError) return <BootError />
+
+  const licenseInvalid = !license || license.status === 'unlicensed' || license.status === 'offline_unlicensed' || license.status === 'expired'
+  if (licenseInvalid && !initialLicenseValid && !readonlyBypass && location.pathname !== '/activation') {
+    return <Navigate to="/activation" replace />
+  }
+  if (
+    license &&
+    (license.status === 'licensed' || license.status === 'grace') &&
+    settings &&
+    !settings.onboardingDone &&
+    !onboardingBypass &&
+    location.pathname !== '/onboarding' &&
+    location.pathname !== '/activation'
+  ) {
+    return <Navigate to="/onboarding" replace />
+  }
+
+  return (
+    <>
+      <Outlet />
+      <CommandPalette />
+      <ShortcutsSheet />
+      <GuideDialog />
+      <ToastViewport />
+      {dragOver && (
+        <div className="drop-overlay" aria-hidden>
+          <div className="drop-overlay-inner flex items-center gap-2">
+            <ArrowDownToLine size={18} /> Drop to add. Hold Shift for a set.
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+export { TWELVE_HOURS }

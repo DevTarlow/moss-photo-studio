@@ -1,0 +1,307 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { BarChart3, Download } from 'lucide-react'
+import type { UsageEvent, UsageSummary } from '@shared/types'
+import { AppFrame } from '../components/ui/AppFrame'
+import { Button } from '../components/ui/Button'
+import { EmptyState } from '../components/ui/EmptyState'
+import { ErrorState } from '../components/ui/ErrorState'
+import { Progress } from '../components/ui/Progress'
+import { Skeleton } from '../components/ui/Skeleton'
+import { useAppStore } from '../store/app'
+import { unwrap, messageOf } from '../lib/ipc'
+import { usd, monthLabel, shortMonthLabel, formatDateTime } from '../lib/format'
+import { toast } from '../lib/toast'
+import { currentMonth } from '../store/library'
+import { errorMessage } from '@shared/errors'
+
+function lastMonths(count: number): string[] {
+  const result: string[] = []
+  const now = new Date()
+  for (let index = 0; index < count; index += 1) {
+    const date = new Date(now.getFullYear(), now.getMonth() - index, 1)
+    result.push(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`)
+  }
+  return result
+}
+
+const actionLabels = { create: 'Create', set: 'Set', edit: 'Edit', adjust: 'Adjust' } as const
+
+export function Usage(): React.JSX.Element {
+  const settings = useAppStore((state) => state.settings)
+  const refreshSettings = useAppStore((state) => state.refreshSettings)
+  const [month, setMonth] = useState(currentMonth())
+  const [summary, setSummary] = useState<UsageSummary | null>(null)
+  const [events, setEvents] = useState<UsageEvent[]>([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [budget, setBudget] = useState('')
+  const [savingBudget, setSavingBudget] = useState(false)
+  const months = useMemo(() => lastMonths(12), [])
+
+  const load = async (): Promise<void> => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [nextSummary, list] = await Promise.all([
+        unwrap(window.moss.usage.summary({ month })),
+        unwrap(window.moss.usage.list({ month, limit: 50, offset: 0 }))
+      ])
+      setSummary(nextSummary)
+      setEvents(list.items)
+      setTotal(list.total)
+      setBudget(nextSummary.budgetCents === null ? '' : (nextSummary.budgetCents / 100).toFixed(2))
+    } catch {
+      setError('Could not load usage. Try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void load()
+  }, [month])
+
+  const showMore = async (): Promise<void> => {
+    setLoadingMore(true)
+    try {
+      const next = await unwrap(window.moss.usage.list({ month, limit: 50, offset: events.length }))
+      setEvents((current) => [...current, ...next.items])
+      setTotal(next.total)
+    } catch {
+      toast.error('Could not load more usage.')
+    } finally {
+      setLoadingMore(false)
+    }
+  }
+
+  const exportCsv = async (): Promise<void> => {
+    try {
+      const result = await unwrap(window.moss.usage.exportCsv({ month }))
+      if (result.path) toast.status('Usage CSV exported.')
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    }
+  }
+
+  const saveBudget = async (): Promise<void> => {
+    setSavingBudget(true)
+    try {
+      const trimmed = budget.trim().replace(/^\$/, '')
+      if (!trimmed) {
+        await unwrap(window.moss.settings.set({ key: 'budgetCents', value: null }))
+      } else {
+        const dollars = Number(trimmed)
+        if (!Number.isFinite(dollars) || dollars < 0) {
+          toast.error('Enter a monthly limit in dollars, or leave it empty.')
+          return
+        }
+        await unwrap(window.moss.settings.set({ key: 'budgetCents', value: Math.round(dollars * 100) }))
+      }
+      await refreshSettings()
+      toast.status('Monthly limit saved.')
+      await load()
+    } catch {
+      toast.error('The monthly limit could not be saved.')
+    } finally {
+      setSavingBudget(false)
+    }
+  }
+
+  const budgetCents = summary?.budgetCents ?? null
+  const maxProject = Math.max(1, ...(summary?.projects.map((project) => project.spendCents) ?? [0]))
+
+  return (
+    <AppFrame>
+      <div className="page-scroll">
+        <div className="page-pad page-max">
+          <div className="flex flex-wrap items-center gap-3">
+            <div>
+              <h1 className="page-title">Usage</h1>
+              <p className="meta">Images that came back, and what they cost.</p>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <label className="sr-only" htmlFor="usage-month">Month</label>
+              <select
+                id="usage-month"
+                className="field w-auto"
+                value={month}
+                onChange={(event) => setMonth(event.target.value)}
+              >
+                {months.map((value) => (
+                  <option key={value} value={value}>{shortMonthLabel(value)}</option>
+                ))}
+              </select>
+              <Button variant="secondary" onClick={() => void exportCsv()}>
+                <Download size={15} /> Export CSV
+              </Button>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="mt-6 space-y-4">
+              <div className="grid gap-3 md:grid-cols-3">
+                <Skeleton className="h-24" />
+                <Skeleton className="h-24" />
+                <Skeleton className="h-24" />
+              </div>
+              <Skeleton className="h-64" />
+            </div>
+          ) : error ? (
+            <ErrorState message={error} onRetry={() => void load()} />
+          ) : (
+            <>
+              <div className="mt-6 grid gap-3 md:grid-cols-3">
+                <div className="card p-4">
+                  <p className="section-label">Images made</p>
+                  <p className="mt-2 text-[24px] font-semibold tabular">{summary?.images ?? 0}</p>
+                  <p className="meta">{monthLabel(month)}</p>
+                </div>
+                <div className="card p-4">
+                  <p className="section-label">Spent</p>
+                  <p className="mt-2 text-[24px] font-semibold tabular">{usd(summary?.spendCents ?? 0)}</p>
+                  <p className="meta">Images that came back</p>
+                </div>
+                <div className="card p-4">
+                  <p className="section-label">Budget</p>
+                  {budgetCents === null ? (
+                    <p className="mt-2 text-[15px] font-semibold">No monthly limit</p>
+                  ) : (
+                    <>
+                      <p className="mt-2 text-[15px] font-semibold tabular">{usd(summary?.spendCents ?? 0)} of {usd(budgetCents)}</p>
+                      <div className="mt-2">
+                        <Progress
+                          value={Math.min(summary?.spendCents ?? 0, budgetCents)}
+                          max={budgetCents}
+                          label={`${usd(summary?.spendCents ?? 0)} of ${usd(budgetCents)} used this month`}
+                        />
+                      </div>
+                    </>
+                  )}
+                  <p className="meta mt-2">A limit inside the app</p>
+                </div>
+              </div>
+
+              <section className="mt-8">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="section-label">By project</h2>
+                  <span className="meta-faint">{monthLabel(month)}</span>
+                </div>
+                <div className="card mt-2 overflow-hidden">
+                  {(summary?.projects.length ?? 0) === 0 ? (
+                    <p className="meta p-4">Nothing yet this month.</p>
+                  ) : (
+                    summary?.projects.map((project) => (
+                      <div key={`${project.projectId}-${project.name}`} className="flex items-center gap-3 border-b px-4 py-3 last:border-b-0" style={{ borderColor: 'var(--border)' }}>
+                        {project.projectId ? (
+                          <Link to={`/project/${project.projectId}`} className="min-w-[160px] max-w-[260px] truncate text-[12px] font-medium">{project.name}</Link>
+                        ) : (
+                          <span className="min-w-[160px] max-w-[260px] truncate text-[12px] font-medium">{project.name}</span>
+                        )}
+                        <div className="hidden flex-1 md:block">
+                          <div className="meter" aria-hidden><span style={{ width: `${(project.spendCents / maxProject) * 100}%` }} /></div>
+                        </div>
+                        <span className="meta tabular">{project.images} {project.images === 1 ? 'image' : 'images'}</span>
+                        <span className="w-[70px] text-right text-[12px] font-semibold tabular">{usd(project.spendCents)}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </section>
+
+              <section className="mt-8">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="section-label">Full ledger</h2>
+                  <span className="meta-faint">{total} {total === 1 ? 'row' : 'rows'}</span>
+                </div>
+                {events.length === 0 ? (
+                  <EmptyState icon={<BarChart3 size={22} />} title="No images made yet" line="Your runs and their cost show up here." />
+                ) : (
+                  <div className="card mt-2 overflow-x-auto">
+                    <table className="w-full min-w-[780px] border-collapse text-left">
+                      <thead>
+                        <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
+                          {['Date', 'Project', 'Action', 'Images', 'Cost', 'Duration', 'Result'].map((heading) => (
+                            <th key={heading} className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--text-faint)' }}>
+                              {heading}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {events.map((event) => {
+                          const failed = event.result === 'failed'
+                          return (
+                            <tr key={event.id} className="border-b last:border-b-0" style={{ borderColor: 'var(--border)' }}>
+                              <td className="whitespace-nowrap px-3 py-2 text-[12px]" title={new Date(event.at).toISOString()}>{formatDateTime(event.at)}</td>
+                              <td className="max-w-[180px] truncate px-3 py-2 text-[12px]">{event.projectName || 'Deleted project'}</td>
+                              <td
+                                className="whitespace-nowrap px-3 py-2 text-[12px]"
+                                style={{ color: failed ? 'var(--danger)' : 'var(--text)' }}
+                                title={failed && event.errorCode ? errorMessage(event.errorCode as never) : undefined}
+                              >
+                                {failed ? 'Failed' : actionLabels[event.action]}
+                              </td>
+                              <td className="whitespace-nowrap px-3 py-2 text-[12px] tabular">
+                                {event.returned === event.requested ? event.returned : `${event.returned} of ${event.requested}`}
+                              </td>
+                              <td className="whitespace-nowrap px-3 py-2 text-[12px] tabular">
+                                {event.uncertainBilling ? 'Unknown' : event.action === 'adjust' ? 'Free' : usd(event.costCents)}
+                              </td>
+                              <td className="whitespace-nowrap px-3 py-2 text-[12px] tabular">
+                                {event.durationMs === null ? '-' : `${(event.durationMs / 1000).toFixed(1)}s`}
+                              </td>
+                              <td className="whitespace-nowrap px-3 py-2 text-[12px]">
+                                <span className="badge" data-tone={failed ? 'danger' : 'success'}>
+                                  {failed ? 'Failed' : 'Made'}
+                                </span>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                {events.length < total && (
+                  <div className="mt-3 flex justify-center">
+                    <Button variant="secondary" disabled={loadingMore} onClick={() => void showMore()}>
+                      {loadingMore ? 'Loading...' : 'Show more'}
+                    </Button>
+                  </div>
+                )}
+              </section>
+
+              <section className="mt-8 max-w-[640px]">
+                <h2 className="section-label">Monthly limit</h2>
+                <div className="mt-2 flex flex-wrap items-end gap-2">
+                  <div className="w-[160px]">
+                    <label className="field-label" htmlFor="budget">Budget in dollars</label>
+                    <input
+                      id="budget"
+                      type="text"
+                      inputMode="decimal"
+                      className="field tabular"
+                      value={budget}
+                      onChange={(event) => setBudget(event.target.value)}
+                      placeholder="No limit"
+                    />
+                  </div>
+                  <Button variant="primary" disabled={savingBudget} onClick={() => void saveBudget()}>
+                    {savingBudget ? 'Saving...' : 'Save Limit'}
+                  </Button>
+                </div>
+                <p className="hint mt-2">
+                  This is a limit inside the app. Meta bills your key separately, so it cannot stop a charge made outside the app.
+                </p>
+                <p className="hint mt-1">Empty means no monthly limit.</p>
+              </section>
+            </>
+          )}
+        </div>
+      </div>
+    </AppFrame>
+  )
+}

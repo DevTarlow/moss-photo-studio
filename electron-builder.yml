@@ -1,0 +1,42 @@
+appId: com.mosstoolbox.photostudio
+productName: Moss Photo Studio
+copyright: Copyright © 2026 Moss Toolbox
+directories:
+  buildResources: resources/brand
+  output: release
+files:
+  - out/**/*
+  - package.json
+extraResources:
+  - from: resources
+    to: resources
+asarUnpack:
+  - node_modules/sharp/**/*
+  - node_modules/@img/**/*
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Graphics
+  icon: icon.png
+  syncDesktopName: true
+  artifactName: ${productName}-${version}-${arch}.${ext}
+win:
+  target:
+    - nsis
+  icon: icon.ico
+  artifactName: ${productName}-${version}-Setup.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+mac:
+  target:
+    - dmg
+  icon: icon.icns
+  category: public.app-category.photography
+  artifactName: ${productName}-${version}-${arch}.${ext}
+dmg:
+  title: Moss Photo Studio ${version}
+publish: null
+npmRebuild: false

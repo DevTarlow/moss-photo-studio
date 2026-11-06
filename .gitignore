@@ -1,0 +1,20 @@
+node_modules/
+out/
+release/
+dist/
+.npm-cache/
+.cache/
+.node-gyp/
+test-results/
+playwright-report/
+tests/screenshots/diff/
+*.log
+.DS_Store
+# Local runtime data from manual dev runs
+.dev-user-data*/
+.home/
+.artifact-config/
+.deb-extract/
+.debug-badge/
+.packaged-config/
+*.tsbuildinfo
