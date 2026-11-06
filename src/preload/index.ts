@@ -37,6 +37,7 @@ const api: MossApi = {
     copyImage: invoke('app:copyImage'),
     copyLibraryPath: invokeVoid('app:copyLibraryPath'),
     readClipboardImage: invokeVoid('app:readClipboardImage'),
+    reset: invokeVoid('app:reset'),
     relaunch: () => {
       ipcRenderer.send('app:relaunch')
     }

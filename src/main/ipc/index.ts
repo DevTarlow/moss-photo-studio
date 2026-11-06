@@ -1039,6 +1039,30 @@ export function registerIpcHandlers(context: AppContext): void {
     return { ok: true as const }
   })
 
+  registerIpc(context, 'app:reset', voidSchema, async () => {
+    // A development-only factory reset. Packaged builds hide the control and
+    // refuse the channel so a renderer compromise cannot wipe a seller's data.
+    if (app.isPackaged) throw new IpcFault('forbidden')
+    const userDataDir = path.resolve(context.userDataDir)
+    const sqlite = path.join(userDataDir, 'library.sqlite')
+    const looksLikeAppData = await fs
+      .stat(sqlite)
+      .then((stat) => stat.isFile())
+      .catch(() => false)
+    if (
+      userDataDir === path.parse(userDataDir).root ||
+      userDataDir === path.resolve(app.getPath('home')) ||
+      !looksLikeAppData
+    ) {
+      throw new IpcFault('unknown', 'The app data folder could not be verified.')
+    }
+    context.logger.info('app', 'reset')
+    context.db.close()
+    await fs.rm(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
+    setTimeout(() => app.exit(0), 100)
+    return { ok: true as const }
+  })
+
   registerRaw('app:relaunch', () => {
     app.relaunch()
     app.exit(0)

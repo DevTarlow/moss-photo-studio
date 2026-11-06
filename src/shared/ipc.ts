@@ -45,6 +45,7 @@ export interface IpcChannels {
   'app:copyImage': { request: { imageId: string }; response: { ok: true } }
   'app:copyLibraryPath': { request: undefined; response: { ok: true } }
   'app:readClipboardImage': { request: undefined; response: { bytes: Uint8Array | null; mime: string | null } }
+  'app:reset': { request: undefined; response: { ok: true } }
   'dialog:pickLogo': { request: undefined; response: Brand | null }
   'settings:get': { request: { key: string }; response: { value: unknown } }
   'settings:set': { request: { key: string; value: unknown }; response: { ok: true } }
@@ -189,6 +190,7 @@ export interface MossApi {
     copyImage: Call<'app:copyImage'>
     copyLibraryPath: CallVoid<'app:copyLibraryPath'>
     readClipboardImage: CallVoid<'app:readClipboardImage'>
+    reset: CallVoid<'app:reset'>
     relaunch: () => void
   }
   settings: {

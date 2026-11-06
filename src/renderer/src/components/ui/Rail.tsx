@@ -1,6 +1,10 @@
+import { useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { BarChart3, Images, PanelLeftClose, PanelLeftOpen, Settings, Users } from 'lucide-react'
+import { BarChart3, Images, PanelLeftClose, PanelLeftOpen, RotateCcw, Settings, Users } from 'lucide-react'
 import { markUrl } from '../../lib/assets'
+import { useAppStore } from '../../store/app'
+import { toast } from '../../lib/toast'
+import { useConfirm } from './ConfirmProvider'
 import { IconButton } from './IconButton'
 import { cn } from '../../lib/cn'
 
@@ -13,6 +17,26 @@ const items = [
 export function Rail({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }): React.JSX.Element {
   const location = useLocation()
   const workspace = location.pathname.startsWith('/project/')
+  const appInfo = useAppStore((state) => state.appInfo)
+  const confirm = useConfirm()
+  const [resetting, setResetting] = useState(false)
+
+  const resetApp = async (): Promise<void> => {
+    const confirmed = await confirm({
+      title: 'Reset Moss Photo Studio?',
+      body: 'This deletes all local app data, settings, license, and saved keys, then closes the app. It cannot be undone.',
+      confirmLabel: 'Reset and Close',
+      danger: true
+    })
+    if (!confirmed) return
+    setResetting(true)
+    const result = await window.moss.app.reset().catch(() => null)
+    if (!result?.ok) {
+      setResetting(false)
+      toast.error('The app could not be reset.')
+    }
+  }
+
   return (
     <nav className={cn('app-rail', collapsed && 'rail-collapsed')} data-collapsed={collapsed} aria-label="Studio">
       <div className={cn('flex flex-col', collapsed ? 'items-center pt-3' : 'px-3 pt-3')}>
@@ -47,6 +71,19 @@ export function Rail({ collapsed, onToggle }: { collapsed: boolean; onToggle: ()
         })}
       </div>
       <div className={cn('mt-auto flex flex-col gap-1 pb-3', collapsed ? 'items-center px-2' : 'px-2')}>
+        {appInfo && !appInfo.isPackaged && (
+          <button
+            type="button"
+            className="rail-item"
+            aria-label={collapsed ? 'Reset app' : undefined}
+            aria-busy={resetting}
+            disabled={resetting}
+            onClick={() => void resetApp()}
+          >
+            <RotateCcw size={18} strokeWidth={1.75} />
+            {!collapsed && <span className="rail-label">Reset App</span>}
+          </button>
+        )}
         <NavLink
           to="/settings/studio"
           className="rail-item"
