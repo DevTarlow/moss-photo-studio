@@ -134,9 +134,6 @@ describe('logo badge compositing', () => {
       logoRelative: 'brand/logo.png',
       format: 'webp',
       brand: {
-        name: 'Test',
-        sells: '',
-        marketplaces: [],
         colors: [],
         logoUrl: 'moss-media://library/brand/logo.png',
         badgeEnabled: true,

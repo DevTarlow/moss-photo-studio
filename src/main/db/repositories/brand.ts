@@ -4,9 +4,6 @@ import { libraryUrl } from '@shared/files'
 
 interface BrandRow {
   id: string
-  name: string | null
-  sells: string | null
-  marketplaces: string | null
   colors: string | null
   logo_file: string | null
   badge_enabled: number
@@ -36,9 +33,6 @@ export class BrandRepository {
     const row = this.db.prepare('SELECT * FROM brand WHERE id = ?').get('default') as BrandRow | undefined
     if (!row) {
       return {
-        name: '',
-        sells: '',
-        marketplaces: [],
         colors: [],
         logoUrl: null,
         badgeEnabled: false,
@@ -48,9 +42,6 @@ export class BrandRepository {
       }
     }
     return {
-      name: row.name ?? '',
-      sells: row.sells ?? '',
-      marketplaces: parseArray(row.marketplaces),
       colors: parseArray(row.colors).slice(0, 6),
       logoUrl: row.logo_file ? libraryUrl(row.logo_file) : null,
       badgeEnabled: Boolean(row.badge_enabled),
@@ -72,18 +63,14 @@ export class BrandRepository {
       colors: (patch.colors ?? current.colors)
         .filter((color) => /^#[0-9a-fA-F]{6}$/.test(color))
         .slice(0, 6),
-      marketplaces: (patch.marketplaces ?? current.marketplaces).slice(0, 20),
       badgeOpacity: Math.max(60, Math.min(100, patch.badgeOpacity ?? current.badgeOpacity))
     }
     this.db
       .prepare(
-        `UPDATE brand SET name = ?, sells = ?, marketplaces = ?, colors = ?, badge_enabled = ?,
-          badge_corner = ?, badge_scale = ?, badge_opacity = ?, updated_at = ? WHERE id = 'default'`
+        `UPDATE brand SET colors = ?, badge_enabled = ?, badge_corner = ?, badge_scale = ?,
+          badge_opacity = ?, updated_at = ? WHERE id = 'default'`
       )
       .run(
-        next.name,
-        next.sells,
-        JSON.stringify(next.marketplaces),
         JSON.stringify(next.colors),
         next.badgeEnabled ? 1 : 0,
         next.badgeCorner,

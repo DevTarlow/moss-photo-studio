@@ -71,7 +71,7 @@ export function Rail({ collapsed, onToggle }: { collapsed: boolean; onToggle: ()
         })}
       </div>
       <div className={cn('mt-auto flex flex-col gap-1 pb-3', collapsed ? 'items-center px-2' : 'px-2')}>
-        {appInfo && !appInfo.isPackaged && (
+        {appInfo && !appInfo.isPackaged && !appInfo.e2e && (
           <button
             type="button"
             className="rail-item"

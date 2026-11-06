@@ -133,7 +133,7 @@ export function CommandPalette(): React.JSX.Element {
     }
     ;[
       ['Studio', '/settings/studio'],
-      ['Brand', '/settings/brand'],
+      ['Logo & Colors', '/settings/brand'],
       ['Library', '/settings/library'],
       ['Appearance', '/settings/appearance'],
       ['License', '/settings/license'],

@@ -19,7 +19,7 @@ The app turns off Chromium's background networking, component updates, domain re
 - A random per-installation `user` id.
 - A generated `x-request-id` for support and log correlation.
 
-It does **not** send any other library image, project list, usage history, project names, person names, brand kit, or license key. A local adjustment never sends anything. Browsing the library never sends anything.
+It does **not** send any other library image, project list, usage history, project names, person names, your logo, or license key. The first three saved colors are included as hex values in the composed prompt when you make a set or change a photo. A local adjustment never sends anything. Browsing the library never sends anything.
 
 ## What is sent with a license request
 

@@ -27,6 +27,7 @@ import { absoluteInLibrary, workingFor } from '../media/paths'
 import { applyLocalAdjust } from '../media/transform'
 import { exportImageToPath, exportOneImage, exportSetProject } from '../media/export'
 import { openExternalSafely } from '../security'
+import { runtimeEnv } from '../env'
 import { registerIpc, registerRaw, IpcFault } from './helpers'
 import { type SettingKey } from '../settings'
 
@@ -78,9 +79,6 @@ const exportOptionsSchema = z.object({
   filename: z.string().max(120).optional()
 })
 const brandPatchSchema = z.object({
-  name: z.string().max(120).optional(),
-  sells: z.string().max(80).optional(),
-  marketplaces: z.array(z.string().max(40)).max(20).optional(),
   colors: z.array(z.string().regex(/^#[0-9a-fA-F]{6}$/)).max(6).optional(),
   logoUrl: z.string().nullable().optional(),
   badgeEnabled: z.boolean().optional(),
@@ -231,6 +229,7 @@ export function registerIpcHandlers(context: AppContext): void {
     },
     fakeMode: context.fakeMode,
     devUnlock: context.devUnlock,
+    e2e: runtimeEnv.e2e,
     buildDate: context.buildDate,
     releases: {
       electron: process.versions.electron ?? '',

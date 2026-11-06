@@ -28,7 +28,7 @@ import { Skeleton } from '../components/ui/Skeleton'
 
 const sections = [
   { id: 'studio', label: 'Studio' },
-  { id: 'brand', label: 'Brand' },
+  { id: 'brand', label: 'Logo & Colors' },
   { id: 'library', label: 'Library' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'license', label: 'License' },
@@ -271,7 +271,7 @@ function BrandSection(): React.JSX.Element {
       const updated = await unwrap(window.moss.brand.update(value))
       await refreshBrand()
       setValue(updated)
-      toast.status('Brand saved.')
+      toast.status('Logo and colors saved.')
     } catch (caught) {
       toast.error(messageOf(caught))
     } finally {
@@ -280,11 +280,11 @@ function BrandSection(): React.JSX.Element {
   }
   return (
     <div>
-      <SettingsTitle title="Brand" line="The small details that make a set look like your shop." />
+      <SettingsTitle title="Logo & Colors" line="The logo, badge, and colors used when the studio makes images." />
       <BrandFields value={value} onChange={setValue} />
       <div className="mt-6 flex items-center gap-3">
         <Button variant="primary" disabled={saving} onClick={() => void save()}>
-          {saving ? <Loader2 size={14} className="animate-spin" /> : null} Save Brand
+          {saving ? <Loader2 size={14} className="animate-spin" /> : null} Save Changes
         </Button>
         <p className="hint">All fields are optional.</p>
       </div>

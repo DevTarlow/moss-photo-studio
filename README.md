@@ -12,7 +12,7 @@ This is the sibling application to `../moss-toolbox`. It is an Electron desktop 
 - **Photo editor** with 32 tiles in six groups, 12 bundled people plus your own, a free local adjust panel, version labels, branching, a filmstrip, compare, export, and copy.
 - **Create from words** with 24 starters, optional product references, one to four images, three shapes, and three formats.
 - **Local adjust** for crop, rotate, flip, brightness, contrast, saturation, warmth, sharpen, and vignette. It makes a new version and never resends the product to an image service.
-- **Brand kit** with name, what you sell, marketplaces, palette, logo, badge position, badge size, and opacity. The badge is composited locally.
+- **Logo & Colors** with up to six colors, a logo, and corner badge position, size, and opacity. Colors steer backgrounds and props in sets and photo changes. The badge is composited locally.
 - **Usage ledger** with the real returned-image cost, $0.01 per returned image, a monthly budget, and CSV export.
 - **License activation** with a 14 day offline grace window and a read-only library when the license ends.
 - **Desktop packaging** for Linux AppImage and deb. Windows NSIS and macOS DMG configuration is present and unverified.

@@ -29,7 +29,7 @@ export function appendWithinCap(base: string, addition: string): string {
 }
 
 /**
- * Used for a set or an edit when the brand kit has colours. The clause may
+ * Used for a set or an edit when saved colors exist. The clause may
  * steer backgrounds and props only; it must never tint the product.
  */
 export function paletteClause(colors: string[]): string {

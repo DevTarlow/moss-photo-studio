@@ -3,7 +3,6 @@ import { Plus, Trash2 } from 'lucide-react'
 import type { Brand } from '@shared/types'
 import { exampleUrl } from '../../lib/assets'
 import { Button } from '../ui/Button'
-import { Chip } from '../ui/Chip'
 import { Dropzone } from '../ui/Dropzone'
 import { Field } from '../ui/Field'
 import { Segmented } from '../ui/Segmented'
@@ -12,7 +11,7 @@ import { unwrap, messageOf } from '../../lib/ipc'
 import { fileToBytes } from '../../lib/files'
 import { toast } from '../../lib/toast'
 
-const MARKETPLACES = ['Etsy', 'Amazon', 'Shopify', 'eBay', 'Poshmark', 'Depop', 'Vinted', 'Facebook', 'Instagram', 'My own shop', 'Local']
+const MAX_COLORS = 6
 const CORNERS = [
   { value: 'br', label: 'Bottom right' },
   { value: 'bl', label: 'Bottom left' },
@@ -44,12 +43,10 @@ export function BrandPreview({ brand }: { brand: Brand }): React.JSX.Element {
 
 export function BrandFields({
   value,
-  onChange,
-  maxColors = 6
+  onChange
 }: {
   value: Brand
   onChange: (brand: Brand) => void
-  maxColors?: number
 }): React.JSX.Element {
   const [newColor, setNewColor] = useState(cssColor('--accent'))
   const [hex, setHex] = useState('')
@@ -63,8 +60,8 @@ export function BrandFields({
       toast.error('Enter a six-digit color, like a hex value.')
       return
     }
-    if (value.colors.length >= maxColors) {
-      toast.error('The brand kit holds six colors.')
+    if (value.colors.length >= MAX_COLORS) {
+      toast.error('Up to six colors can be saved.')
       return
     }
     if (!value.colors.some((entry) => entry.toLowerCase() === color.toLowerCase())) {
@@ -101,47 +98,9 @@ export function BrandFields({
   return (
     <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div className="space-y-5">
-        <Field
-          label="Business name"
-          optional
-          value={value.name}
-          maxLength={120}
-          onChange={(event) => patch({ name: event.target.value })}
-          placeholder="Your shop's name"
-        />
-        <Field
-          label="What do you sell"
-          optional
-          value={value.sells}
-          maxLength={80}
-          onChange={(event) => patch({ sells: event.target.value })}
-          placeholder="Hand-thrown ceramics"
-          hint="A few words. It helps the studio choose the right set plan."
-        />
         <div>
-          <p className="field-label">Where you sell <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
-          <div className="flex flex-wrap gap-1.5">
-            {MARKETPLACES.map((marketplace) => (
-              <Chip
-                key={marketplace}
-                selected={value.marketplaces.includes(marketplace)}
-                onClick={() =>
-                  patch({
-                    marketplaces: value.marketplaces.includes(marketplace)
-                      ? value.marketplaces.filter((entry) => entry !== marketplace)
-                      : [...value.marketplaces, marketplace]
-                  })
-                }
-              >
-                {marketplace}
-              </Chip>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="field-label">Brand colors <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
-          <p className="hint mb-2">Up to {maxColors} saved. The first three steer backgrounds and props in new images. They never tint the product.</p>
+          <p className="field-label">Colors <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+          <p className="hint mb-2">Up to six saved. The first three steer backgrounds and props when the studio makes a set or changes a photo. They never tint the product.</p>
           <div className="flex flex-wrap items-center gap-2">
             {value.colors.map((color, index) => (
               <span key={color} className="inline-flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2" style={{ borderColor: 'var(--border)' }}>
@@ -153,7 +112,7 @@ export function BrandFields({
                 </button>
               </span>
             ))}
-            {value.colors.length === 0 && <p className="meta">No brand colors yet.</p>}
+            {value.colors.length === 0 && <p className="meta">No colors yet.</p>}
           </div>
           <div className="mt-2 flex flex-wrap items-end gap-2">
             <input
@@ -177,7 +136,7 @@ export function BrandFields({
                 className="font-mono"
               />
             </div>
-            <Button variant="secondary" size="sm" onClick={addColor} disabled={value.colors.length >= 6}>
+            <Button variant="secondary" size="sm" onClick={addColor} disabled={value.colors.length >= MAX_COLORS}>
               <Plus size={14} /> Add Color
             </Button>
           </div>

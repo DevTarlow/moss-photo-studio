@@ -176,9 +176,6 @@ export interface Person {
 }
 
 export interface Brand {
-  name: string
-  sells: string
-  marketplaces: string[]
   colors: string[]
   logoUrl: string | null
   badgeEnabled: boolean
@@ -249,6 +246,7 @@ export interface AppInfo {
   paths: { library: string; logs: string; userData: string }
   fakeMode: boolean
   devUnlock: boolean
+  e2e: boolean
   buildDate: string
   releases: { electron: string; chromium: string; node: string }
 }

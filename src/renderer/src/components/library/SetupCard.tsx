@@ -10,7 +10,6 @@ export function SetupCard({ onNewSet }: { onNewSet: () => void }): React.JSX.Ele
   const navigate = useNavigate()
   const settings = useAppStore((state) => state.settings)
   const secrets = useAppStore((state) => state.secrets)
-  const brand = useAppStore((state) => state.brand)
   const refreshSettings = useAppStore((state) => state.refreshSettings)
   const [hasSet, setHasSet] = useState<boolean | null>(null)
   const [dismissedLocally, setDismissedLocally] = useState(false)
@@ -22,17 +21,16 @@ export function SetupCard({ onNewSet }: { onNewSet: () => void }): React.JSX.Ele
   }, [])
 
   useEffect(() => {
-    if (!settings || !secrets || !brand || hasSet === null) return
-    const allDone = secrets.hasKey && Boolean(brand.name || brand.sells || brand.colors.length) && hasSet
+    if (!settings || !secrets || hasSet === null) return
+    const allDone = secrets.hasKey && hasSet
     if (allDone && !settings.onboardingDone) {
       void window.moss.settings.set({ key: 'onboardingDone', value: true }).then(() => refreshSettings()).catch(() => undefined)
     }
-  }, [brand, hasSet, refreshSettings, secrets, settings])
+  }, [hasSet, refreshSettings, secrets, settings])
 
   if (!settings || settings.setupDismissed || dismissedLocally) return null
-  const brandDone = Boolean(brand?.name || brand?.sells || brand?.colors.length)
   const keyDone = Boolean(secrets?.hasKey)
-  const allDone = keyDone && brandDone && hasSet
+  const allDone = keyDone && hasSet
   if (allDone) return null
   const rows = [
     {
@@ -41,13 +39,6 @@ export function SetupCard({ onNewSet }: { onNewSet: () => void }): React.JSX.Ele
       detail: 'Needed to make images.',
       action: 'Add Key',
       run: () => navigate('/settings/studio')
-    },
-    {
-      done: brandDone,
-      label: 'Tell the studio about your shop',
-      detail: 'Your name, what you sell and your colors.',
-      action: 'Open Brand',
-      run: () => navigate('/settings/brand')
     },
     {
       done: Boolean(hasSet),
@@ -62,8 +53,8 @@ export function SetupCard({ onNewSet }: { onNewSet: () => void }): React.JSX.Ele
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="font-semibold">Finish setting up</h2>
-          <p className="hint mt-0.5">Add your Meta key. Tell the studio about your shop. Make a first set.</p>
-          <p className="hint">Three short steps. You can stop after any of them.</p>
+          <p className="hint mt-0.5">Add your Meta key. Make a first set.</p>
+          <p className="hint">Two short steps. You can stop after either.</p>
         </div>
         <IconButton
           label="Don't show this again"

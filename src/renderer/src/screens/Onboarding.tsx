@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react'
-import type { Brand, JobState, ProjectDetail } from '@shared/types'
+import type { JobState, ProjectDetail } from '@shared/types'
 import { CATEGORY_CHIPS, recipeById } from '@shared/prompts/recipes'
 import { shotDefinition } from '@shared/prompts/shots'
 import { createDefaultPlan } from '@shared/plans'
@@ -18,30 +18,15 @@ import { Button } from '../components/ui/Button'
 import { Field } from '../components/ui/Field'
 import { Chip } from '../components/ui/Chip'
 import { Dropzone } from '../components/ui/Dropzone'
-import { BrandFields } from '../components/brand/BrandFields'
 import { FirstRunConfirm } from '../components/ui/FirstRunConfirm'
 import { Progress } from '../components/ui/Progress'
 import { Spinner } from '../components/ui/Spinner'
 
-const emptyBrand: Brand = {
-  name: '',
-  sells: '',
-  marketplaces: [],
-  colors: [],
-  logoUrl: null,
-  badgeEnabled: false,
-  badgeCorner: 'br',
-  badgeScale: 'm',
-  badgeOpacity: 100
-}
-
 export function Onboarding(): React.JSX.Element {
   const navigate = useNavigate()
   const settings = useAppStore((state) => state.settings)
-  const brand = useAppStore((state) => state.brand)
   const secrets = useAppStore((state) => state.secrets)
   const refreshSettings = useAppStore((state) => state.refreshSettings)
-  const refreshBrand = useAppStore((state) => state.refreshBrand)
   const refreshSecrets = useAppStore((state) => state.refreshSecrets)
   const setOnboardingBypass = useAppStore((state) => state.setOnboardingBypass)
   const [step, setStep] = useState(() => Math.min(4, Math.max(0, settings?.onboardingStep ?? 0)))
@@ -49,7 +34,6 @@ export function Onboarding(): React.JSX.Element {
   const [revealKey, setRevealKey] = useState(false)
   const [keyError, setKeyError] = useState<string | null>(null)
   const [keyBusy, setKeyBusy] = useState(false)
-  const [localBrand, setLocalBrand] = useState<Brand>(brand ?? emptyBrand)
   const [category, setCategory] = useState('other')
   const [photoProject, setPhotoProject] = useState<ProjectDetail | null>(null)
   const [photoBusy, setPhotoBusy] = useState(false)
@@ -59,10 +43,6 @@ export function Onboarding(): React.JSX.Element {
   const [runError, setRunError] = useState<string | null>(null)
   const [finishing, setFinishing] = useState(false)
   const pollRef = useRef<number | null>(null)
-
-  useEffect(() => {
-    if (brand) setLocalBrand(brand)
-  }, [brand])
 
   useEffect(() => {
     if (!settings) return
@@ -148,16 +128,6 @@ export function Onboarding(): React.JSX.Element {
       setKeyError(messageOf(caught))
     } finally {
       setKeyBusy(false)
-    }
-  }
-
-  const saveBrand = async (): Promise<void> => {
-    try {
-      await unwrap(window.moss.brand.update(localBrand))
-      await refreshBrand()
-      await goTo(3)
-    } catch (caught) {
-      toast.error(messageOf(caught))
     }
   }
 
@@ -373,23 +343,15 @@ export function Onboarding(): React.JSX.Element {
         {step === 2 && (
           <div className="py-8">
             <p className="section-label">Step 3 of 5</p>
-            <h1 className="page-title mt-2 text-[24px]">Tell the studio about your shop</h1>
-            <p className="mt-2 text-[13px]" style={{ color: 'var(--text-muted)' }}>Optional. It takes a minute and makes the images look more like yours.</p>
-            <div className="mt-6">
-              <BrandFields value={localBrand} onChange={setLocalBrand} maxColors={3} />
-            </div>
-            <div className="mt-5">
-              <p className="field-label">What kind of product is your first set for?</p>
-              <p className="hint mb-2">This picks the recipe for the first set. You can change it later.</p>
-              <div className="flex flex-wrap gap-1.5">
-                {CATEGORY_CHIPS.map((chip) => (
-                  <Chip key={chip.id} selected={category === chip.id} onClick={() => setCategory(chip.id)}>{chip.label}</Chip>
-                ))}
-              </div>
+            <h1 className="page-title mt-2 text-[24px]">What are you making first?</h1>
+            <p className="mt-2 text-[13px]" style={{ color: 'var(--text-muted)' }}>This picks the recipe for your first set. You can change it later.</p>
+            <div className="mt-6 flex flex-wrap gap-1.5">
+              {CATEGORY_CHIPS.map((chip) => (
+                <Chip key={chip.id} selected={category === chip.id} onClick={() => setCategory(chip.id)}>{chip.label}</Chip>
+              ))}
             </div>
             <div className="mt-7 flex items-center gap-3">
-              <Button variant="primary" onClick={() => void saveBrand()}>Save and Continue</Button>
-              <Button variant="ghost" onClick={() => void goTo(3)}>Skip for Now</Button>
+              <Button variant="primary" onClick={() => void goTo(3)}>Continue</Button>
             </div>
           </div>
         )}

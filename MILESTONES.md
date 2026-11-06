@@ -96,7 +96,7 @@ Delivered:
 
 - 12 synthetic bundled people and custom people with normalized portraits.
 - Person create, rename, remove, usage count, and picker.
-- Brand name, sells, marketplaces, up to six colors, logo, badge, badge corner, size, and opacity.
+- Up to six colors, logo, badge, badge corner, size, and opacity.
 - Local badge compositing with no upscaling and cache-safe logo replacement.
 - Settings Studio, Appearance, Library, License, Privacy, and About.
 - Theme, density, reduced motion, library location move, logs, usage deletion, and install id.
@@ -115,7 +115,7 @@ Delivered:
 - Usage summary, by-project rollup, paginated ledger, CSV, budget, and unknown-billing display.
 - Activation, grace, expiry, deactivation, 24-hour validation, and read-only library.
 - Fake license and Muse hosts for tests.
-- Onboarding key step, brand step, category choice, six-image preview, first paid set, Got It confirmation, and skip behavior.
+- Onboarding key step, category choice, six-image preview, first paid set, Got It confirmation, and skip behavior.
 - Setup card completion rules.
 
 Verified by:
