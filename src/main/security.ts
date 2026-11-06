@@ -6,11 +6,15 @@ function contentSecurityPolicy(dev: boolean): string {
   const connect = dev
     ? "'self' https://api.meta.ai https://api.lemonsqueezy.com ws://127.0.0.1:* ws://localhost:* http://127.0.0.1:* http://localhost:*"
     : "'self' https://api.meta.ai https://api.lemonsqueezy.com"
+  // Vite injects an inline React Refresh preamble into the dev page. Without
+  // 'unsafe-inline' the policy blocks it, React never mounts, and the window
+  // stays blank. Production builds keep the strict policy.
+  const script = dev ? "'self' 'unsafe-inline'" : "'self'"
   return [
     "default-src 'self'",
     "img-src 'self' moss-media: data: blob:",
     "style-src 'self' 'unsafe-inline'",
-    "script-src 'self'",
+    `script-src ${script}`,
     `connect-src ${connect}`,
     "font-src 'self' data:",
     "object-src 'none'",
