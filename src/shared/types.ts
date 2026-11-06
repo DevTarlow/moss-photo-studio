@@ -238,7 +238,6 @@ export interface ExportOptions {
   format: Format
   quality: number
   maxDimension: number | null
-  folder?: string
   includeVersions?: boolean
   filename?: string
 }

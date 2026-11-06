@@ -43,7 +43,6 @@ let keyPresent = true
 let licensed = true
 let updates: JobState[] = []
 
-const userData = (): string => dir
 const libraryPath = (): string => path.join(dir, 'library')
 
 beforeAll(async () => {

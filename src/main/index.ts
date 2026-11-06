@@ -27,7 +27,7 @@ import { installSessionSecurity, hardenWebContents } from './security'
 import { createMainWindow } from './window'
 import { buildAppMenu } from './menu'
 import { registerIpcHandlers } from './ipc'
-import type { AppContext, ExportFolderRegistry } from './context'
+import type { AppContext } from './context'
 
 app.setName(APP_NAME)
 app.setAppUserModelId(APP_ID)
@@ -82,7 +82,7 @@ function broadcastJob(state: JobState): void {
 }
 
 app.on('second-instance', () => {
-  if (mainWindow) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
     if (mainWindow.isMinimized()) mainWindow.restore()
     mainWindow.focus()
   }
@@ -122,7 +122,7 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', () => {
-  if (mainWindow) mainWindow.show()
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.show()
 })
 
 async function boot(): Promise<void> {
@@ -184,12 +184,6 @@ async function boot(): Promise<void> {
     logger
   })
 
-  const folders = new Set<string>()
-  const exportFolders: ExportFolderRegistry = {
-    add: (folder) => folders.add(folder),
-    has: (folder) => folders.has(folder)
-  }
-
   const queue = new JobQueue({
     projects,
     images,
@@ -232,7 +226,6 @@ async function boot(): Promise<void> {
     fakeMode: runtimeEnv.overrideActive,
     devUnlock: runtimeEnv.devUnlock,
     buildDate: typeof __BUILD_DATE__ === 'string' ? __BUILD_DATE__ : new Date().toISOString(),
-    exportFolders,
     getWindow: resolveContext,
     refreshMenu: () => refreshMenu()
   }

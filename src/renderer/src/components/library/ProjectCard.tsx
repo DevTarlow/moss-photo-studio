@@ -5,7 +5,6 @@ import type { Project } from '@shared/types'
 import type { JobState } from '@shared/types'
 import { formatDate } from '../../lib/format'
 import { Progress } from '../ui/Progress'
-import { IconButton } from '../ui/IconButton'
 import { DropdownMenu } from 'radix-ui'
 import { ProjectMenuContent } from './ProjectMenu'
 

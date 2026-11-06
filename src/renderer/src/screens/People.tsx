@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { UserPlus, Users } from 'lucide-react'
 import type { Person } from '@shared/types'
 import { AppFrame } from '../components/ui/AppFrame'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
+import { ErrorState } from '../components/ui/ErrorState'
+import { Skeleton } from '../components/ui/Skeleton'
 import { Dialog } from '../components/ui/Dialog'
 import { Dropzone } from '../components/ui/Dropzone'
 import { Field } from '../components/ui/Field'
@@ -54,7 +55,6 @@ function PersonCard({
 }
 
 export function People(): React.JSX.Element {
-  const navigate = useNavigate()
   const confirm = useConfirm()
   const people = useAppStore((state) => state.people)
   const refreshPeople = useAppStore((state) => state.refreshPeople)
@@ -64,10 +64,24 @@ export function People(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [renaming, setRenaming] = useState<Person | null>(null)
   const [renameValue, setRenameValue] = useState('')
+  const [loading, setLoading] = useState(people.length === 0)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  const loadPeople = async (): Promise<void> => {
+    setLoading(true)
+    setLoadError(null)
+    try {
+      await refreshPeople()
+    } catch {
+      setLoadError('Could not load people. Try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    void refreshPeople()
-  }, [refreshPeople])
+    void loadPeople()
+  }, [])
 
   const included = people.filter((person) => person.source === 'bundled')
   const yours = people.filter((person) => person.source === 'user')
@@ -161,6 +175,21 @@ export function People(): React.JSX.Element {
             </Button>
           </div>
 
+          {loadError && people.length === 0 ? (
+            <ErrorState message={loadError} onRetry={() => void loadPeople()} />
+          ) : loading && people.length === 0 ? (
+            <div className="mt-8 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
+              {Array.from({ length: 8 }).map((_, index) => <Skeleton key={index} className="aspect-[4/5]" />)}
+            </div>
+          ) : people.length === 0 ? (
+            <EmptyState
+              icon={<Users size={22} />}
+              title="No people yet"
+              line="Add a person to put your products on someone."
+              action={<Button variant="primary" onClick={() => setAddOpen(true)}>Add a Person</Button>}
+            />
+          ) : (
+          <>
           <section className="mt-8" aria-labelledby="included-heading">
             <div className="flex items-baseline gap-2">
               <h2 id="included-heading" className="section-label">Included</h2>
@@ -201,6 +230,8 @@ export function People(): React.JSX.Element {
               </div>
             )}
           </section>
+          </>
+          )}
         </div>
       </div>
 

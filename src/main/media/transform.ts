@@ -35,22 +35,18 @@ export async function applyLocalAdjust(input: {
   if (t.flipH) oriented = oriented.flop()
   if (t.flipV) oriented = oriented.flip()
   const firstBuffer = await oriented.png().toBuffer()
-  let width = 0
-  let height = 0
   let cropped = firstBuffer
   if (t.crop) {
-    const meta = await sharp(firstBuffer).metadata()
-    width = meta.width ?? 0
-    height = meta.height ?? 0
-    const region = cropPixels(width, height, t.crop)
+    const firstMeta = await sharp(firstBuffer).metadata()
+    const region = cropPixels(firstMeta.width ?? 0, firstMeta.height ?? 0, t.crop)
     cropped = await sharp(firstBuffer)
       .extract(region)
       .png()
       .toBuffer()
   }
   const meta = await sharp(cropped).metadata()
-  width = meta.width ?? 0
-  height = meta.height ?? 0
+  const width = meta.width ?? 0
+  const height = meta.height ?? 0
   let pipeline = sharp(cropped).toColorspace('srgb')
   const brightness = clamp(t.brightness ?? 0, -100, 100)
   const contrast = clamp(t.contrast ?? 0, -100, 100)

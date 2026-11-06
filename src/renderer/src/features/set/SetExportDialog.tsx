@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button'
 import { unwrap } from '../../lib/ipc'
 import { toast } from '../../lib/toast'
 import { useAppStore } from '../../store/app'
+import { showExportToast } from '../../lib/exportFeedback'
 
 export function SetExportDialog({
   open,
@@ -41,10 +42,10 @@ export function SetExportDialog({
       await refreshSettings().catch(() => undefined)
       if (result.cancelled) {
         toast.status('Export stopped. Completed files are in the folder.')
-      } else if (result.paths.length) {
-        toast.status(`${result.paths.length} ${result.paths.length === 1 ? 'image' : 'images'} exported to "${project.name}".`)
+      } else {
+        showExportToast(result.count, result.folderName, project.id)
       }
-      if (result.paths.length) onExported(result.paths.length)
+      if (result.count > 0) onExported(result.count)
       setExporting(false)
       onOpenChange(false)
     } catch {

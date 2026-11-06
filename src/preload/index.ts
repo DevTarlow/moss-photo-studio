@@ -76,8 +76,7 @@ const api: MossApi = {
     recent: invoke('projects:recent')
   },
   dialogs: {
-    importImage: invoke('dialog:importImage'),
-    pickExportFolder: invoke('dialog:pickExportFolder')
+    importImage: invoke('dialog:importImage')
   },
   media: {
     importBytes: invoke('media:importBytes')

@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Command as CommandIcon, CornerDownLeft, Search } from 'lucide-react'
-import type { Person, Project } from '@shared/types'
+import type { Project } from '@shared/types'
 import { unwrap } from '../../lib/ipc'
 import { useAppStore } from '../../store/app'
 import { useUiStore } from '../../store/ui'
 import { emitCommand } from '../../lib/commands'
 import { toast } from '../../lib/toast'
-import { useJobsStore } from '../../store/jobs'
 import { Dialog } from './Dialog'
 
 interface PaletteItem {

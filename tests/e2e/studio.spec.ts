@@ -273,6 +273,23 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await expect(page.getByText('Cost: Free').first()).toBeVisible()
     await screenshot('photo-adjusted')
     await assertNoSeriousA11y('photo-adjusted')
+    const clipboardCheck = await page.evaluate(async () => {
+      const recent = await window.moss.projects.recent({ limit: 1 })
+      const projectId = recent.ok ? recent.data[0]?.id : null
+      if (!projectId) return null
+      const detail = await window.moss.projects.get({ id: projectId })
+      const image = detail.ok ? detail.data.images.find((entry) => entry.status === 'ready') : null
+      if (!image) return null
+      const copied = await window.moss.app.copyImage({ imageId: image.id })
+      const read = await window.moss.app.readClipboardImage()
+      return {
+        copied: copied.ok,
+        read: read.ok ? { mime: read.data.mime, size: read.data.bytes?.byteLength ?? 0 } : null
+      }
+    })
+    expect(clipboardCheck?.copied).toBe(true)
+    expect(clipboardCheck?.read?.mime).toMatch(/^image\//)
+    expect(clipboardCheck?.read?.size ?? 0).toBeGreaterThan(1000)
     expect(pageErrors).toEqual([])
   })
 
@@ -314,6 +331,8 @@ test.describe.serial('Moss Photo Studio journey', () => {
       '05-flat-lay.webp',
       '06-gift-ready.webp'
     ])
+    await expect(page.getByText(/6 images exported to "exports"\./)).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByRole('button', { name: 'Open Folder' })).toBeVisible()
     const manifest = fs.readFileSync(path.join(exportFolder, 'set.txt'), 'utf8')
     expect(manifest).toContain('Shot:')
     expect(manifest).toContain('Direction:')
@@ -528,8 +547,8 @@ test.describe.serial('Moss Photo Studio journey', () => {
       })
       return result.ok ? result.data : null
     }, { id: projectId, imageId: adjusted!.imageId })
-    expect(exported?.paths.length).toBe(1)
-    expect(fs.existsSync(exported!.paths[0]!)).toBe(true)
+    expect(exported?.count).toBe(1)
+    expect(fs.readdirSync(exportFolder).some((file) => file.endsWith('.webp'))).toBe(true)
     license.control('active')
     expect(pageErrors).toEqual([])
   })

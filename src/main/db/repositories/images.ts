@@ -279,7 +279,7 @@ export class ImageRepository {
 
   labels(projectId: string): string[] {
     const rows = this.db
-      .prepare('SELECT label FROM images WHERE project_id = ? AND deleted_at IS NULL')
+      .prepare('SELECT label FROM images WHERE project_id = ?')
       .all(projectId) as Array<{ label: string | null }>
     return rows.map((row) => row.label ?? '')
   }

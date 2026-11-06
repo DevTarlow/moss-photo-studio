@@ -87,7 +87,7 @@ export function installMediaProtocol(options: {
         status: 200,
         headers: {
           'Content-Type': CONTENT_TYPES[ext] ?? 'application/octet-stream',
-          'Cache-Control': 'private, max-age=3600'
+          'Cache-Control': host === 'library' ? 'no-cache' : 'private, max-age=3600'
         }
       })
     } catch {

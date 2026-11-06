@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { DragEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { DropdownMenu } from 'radix-ui'
@@ -15,7 +15,7 @@ import {
   TriangleAlert
 } from 'lucide-react'
 import type { Project, ProjectFilter, ProjectSort } from '@shared/types'
-import { currentMonth, useLibraryStore } from '../store/library'
+import { useLibraryStore } from '../store/library'
 import { useAppStore } from '../store/app'
 import { useJobsStore } from '../store/jobs'
 import { AppFrame } from '../components/ui/AppFrame'
@@ -33,7 +33,8 @@ import { useConfirm } from '../components/ui/ConfirmProvider'
 import { unwrap, messageOf } from '../lib/ipc'
 import { usd } from '../lib/format'
 import { toast } from '../lib/toast'
-import { onCommand, emitCommand } from '../lib/commands'
+import { showExportToast } from '../lib/exportFeedback'
+import { onCommand } from '../lib/commands'
 import { fileToBytes } from '../lib/files'
 import { warnIfSmallPhoto } from '../lib/photoWarnings'
 
@@ -56,8 +57,6 @@ export function Library(): React.JSX.Element {
   const store = useLibraryStore()
   const jobs = useJobsStore((state) => state.jobs)
   const secrets = useAppStore((state) => state.secrets)
-  const brand = useAppStore((state) => state.brand)
-  const settings = useAppStore((state) => state.settings)
   const license = useAppStore((state) => state.license)
   const canGenerate = useAppStore((state) => state.canGenerate)
   const applyLicense = useAppStore((state) => state.applyLicense)
@@ -161,7 +160,7 @@ export function Library(): React.JSX.Element {
     try {
       if (project.type === 'set') {
         const result = await unwrap(window.moss.exports.set({ projectId: project.id, options: { format: project.format, quality: 90, maxDimension: null } }))
-        if (result.paths.length) toast.status(`${result.paths.length} ${result.paths.length === 1 ? 'image' : 'images'} exported to "${project.name}".`)
+        showExportToast(result.count, result.folderName, project.id)
         return
       }
       const images = await unwrap(window.moss.images.list({ projectId: project.id }))
@@ -180,7 +179,7 @@ export function Library(): React.JSX.Element {
           filename: project.name
         }
       }))
-      if (result.paths.length) toast.status('Image exported.')
+      showExportToast(result.count, result.folderName, project.id)
     } catch (caught) {
       toast.error(messageOf(caught))
     }

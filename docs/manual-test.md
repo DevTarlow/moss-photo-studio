@@ -46,9 +46,9 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - Onboarding: key step, brand step with three colors, category choice, six-shot preview with prices, first-run confirmation, first paid set. The first paid set was started with Space on the focused primary button and finished through the first-run dialog with Tab and Enter.
 - A five-shot set costs `$0.05`. The primary button says the price before the click. Five requests produced five images.
 - A two-shot failure set showed the partial review, the failed cards, and `Try Again · $0.02`. The retry made exactly two requests. Total set requests were eight. Older ready images were preserved.
-- Photo Editor: Kitchen table tile, compare slider with pointer and keyboard, hold Space for the earlier version, local 1:1 crop, rotate, brightness, sharpen, apply locally free, version labels, and new version.
+- Photo Editor: Kitchen table tile, compare slider with pointer and keyboard, hold Space for the earlier version, local 1:1 crop, rotate, brightness, sharpen, apply locally free, version labels, and new version. Copy Image writes a PNG and Paste Image reads it back through the main-process clipboard.
 - Create: four images, run cost, first result gets Newest, Edit opens the editor, Back to Create returns to the result.
-- Set export: six named WebP files and a UTF-8 `set.txt`, no overwrite, format and quality controls.
+- Set export: six named WebP files and a UTF-8 `set.txt`, no overwrite, format and quality controls. The toast names the folder and count and offers Open Folder.
 - Usage: month total equals returned images times one cent, by-project rows, ledger, CSV totals sum to the displayed month spend, budget warning at `$10.00`, reset budget.
 - People: 12 bundled people, user section, Maya's included card, descriptions, and the synthetic-people note.
 - Settings: light and dark theme, persisted after restart, window bounds remembered, 150% zoom at 1024 by 700, no horizontal overflow on the library and set page, keyring warning visible when safeStorage is unavailable.

@@ -106,7 +106,7 @@ src/
   main/          Electron main process, SQLite, files, sharp, Muse requests,
                  license, queue, secrets, menus, moss-media protocol
   preload/       deeply frozen named window.moss API
-  renderer/      React screens, no Node, no filesystem paths, no network keys
+  renderer/      React screens, no Node, no filesystem access, no network keys
   shared/        constants, types, IPC map, guards, recipes, prompts, costs
 ```
 

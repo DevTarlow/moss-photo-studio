@@ -153,12 +153,16 @@ export class UsageRepository {
   }
 
   allMonths(): string[] {
-    const rows = this.db
-      .prepare(
-        `SELECT DISTINCT strftime('%Y-%m', at / 1000, 'unixepoch', 'localtime') AS month
-         FROM usage_events ORDER BY month DESC LIMIT 12`
-      )
-      .all() as Array<{ month: string | null }>
-    return rows.map((row) => row.month ?? '').filter(Boolean)
+    // The picker always has the last twelve calendar months, even when a month
+    // has no runs. Months come before the current one by date, not by usage.
+    const months: string[] = []
+    const cursor = new Date()
+    cursor.setDate(1)
+    cursor.setHours(12, 0, 0, 0)
+    for (let index = 0; index < 12; index += 1) {
+      months.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`)
+      cursor.setMonth(cursor.getMonth() - 1)
+    }
+    return months
   }
 }

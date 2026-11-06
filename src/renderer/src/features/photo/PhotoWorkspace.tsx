@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertCircle, ArrowLeft, ChevronLeft, ChevronRight, Download, Loader2, PanelLeft, PanelRight, Plus, RotateCcw } from 'lucide-react'
-import type { AdjustTransform, Image, JobState, Project } from '@shared/types'
+import { useNavigate } from 'react-router-dom'
+import { ArrowLeft, Download, Loader2, PanelLeft, PanelRight, Plus } from 'lucide-react'
+import type { AdjustTransform, Image, Project } from '@shared/types'
 import { estimateCents, usd } from '@shared/cost'
 import { errorMessage, billingUncertain } from '@shared/errors'
-import { templateById } from '@shared/prompts/templates'
 import type { ChangeKind } from '@shared/prompts/guards'
 import { shapeLabel } from '@shared/shapes'
 import { useWorkspaceStore } from '../../store/workspace'
@@ -15,7 +14,6 @@ import { useConfirm } from '../../components/ui/ConfirmProvider'
 import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
 import { Sheet } from '../../components/ui/Sheet'
-import { Progress } from '../../components/ui/Progress'
 import { FirstRunConfirm } from '../../components/ui/FirstRunConfirm'
 import { BudgetWarning } from '../../components/ui/BudgetWarning'
 import { ChangePanel } from './ChangePanel'
@@ -53,14 +51,12 @@ export function PhotoWorkspace(): React.JSX.Element {
   const brand = useAppStore((state) => state.brand)
   const settings = useAppStore((state) => state.settings)
   const secrets = useAppStore((state) => state.secrets)
-  const license = useAppStore((state) => state.license)
   const canGenerate = useAppStore((state) => state.canGenerate)
   const refreshSettings = useAppStore((state) => state.refreshSettings)
   const jobs = useJobsStore((state) => state.jobs)
   const upsert = useJobsStore((state) => state.upsert)
   const confirm = useConfirm()
   const navigate = useNavigate()
-  const [, setParams] = useSearchParams()
   const tier = useViewportTier()
   const leftHidden = tier === 'tiny'
   const rightHidden = tier === 'narrow' || tier === 'tiny'
@@ -84,6 +80,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const [exportOpen, setExportOpen] = useState(false)
   const [leftSheet, setLeftSheet] = useState(false)
   const [rightSheet, setRightSheet] = useState(false)
+  const [rightCollapsed, setRightCollapsed] = useState(false)
   const [applyBusy, setApplyBusy] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const handledJob = useRef<string | null>(null)
@@ -223,6 +220,7 @@ export function PhotoWorkspace(): React.JSX.Element {
       else if (command === 'paste-image') void pasteImage()
       else if (command === 'toggle-panel') {
         if (rightHidden) setRightSheet(true)
+        else setRightCollapsed((collapsed) => !collapsed)
       }
       else if (command === 'zoom-in') setZoom((value) => Math.min(2.5, +(value + 0.15).toFixed(2)))
       else if (command === 'zoom-out') setZoom((value) => Math.max(0.4, +(value - 0.15).toFixed(2)))
@@ -487,7 +485,7 @@ export function PhotoWorkspace(): React.JSX.Element {
             {(leftHidden || rightHidden) && (
               <div className="flex items-center gap-1">
                 {leftHidden && <IconButton label="Open change panel" onClick={() => setLeftSheet(true)}><PanelLeft size={16} /></IconButton>}
-                {rightHidden && <IconButton label="Open version details" onClick={() => setRightSheet(true)}><PanelRight size={16} /></IconButton>}
+                {(rightHidden || rightCollapsed) && <IconButton label="Open version details" onClick={() => { if (rightHidden) setRightSheet(true); else setRightCollapsed(false) }}><PanelRight size={16} /></IconButton>}
               </div>
             )}
             {tab === 'change' && (
@@ -620,7 +618,7 @@ export function PhotoWorkspace(): React.JSX.Element {
             })}
           </div>
         </section>
-        {!rightHidden && <aside className="ws-right">{rightPanel}</aside>}
+        {!rightHidden && !rightCollapsed && <aside className="ws-right">{rightPanel}</aside>}
       </div>
 
       <Sheet open={leftSheet} onOpenChange={setLeftSheet} side="left" title="Edit">{leftPanel}</Sheet>

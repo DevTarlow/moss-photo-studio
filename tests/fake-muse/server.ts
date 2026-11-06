@@ -52,7 +52,7 @@ export async function startFakeMuse(options: { delayMs?: number; slowMs?: number
       res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ object: 'list', data: [{ id: 'muse-image-1.0', object: 'model' }] })); return
     }
     if (req.method === 'POST' && (url.pathname === '/v1/images/generations' || url.pathname === '/v1/images/edits')) {
-      let body: Record<string, unknown> = {}
+      let body: Record<string, unknown>
       try { body = JSON.parse(await readBody(req)) as Record<string, unknown> } catch { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end('{"error":{"code":"invalid_request"}}'); return }
       imageRequestNumber += 1
       const currentNumber = imageRequestNumber

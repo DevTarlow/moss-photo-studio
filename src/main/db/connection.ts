@@ -10,8 +10,6 @@ interface Migration {
   up: (db: Db) => void
 }
 
-const now = (): number => Date.now()
-
 const migrations: Migration[] = [
   {
     version: 1,

@@ -8,6 +8,7 @@ import { Segmented } from '../../components/ui/Segmented'
 import { useAppStore } from '../../store/app'
 import { unwrap, messageOf } from '../../lib/ipc'
 import { toast } from '../../lib/toast'
+import { showExportToast } from '../../lib/exportFeedback'
 import { formatLabel, extensionForFormat } from '@shared/shapes'
 
 export function ExportDialog({
@@ -55,7 +56,7 @@ export function ExportDialog({
         value: { format, quality, maxDimension: max }
       }))
       await refreshSettings()
-      if (result.paths.length) toast.status('Image exported.')
+      showExportToast(result.count, result.folderName, project.id)
       onOpenChange(false)
     } catch (caught) {
       toast.error(messageOf(caught))

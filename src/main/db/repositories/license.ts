@@ -1,5 +1,4 @@
 import type { Db } from '../connection'
-import type { LicenseState } from '@shared/types'
 
 export interface LicenseRow {
   id: string

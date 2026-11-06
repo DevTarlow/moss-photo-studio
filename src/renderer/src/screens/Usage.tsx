@@ -28,7 +28,6 @@ function lastMonths(count: number): string[] {
 const actionLabels = { create: 'Create', set: 'Set', edit: 'Edit', adjust: 'Adjust' } as const
 
 export function Usage(): React.JSX.Element {
-  const settings = useAppStore((state) => state.settings)
   const refreshSettings = useAppStore((state) => state.refreshSettings)
   const [month, setMonth] = useState(currentMonth())
   const [summary, setSummary] = useState<UsageSummary | null>(null)
@@ -80,7 +79,7 @@ export function Usage(): React.JSX.Element {
   const exportCsv = async (): Promise<void> => {
     try {
       const result = await unwrap(window.moss.usage.exportCsv({ month }))
-      if (result.path) toast.status('Usage CSV exported.')
+      if (result.saved) toast.status('Usage CSV exported.')
     } catch (caught) {
       toast.error(messageOf(caught))
     }

@@ -24,6 +24,7 @@ import { TextareaCounter } from '../../components/ui/TextareaCounter'
 import { exampleUrl } from '../../lib/assets'
 import { unwrap, messageOf } from '../../lib/ipc'
 import { toast } from '../../lib/toast'
+import { showExportToast } from '../../lib/exportFeedback'
 import { warnIfSmallPhoto } from '../../lib/photoWarnings'
 import { elapsedLabel, formatDate } from '../../lib/format'
 import { currentMonth } from '../../store/library'
@@ -45,7 +46,6 @@ export function CreateWorkspace(): React.JSX.Element {
   const project = useWorkspaceStore((state) => state.project) as Project
   const images = useWorkspaceStore((state) => state.images)
   const sourceImageId = useWorkspaceStore((state) => state.project?.sourceImageId ?? null)
-  const selectedImageId = useWorkspaceStore((state) => state.selectedImageId)
   const refresh = useWorkspaceStore((state) => state.refresh)
   const refreshImages = useWorkspaceStore((state) => state.refreshImages)
   const settings = useAppStore((state) => state.settings)
@@ -74,6 +74,7 @@ export function CreateWorkspace(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [leftSheet, setLeftSheet] = useState(false)
   const [rightSheet, setRightSheet] = useState(false)
+  const [rightCollapsed, setRightCollapsed] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const handled = useRef<Set<string>>(new Set())
@@ -99,7 +100,6 @@ export function CreateWorkspace(): React.JSX.Element {
   const overBudget = (settings?.budgetCents ?? null) !== null && monthCents + estimateCents(count) > (settings?.budgetCents ?? 0)
   const promptTooLongForReference = Boolean(reference) && prompt.length + REF_GUARD.length > MAX_PROMPT
   const canSubmit = Boolean(prompt.trim()) && prompt.length <= MAX_PROMPT && !promptTooLongForReference && Boolean(secrets?.hasKey) && canGenerate
-  const selected = images.find((image) => image.id === selectedImageId) ?? null
 
   useEffect(() => {
     void loadMonth()
@@ -139,7 +139,10 @@ export function CreateWorkspace(): React.JSX.Element {
   useEffect(() => {
     return onCommand((command) => {
       if (command === 'export' && results[0]) void download(results[0])
-      if (command === 'toggle-panel' && rightHidden) setRightSheet(true)
+      if (command === 'toggle-panel') {
+        if (rightHidden) setRightSheet(true)
+        else setRightCollapsed((collapsed) => !collapsed)
+      }
     })
     // The newest result is the one the shortcut exports.
   }, [images, rightHidden])
@@ -235,7 +238,7 @@ export function CreateWorkspace(): React.JSX.Element {
         imageIds: [image.id],
         options: { format, quality: 90, maxDimension: null, filename: image.label }
       }))
-      if (result.paths.length) toast.status('Image exported.')
+      showExportToast(result.count, result.folderName, project.id)
     } catch (caught) {
       toast.error(messageOf(caught))
     }
@@ -459,7 +462,7 @@ export function CreateWorkspace(): React.JSX.Element {
           <div className="flex items-center gap-2 border-b px-4" style={{ height: 44, borderColor: 'var(--border)', background: 'var(--bg)' }}>
             <p className="min-w-0 flex-1 truncate text-[12px] font-medium">{runFilter ? `One run · ${formatDate(runFilter.startedAt, true)}` : 'Create'}</p>
             {leftHidden && <Button variant="ghost" size="sm" onClick={() => setLeftSheet(true)}>Describe</Button>}
-            {rightHidden && <Button variant="ghost" size="sm" onClick={() => setRightSheet(true)}>Runs</Button>}
+            {(rightHidden || rightCollapsed) && <Button variant="ghost" size="sm" onClick={() => { if (rightHidden) setRightSheet(true); else setRightCollapsed(false) }}>Runs</Button>}
             {isRunning && job && <span className="badge" data-tone="success">Making</span>}
           </div>
           <div className="scroll-area flex-1 p-5">
@@ -524,7 +527,7 @@ export function CreateWorkspace(): React.JSX.Element {
             )}
           </div>
         </section>
-        {!rightHidden && <aside className="ws-right">{rightPanel}</aside>}
+        {!rightHidden && !rightCollapsed && <aside className="ws-right">{rightPanel}</aside>}
       </div>
       <Sheet open={leftSheet} onOpenChange={setLeftSheet} side="left" title="Create">{leftPanel}</Sheet>
       <Sheet open={rightSheet} onOpenChange={setRightSheet} side="right" title="Runs">{rightPanel}</Sheet>

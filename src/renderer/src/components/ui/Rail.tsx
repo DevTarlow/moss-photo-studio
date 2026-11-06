@@ -1,7 +1,6 @@
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { BarChart3, Images, PanelLeftClose, PanelLeftOpen, Settings, Users } from 'lucide-react'
 import { markUrl } from '../../lib/assets'
-import { useUiStore } from '../../store/ui'
 import { IconButton } from './IconButton'
 import { cn } from '../../lib/cn'
 

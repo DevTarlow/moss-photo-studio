@@ -8,7 +8,6 @@ import { useWorkspaceStore } from '../store/workspace'
 import { SetWorkspace } from '../features/set/SetWorkspace'
 import { PhotoWorkspace } from '../features/photo/PhotoWorkspace'
 import { CreateWorkspace } from '../features/create/CreateWorkspace'
-import { Button } from '../components/ui/Button'
 
 export function Workspace(): React.JSX.Element {
   const { id } = useParams()

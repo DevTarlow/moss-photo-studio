@@ -29,6 +29,19 @@ export function createMainWindow(settings: SettingsStore, logger?: Logger, canCl
   if (!isVisible(state)) {
     state = { ...defaults, isMaximized: false }
   }
+  const display = screen.getDisplayNearestPoint({ x: state.x ?? 0, y: state.y ?? 0 })
+  const area = display.workArea
+  state = {
+    ...state,
+    width: Math.min(Math.max(state.width, 1024), area.width),
+    height: Math.min(Math.max(state.height, 700), area.height)
+  }
+  if (state.x !== undefined) {
+    state.x = Math.max(area.x, Math.min(state.x, area.x + area.width - state.width))
+  }
+  if (state.y !== undefined) {
+    state.y = Math.max(area.y, Math.min(state.y, area.y + area.height - state.height))
+  }
   const dark = settings.all().theme === 'dark' || (settings.all().theme === 'system' && nativeTheme.shouldUseDarkColors)
   const options: Electron.BrowserWindowConstructorOptions = {
     width: state.width,

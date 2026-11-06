@@ -67,7 +67,7 @@ describe('version and project repository behaviour', () => {
     const db: Db = openDatabase({ file: path.join(dir, 'library.sqlite'), libraryPath: path.join(dir, 'library'), logger: logger() })
     const projects = new ProjectRepository(db)
     const images = new ImageRepository(db)
-    const mug = projects.create({ type: 'photo', name: 'Mug on a shelf' })
+    projects.create({ type: 'photo', name: 'Mug on a shelf' })
     const bowl = projects.create({ type: 'photo', name: 'Blue bowl' })
     images.create({ projectId: bowl.id, kind: 'render', status: 'ready', label: 'Edit 01', userText: 'a warm kitchen table', personId: 'maya' })
     expect(projects.list({ search: 'mug' }).total).toBe(1)

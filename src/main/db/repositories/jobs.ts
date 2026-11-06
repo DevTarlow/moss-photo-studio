@@ -126,7 +126,7 @@ export class JobRepository {
   }
 
   toState(row: JobRow): JobState {
-    let items: JobItemState[] = []
+    let items: JobItemState[]
     try {
       const snapshot = row.snapshot ? (JSON.parse(row.snapshot) as JobSnapshot) : null
       items = Array.isArray(snapshot?.items)

@@ -42,7 +42,6 @@ export interface AppContext {
   fakeMode: boolean
   devUnlock: boolean
   buildDate: string
-  exportFolders: ExportFolderRegistry
   getWindow: () => BrowserWindow | null
   refreshMenu: () => void
 }

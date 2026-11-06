@@ -43,7 +43,6 @@ export class MediaService {
     const imageId = crypto.randomUUID()
     const existingRows = this.deps.images.list(input.projectId, true)
     const first = existingRows.length === 0
-    const ext = format === 'jpeg' ? 'jpg' : format
     let relative = originalRelative(input.projectId, imageId, format, first)
     try {
       await fs.access(absoluteInLibrary(this.deps.libraryPath(), relative))

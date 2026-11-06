@@ -21,7 +21,6 @@ import type {
   Shape,
   LibraryStats,
   MenuEvent,
-  ThemeSetting,
   UsageByProject,
   UsageEvent,
   UsageListResult,
@@ -36,7 +35,7 @@ export interface IpcChannels {
   'app:info': { request: undefined; response: AppInfo }
   'app:openExternal': { request: { url: string }; response: { ok: true } }
   'app:openPath': {
-    request: { kind: 'library' | 'logs' | 'project'; projectId?: string }
+    request: { kind: 'library' | 'logs' | 'project' | 'exports'; projectId?: string }
     response: { ok: true }
   }
   'app:libraryStats': { request: undefined; response: LibraryStats }
@@ -90,7 +89,6 @@ export interface IpcChannels {
     request: { projectId?: string; kind: 'source' | 'person'; type?: 'set' | 'photo'; name?: string }
     response: ImportResult | null
   }
-  'dialog:pickExportFolder': { request: { projectId: string }; response: { path: string | null } }
   'media:importBytes': {
     request: {
       projectId?: string
@@ -154,15 +152,15 @@ export interface IpcChannels {
     response: UsageListResult
   }
   'usage:byProject': { request: { month: string }; response: UsageByProject }
-  'usage:exportCsv': { request: { month: string }; response: { path: string | null } }
+  'usage:exportCsv': { request: { month: string }; response: { saved: boolean } }
   'usage:deleteAll': { request: undefined; response: { ok: true } }
   'export:images': {
     request: { projectId: string; imageIds: string[]; options: ExportOptions }
-    response: { paths: string[] }
+    response: { count: number; folderName: string }
   }
   'export:set': {
     request: { projectId: string; options: ExportOptions }
-    response: { folder: string; paths: string[]; cancelled?: boolean }
+    response: { count: number; folderName: string; cancelled?: boolean }
   }
   'export:cancel': { request: { projectId: string }; response: { ok: true } }
 }
@@ -227,7 +225,6 @@ export interface MossApi {
   }
   dialogs: {
     importImage: Call<'dialog:importImage'>
-    pickExportFolder: Call<'dialog:pickExportFolder'>
   }
   media: {
     importBytes: Call<'media:importBytes'>

@@ -1,7 +1,7 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { app, clipboard, dialog, nativeImage, shell } from 'electron'
+import { app, clipboard, ClipboardItem, dialog, shell } from 'electron'
 import sharp from 'sharp'
 import { z } from 'zod'
 import type { AppContext } from '../context'
@@ -16,20 +16,19 @@ import type {
   Project,
   ProjectDetail,
   SettingsAll,
-  UsageAction,
-  UsageEvent
 } from '@shared/types'
 import { monthBounds } from '@shared/cost'
 import { MAX_LOGO_BYTES, MAX_PERSON_BYTES, MAX_PROMPT } from '@shared/constants'
 import { shapeForImage } from '@shared/shapes'
 import { createDefaultPlan, normalisePlan } from '@shared/plans'
 import { nextCountedLabel } from '@shared/labels'
-import { workingFor } from '../media/paths'
+import { safeBaseName } from '@shared/files'
+import { absoluteInLibrary, workingFor } from '../media/paths'
 import { applyLocalAdjust } from '../media/transform'
 import { exportImageToPath, exportOneImage, exportSetProject } from '../media/export'
 import { openExternalSafely } from '../security'
 import { registerIpc, registerRaw, IpcFault } from './helpers'
-import { SETTING_KEYS, type SettingKey } from '../settings'
+import { type SettingKey } from '../settings'
 
 const shapeSchema = z.enum(['square', 'portrait', 'landscape'])
 const formatSchema = z.enum(['webp', 'jpeg', 'png'])
@@ -75,7 +74,6 @@ const exportOptionsSchema = z.object({
   format: formatSchema,
   quality: z.number().int().min(60).max(100),
   maxDimension: z.number().int().positive().nullable(),
-  folder: z.string().optional(),
   includeVersions: z.boolean().optional(),
   filename: z.string().max(120).optional()
 })
@@ -153,10 +151,10 @@ function asProject(project: Project | null): Project {
 
 function buildDetail(context: AppContext, project: Project): ProjectDetail {
   const detail = context.projects.get(project.id) ?? project
-  let activeJob: JobState | null = null
   const activeId = context.queue.active().find((job) => job.projectId === project.id)?.id
-  if (activeId) activeJob = context.queue.state(activeId)
-  else activeJob = context.jobs.latestInterrupted(project.id)
+  const activeJob: JobState | null = activeId
+    ? context.queue.state(activeId)
+    : context.jobs.latestInterrupted(project.id)
   return {
     project: detail,
     images: context.images.list(project.id, false),
@@ -256,12 +254,17 @@ export function registerIpcHandlers(context: AppContext): void {
   registerIpc(
     context,
     'app:openPath',
-    z.object({ kind: z.enum(['library', 'logs', 'project']), projectId: z.string().optional() }),
+    z.object({ kind: z.enum(['library', 'logs', 'project', 'exports']), projectId: z.string().optional() }),
     async ({ kind, projectId }) => {
       let target: string
       if (kind === 'library') target = context.libraryPath()
       else if (kind === 'logs') target = path.join(context.userDataDir, 'logs')
-      else {
+      else if (kind === 'exports') {
+        if (!projectId) throw new IpcFault('invalid_payload')
+        const folder = settings.exportFolderFor(projectId)
+        if (!folder) throw new IpcFault('not_found')
+        target = folder
+      } else {
         if (!projectId) throw new IpcFault('invalid_payload')
         const project = context.projects.get(projectId)
         if (!project) throw new IpcFault('not_found')
@@ -272,6 +275,40 @@ export function registerIpcHandlers(context: AppContext): void {
       return { ok: true as const }
     }
   )
+
+  registerIpc(context, 'app:copyLibraryPath', voidSchema, async () => {
+    await clipboard.writeText(context.libraryPath())
+    return { ok: true as const }
+  })
+
+  registerIpc(context, 'app:copyImage', z.object({ imageId: idSchema }), async ({ imageId }) => {
+    const image = context.images.get(imageId)
+    if (!image || image.status !== 'ready' || !image.url) throw new IpcFault('not_found')
+    const relative = decodeURI(image.url.replace('moss-media://library/', ''))
+    const png = await sharp(absoluteInLibrary(context.libraryPath(), relative)).png().toBuffer()
+    await clipboard.write([
+      new ClipboardItem({ 'image/png': new Blob([new Uint8Array(png)], { type: 'image/png' }) })
+    ])
+    return { ok: true as const }
+  })
+
+  registerIpc(context, 'app:readClipboardImage', voidSchema, async () => {
+    // The OS clipboard can lag the write promise by a frame. Give a paste
+    // request three short chances before reporting an empty clipboard.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const items = await clipboard.read()
+      for (const item of items) {
+        const type = item.types.find((entry) => entry.startsWith('image/'))
+        if (!type) continue
+        const value = await item.getType(type)
+        if (value instanceof Blob) {
+          return { bytes: new Uint8Array(await value.arrayBuffer()), mime: type }
+        }
+      }
+      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 50))
+    }
+    return { bytes: null, mime: null }
+  })
 
   registerIpc(context, 'settings:get', z.object({ key: z.enum([...rendererSettingKeys, 'deviceId']) }), ({ key }) => ({
     value: key === 'deviceId'
@@ -293,6 +330,7 @@ export function registerIpcHandlers(context: AppContext): void {
 
   registerIpc(context, 'settings:changeLibrary', voidSchema, async () => {
     const current = context.libraryPath()
+    await fs.mkdir(current, { recursive: true })
     const result = await openFolderDialog(context, {
       title: 'Choose a new library folder',
       properties: ['openDirectory', 'createDirectory']
@@ -568,26 +606,6 @@ export function registerIpcHandlers(context: AppContext): void {
 
   registerIpc(
     context,
-    'dialog:pickExportFolder',
-    z.object({ projectId: idSchema }),
-    async ({ projectId }) => {
-      const project = context.projects.get(projectId)
-      if (!project) throw new IpcFault('not_found')
-      const result = await openFolderDialog(context, {
-        title: 'Choose an export folder',
-        properties: ['openDirectory', 'createDirectory'],
-        defaultPath: settings.exportFolderFor(projectId) ?? undefined
-      })
-      if (result.canceled || !result.filePaths[0]) return { path: null }
-      const folder = result.filePaths[0]
-      context.exportFolders.add(folder)
-      settings.rememberExportFolder(projectId, folder)
-      return { path: folder }
-    }
-  )
-
-  registerIpc(
-    context,
     'projects:update',
     z.object({
       id: idSchema,
@@ -678,7 +696,13 @@ export function registerIpcHandlers(context: AppContext): void {
       }
     }
     const files = context.media.relativeFilesForImage(image)
+    const project = context.projects.get(image.projectId)
     context.images.softDelete(id)
+    if (project?.coverImageId === id) {
+      const ready = context.images.list(project.id, false)
+      const next = project.type === 'set' ? ready.find((entry) => entry.kind !== 'upload') : ready[0]
+      context.projects.update(project.id, { coverImageId: next?.id ?? null })
+    }
     for (const relative of files) {
       await fs.rm(path.join(context.libraryPath(), relative), { force: true }).catch(() => undefined)
     }
@@ -898,9 +922,9 @@ export function registerIpcHandlers(context: AppContext): void {
       defaultPath: path.join(app.getPath('documents'), filename),
       filters: [{ name: 'CSV', extensions: ['csv'] }]
     })
-    if (result.canceled || !result.filePath) return { path: null }
+    if (result.canceled || !result.filePath) return { saved: false }
     await fs.writeFile(result.filePath, `${header}\n${lines.join('\n')}\n`, 'utf8')
-    return { path: result.filePath }
+    return { saved: true }
   })
 
   registerIpc(
@@ -913,51 +937,31 @@ export function registerIpcHandlers(context: AppContext): void {
       const images = imageIds.map((id) => context.images.get(id)).filter((image): image is Image => Boolean(image && image.projectId === projectId && image.status === 'ready'))
       if (!images.length) throw new IpcFault('not_found')
       const extension = options.format === 'jpeg' ? 'jpg' : options.format
-      const base = options.filename?.replace(/\.[^.]+$/, '') || (images.length === 1 ? images[0]!.label : project.name)
+      const base = safeBaseName(options.filename?.replace(/\.[^.]+$/, '') || (images.length === 1 ? images[0]!.label : project.name), 'image')
       const workingPathFor = (image: Image): string => workingFor(context.libraryPath(), image.projectId, image.id)
       if (images.length === 1) {
-        const folder = options.folder
-        if (folder) {
-          if (!context.exportFolders.has(folder)) throw new IpcFault('invalid_payload')
-        } else {
-          const defaultFolder = settings.exportFolderFor(projectId) ?? app.getPath('pictures')
-          const picked = await saveFileDialog(context, {
-            title: 'Export image',
-            defaultPath: path.join(defaultFolder, `${base}.${extension}`),
-            filters: [{ name: options.format.toUpperCase(), extensions: [extension] }]
-          })
-          if (picked.canceled || !picked.filePath) return { paths: [] }
-          const destination = picked.filePath.endsWith(`.${extension}`) ? picked.filePath : `${picked.filePath}.${extension}`
-          const written = await exportImageToPath({
-            libraryPath: context.libraryPath(),
-            image: images[0]!,
-            workingPath: workingPathFor(images[0]!),
-            options,
-            destinationPath: destination
-          })
-          settings.rememberExportFolder(projectId, path.dirname(destination))
-          return { paths: [written] }
-        }
-        const pathWritten = await exportOneImage({
+        const defaultFolder = settings.exportFolderFor(projectId) ?? app.getPath('pictures')
+        const picked = await saveFileDialog(context, {
+          title: 'Export image',
+          defaultPath: path.join(defaultFolder, `${base}.${extension}`),
+          filters: [{ name: options.format.toUpperCase(), extensions: [extension] }]
+        })
+        if (picked.canceled || !picked.filePath) return { count: 0, folderName: '' }
+        const destination = picked.filePath.endsWith(`.${extension}`) ? picked.filePath : `${picked.filePath}.${extension}`
+        const written = await exportImageToPath({
           libraryPath: context.libraryPath(),
           image: images[0]!,
           workingPath: workingPathFor(images[0]!),
           options,
-          destinationFolder: folder!,
-          baseName: base
+          destinationPath: destination
         })
-        settings.rememberExportFolder(projectId, folder!)
-        return { paths: [pathWritten] }
+        settings.rememberExportFolder(projectId, path.dirname(destination))
+        return { count: 1, folderName: path.basename(path.dirname(written)) }
       }
-      let folder = options.folder
-      if (folder) {
-        if (!context.exportFolders.has(folder)) throw new IpcFault('invalid_payload')
-      } else {
-        const pick = await openFolderDialog(context, { title: 'Choose an export folder', properties: ['openDirectory', 'createDirectory'] })
-        if (pick.canceled || !pick.filePaths[0]) return { paths: [] }
-        folder = pick.filePaths[0]
-        context.exportFolders.add(folder)
-      }
+      const pick = await openFolderDialog(context, { title: 'Choose an export folder', properties: ['openDirectory', 'createDirectory'] })
+      if (pick.canceled || !pick.filePaths[0]) return { count: 0, folderName: '' }
+      const folder = pick.filePaths[0]
+      settings.rememberExportFolder(projectId, folder)
       const paths: string[] = []
       const taken = new Set<string>()
       for (const image of images) {
@@ -972,7 +976,7 @@ export function registerIpcHandlers(context: AppContext): void {
         }))
       }
       settings.rememberExportFolder(projectId, folder!)
-      return { paths }
+      return { count: paths.length, folderName: path.basename(folder!) }
     }
   )
 
@@ -985,19 +989,13 @@ export function registerIpcHandlers(context: AppContext): void {
       if (!project) throw new IpcFault('not_found')
       const plan = context.plans.getActive(projectId)
       if (!plan) throw new IpcFault('invalid_payload', 'Add a photo and plan the set first.')
-      let folder = options.folder
-      if (folder) {
-        if (!context.exportFolders.has(folder)) throw new IpcFault('invalid_payload')
-      } else {
-        const pick = await openFolderDialog(context, {
-          title: 'Export set',
-          properties: ['openDirectory', 'createDirectory'],
-          defaultPath: settings.exportFolderFor(projectId) ?? undefined
-        })
-        if (pick.canceled || !pick.filePaths[0]) return { folder: '', paths: [] }
-        folder = pick.filePaths[0]
-        context.exportFolders.add(folder)
-      }
+      const pick = await openFolderDialog(context, {
+        title: 'Export set',
+        properties: ['openDirectory', 'createDirectory'],
+        defaultPath: settings.exportFolderFor(projectId) ?? undefined
+      })
+      if (pick.canceled || !pick.filePaths[0]) return { count: 0, folderName: '' }
+      const folder = pick.filePaths[0]
       const images = context.images.list(projectId, false)
       if (!images.length) throw new IpcFault('invalid_payload', 'Make an image first.')
       const token = { cancelled: false }
@@ -1013,7 +1011,7 @@ export function registerIpcHandlers(context: AppContext): void {
         shouldCancel: () => token.cancelled
       }).finally(() => activeExports.delete(projectId))
       settings.rememberExportFolder(projectId, folder!)
-      return { folder: folder!, paths: result.paths, cancelled: result.cancelled }
+      return { count: result.paths.length, folderName: path.basename(folder!), cancelled: result.cancelled }
     }
   )
 

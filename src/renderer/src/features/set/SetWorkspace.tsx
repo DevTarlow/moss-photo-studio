@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertCircle, Check, Clock, Download, FolderOpen, Image as ImageIcon, Loader2, PanelLeft, PanelRight, Sparkles, Star, Trash2 } from 'lucide-react'
+import { AlertCircle, Check, Clock, PanelLeft, PanelRight, Sparkles } from 'lucide-react'
 import type { Image, JobItemState, JobState, PlanJson, PlanShot, Project } from '@shared/types'
-import { MAX_SET_SHOTS, MAX_SET_DIRECTION } from '@shared/constants'
+import { MAX_SET_SHOTS } from '@shared/constants'
 import { CATEGORY_CHIPS, recipeById } from '@shared/prompts/recipes'
 import { shotDefinition } from '@shared/prompts/shots'
 import { createDefaultPlan, addShotToPlan, makeShots } from '@shared/plans'
@@ -25,8 +25,9 @@ import { PlanPanel } from './PlanPanel'
 import { SetExportDialog } from './SetExportDialog'
 import { unwrap, messageOf } from '../../lib/ipc'
 import { toast } from '../../lib/toast'
+import { showExportToast } from '../../lib/exportFeedback'
 import { warnIfSmallPhoto } from '../../lib/photoWarnings'
-import { elapsedLabel, formatDate, plural } from '../../lib/format'
+import { elapsedLabel } from '../../lib/format'
 import { currentMonth } from '../../store/library'
 
 type Phase = 'plan' | 'review'
@@ -73,7 +74,6 @@ function jobItemFor(job: JobState, shot: PlanShot): JobItemState | undefined {
 export function SetWorkspace(): React.JSX.Element {
   const project = useWorkspaceStore((state) => state.project) as Project
   const images = useWorkspaceStore((state) => state.images)
-  const planRecord = useWorkspaceStore((state) => state.plan)
   const plan = useWorkspaceStore((state) => state.planDraft)
   const setPlanDraft = useWorkspaceStore((state) => state.setPlanDraft)
   const savePlan = useWorkspaceStore((state) => state.savePlan)
@@ -82,10 +82,8 @@ export function SetWorkspace(): React.JSX.Element {
   const activeStoredJob = useWorkspaceStore((state) => state.activeJob)
   const usageCents = useWorkspaceStore((state) => state.usageCents)
   const people = useAppStore((state) => state.people)
-  const brand = useAppStore((state) => state.brand)
   const settings = useAppStore((state) => state.settings)
   const secrets = useAppStore((state) => state.secrets)
-  const license = useAppStore((state) => state.license)
   const canGenerate = useAppStore((state) => state.canGenerate)
   const refreshSettings = useAppStore((state) => state.refreshSettings)
   const jobs = useJobsStore((state) => state.jobs)
@@ -98,6 +96,7 @@ export function SetWorkspace(): React.JSX.Element {
   const rightHidden = tier === 'narrow' || tier === 'tiny'
   const [leftSheet, setLeftSheet] = useState(false)
   const [rightSheet, setRightSheet] = useState(false)
+  const [rightCollapsed, setRightCollapsed] = useState(false)
   const [phase, setPhase] = useState<Phase>('plan')
   const [currentJobId, setCurrentJobId] = useState<string | null>(null)
   const [pending, setPending] = useState<PendingRun | null>(null)
@@ -197,6 +196,7 @@ export function SetWorkspace(): React.JSX.Element {
       if (command === 'export' && madeCount > 0) setExportOpen(true)
       if (command === 'toggle-panel') {
         if (rightHidden) setRightSheet((open) => !open)
+        else setRightCollapsed((collapsed) => !collapsed)
       }
     })
   }, [madeCount, rightHidden])
@@ -385,7 +385,6 @@ export function SetWorkspace(): React.JSX.Element {
   const paidCount = phase === 'plan' ? phasePlanCount : primaryPaidCount
   const over = overBudget(paidCount)
 
-  const shotById = (id: string | null): PlanShot | undefined => plan?.shots.find((shot) => shot.id === id)
   const lightboxImages = exportableImages
 
   const goOpenLibrary = (): void => {
@@ -412,7 +411,7 @@ export function SetWorkspace(): React.JSX.Element {
         imageIds: [image.id],
         options: { format: project.format, quality: 90, maxDimension: null, filename: image.label }
       }))
-      if (result.paths.length) toast.status('Image exported.')
+      showExportToast(result.count, result.folderName, project.id)
     } catch (caught) {
       toast.error(messageOf(caught))
     }
@@ -533,7 +532,7 @@ export function SetWorkspace(): React.JSX.Element {
             {(leftHidden || rightHidden) && (
               <div className="flex items-center gap-1">
                 {leftHidden && <IconButton label="Open plan" onClick={() => setLeftSheet(true)}><PanelLeft size={16} /></IconButton>}
-                {rightHidden && <IconButton label="Open set details" onClick={() => setRightSheet(true)}><PanelRight size={16} /></IconButton>}
+                {(rightHidden || rightCollapsed) && <IconButton label="Open set details" onClick={() => { if (rightHidden) setRightSheet(true); else setRightCollapsed(false) }}><PanelRight size={16} /></IconButton>}
               </div>
             )}
             {isRunning && <span className="badge" data-tone="success">Making</span>}
@@ -664,7 +663,7 @@ export function SetWorkspace(): React.JSX.Element {
             ) : null}
           </div>
         </section>
-        {!rightHidden && <aside className="ws-right">{rightContent}</aside>}
+        {!rightHidden && !rightCollapsed && <aside className="ws-right">{rightContent}</aside>}
       </div>
 
       <Sheet open={leftSheet} onOpenChange={setLeftSheet} side="left" title="Plan">{leftContent}</Sheet>
