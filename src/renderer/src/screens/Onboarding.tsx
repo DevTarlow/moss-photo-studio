@@ -18,6 +18,7 @@ import { Button } from '../components/ui/Button'
 import { Field } from '../components/ui/Field'
 import { Chip } from '../components/ui/Chip'
 import { Dropzone } from '../components/ui/Dropzone'
+import { Segmented } from '../components/ui/Segmented'
 import { BrandFields } from '../components/brand/BrandFields'
 import { FirstRunConfirm } from '../components/ui/FirstRunConfirm'
 import { Progress } from '../components/ui/Progress'
@@ -40,6 +41,7 @@ export function Onboarding(): React.JSX.Element {
   const refreshSettings = useAppStore((state) => state.refreshSettings)
   const refreshBrand = useAppStore((state) => state.refreshBrand)
   const refreshSecrets = useAppStore((state) => state.refreshSecrets)
+  const setTheme = useAppStore((state) => state.setTheme)
   const setOnboardingBypass = useAppStore((state) => state.setOnboardingBypass)
   const [step, setStep] = useState(() => Math.min(5, Math.max(0, settings?.onboardingStep ?? 0)))
   const [keyValue, setKeyValue] = useState('')
@@ -155,6 +157,15 @@ export function Onboarding(): React.JSX.Element {
       await goTo(3)
     } catch (caught) {
       toast.error(messageOf(caught))
+    }
+  }
+
+  const saveSetting = async (key: 'density' | 'reduceMotion', value: unknown): Promise<void> => {
+    try {
+      await unwrap(window.moss.settings.set({ key, value }))
+      await refreshSettings()
+    } catch {
+      toast.error('That setting could not be saved.')
     }
   }
 
@@ -371,8 +382,60 @@ export function Onboarding(): React.JSX.Element {
           <div className="py-8">
             <p className="section-label">Step 3 of 6</p>
             <h1 className="page-title mt-2 text-[24px]">Make it yours</h1>
-            <p className="mt-2 text-[13px]" style={{ color: 'var(--text-muted)' }}>Add your logo and colors. Optional; you can change them in Settings later.</p>
-            <div className="mt-6">
+            <p className="mt-2 text-[13px]" style={{ color: 'var(--text-muted)' }}>Choose how the studio looks, then add your logo and colors. Optional; you can change this in Settings later.</p>
+            <div className="card mt-5 p-4">
+              <p className="section-label">Appearance</p>
+              <div className="mt-3 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[12px] font-semibold">Theme</p>
+                    <p className="hint">Light, dark, or follow the system.</p>
+                  </div>
+                  <Segmented
+                    label="Theme"
+                    value={settings?.theme ?? 'light'}
+                    onChange={(value) => void setTheme(value).catch(() => toast.error('The theme could not be saved.'))}
+                    options={[
+                      { value: 'system' as const, label: 'System' },
+                      { value: 'light' as const, label: 'Light' },
+                      { value: 'dark' as const, label: 'Dark' }
+                    ]}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[12px] font-semibold">Density</p>
+                    <p className="hint">Compact tightens list rows. Photos keep their space.</p>
+                  </div>
+                  <Segmented
+                    label="Density"
+                    value={settings?.density ?? 'comfortable'}
+                    onChange={(value) => void saveSetting('density', value)}
+                    options={[
+                      { value: 'comfortable' as const, label: 'Comfortable' },
+                      { value: 'compact' as const, label: 'Compact' }
+                    ]}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[12px] font-semibold">Reduce motion</p>
+                    <p className="hint">Use the system preference, or choose for this app.</p>
+                  </div>
+                  <select
+                    className="field w-[180px]"
+                    aria-label="Reduce motion"
+                    value={settings?.reduceMotion ?? 'system'}
+                    onChange={(event) => void saveSetting('reduceMotion', event.target.value)}
+                  >
+                    <option value="system">Use system setting</option>
+                    <option value="reduce">Reduce motion</option>
+                    <option value="full">Full motion</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="mt-5">
               <BrandFields value={localBrand} onChange={setLocalBrand} maxColors={3} />
             </div>
             <div className="mt-7 flex items-center gap-3">

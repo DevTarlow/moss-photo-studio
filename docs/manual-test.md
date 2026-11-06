@@ -43,7 +43,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 ## What the automated journey proved
 
 - Invalid activation key shows the approved "That key wasn't accepted" copy. A valid fake key activates. The key is not returned to the renderer.
-- Onboarding: key step, optional logo and colors step, category choice, six-shot preview with prices, first-run confirmation, first paid set. The first paid set was started with Space on the focused primary button and finished through the first-run dialog with Tab and Enter.
+- Onboarding: key step, optional appearance, logo, and colors step, category choice, six-shot preview with prices, first-run confirmation, first paid set. The first paid set was started with Space on the focused primary button and finished through the first-run dialog with Tab and Enter.
 - A five-shot set costs `$0.05`. The primary button says the price before the click. Five requests produced five images.
 - A two-shot failure set showed the partial review, the failed cards, and `Try Again · $0.02`. The retry made exactly two requests. Total set requests were eight. Older ready images were preserved.
 - Photo Editor: Kitchen table tile, compare slider with pointer and keyboard, hold Space for the earlier version, local 1:1 crop, rotate, brightness, sharpen, apply locally free, version labels, and new version. Copy Image writes a PNG and Paste Image reads it back through the main-process clipboard.
@@ -89,7 +89,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 ### 3. Onboarding
 
-- [x] **A** Under three minutes: paste a key, optionally add a logo or colors, choose a category, make six images, see Setup complete.
+- [x] **A** Under three minutes: paste a key, optionally choose appearance and add a logo or colors, choose a category, make six images, see Setup complete.
   - The automated journey completes this in seconds with the fake image host. Human timing with a real key is still an O check.
 
 ### 4. Key management

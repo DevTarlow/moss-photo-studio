@@ -45,6 +45,14 @@ async function launch(): Promise<void> {
   await stubDialogs()
 }
 
+async function setAppTheme(theme: 'light' | 'dark'): Promise<void> {
+  await page.evaluate(async (value) => {
+    await window.moss.settings.set({ key: 'theme', value })
+  }, theme)
+  await page.reload()
+  await page.waitForLoadState('domcontentloaded')
+}
+
 async function screenshot(name: string, compare = true): Promise<void> {
   fs.mkdirSync(screenshots, { recursive: true })
   // Playwright's screenshot helper can restore the Electron viewport before
@@ -170,6 +178,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
 
   test('activation, onboarding, and the first set', async () => {
     await expect(page.getByRole('heading', { name: 'Activate Moss Photo Studio' })).toBeVisible({ timeout: 20_000 })
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
     await screenshot('activation')
     await assertNoSeriousA11y('activation')
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1024, 700))
@@ -177,11 +186,13 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await noHorizontalOverflow()
     await screenshot('activation-1024-light')
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1440, 900))
-    await page.emulateMedia({ colorScheme: 'dark' })
+    await setAppTheme('dark')
+    await expect(page.getByRole('heading', { name: 'Activate Moss Photo Studio' })).toBeVisible({ timeout: 20_000 })
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
     await screenshot('activation-dark')
     await assertNoSeriousA11y('activation-dark')
-    await page.emulateMedia({ colorScheme: 'light' })
+    await setAppTheme('light')
+    await expect(page.getByRole('heading', { name: 'Activate Moss Photo Studio' })).toBeVisible({ timeout: 20_000 })
     await page.getByLabel('License key').fill('bad')
     await page.getByRole('button', { name: 'Activate', exact: true }).click()
     await expect(page.getByText("That key wasn't accepted. Check it and try again.")).toBeVisible()
@@ -195,11 +206,13 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await noHorizontalOverflow()
     await screenshot('onboarding-1024-light')
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1440, 900))
-    await page.emulateMedia({ colorScheme: 'dark' })
+    await setAppTheme('dark')
+    await expect(page.getByRole('heading', { name: "Your shop's photo studio." })).toBeVisible({ timeout: 20_000 })
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
     await screenshot('onboarding-dark')
     await assertNoSeriousA11y('onboarding-dark')
-    await page.emulateMedia({ colorScheme: 'light' })
+    await setAppTheme('light')
+    await expect(page.getByRole('heading', { name: "Your shop's photo studio." })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Set Up the Studio' }).click()
     await page.getByLabel('Muse key').fill('LLM|e2e-muse-key')
     await page.getByRole('button', { name: 'Test and Save' }).click()

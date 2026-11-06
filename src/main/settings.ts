@@ -102,13 +102,13 @@ export class SettingsStore {
 
   all(): SettingsAll {
     const exportDefaults = this.exportDefaults()
-    const theme = this.get<ThemeSetting>('theme', 'system')
+    const theme = this.get<ThemeSetting>('theme', 'light')
     const density = this.get<DensitySetting>('density', 'comfortable')
     const defaultFormat = this.get<Format>('defaultFormat', 'webp')
     const defaultShape = this.get<Shape>('defaultShape', 'square')
     const reduceMotion = this.get<'system' | 'reduce' | 'full'>('reduceMotion', 'system')
     return {
-      theme: ['system', 'light', 'dark'].includes(theme) ? theme : 'system',
+      theme: ['system', 'light', 'dark'].includes(theme) ? theme : 'light',
       density: density === 'compact' ? 'compact' : 'comfortable',
       onboardingStep: this.get<number>('onboardingStep', 0),
       onboardingDone: this.get<boolean>('onboardingDone', false),

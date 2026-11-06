@@ -224,7 +224,7 @@ function seedDefaults(db: Db, libraryPath: string): void {
   const set = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)')
   const seed = db.transaction(() => {
     set.run('deviceId', JSON.stringify(crypto.randomUUID()))
-    set.run('theme', JSON.stringify('system'))
+    set.run('theme', JSON.stringify('light'))
     set.run('density', JSON.stringify('comfortable'))
     set.run('onboardingStep', JSON.stringify(0))
     set.run('onboardingDone', JSON.stringify(false))
