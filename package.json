@@ -13,8 +13,8 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "electron-vite dev",
-    "start": "electron-vite preview",
+    "dev": "electron-vite dev --noSandbox",
+    "start": "electron-vite preview --noSandbox",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",

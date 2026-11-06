@@ -30,6 +30,8 @@ npm install
 npm run dev
 ```
 
+The `dev` and `start` scripts pass electron-vite's `--noSandbox`, which launches Electron without Chromium's sandbox. This avoids the startup failure when the repository lives on a filesystem that cannot provide a root-owned setuid `chrome-sandbox` helper, such as an NTFS mount with `nosuid`. It affects local development only; packaged builds keep the sandbox.
+
 The dev app uses a separate development data set. Set `MOSS_DEV_UNLOCK=1` and `MOSS_MUSE_FAKE=1` to work without a license or a Muse key:
 
 ```bash
