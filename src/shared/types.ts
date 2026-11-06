@@ -357,6 +357,16 @@ export type MenuAction =
   | 'zoom-scale-out'
   | 'toggle-theme'
 
+export interface MenuContext {
+  editor: boolean
+  adjust: boolean
+  canUndo: boolean
+  canRedo: boolean
+  hasSelection: boolean
+  canExport: boolean
+  canZoom: boolean
+}
+
 export interface MenuEvent {
   action: MenuAction
   projectId?: string

@@ -37,6 +37,7 @@ import { showExportToast } from '../lib/exportFeedback'
 import { onCommand } from '../lib/commands'
 import { fileToBytes } from '../lib/files'
 import { warnIfSmallPhoto } from '../lib/photoWarnings'
+import { VirtualLibrary } from '../components/library/VirtualLibrary'
 
 const filters: Array<{ id: ProjectFilter; label: string }> = [
   { id: 'all', label: 'All' },
@@ -65,6 +66,7 @@ export function Library(): React.JSX.Element {
   const [renameValue, setRenameValue] = useState('')
   const [search, setSearch] = useState(store.search)
   const searchRef = useRef<HTMLInputElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const [dragOver, setDragOver] = useState(false)
   const dragDepth = useRef(0)
 
@@ -75,12 +77,15 @@ export function Library(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
+    // The input starts from the store value. Skip the initial effect so the
+    // mount load is not raced by a second debounced load.
+    if (search === store.search) return
     const timer = window.setTimeout(() => {
       store.setSearch(search)
       void store.load()
     }, 150)
     return () => window.clearTimeout(timer)
-  }, [search])
+  }, [search, store.search])
 
   const runningCount = Object.values(jobs).filter((job) => job.status === 'running').length
   const previousRunning = useRef(runningCount)
@@ -231,9 +236,22 @@ export function Library(): React.JSX.Element {
   const empty = !store.loading && store.items.length === 0
   const filtering = Boolean(store.search.trim()) || store.filter !== 'all'
 
+  const renderProject = (project: Project, view: 'grid' | 'list'): React.ReactNode => (
+    <ProjectCard
+      project={project}
+      view={view}
+      job={jobFor(project.id)}
+      onRename={() => { setRenameProject(project); setRenameValue(project.name) }}
+      onDuplicate={() => void duplicate(project)}
+      onExport={() => void exportProject(project)}
+      onDelete={() => void remove(project)}
+    />
+  )
+
   return (
     <AppFrame>
       <div
+        ref={scrollRef}
         className="page-scroll relative"
         onDragEnter={(event) => {
           if (event.dataTransfer.types.includes('Files')) {
@@ -412,34 +430,24 @@ export function Library(): React.JSX.Element {
                   </div>
                 </div>
               )
+            ) : store.items.length > 200 ? (
+              store.view === 'grid' ? (
+                <VirtualLibrary items={store.items} view="grid" scrollElement={scrollRef} renderCard={renderProject} />
+              ) : (
+                <div className="card overflow-hidden">
+                  <VirtualLibrary items={store.items} view="list" scrollElement={scrollRef} renderCard={renderProject} />
+                </div>
+              )
             ) : store.view === 'grid' ? (
               <div className="grid-library">
                 {store.items.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    view="grid"
-                    job={jobFor(project.id)}
-                    onRename={() => { setRenameProject(project); setRenameValue(project.name) }}
-                    onDuplicate={() => void duplicate(project)}
-                    onExport={() => void exportProject(project)}
-                    onDelete={() => void remove(project)}
-                  />
+                  <div key={project.id} style={{ display: 'contents' }}>{renderProject(project, 'grid')}</div>
                 ))}
               </div>
             ) : (
               <div className="card overflow-hidden">
                 {store.items.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    view="list"
-                    job={jobFor(project.id)}
-                    onRename={() => { setRenameProject(project); setRenameValue(project.name) }}
-                    onDuplicate={() => void duplicate(project)}
-                    onExport={() => void exportProject(project)}
-                    onDelete={() => void remove(project)}
-                  />
+                  <div key={project.id} style={{ display: 'contents' }}>{renderProject(project, 'list')}</div>
                 ))}
               </div>
             )}

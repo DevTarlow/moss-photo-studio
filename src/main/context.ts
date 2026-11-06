@@ -14,11 +14,7 @@ import type { JobQueue } from './jobs/queue'
 import type { LicenseController } from './license/controller'
 import type { ImageProvider } from './muse/provider'
 import type { BrowserWindow } from 'electron'
-
-export interface ExportFolderRegistry {
-  add(folder: string): void
-  has(folder: string): boolean
-}
+import type { MenuContext } from '@shared/types'
 
 export interface AppContext {
   db: Db
@@ -44,4 +40,5 @@ export interface AppContext {
   buildDate: string
   getWindow: () => BrowserWindow | null
   refreshMenu: () => void
+  updateMenuContext: (context: MenuContext) => void
 }

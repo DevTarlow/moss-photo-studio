@@ -47,6 +47,9 @@ async function launch(): Promise<void> {
 
 async function screenshot(name: string, compare = true): Promise<void> {
   fs.mkdirSync(screenshots, { recursive: true })
+  // Playwright's screenshot helper can restore the Electron viewport before
+  // capturing. Small-window captures are regenerated rather than compared.
+  const captureOnly = !compare || name.endsWith('-1024-light')
   await page.waitForTimeout(200)
   const file = path.join(screenshots, `${name}.png`)
   for (let wait = 0; wait < 20 && (await page.locator('.toast').count()) > 0; wait += 1) {
@@ -54,7 +57,7 @@ async function screenshot(name: string, compare = true): Promise<void> {
   }
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
-      if (!compare || !fs.existsSync(file) || process.env.MOSS_UPDATE_SCREENS === '1') {
+      if (captureOnly || !fs.existsSync(file) || process.env.MOSS_UPDATE_SCREENS === '1') {
         await page.screenshot({ path: file, animations: 'disabled' })
       } else {
         await expect(page).toHaveScreenshot(`${name}.png`, { maxDiffPixelRatio: 0.01, animations: 'disabled' })
@@ -115,6 +118,29 @@ async function assertNoSeriousA11y(where: string): Promise<void> {
   expect(serious, `${where}: ${serious.map((violation) => violation.id).join(', ')}`).toEqual([])
 }
 
+async function noHorizontalOverflow(): Promise<void> {
+  const overflow = await page.evaluate(() => {
+    const body = document.documentElement.scrollWidth - window.innerWidth
+    const page = document.querySelector<HTMLElement>('.page-scroll')
+    const main = document.querySelector<HTMLElement>('.app-main')
+    const workspace = document.querySelector<HTMLElement>('.workspace')
+    return Math.max(
+      body,
+      page ? page.scrollWidth - page.clientWidth : 0,
+      main ? main.scrollWidth - main.clientWidth : 0,
+      workspace ? workspace.scrollWidth - workspace.clientWidth : 0
+    )
+  })
+  expect(overflow).toBeLessThanOrEqual(1)
+}
+
+async function menuEnabled(id: string): Promise<boolean | undefined> {
+  return app.evaluate(({ Menu }, menuId) => {
+    const items = Menu.getApplicationMenu()?.items.flatMap((item) => item.submenu?.items ?? []) ?? []
+    return items.find((item) => item.id === menuId)?.enabled
+  }, id)
+}
+
 async function spendCents(): Promise<number> {
   return page.evaluate(async () => {
     const now = new Date()
@@ -146,6 +172,11 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await expect(page.getByRole('heading', { name: 'Activate Moss Photo Studio' })).toBeVisible({ timeout: 20_000 })
     await screenshot('activation')
     await assertNoSeriousA11y('activation')
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1024, 700))
+    await page.waitForTimeout(200)
+    await noHorizontalOverflow()
+    await screenshot('activation-1024-light')
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1440, 900))
     await page.emulateMedia({ colorScheme: 'dark' })
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
     await screenshot('activation-dark')
@@ -159,6 +190,11 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await expect(page.getByRole('heading', { name: "Your shop's photo studio." })).toBeVisible({ timeout: 20_000 })
     await screenshot('onboarding')
     await assertNoSeriousA11y('onboarding')
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1024, 700))
+    await page.waitForTimeout(200)
+    await noHorizontalOverflow()
+    await screenshot('onboarding-1024-light')
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1440, 900))
     await page.emulateMedia({ colorScheme: 'dark' })
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
     await screenshot('onboarding-dark')
@@ -177,6 +213,8 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.keyboard.press('Space')
     const firstDialog = page.getByRole('dialog')
     await expect(firstDialog).toContainText('Meta charges your key $0.01')
+    await page.waitForTimeout(350)
+    await assertNoSeriousA11y('first-run-confirm')
     for (let attempt = 0; attempt < 5; attempt += 1) {
       const focusedText = await page.evaluate(() => document.activeElement?.textContent ?? '')
       if (focusedText.includes('Make 6 Images')) break
@@ -232,6 +270,12 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.getByRole('button', { name: /Main shot of the product/ }).first().click()
     await page.getByRole('button', { name: /Open in Editor/ }).click()
     await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 15_000 })
+    await expect.poll(() => menuEnabled('menu-copy-image')).toBe(true)
+    expect(await menuEnabled('menu-export')).toBe(true)
+    expect(await menuEnabled('menu-zoom-in')).toBe(true)
+    expect(await menuEnabled('menu-toggle-panel')).toBe(true)
+    expect(await menuEnabled('menu-undo')).toBe(false)
+    expect(await menuEnabled('menu-paste-image')).toBe(true)
     await screenshot('photo-editor')
     await assertNoSeriousA11y('photo-editor')
     await page.getByRole('button', { name: /Kitchen table/ }).first().click()
@@ -268,6 +312,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     const sharpen = page.getByRole('slider', { name: 'Sharpen' })
     await sharpen.focus()
     await page.keyboard.press('ArrowRight')
+    await expect.poll(() => menuEnabled('menu-undo')).toBe(true)
     await page.getByRole('button', { name: /Apply Locally · Free/ }).click()
     await expect(page.getByText('Adjust 01', { exact: true }).first()).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('Cost: Free').first()).toBeVisible()
@@ -296,11 +341,15 @@ test.describe.serial('Moss Photo Studio journey', () => {
   test('create makes four images and opens one in the editor', async () => {
     await page.keyboard.press('Control+3')
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
+    await expect.poll(() => menuEnabled('menu-toggle-panel')).toBe(true)
+    expect(await menuEnabled('menu-zoom-in')).toBe(false)
+    expect(await menuEnabled('menu-export')).toBe(false)
     await screenshot('create-empty')
     await assertNoSeriousA11y('create-empty')
     await page.locator('textarea').first().fill('A ceramic mug alone on a pure white background, centred and filling most of the frame, soft even lighting, product photo.')
     await page.getByRole('button', { name: /Create 4 Images · \$0\.04/ }).click()
     await expect(page.getByText('Newest')).toBeVisible({ timeout: 30_000 })
+    await expect.poll(() => menuEnabled('menu-export')).toBe(true)
     await screenshot('create-results')
     await assertNoSeriousA11y('create-results')
     await page.getByRole('button', { name: 'Edit', exact: true }).first().click()
@@ -317,6 +366,8 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await stubDialogs()
     await page.getByRole('button', { name: 'Export Set', exact: true }).click()
     const dialog = page.getByRole('dialog')
+    await page.waitForTimeout(350)
+    await assertNoSeriousA11y('export-set-dialog')
     await dialog.getByRole('button', { name: 'Export', exact: true }).click()
     await expect.poll(() => fs.existsSync(path.join(exportFolder, 'set.txt')), { timeout: 20_000 }).toBe(true)
     const files = fs.readdirSync(exportFolder)
@@ -429,6 +480,34 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await gotoLibrary()
     await screenshot('library-1024-light')
     await assertNoSeriousA11y('library-1024-light')
+    await page.getByRole('link', { name: 'People', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'People', exact: true })).toBeVisible()
+    await noHorizontalOverflow()
+    await screenshot('people-1024-light')
+    await page.getByRole('link', { name: 'Usage', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'Usage', exact: true })).toBeVisible()
+    await noHorizontalOverflow()
+    await screenshot('usage-1024-light')
+    await page.getByRole('link', { name: 'Settings', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'Studio', exact: true })).toBeVisible()
+    await noHorizontalOverflow()
+    await screenshot('settings-1024-light')
+    await gotoLibrary()
+    await page.locator('article.lib-card').filter({ hasText: '6 images' }).first().getByRole('link', { name: /Open/ }).click()
+    await expect(page.getByRole('button', { name: /Main shot of the product/ }).first()).toBeVisible()
+    await noHorizontalOverflow()
+    await screenshot('set-1024-light')
+    await page.getByRole('button', { name: /Main shot of the product/ }).first().click()
+    await page.getByRole('button', { name: /Open in Editor/ }).click()
+    await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 15_000 })
+    await noHorizontalOverflow()
+    await screenshot('photo-1024-light')
+    await gotoLibrary()
+    await page.locator('article.lib-card').filter({ has: page.getByText('Image', { exact: true }) }).first().getByRole('link', { name: /Open/ }).click()
+    await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
+    await noHorizontalOverflow()
+    await screenshot('create-1024-light')
+    await gotoLibrary()
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.setZoomFactor(1.5))
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.setZoomFactor(1.5))
     await page.waitForTimeout(400)
@@ -442,6 +521,31 @@ test.describe.serial('Moss Photo Studio journey', () => {
     expect(workspaceOverflow).toBeLessThanOrEqual(1)
     await expect(page.locator('.ws-bottom .btn-primary')).toBeVisible()
     await screenshot('set-zoom-150', false)
+    await page.getByRole('link', { name: 'People', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'People', exact: true })).toBeVisible()
+    await noHorizontalOverflow()
+    await page.getByRole('link', { name: 'Usage', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'Usage', exact: true })).toBeVisible()
+    await noHorizontalOverflow()
+    await page.getByRole('link', { name: 'Settings', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'Studio', exact: true })).toBeVisible()
+    await noHorizontalOverflow()
+    await gotoLibrary()
+    await page.locator('article.lib-card').filter({ has: page.getByText('Image', { exact: true }) }).first().getByRole('link', { name: /Open/ }).click()
+    await expect(page.getByRole('button', { name: 'Describe', exact: true })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Describe', exact: true }).click()
+    await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 10_000 })
+    await noHorizontalOverflow()
+    await page.keyboard.press('Escape')
+    await gotoLibrary()
+    await page.locator('article.lib-card').filter({ hasText: '6 images' }).first().getByRole('link', { name: /Open/ }).click()
+    await page.getByRole('button', { name: /Main shot of the product/ }).first().click()
+    await page.getByRole('button', { name: /Open in Editor/ }).click()
+    await expect(page.getByRole('button', { name: 'Open change panel' })).toBeVisible({ timeout: 15_000 })
+    await page.getByRole('button', { name: 'Open change panel' }).click()
+    await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 10_000 })
+    await noHorizontalOverflow()
+    await page.keyboard.press('Escape')
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.webContents.setZoomFactor(1))
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1440, 900))
     expect(pageErrors).toEqual([])
@@ -550,6 +654,36 @@ test.describe.serial('Moss Photo Studio journey', () => {
     expect(exported?.count).toBe(1)
     expect(fs.readdirSync(exportFolder).some((file) => file.endsWith('.webp'))).toBe(true)
     license.control('active')
+    expect(pageErrors).toEqual([])
+  })
+
+  test('a library above 200 projects virtualizes its rows', async () => {
+    await page.evaluate(async () => {
+      for (let index = 0; index < 510; index += 1) {
+        await window.moss.projects.create({ type: 'image', name: `Perf project ${index}` })
+      }
+    })
+    await page.getByRole('link', { name: 'Library', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible({ timeout: 20_000 })
+    const total = await page.evaluate(async () => {
+      const result = await window.moss.projects.list({ limit: 1 })
+      return result.ok ? result.data.total : 0
+    })
+    expect(total).toBeGreaterThan(500)
+    await expect(page.getByText(`${total} projects`, { exact: true })).toBeVisible({ timeout: 20_000 })
+    const showMore = page.getByRole('button', { name: /Show More Projects/ })
+    await expect(showMore).toBeVisible({ timeout: 20_000 })
+    for (let step = 0; step < 3; step += 1) {
+      const button = page.getByRole('button', { name: /Show More Projects/ })
+      if (!(await button.isVisible())) break
+      await button.click()
+      await page.waitForTimeout(1_500)
+    }
+    await expect(showMore).not.toBeVisible({ timeout: 20_000 })
+    expect(await page.locator('article.lib-card').count()).toBeLessThan(80)
+    await page.locator('.page-scroll').evaluate((element) => element.scrollTo({ top: element.scrollHeight }))
+    await page.waitForTimeout(300)
+    await expect(page.getByText('Perf project 0', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
     expect(pageErrors).toEqual([])
   })
 })

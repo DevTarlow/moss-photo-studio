@@ -20,6 +20,7 @@ import type {
   SettingsAll,
   Shape,
   LibraryStats,
+  MenuContext,
   MenuEvent,
   UsageByProject,
   UsageEvent,
@@ -34,6 +35,7 @@ import type {
 export interface IpcChannels {
   'app:info': { request: undefined; response: AppInfo }
   'app:openExternal': { request: { url: string }; response: { ok: true } }
+  'app:setMenuContext': { request: MenuContext; response: { ok: true } }
   'app:openPath': {
     request: { kind: 'library' | 'logs' | 'project' | 'exports'; projectId?: string }
     response: { ok: true }
@@ -180,6 +182,7 @@ export interface MossApi {
   app: {
     info: CallVoid<'app:info'>
     openExternal: Call<'app:openExternal'>
+    setMenuContext: Call<'app:setMenuContext'>
     openPath: Call<'app:openPath'>
     libraryStats: CallVoid<'app:libraryStats'>
     deleteLogs: CallVoid<'app:deleteLogs'>

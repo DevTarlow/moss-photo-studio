@@ -100,6 +100,18 @@ export function PhotoWorkspace(): React.JSX.Element {
   const ready = readyInProject(images)
   const selected = ready.find((image) => image.id === selectedImageId) ?? ready.at(-1) ?? null
   const parent = selected?.parentId ? ready.find((image) => image.id === selected.parentId) ?? null : null
+
+  useEffect(() => {
+    void window.moss.app.setMenuContext({
+      editor: true,
+      adjust: tab === 'adjust',
+      canUndo: tab === 'adjust' && undoStack.length > 0,
+      canRedo: tab === 'adjust' && redoStack.length > 0,
+      hasSelection: Boolean(selected),
+      canExport: Boolean(selected),
+      canZoom: true
+    }).catch(() => undefined)
+  }, [tab, undoStack.length, redoStack.length, selected?.id])
   const parentLabel = parent?.label ?? null
   const overBudget = (settings?.budgetCents ?? null) !== null && monthCents + estimateCents(1) > (settings?.budgetCents ?? 0)
 

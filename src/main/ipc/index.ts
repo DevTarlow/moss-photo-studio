@@ -253,6 +253,24 @@ export function registerIpcHandlers(context: AppContext): void {
 
   registerIpc(
     context,
+    'app:setMenuContext',
+    z.object({
+      editor: z.boolean(),
+      adjust: z.boolean(),
+      canUndo: z.boolean(),
+      canRedo: z.boolean(),
+      hasSelection: z.boolean(),
+      canExport: z.boolean(),
+      canZoom: z.boolean()
+    }),
+    (next) => {
+      context.updateMenuContext(next)
+      return { ok: true as const }
+    }
+  )
+
+  registerIpc(
+    context,
     'app:openPath',
     z.object({ kind: z.enum(['library', 'logs', 'project', 'exports']), projectId: z.string().optional() }),
     async ({ kind, projectId }) => {

@@ -1,3 +1,5 @@
+import type { MenuContext } from './types'
+
 export const APP_NAME = 'Moss Photo Studio'
 export const APP_ID = 'com.mosstoolbox.photostudio'
 export const APP_VERSION = '1.0.0'
@@ -51,3 +53,13 @@ export const APP_ALLOWED_EXTERNAL_HOSTS = [
 export const NETWORK_HOSTS = ['api.meta.ai', 'api.lemonsqueezy.com'] as const
 
 export const isStoreUrlPlaceholder = (url: string): boolean => url === LICENSE_STORE_PLACEHOLDER
+
+export const EMPTY_MENU_CONTEXT: MenuContext = {
+  editor: false,
+  adjust: false,
+  canUndo: false,
+  canRedo: false,
+  hasSelection: false,
+  canExport: false,
+  canZoom: false
+}

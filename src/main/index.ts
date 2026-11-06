@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { app, BrowserWindow, dialog, nativeTheme } from 'electron'
-import { APP_ID, APP_NAME, DEFAULT_BUDGET_CENTS } from '@shared/constants'
+import { APP_ID, APP_NAME, DEFAULT_BUDGET_CENTS, EMPTY_MENU_CONTEXT } from '@shared/constants'
 import type { JobState } from '@shared/types'
 import { runtimeEnv, appResourceRoot, defaultLibraryPath, isReleaseBuild } from './env'
 import { Logger } from './logger'
@@ -28,6 +28,7 @@ import { createMainWindow } from './window'
 import { buildAppMenu } from './menu'
 import { registerIpcHandlers } from './ipc'
 import type { AppContext } from './context'
+import type { MenuContext } from '@shared/types'
 
 app.setName(APP_NAME)
 app.setAppUserModelId(APP_ID)
@@ -52,6 +53,8 @@ if (!gotLock) {
 let mainWindow: BrowserWindow | null = null
 let context: AppContext | null = null
 let quitConfirmed = false
+let menuContext: MenuContext = { ...EMPTY_MENU_CONTEXT }
+let reopenMainWindow: (() => void) | null = null
 const broadcastTimers = new Map<string, NodeJS.Timeout>()
 const lastBroadcast = new Map<string, number>()
 
@@ -82,10 +85,12 @@ function broadcastJob(state: JobState): void {
 }
 
 app.on('second-instance', () => {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    if (mainWindow.isMinimized()) mainWindow.restore()
-    mainWindow.focus()
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    reopenMainWindow?.()
+    return
   }
+  if (mainWindow.isMinimized()) mainWindow.restore()
+  mainWindow.focus()
 })
 
 app.on('before-quit', (event) => {
@@ -122,7 +127,7 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', () => {
-  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.show()
+  reopenMainWindow?.()
 })
 
 async function boot(): Promise<void> {
@@ -227,7 +232,11 @@ async function boot(): Promise<void> {
     devUnlock: runtimeEnv.devUnlock,
     buildDate: typeof __BUILD_DATE__ === 'string' ? __BUILD_DATE__ : new Date().toISOString(),
     getWindow: resolveContext,
-    refreshMenu: () => refreshMenu()
+    refreshMenu: () => refreshMenu(),
+    updateMenuContext: (next) => {
+      menuContext = next
+      refreshMenu()
+    }
   }
 
   installSessionSecurity(!app.isPackaged, logger)
@@ -266,17 +275,34 @@ async function boot(): Promise<void> {
     }
     return false
   }
-  mainWindow = createMainWindow(settings, logger, guardClose)
-  hardenWebContents(mainWindow, !app.isPackaged, logger)
+  const openMainWindow = (): BrowserWindow => {
+    const window = createMainWindow(settings, logger, guardClose)
+    hardenWebContents(window, !app.isPackaged, logger)
+    window.on('closed', () => {
+      if (mainWindow === window) mainWindow = null
+    })
+    return window
+  }
+  mainWindow = openMainWindow()
   const recent = projects.recent(5)
   const rebuildMenu = (): void => {
     buildAppMenu({
       getWindow: () => mainWindow,
       recent: projects.recent(5),
-      dev: !app.isPackaged
+      dev: !app.isPackaged,
+      context: menuContext
     })
   }
   refreshMenu = rebuildMenu
+  reopenMainWindow = () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show()
+      mainWindow.focus()
+      return
+    }
+    mainWindow = openMainWindow()
+    rebuildMenu()
+  }
   rebuildMenu()
   nativeTheme.on('updated', () => {
     // The renderer listens to prefers-color-scheme; this keeps native title

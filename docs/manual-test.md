@@ -8,7 +8,7 @@ This is the record of what was run, what passed, and what the acceptance owner s
 | --- | --- |
 | `npm run typecheck` | Pass |
 | `npm test` | 100 tests pass in 10 files |
-| `npm run test:e2e` | 12 serial tests pass, including axe and screenshot baseline comparison |
+| `npm run test:e2e` | 13 serial tests pass, including axe on dialogs, 510-project virtualization, all-screen 1024 and 150% layout, and screenshot comparison |
 | `npm run audit:tokens` | All foreground/background token pairs pass AA in light and dark |
 | `npm run lint` | 0 errors, warnings for unused locals and preferences |
 | `npm run build` | Pass |
@@ -16,7 +16,7 @@ This is the record of what was run, what passed, and what the acceptance owner s
 | Packaged override test | A packaged release launched to Activation with `MOSS_DEV_UNLOCK=1`, `MOSS_MUSE_FAKE=1`, and `MOSS_E2E=1` set, proving the build gate ignores them. `fakeMode` was false |
 | AppImage launch smoke | Extracted AppImage launched to Activation through Playwright with `APPIMAGE_EXTRACT_AND_RUN=1` |
 | deb launch smoke | `.deb` was unpacked with `dpkg-deb -x` and its executable launched to Activation. The package metadata, desktop entry, icons, and control scripts were inspected |
-| Screenshot baselines | 33 images in `tests/screenshots`, compared with a maximum diff ratio of 0.01. The 150% zoom images are captured but not compared because Playwright rescales the Electron viewport |
+| Screenshot baselines | 41 images in `tests/screenshots`. The 1440 by 900 light and dark images are compared with a maximum diff ratio of 0.01. The 1024 by 700 and 150% zoom images are captured fresh because Playwright can restore the Electron viewport under that helper |
 
 ### Commands used
 
@@ -51,21 +51,23 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - Set export: six named WebP files and a UTF-8 `set.txt`, no overwrite, format and quality controls. The toast names the folder and count and offers Open Folder.
 - Usage: month total equals returned images times one cent, by-project rows, ledger, CSV totals sum to the displayed month spend, budget warning at `$10.00`, reset budget.
 - People: 12 bundled people, user section, Maya's included card, descriptions, and the synthetic-people note.
-- Settings: light and dark theme, persisted after restart, window bounds remembered, 150% zoom at 1024 by 700, no horizontal overflow on the library and set page, keyring warning visible when safeStorage is unavailable.
+- Settings: light and dark theme, persisted after restart, window bounds remembered, 1024 by 700 and 150% zoom coverage for every main screen, keyring warning visible when safeStorage is unavailable.
 - Settings key: Test Connection, Replace, Test and Save, Remove with confirmation. The full key never appears in the page after saving.
 - Offline: with both fake hosts down, generation shows the approved offline copy, no images, no cost. The library, local adjust, and export remain usable.
 - Stray network: no renderer request left for an unexpected host. Only `moss-media://` and the local fake hosts appeared.
 - License grace: with the stored validation moved back 13 days and the store down, the app opened the library with the grace banner. At 15 days it opened Activation, Browse My Library worked, and a project showed the read-only message.
-- Axe: activation, onboarding, set plan, set review, photo editor, adjusted photo, Create empty, Create results, Usage, People, Settings light, Library light, Library dark, Library at 1024, and Library at 150% zoom were checked. No serious or critical violations remained after fixing the onboarding step group and progress bar names.
+- Axe: activation, onboarding, set plan, set review, photo editor, adjusted photo, Create empty, Create results, Usage, People, Settings light, Library light, Library dark, Library at 1024, Library at 150% zoom, the first-run confirmation dialog, and the set export dialog were checked. No serious or critical violations remained after fixing the onboarding step group, progress bar names, and dialog animation timing in the check.
 - Screenshot comparison passed on a second run with the live app.
+- Large library: 510 created projects loaded through every page. The virtual list mounted fewer than 80 cards and scrolling to the bottom exposed the oldest project.
+- Application menu: Export, Undo, Redo, Copy Image, zoom, and Toggle Panel enabled only in the correct editor states. Paste stayed available in the Library. The test read the native menu item state through Electron.
 
 ## Coverage gaps in the automated artifact
 
-- The 1440 by 900 matrix covers every main screen in light mode. Dark mode covers Activation, Onboarding, Library, Set, Photo, Create, People, Usage, and Settings. Set running, Set plan, and export dialogs are light only.
-- Not every screen has a 1024 by 700 at 150% screenshot. The library and set page have that check. Other screens are checked at 1440 by 900, with a library image at 1024 by 700 at 100%.
+- The 1440 by 900 matrix covers every main screen in light mode. Dark mode covers Activation, Onboarding, Library, Set review, Photo, Create, People, Usage, and Settings. Set plan and Set running are light only.
+- Every main screen is captured at 1024 by 700 light. Every main screen also passes a 150% zoom layout and overflow assertion, including the panels as sheets where the viewport hides them.
 - The screenshot matrix was added after the bulk of development. The baseline images reflect the final build states only for the visited journey states.
 - Dialog states are covered by axe during their normal use but are not each captured as standalone screenshots.
-- The library uses pagination and CSS `content-visibility`, not a virtualized DOM. A 500 project and 2,000 image scroll performance session was not run on this host.
+- The library virtualizes above 200 loaded projects and the journey proves a 510-project library mounts fewer than 80 cards. A 2,000 image scroll frame-time profile and a 2,000-version single project were not run.
 
 ## Acceptance checklist
 
@@ -150,8 +152,8 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 ### 17. Accessibility and layout
 
-- [x] **A half** No serious or critical axe findings on the visited screens in light and dark. Keyboard focus is visible. Every control is reachable. 1024 by 700 at 150% has no horizontal overflow for the library and set page.
-  - Full every-screen dark and every-screen 150% matrix was not captured. See the gaps above.
+- [x] **A half** No serious or critical axe findings on the visited screens in light and dark. Keyboard focus is visible. Every control is reachable. Every main screen passes at 1024 by 700 and at 150% zoom with no horizontal overflow. The Set running and export dialog states are not separately captured at 150%.
+  - A real screen-reader pass is still an O check.
 - [ ] **O** Screen reader pass with NVDA and VoiceOver on the target machines.
 
 ### 18. Packaging

@@ -30,6 +30,7 @@ const api: MossApi = {
   app: {
     info: invokeVoid('app:info'),
     openExternal: invoke('app:openExternal'),
+    setMenuContext: invoke('app:setMenuContext'),
     openPath: invoke('app:openPath'),
     libraryStats: invokeVoid('app:libraryStats'),
     deleteLogs: invokeVoid('app:deleteLogs'),

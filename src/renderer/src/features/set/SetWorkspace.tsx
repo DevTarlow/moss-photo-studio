@@ -201,6 +201,18 @@ export function SetWorkspace(): React.JSX.Element {
     })
   }, [madeCount, rightHidden])
 
+  useEffect(() => {
+    void window.moss.app.setMenuContext({
+      editor: true,
+      adjust: false,
+      canUndo: false,
+      canRedo: false,
+      hasSelection: false,
+      canExport: exportableImages.length > 0,
+      canZoom: false
+    }).catch(() => undefined)
+  }, [exportableImages.length])
+
   const loadMonth = async (): Promise<void> => {
     try {
       const summary = await unwrap(window.moss.usage.summary({ month: currentMonth() }))

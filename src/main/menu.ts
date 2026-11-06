@@ -1,20 +1,23 @@
 import { app, BrowserWindow, Menu, shell } from 'electron'
 import type { MenuItemConstructorOptions } from 'electron'
-import type { MenuAction, MenuEvent, Project } from '@shared/types'
+import type { MenuAction, MenuContext, MenuEvent, Project } from '@shared/types'
 import { APP_NAME } from '@shared/constants'
 
 export function buildAppMenu(options: {
   getWindow: () => BrowserWindow | null
   recent: Project[]
   dev: boolean
+  context: MenuContext
 }): void {
   const send = (event: MenuEvent): void => {
     const window = options.getWindow()
     if (window && !window.isDestroyed()) window.webContents.send('moss:menu-action', event)
   }
-  const action = (label: string, menuAction: MenuAction, accelerator?: string): MenuItemConstructorOptions => ({
+  const action = (label: string, menuAction: MenuAction, accelerator?: string, enabled = true): MenuItemConstructorOptions => ({
     label,
+    id: `menu-${menuAction}`,
     accelerator,
+    enabled,
     click: () => send({ action: menuAction })
   })
   const theme = (label: string, menuAction: MenuAction): MenuItemConstructorOptions => ({
@@ -56,18 +59,18 @@ export function buildAppMenu(options: {
         { type: 'separator' },
         { label: 'Open Recent', submenu: recentItems },
         { type: 'separator' },
-        action('Export', 'export', 'CmdOrCtrl+E'),
+        action('Export', 'export', 'CmdOrCtrl+E', options.context.canExport),
         { role: 'close', label: 'Close Window', accelerator: 'CmdOrCtrl+W' }
       ]
     },
     {
       label: 'Edit',
       submenu: [
-        action('Undo', 'undo', 'CmdOrCtrl+Z'),
-        action('Redo', 'redo', 'Shift+CmdOrCtrl+Z'),
+        action('Undo', 'undo', 'CmdOrCtrl+Z', options.context.canUndo),
+        action('Redo', 'redo', 'Shift+CmdOrCtrl+Z', options.context.canRedo),
         { type: 'separator' },
         { role: 'cut' },
-        action('Copy Image', 'copy-image', 'CmdOrCtrl+Shift+C'),
+        action('Copy Image', 'copy-image', 'CmdOrCtrl+Shift+C', options.context.hasSelection),
         action('Paste Image', 'paste-image', 'CmdOrCtrl+V'),
         { type: 'separator' },
         action('Find', 'find', 'CmdOrCtrl+F'),
@@ -78,13 +81,13 @@ export function buildAppMenu(options: {
     {
       label: 'View',
       submenu: [
-        action('Zoom In', 'zoom-in'),
-        action('Zoom Out', 'zoom-out'),
-        action('Reset Zoom', 'zoom-reset'),
-        action('Actual Size', 'actual-size', 'CmdOrCtrl+0'),
+        action('Zoom In', 'zoom-in', 'CmdOrCtrl+=', options.context.canZoom),
+        action('Zoom Out', 'zoom-out', 'CmdOrCtrl+-', options.context.canZoom),
+        action('Reset Zoom', 'zoom-reset', undefined, options.context.canZoom),
+        action('Actual Size', 'actual-size', 'CmdOrCtrl+0', options.context.canZoom),
         { type: 'separator' },
         action('Toggle Rail', 'toggle-rail', 'CmdOrCtrl+B'),
-        action('Toggle Panel', 'toggle-panel', 'CmdOrCtrl+Alt+B'),
+        action('Toggle Panel', 'toggle-panel', 'CmdOrCtrl+Alt+B', options.context.editor),
         action('Toggle Theme', 'toggle-theme'),
         {
           label: 'Theme',

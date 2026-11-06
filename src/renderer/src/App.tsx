@@ -12,6 +12,7 @@ import { fileToBytes } from './lib/files'
 import { warnIfSmallPhoto } from './lib/photoWarnings'
 import { toast } from './lib/toast'
 import { emitCommand } from './lib/commands'
+import { EMPTY_MENU_CONTEXT } from '@shared/constants'
 import { useConfirm } from './components/ui/ConfirmProvider'
 import { Button } from './components/ui/Button'
 import { ToastViewport } from './components/ui/Toast'
@@ -185,6 +186,12 @@ export function RootLayout(): React.JSX.Element {
     document.body.classList.add(`platform-${window.moss.platform}`)
     if (!useAppStore.getState().booted) void boot()
   }, [])
+
+  useEffect(() => {
+    if (!booted) return
+    if (location.pathname.startsWith('/project/')) return
+    void window.moss.app.setMenuContext(EMPTY_MENU_CONTEXT).catch(() => undefined)
+  }, [booted, location.pathname])
 
   useEffect(() => {
     if (!booted) return

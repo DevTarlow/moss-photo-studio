@@ -6,7 +6,7 @@ This is the sibling application to `../moss-toolbox`. It is an Electron desktop 
 
 ## What is in the app
 
-- **Library** with sets, photos, and images, search, filters, sorting, grid and list views, project duplication, rename, delete, and export.
+- **Library** with sets, photos, and images, search, filters, sorting, grid and list views, project duplication, rename, delete, and export. Above 200 projects the grid and list mount only viewport rows.
 - **Sets** from 1 to 8 listing shots. Each shot can be switched off, renamed, described, assigned a person, or given a feature line. The plan saves automatically.
 - **Connection icons** for Main shot, In use, Close-up, Size reference, Flat lay, Gift-ready, Feature callout, and On a person.
 - **Photo editor** with 32 tiles in six groups, 12 bundled people plus your own, a free local adjust panel, version labels, branching, a filmstrip, compare, export, and copy.
@@ -47,7 +47,7 @@ npm run audit:tokens
 npm run lint
 ```
 
-`npm test` runs the unit and integration suites against the fake Muse and Lemon Squeezy hosts. `npm run test:e2e` builds the app, launches Electron with Playwright, activates with a fake key, walks the whole studio, runs axe checks, and compares the screenshots under `tests/screenshots`. Set `MOSS_UPDATE_SCREENS=1` on the first run after an intentional visual change to write new baselines. Screenshot comparison uses a maximum diff ratio of 0.01, as specified. The 150% zoom snapshots are captured without comparison because Playwright rescales the live viewport at that zoom level.
+`npm test` runs the unit and integration suites against the fake Muse and Lemon Squeezy hosts. `npm run test:e2e` builds the app, launches Electron with Playwright, activates with a fake key, walks the whole studio, runs axe checks, and compares the screenshots under `tests/screenshots`. Set `MOSS_UPDATE_SCREENS=1` on the first run after an intentional visual change to write new baselines. The 1440 by 900 light and dark images are compared with a maximum diff ratio of 0.01. The 1024 by 700 and 150% zoom images are captured fresh each run because Playwright's screenshot helper can restore the Electron viewport before taking them.
 
 The E2E suite uses `MOSS_E2E=1`, `MOSS_MUSE_BASE_URL`, and `MOSS_LICENSE_API_BASE` only in an unpackaged development build. `MOSS-E2E-VALID-KEY` is a fake key. No test sends a real key or reaches Meta or Lemon Squeezy.
 
@@ -114,7 +114,7 @@ The renderer reaches the outside world only through named IPC methods. Every req
 
 The Muse client sends one request per set shot. Edits omit `n` and never send a moderation field. Generations include `n`. The client retries only a 429, at most three times, honours `Retry-After`, and shows **Waiting for Meta** while it waits. A 401, 402, 403, or 5xx is never retried. A timeout is recorded with unknown billing and the request is not aborted, because aborting does not undo a bill.
 
-See [docs/api-notes.md](docs/api-notes.md) for the provider assumptions, [DECISIONS.md](DECISIONS.md) for judgement calls, and [docs/manual-test.md](docs/manual-test.md) for the acceptance checklist.
+See [MILESTONES.md](MILESTONES.md) for the M0 through M7 delivery map, [docs/api-notes.md](docs/api-notes.md) for the provider assumptions, [DECISIONS.md](DECISIONS.md) for judgement calls, and [docs/manual-test.md](docs/manual-test.md) for the acceptance checklist.
 
 ## Not included
 
