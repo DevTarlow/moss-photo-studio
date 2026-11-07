@@ -1,6 +1,17 @@
 import { useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { BarChart3, Images, PanelLeftClose, PanelLeftOpen, RotateCcw, Settings, Users } from 'lucide-react'
+import {
+  BarChart3,
+  Image as ImageIcon,
+  Images,
+  Layers,
+  PanelLeftClose,
+  PanelLeftOpen,
+  RotateCcw,
+  Settings,
+  Sparkles,
+  Users
+} from 'lucide-react'
 import { markUrl } from '../../lib/assets'
 import { useAppStore } from '../../store/app'
 import { toast } from '../../lib/toast'
@@ -12,6 +23,12 @@ const items = [
   { to: '/library', label: 'Library', icon: Images },
   { to: '/people', label: 'People', icon: Users },
   { to: '/usage', label: 'Usage', icon: BarChart3 }
+]
+
+const tools = [
+  { to: '/library?new=set', label: 'Set Creator', icon: Layers },
+  { to: '/library?new=photo', label: 'Image Editor', icon: ImageIcon },
+  { to: '/library?new=image', label: 'Image Generator', icon: Sparkles }
 ]
 
 export function Rail({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }): React.JSX.Element {
@@ -67,6 +84,22 @@ export function Rail({ collapsed, onToggle }: { collapsed: boolean; onToggle: ()
               <Icon size={18} strokeWidth={1.75} />
               {!collapsed && <span className="rail-label">{item.label}</span>}
             </NavLink>
+          )
+        })}
+      </div>
+      <div className={cn('mt-5 flex flex-col gap-1', collapsed ? 'items-center px-2' : 'px-2')}>
+        {!collapsed ? (
+          <p className="section-label px-2 pb-1">Tools</p>
+        ) : (
+          <div className="my-1 h-px w-6" style={{ background: 'var(--border)' }} aria-hidden />
+        )}
+        {tools.map((item) => {
+          const Icon = item.icon
+          return (
+            <Link key={item.to} to={item.to} className="rail-item" aria-label={collapsed ? item.label : undefined}>
+              <Icon size={18} strokeWidth={1.75} />
+              {!collapsed && <span className="rail-label">{item.label}</span>}
+            </Link>
           )
         })}
       </div>
