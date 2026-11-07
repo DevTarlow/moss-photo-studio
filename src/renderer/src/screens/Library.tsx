@@ -300,15 +300,15 @@ export function Library(): React.JSX.Element {
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
                   <DropdownMenu.Content className="menu-content" align="end" sideOffset={6}>
-                    <DropdownMenu.Item className="menu-item h-auto flex-col items-start py-2" onSelect={() => openNew('set')}>
+                    <DropdownMenu.Item className="menu-item menu-item-stack" onSelect={() => openNew('set')}>
                       <span className="flex items-center gap-2 font-semibold"><Layers size={15} /> Set Creator</span>
                       <span className="pl-6 text-[11px]" style={{ color: 'var(--text-faint)' }}>One photo in, a full set out.</span>
                     </DropdownMenu.Item>
-                    <DropdownMenu.Item className="menu-item h-auto flex-col items-start py-2" onSelect={() => openNew('photo')}>
+                    <DropdownMenu.Item className="menu-item menu-item-stack" onSelect={() => openNew('photo')}>
                       <span className="flex items-center gap-2 font-semibold"><ImageIcon size={15} /> Image Editor</span>
                       <span className="pl-6 text-[11px]" style={{ color: 'var(--text-faint)' }}>Change a photo you already have.</span>
                     </DropdownMenu.Item>
-                    <DropdownMenu.Item className="menu-item h-auto flex-col items-start py-2" onSelect={() => openNew('image')}>
+                    <DropdownMenu.Item className="menu-item menu-item-stack" onSelect={() => openNew('image')}>
                       <span className="flex items-center gap-2 font-semibold"><Sparkles size={15} /> Image Generator</span>
                       <span className="pl-6 text-[11px]" style={{ color: 'var(--text-faint)' }}>Describe a picture and make it.</span>
                     </DropdownMenu.Item>
