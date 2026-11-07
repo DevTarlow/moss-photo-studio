@@ -74,7 +74,7 @@ export function CommandPalette(): React.JSX.Element {
       {
         id: 'new-set',
         group: 'Actions',
-        label: 'New Set Creator',
+        label: 'New Set',
         hint: 'One photo in, a full set out',
         run: () => go('/library?new=set')
       },

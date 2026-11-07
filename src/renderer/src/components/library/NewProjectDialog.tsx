@@ -71,7 +71,7 @@ export function NewProjectDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title={type === 'set' ? 'New Set Creator' : 'New Image Editor'}
+      title={type === 'set' ? 'New Set' : 'New Image Editor'}
       description={type === 'set' ? 'One clear photo of the product. The better the light, the better the set.' : 'Open a photo to start changing it.'}
       width={540}
       footer={<Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>}
