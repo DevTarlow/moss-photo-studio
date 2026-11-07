@@ -42,6 +42,7 @@ test('a person opens larger, seeds a set, and seeds the image generator', async 
     await preview.getByRole('button', { name: 'Create an Image' }).click()
     await page.getByText('Describe the image').waitFor({ timeout: 20_000 })
     await expect(page.getByText('Image Generator', { exact: true }).first()).toBeVisible()
+    await expect(page.getByText('Mei', { exact: true })).toBeVisible()
     const seeded = await page.evaluate(async () => {
       const id = window.location.hash.split('/project/')[1]?.split(/[?#]/)[0]
       if (!id) return null

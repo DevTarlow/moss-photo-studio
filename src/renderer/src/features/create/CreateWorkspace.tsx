@@ -107,6 +107,12 @@ export function CreateWorkspace(): React.JSX.Element {
     void loadRuns()
   }, [project.id])
 
+  // The project can finish loading after this component mounts, so pick up the
+  // source image when it arrives instead of only reading it at first render.
+  useEffect(() => {
+    if (sourceImageId) setReferenceId(sourceImageId)
+  }, [sourceImageId])
+
   useEffect(() => {
     if (!isRunning) return
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
