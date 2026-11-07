@@ -62,6 +62,7 @@ export function Library(): React.JSX.Element {
   const canGenerate = useAppStore((state) => state.canGenerate)
   const applyLicense = useAppStore((state) => state.applyLicense)
   const [newType, setNewType] = useState<'set' | 'photo' | null>(null)
+  const [newPersonId, setNewPersonId] = useState<string | null>(null)
   const [renameProject, setRenameProject] = useState<Project | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [search, setSearch] = useState(store.search)
@@ -101,6 +102,7 @@ export function Library(): React.JSX.Element {
     const nextType = params.get('new')
     if (nextType === 'set' || nextType === 'photo') {
       setNewType(nextType)
+      setNewPersonId(params.get('person'))
       setParams({}, { replace: true })
     } else if (nextType === 'image') {
       setParams({}, { replace: true })
@@ -131,8 +133,12 @@ export function Library(): React.JSX.Element {
     if (!canGenerate && type !== 'image') {
       toast.error(license?.status === 'expired' ? 'Reactivate to make images.' : 'Add your Muse key in Settings to make images.')
     }
-    if (type === 'image') void createImageProject()
-    else setNewType(type)
+    if (type === 'image') {
+      void createImageProject()
+      return
+    }
+    setNewPersonId(null)
+    setNewType(type)
   }
 
   const duplicate = async (project: Project): Promise<void> => {
@@ -475,7 +481,17 @@ export function Library(): React.JSX.Element {
         )}
       </div>
 
-      <NewProjectDialog open={Boolean(newType)} type={newType} onOpenChange={(open) => { if (!open) setNewType(null) }} />
+      <NewProjectDialog
+        open={Boolean(newType)}
+        type={newType}
+        personId={newPersonId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setNewType(null)
+            setNewPersonId(null)
+          }
+        }}
+      />
 
       <Dialog
         open={Boolean(renameProject)}

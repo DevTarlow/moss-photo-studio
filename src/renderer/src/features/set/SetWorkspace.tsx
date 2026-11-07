@@ -71,7 +71,7 @@ function jobItemFor(job: JobState, shot: PlanShot): JobItemState | undefined {
   return job.items.find((item) => item.key === shot.id)
 }
 
-export function SetWorkspace(): React.JSX.Element {
+export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string | null }): React.JSX.Element {
   const project = useWorkspaceStore((state) => state.project) as Project
   const images = useWorkspaceStore((state) => state.images)
   const plan = useWorkspaceStore((state) => state.planDraft)
@@ -230,7 +230,15 @@ export function SetWorkspace(): React.JSX.Element {
       shape: project.shape,
       format: project.format
     })
-    setPlanDraft(next)
+    const withPerson = preferredPersonId && people.some((person) => person.id === preferredPersonId)
+      ? {
+          ...next,
+          shots: next.shots.map((shot) =>
+            shot.type === 'onmodel' ? { ...shot, personId: preferredPersonId } : shot
+          )
+        }
+      : next
+    setPlanDraft(withPerson)
     await savePlan()
     phaseInitialized.current = true
     setPhase('plan')

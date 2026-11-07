@@ -41,7 +41,7 @@ function readyInProject(images: Image[]): Image[] {
     .sort((a, b) => a.seq - b.seq || a.createdAt - b.createdAt)
 }
 
-export function PhotoWorkspace(): React.JSX.Element {
+export function PhotoWorkspace({ preferredPersonId }: { preferredPersonId?: string | null }): React.JSX.Element {
   const project = useWorkspaceStore((state) => state.project) as Project
   const images = useWorkspaceStore((state) => state.images)
   const selectedImageId = useWorkspaceStore((state) => state.selectedImageId)
@@ -65,7 +65,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const [textSource, setTextSource] = useState<TextSource>('user')
   const [kind, setKind] = useState<ChangeKind>('')
   const [templateId, setTemplateId] = useState<string | null>(null)
-  const [personId, setPersonId] = useState('maya')
+  const [personId, setPersonId] = useState(preferredPersonId ?? 'maya')
   const [adjust, setAdjust] = useState<AdjustTransform>(emptyAdjust())
   const [undoStack, setUndoStack] = useState<AdjustTransform[]>([])
   const [redoStack, setRedoStack] = useState<AdjustTransform[]>([])

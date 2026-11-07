@@ -21,6 +21,7 @@ export function Workspace(): React.JSX.Element {
   const imageParam = params.get('image')
   const view = params.get('view')
   const photoView = view === 'photo'
+  const preferredPersonId = params.get('person')
 
   useEffect(() => {
     if (!id) return
@@ -66,11 +67,13 @@ export function Workspace(): React.JSX.Element {
     )
   }
   const content = project.type === 'set'
-    ? photoView ? <PhotoWorkspace key="set-photo" /> : <SetWorkspace key="set" />
+    ? photoView
+      ? <PhotoWorkspace key="set-photo" preferredPersonId={preferredPersonId} />
+      : <SetWorkspace key="set" preferredPersonId={preferredPersonId} />
     : project.type === 'photo'
-      ? <PhotoWorkspace key="photo" />
+      ? <PhotoWorkspace key="photo" preferredPersonId={preferredPersonId} />
       : photoView
-        ? <PhotoWorkspace key="image-photo" />
+        ? <PhotoWorkspace key="image-photo" preferredPersonId={preferredPersonId} />
         : <CreateWorkspace key="image" />
 
   return (

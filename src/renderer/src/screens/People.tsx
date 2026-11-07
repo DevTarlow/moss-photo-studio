@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { UserPlus, Users } from 'lucide-react'
 import type { Person } from '@shared/types'
 import { AppFrame } from '../components/ui/AppFrame'
@@ -18,16 +19,20 @@ import { DropdownMenu } from 'radix-ui'
 
 function PersonCard({
   person,
+  onOpen,
   onRename,
   onDelete
 }: {
   person: Person
+  onOpen: () => void
   onRename?: () => void
   onDelete?: () => void
 }): React.JSX.Element {
   return (
     <div className="card card-hover group relative overflow-hidden">
-      <img src={person.portraitUrl} alt="" className="aspect-square w-full object-cover" />
+      <button type="button" className="block w-full cursor-zoom-in" onClick={onOpen} aria-label={`Open ${person.name} larger`}>
+        <img src={person.portraitUrl} alt="" className="aspect-square w-full object-cover" />
+      </button>
       <div className="p-3">
         <p className="truncate text-[13px] font-semibold">{person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}</p>
         <p className="meta mt-0.5">Used in {person.usedIn} {person.usedIn === 1 ? 'image' : 'images'}</p>
@@ -55,9 +60,11 @@ function PersonCard({
 }
 
 export function People(): React.JSX.Element {
+  const navigate = useNavigate()
   const confirm = useConfirm()
   const people = useAppStore((state) => state.people)
   const refreshPeople = useAppStore((state) => state.refreshPeople)
+  const [previewPerson, setPreviewPerson] = useState<Person | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
@@ -149,6 +156,13 @@ export function People(): React.JSX.Element {
     }
   }
 
+  const startProject = (type: 'set' | 'photo'): void => {
+    if (!previewPerson) return
+    const personId = previewPerson.id
+    setPreviewPerson(null)
+    navigate(`/library?new=${type}&person=${encodeURIComponent(personId)}`)
+  }
+
   const rename = async (): Promise<void> => {
     if (!renaming || !renameValue.trim()) return
     try {
@@ -197,7 +211,7 @@ export function People(): React.JSX.Element {
             </div>
             <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
               {included.map((person) => (
-                <PersonCard key={person.id} person={person} />
+                <PersonCard key={person.id} person={person} onOpen={() => setPreviewPerson(person)} />
               ))}
             </div>
             <p className="hint mt-3">Synthetic reference people made for Moss. They are not photographs of real people.</p>
@@ -223,6 +237,7 @@ export function People(): React.JSX.Element {
                   <PersonCard
                     key={person.id}
                     person={person}
+                    onOpen={() => setPreviewPerson(person)}
                     onRename={() => { setRenaming(person); setRenameValue(person.name) }}
                     onDelete={() => void remove(person)}
                   />
@@ -284,6 +299,30 @@ export function People(): React.JSX.Element {
         }
       >
         <Field label="Name" value={renameValue} onChange={(event) => setRenameValue(event.target.value)} autoFocus maxLength={80} />
+      </Dialog>
+
+      <Dialog
+        open={Boolean(previewPerson)}
+        onOpenChange={(open) => { if (!open) setPreviewPerson(null) }}
+        title={previewPerson ? `${previewPerson.name}${previewPerson.ageBand ? ` · ${previewPerson.ageBand}` : ''}` : 'Person'}
+        description={previewPerson?.blurb ?? undefined}
+        width={520}
+        footer={<Button variant="ghost" onClick={() => setPreviewPerson(null)}>Close</Button>}
+      >
+        {previewPerson && (
+          <>
+            <img
+              src={previewPerson.portraitUrl}
+              alt={`${previewPerson.name} portrait`}
+              className="mx-auto max-h-[60vh] w-full rounded-[12px] object-contain"
+            />
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button variant="primary" onClick={() => startProject('set')}>Create a Set</Button>
+              <Button variant="secondary" onClick={() => startProject('photo')}>Create a Photo</Button>
+            </div>
+            <p className="hint mt-2">The person is preselected when you add your product photo.</p>
+          </>
+        )}
       </Dialog>
     </AppFrame>
   )

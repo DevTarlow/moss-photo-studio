@@ -11,10 +11,12 @@ import { Button } from '../ui/Button'
 export function NewProjectDialog({
   open,
   type,
+  personId,
   onOpenChange
 }: {
   open: boolean
   type: 'set' | 'photo' | null
+  personId?: string | null
   onOpenChange: (open: boolean) => void
 }): React.JSX.Element {
   const navigate = useNavigate()
@@ -25,7 +27,7 @@ export function NewProjectDialog({
     if (!result?.projectId) return
     warnIfSmallPhoto(result)
     onOpenChange(false)
-    navigate(`/project/${result.projectId}`)
+    navigate(`/project/${result.projectId}${personId ? `?person=${encodeURIComponent(personId)}` : ''}`)
   }
 
   const openPicker = async (): Promise<void> => {
