@@ -12,7 +12,6 @@ import {
   Sparkles,
   Users
 } from 'lucide-react'
-import { markUrl } from '../../lib/assets'
 import { useAppStore } from '../../store/app'
 import { toast } from '../../lib/toast'
 import { useConfirm } from './ConfirmProvider'
@@ -56,13 +55,7 @@ export function Rail({ collapsed, onToggle }: { collapsed: boolean; onToggle: ()
 
   return (
     <nav className={cn('app-rail', collapsed && 'rail-collapsed')} data-collapsed={collapsed} aria-label="Studio">
-      <div className={cn('flex flex-col', collapsed ? 'items-center pt-3' : 'px-3 pt-3')}>
-        <div className={cn('flex items-center gap-2 px-2 py-1', !collapsed && 'w-full')}>
-          <img src={markUrl()} alt="" width={24} height={24} className="h-6 w-6 object-contain" />
-          {!collapsed && <span className="wordmark" style={{ color: 'var(--accent)' }}>Moss</span>}
-        </div>
-      </div>
-      <div className={cn('mt-4 flex flex-col gap-1', collapsed ? 'items-center px-2' : 'px-2')}>
+      <div className={cn('flex flex-col gap-1 pt-3', collapsed ? 'items-center px-2' : 'px-2')}>
         {workspace && (
           <Link to="/library" className="rail-item" aria-label="Back to Library">
             <span className="grid h-[18px] w-[18px] place-items-center" aria-hidden>
