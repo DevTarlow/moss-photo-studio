@@ -39,6 +39,10 @@ app.commandLine.appendSwitch('disable-component-update')
 app.commandLine.appendSwitch('disable-domain-reliability')
 app.commandLine.appendSwitch('disable-sync')
 app.commandLine.appendSwitch('no-pings')
+// The native color chooser ships an eye-dropper button, and the EyeDropper
+// dialog is not supported on Linux Wayland. The app does not need it, so the
+// color well stays a plain color picker.
+app.commandLine.appendSwitch('disable-features', 'EyeDropper')
 if (runtimeEnv.userDataDir) {
   app.setPath('userData', runtimeEnv.userDataDir)
 }
