@@ -4,7 +4,7 @@ import sharp from 'sharp'
 import type { Format } from '@shared/types'
 import { DEFAULT_IMPORT_LONG_EDGE, MAX_IMPORT_BYTES, THUMB_LONG_EDGE, WORKING_QUALITY } from '@shared/constants'
 import { extensionForFormat } from '@shared/shapes'
-import { absoluteInLibrary, thumbRelative, workingRelative } from './paths'
+import { absoluteInLibrary, productRelative, productThumbRelative, thumbRelative, workingRelative } from './paths'
 
 export class ImageImportError extends Error {
   constructor(
@@ -191,6 +191,51 @@ export async function normalisePersonReference(input: {
   } catch (error) {
     if (error instanceof ImageImportError) throw error
     throw new ImageImportError('unreadable', "That photo could not be read. Try another one.")
+  }
+}
+
+export async function normaliseProduct(input: {
+  libraryPath: string
+  productId: string
+  bytes: Uint8Array
+}): Promise<{ file: string; thumb: string; width: number; height: number }> {
+  const fileRel = productRelative(input.productId)
+  const thumbRel = productThumbRelative(input.productId)
+  const filePath = absoluteInLibrary(input.libraryPath, fileRel)
+  const thumbPath = absoluteInLibrary(input.libraryPath, thumbRel)
+  await fs.mkdir(path.dirname(filePath), { recursive: true })
+  await fs.mkdir(path.dirname(thumbPath), { recursive: true })
+  try {
+    const meta = await sharp(input.bytes).rotate().metadata()
+    if (Math.min(meta.width ?? 0, meta.height ?? 0) < 256) {
+      throw new ImageImportError('too_small', 'That photo is too small. Try one at least 256 pixels wide.')
+    }
+    await sharp(input.bytes)
+      .rotate()
+      .toColorspace('srgb')
+      .flatten({ background: { r: 255, g: 255, b: 255 } })
+      .resize({ width: 2048, height: 2048, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 92, effort: 4 })
+      .toFile(filePath)
+    const finalMeta = await sharp(filePath).metadata()
+    await sharp(filePath)
+      .resize({ width: 480, height: 480, fit: 'cover' })
+      .webp({ quality: 82 })
+      .toFile(thumbPath)
+    return {
+      file: fileRel,
+      thumb: thumbRel,
+      width: finalMeta.width ?? 0,
+      height: finalMeta.height ?? 0
+    }
+  } catch (error) {
+    await fs.rm(filePath, { force: true }).catch(() => undefined)
+    await fs.rm(thumbPath, { force: true }).catch(() => undefined)
+    if (error instanceof ImageImportError) throw error
+    if (isDiskFull(error)) {
+      throw new ImageImportError('disk_full', 'There is no space on this computer. Free some space and try again.')
+    }
+    throw new ImageImportError('unreadable', 'That photo could not be read. Try another one.')
   }
 }
 

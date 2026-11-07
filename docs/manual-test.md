@@ -156,7 +156,18 @@ Mark each line only after it is run on the target machine. `A` items should be r
   - A real screen-reader pass is still an O check.
 - [ ] **O** Screen reader pass with NVDA and VoiceOver on the target machines.
 
-### 18. Packaging
+### 18. Products and cross-tool sources
+
+- [ ] **A** Save a generated image, an editor version, and a set shot as Products. Each appears on the Products page after a restart.
+- [ ] **A** Start a New Set and a New Image Editor from a Product, then from a ready library image. The chosen photo becomes the project source.
+- [ ] **A** Replace a set's product photo from a Product and from a library image. Images already made stay.
+- [ ] **A** Add a photo to an existing Image Editor from a Product and from a library image. It becomes a new version.
+- [ ] **A** In the Image Generator, choose a Product and a Person from People. The run makes one image and the person is holding the product.
+- [ ] **A** The count control is fixed at one image while a reference is selected.
+- [ ] **A** Delete a Product. The Products page empties, and projects and images made from it remain.
+- [ ] **O** Real-key check: a saved Product plus a person reference produces a recognizable product and person.
+
+### 19. Packaging
 
 - [x] **A half** The AppImage and deb were built. The deb contains a desktop entry, icons, and postinst. Both application binaries launched.
 - [ ] **O** Install both on a clean Ubuntu 22.04 and 24.04 machine, with no Node.js installed, and launch from the desktop.

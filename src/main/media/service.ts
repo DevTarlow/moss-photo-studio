@@ -17,7 +17,7 @@ import {
   normaliseToWorking,
   writeOriginal
 } from './import'
-import { absoluteInLibrary, originalRelative } from './paths'
+import { absoluteInLibrary, originalRelative, workingFor } from './paths'
 
 export class MediaService {
   constructor(
@@ -103,6 +103,37 @@ export class MediaService {
       width: normalised.width,
       height: normalised.height
     }
+  }
+
+  async importFromImage(input: { projectId: string; imageId: string }): Promise<ImportResult> {
+    const target = this.deps.projects.get(input.projectId)
+    if (!target) throw new ImageImportError('unreadable', 'That project is not here anymore.')
+    const image = this.deps.images.get(input.imageId)
+    if (!image || image.status !== 'ready') {
+      throw new ImageImportError('unreadable', 'That photo is not here anymore.')
+    }
+    let bytes: Buffer | null = null
+    try {
+      bytes = await fs.readFile(workingFor(this.deps.libraryPath(), image.projectId, image.id))
+    } catch {
+      // Older rows may only have their original file.
+    }
+    if (!bytes && image.url) {
+      try {
+        bytes = await fs.readFile(
+          absoluteInLibrary(this.deps.libraryPath(), decodeURI(image.url.replace('moss-media://library/', '')))
+        )
+      } catch {
+        // Report not_found below.
+      }
+    }
+    if (!bytes) throw new ImageImportError('unreadable', 'That photo is not here anymore.')
+    return this.importSource({
+      projectId: input.projectId,
+      bytes,
+      label: image.label,
+      personId: image.personId
+    })
   }
 
   async importPerson(input: { name: string; bytes: Uint8Array }): Promise<{ personId: string }> {

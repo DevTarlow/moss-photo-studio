@@ -112,6 +112,13 @@ export function CommandPalette(): React.JSX.Element {
         run: () => go('/usage')
       },
       {
+        id: 'products',
+        group: 'Actions',
+        label: 'Open Products',
+        hint: 'Reusable product photos',
+        run: () => go('/products')
+      },
+      {
         id: 'theme',
         group: 'Actions',
         label: 'Toggle theme',

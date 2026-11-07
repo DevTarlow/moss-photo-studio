@@ -6,6 +6,8 @@ import type { JobRepository } from './db/repositories/jobs'
 import type { UsageRepository } from './db/repositories/usage'
 import type { BrandRepository } from './db/repositories/brand'
 import type { PeopleRepository } from './db/repositories/people'
+import type { ProductRepository } from './db/repositories/products'
+import type { ProductService } from './products/service'
 import type { SettingsStore } from './settings'
 import type { SecretStore } from './secrets'
 import type { Logger } from './logger'
@@ -28,6 +30,8 @@ export interface AppContext {
   usage: UsageRepository
   brand: BrandRepository
   people: PeopleRepository
+  products: ProductRepository
+  productService: ProductService
   media: MediaService
   queue: JobQueue
   license: LicenseController

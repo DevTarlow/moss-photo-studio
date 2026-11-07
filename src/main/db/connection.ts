@@ -160,6 +160,25 @@ const migrations: Migration[] = [
     up(db) {
       db.exec('ALTER TABLE brand ADD COLUMN colors_enabled INTEGER NOT NULL DEFAULT 1')
     }
+  },
+  {
+    version: 3,
+    up(db) {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS products (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          file TEXT NOT NULL,
+          thumb TEXT,
+          width INTEGER,
+          height INTEGER,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_images_library ON images(deleted_at, status, created_at);
+      `)
+    }
   }
 ]
 

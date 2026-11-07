@@ -12,6 +12,8 @@ import type {
   Person,
   PlanJson,
   PlanRecord,
+  Product,
+  LibraryImage,
   Project,
   ProjectDetail,
   ProjectFilter,
@@ -85,9 +87,28 @@ export interface IpcChannels {
     response: ProjectDetail
   }
   'projects:createFromImage': {
-    request: { sourceImageId: string; name?: string }
+    request: { sourceImageId: string; name?: string; type?: 'set' | 'photo' | 'image' }
     response: ProjectDetail
   }
+  'products:list': { request: undefined; response: Product[] }
+  'products:createFromImage': { request: { imageId: string; name: string }; response: Product }
+  'products:createFromBytes': { request: { bytes: Uint8Array; name: string }; response: Product }
+  'dialog:pickProduct': { request: undefined; response: Product | null }
+  'products:rename': { request: { id: string; name: string }; response: Product }
+  'products:delete': { request: { id: string }; response: { ok: true } }
+  'products:createProject': {
+    request: { productId: string; type: 'set' | 'photo' | 'image'; name?: string }
+    response: ProjectDetail
+  }
+  'products:importIntoProject': {
+    request: { productId: string; projectId: string; label?: string }
+    response: ImportResult
+  }
+  'images:library': {
+    request: { search?: string; limit?: number; offset?: number }
+    response: { items: LibraryImage[]; total: number }
+  }
+  'media:importFromImage': { request: { projectId: string; imageId: string }; response: ImportResult }
   'dialog:importImage': {
     request: { projectId?: string; kind: 'source' | 'person'; type?: 'set' | 'photo'; name?: string }
     response: ImportResult | null
@@ -232,11 +253,22 @@ export interface MossApi {
     delete: Call<'projects:delete'>
     recent: Call<'projects:recent'>
   }
+  products: {
+    list: CallVoid<'products:list'>
+    createFromImage: Call<'products:createFromImage'>
+    createFromBytes: Call<'products:createFromBytes'>
+    rename: Call<'products:rename'>
+    delete: Call<'products:delete'>
+    createProject: Call<'products:createProject'>
+    importIntoProject: Call<'products:importIntoProject'>
+  }
   dialogs: {
     importImage: Call<'dialog:importImage'>
+    pickProduct: CallVoid<'dialog:pickProduct'>
   }
   media: {
     importBytes: Call<'media:importBytes'>
+    importFromImage: Call<'media:importFromImage'>
   }
   plans: {
     get: Call<'plans:get'>
@@ -244,6 +276,7 @@ export interface MossApi {
   }
   images: {
     list: Call<'images:list'>
+    library: Call<'images:library'>
     get: Call<'images:get'>
     delete: Call<'images:delete'>
     setCover: Call<'images:setCover'>

@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Popover } from 'radix-ui'
-import { ChevronDown, Download, Image as ImageIcon, Layers, Loader2, Pencil, Plus, Sparkles, Trash2, X } from 'lucide-react'
+import { DropdownMenu, Popover } from 'radix-ui'
+import { ChevronDown, Download, Image as ImageIcon, Layers, Loader2, Package, Pencil, Plus, Sparkles, Trash2, X } from 'lucide-react'
 import type { Format, Image, JobState, Project, Shape } from '@shared/types'
 import { MAX_PROMPT } from '@shared/constants'
-import { PERSON_REF_GUARD, REF_GUARD } from '@shared/prompts/guards'
+import { composeCreatePrompt } from '@shared/prompts/guards'
 import { startersByCategory } from '@shared/starters'
 import type { Starter } from '@shared/starters'
 import { estimateCents, usd } from '@shared/cost'
 import { errorMessage, billingUncertain } from '@shared/errors'
 import { useWorkspaceStore } from '../../store/workspace'
 import { useAppStore } from '../../store/app'
+import { SourcePickerDialog } from '../../components/sources/SourcePickerDialog'
+import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
+import { SaveProductDialog } from '../../components/products/SaveProductDialog'
 import { useJobsStore } from '../../store/jobs'
 import { useViewportTier } from '../../lib/viewport'
 import { useConfirm } from '../../components/ui/ConfirmProvider'
@@ -50,6 +53,7 @@ export function CreateWorkspace(): React.JSX.Element {
   const refreshImages = useWorkspaceStore((state) => state.refreshImages)
   const settings = useAppStore((state) => state.settings)
   const secrets = useAppStore((state) => state.secrets)
+  const people = useAppStore((state) => state.people)
   const canGenerate = useAppStore((state) => state.canGenerate)
   const refreshSettings = useAppStore((state) => state.refreshSettings)
   const jobs = useJobsStore((state) => state.jobs)
@@ -65,7 +69,9 @@ export function CreateWorkspace(): React.JSX.Element {
   const [count, setCount] = useState(1)
   const [shape, setShape] = useState<Shape>(settings?.defaultShape ?? 'square')
   const [format, setFormat] = useState<Format>(project.format ?? settings?.defaultFormat ?? 'webp')
-  const [referenceId, setReferenceId] = useState<string | null>(sourceImageId)
+  const [productRef, setProductRef] = useState<SourceChoice | null>(null)
+  const [personId, setPersonId] = useState<string | null>(null)
+  const [saveProductImage, setSaveProductImage] = useState<Image | null>(null)
   const [firstOpen, setFirstOpen] = useState(false)
   const [currentJobId, setCurrentJobId] = useState<string | null>(null)
   const [runs, setRuns] = useState<JobState[]>([])
@@ -88,8 +94,11 @@ export function CreateWorkspace(): React.JSX.Element {
   const job = running ?? (currentJob?.status === 'running' ? currentJob : null)
   const isRunning = Boolean(job)
   const completeJobs = runs.filter((run) => run.status !== 'running')
-  const reference = images.find((image) => image.id === referenceId && image.status === 'ready') ?? null
-  const referenceGuard = reference?.personId ? PERSON_REF_GUARD : REF_GUARD
+  const hasReference = Boolean(productRef || personId)
+  const requestedCount = hasReference ? 1 : count
+  const selectedPerson = people.find((person) => person.id === personId) ?? null
+  const composedPrompt = composeCreatePrompt({ text: prompt, hasProduct: Boolean(productRef), hasPerson: Boolean(personId) })
+  const guardChars = composedPrompt.length - prompt.trim().length
   const results = images
     .filter((image) => image.status === 'ready' && image.kind !== 'upload')
     .filter((image) => {
@@ -98,9 +107,9 @@ export function CreateWorkspace(): React.JSX.Element {
       return image.createdAt >= runFilter.startedAt - 100 && image.createdAt <= end + 100
     })
     .sort((a, b) => b.createdAt - a.createdAt || b.seq - a.seq)
-  const overBudget = (settings?.budgetCents ?? null) !== null && monthCents + estimateCents(count) > (settings?.budgetCents ?? 0)
-  const promptTooLongForReference = Boolean(reference) && prompt.length + referenceGuard.length > MAX_PROMPT
-  const canSubmit = Boolean(prompt.trim()) && prompt.length <= MAX_PROMPT && !promptTooLongForReference && Boolean(secrets?.hasKey) && canGenerate
+  const overBudget = (settings?.budgetCents ?? null) !== null && monthCents + estimateCents(requestedCount) > (settings?.budgetCents ?? 0)
+  const promptTooLongForReference = hasReference && composedPrompt.length > MAX_PROMPT
+  const canSubmit = Boolean(prompt.trim()) && composedPrompt.length <= MAX_PROMPT && Boolean(secrets?.hasKey) && canGenerate
 
   useEffect(() => {
     void loadMonth()
@@ -109,9 +118,23 @@ export function CreateWorkspace(): React.JSX.Element {
 
   // The project can finish loading after this component mounts, so pick up the
   // source image when it arrives instead of only reading it at first render.
+  const initializedSource = useRef<string | null>(null)
   useEffect(() => {
-    if (sourceImageId) setReferenceId(sourceImageId)
-  }, [sourceImageId])
+    if (!sourceImageId || initializedSource.current === sourceImageId) return
+    const image = images.find((entry) => entry.id === sourceImageId)
+    if (!image) return
+    initializedSource.current = sourceImageId
+    if (image.personId) {
+      setPersonId(image.personId)
+      setProductRef(null)
+      return
+    }
+    setProductRef({ kind: 'image', imageId: image.id, label: image.label, thumbUrl: image.thumbUrl })
+  }, [sourceImageId, images])
+
+  useEffect(() => {
+    if (hasReference && count !== 1) setCount(1)
+  }, [hasReference, count])
 
   useEffect(() => {
     if (!isRunning) return
@@ -209,7 +232,7 @@ export function CreateWorkspace(): React.JSX.Element {
       return
     }
     if (promptTooLongForReference) {
-      setError(`This photo adds ${REF_GUARD.length} characters to the request. Shorten your description by ${prompt.length + REF_GUARD.length - MAX_PROMPT}.`)
+      setError(`These references add ${guardChars} characters to the request. Shorten your description by ${composedPrompt.length - MAX_PROMPT}.`)
       return
     }
     if (!settings?.firstRunConfirmShown) {
@@ -224,10 +247,12 @@ export function CreateWorkspace(): React.JSX.Element {
       const result = await unwrap(window.moss.jobs.startCreate({
         projectId: project.id,
         prompt,
-        count,
+        count: requestedCount,
         shape,
         format,
-        sourceImageId: referenceId ?? undefined
+        sourceImageId: productRef?.kind === 'image' ? productRef.imageId : undefined,
+        productId: productRef?.kind === 'product' ? productRef.productId : undefined,
+        personId: personId ?? undefined
       }))
       const state = await unwrap(window.moss.jobs.state({ jobId: result.jobId }))
       upsert(state)
@@ -289,6 +314,18 @@ export function CreateWorkspace(): React.JSX.Element {
     }
   }
 
+  const chooseProductRef = (choice: SourceChoice): void => {
+    setProductRef(choice)
+    if (choice.kind !== 'image') return
+    const image = images.find((entry) => entry.id === choice.imageId)
+    if (!image || image.projectId !== project.id || image.personId) return
+    // Keep the project source in step with a reference chosen from this project,
+    // matching the old reference picker. External sources are not copied.
+    void window.moss.images.setSource({ projectId: project.id, imageId: image.id })
+      .then(() => useWorkspaceStore.getState().refresh())
+      .catch(() => undefined)
+  }
+
   const chooseFile = async (): Promise<void> => {
     setPickerOpen(false)
     try {
@@ -296,7 +333,10 @@ export function CreateWorkspace(): React.JSX.Element {
       if (result?.imageId) {
         warnIfSmallPhoto(result)
         await useWorkspaceStore.getState().refresh()
-        setReferenceId(result.imageId)
+        const added = useWorkspaceStore.getState().images.find((image) => image.id === result.imageId)
+        if (added) {
+          setProductRef({ kind: 'image', imageId: added.id, label: added.label, thumbUrl: added.thumbUrl })
+        }
       }
     } catch (caught) {
       toast.error(messageOf(caught))
@@ -320,7 +360,7 @@ export function CreateWorkspace(): React.JSX.Element {
           hint="Meta makes the picture. You pay a cent for every image that comes back."
         />
         {promptTooLongForReference && (
-          <p className="error-text mt-1" role="alert">This reference adds {referenceGuard.length} characters. Shorten your description.</p>
+          <p className="error-text mt-1" role="alert">These references add {guardChars} characters. Shorten your description.</p>
         )}
       </div>
 
@@ -362,53 +402,60 @@ export function CreateWorkspace(): React.JSX.Element {
       </div>
 
       <div className="mt-5">
-        <p className="field-label">Use a reference image <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
-        {reference ? (
+        <p className="field-label">Product reference <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+        {productRef ? (
           <div className="flex items-center gap-2 rounded-[8px] border p-2" style={{ borderColor: 'var(--border)' }}>
-            {reference.thumbUrl && <img src={reference.thumbUrl} alt="The reference image" className="h-10 w-10 rounded object-cover" />}
+            {productRef.thumbUrl && <img src={productRef.thumbUrl} alt="The product reference" className="h-10 w-10 rounded object-cover" />}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[11px] font-medium">{reference.label}</p>
-              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>Sent with the request so its subject stays the same.</p>
+              <p className="truncate text-[11px] font-medium">{productRef.kind === 'product' ? productRef.name : productRef.label}</p>
+              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>Sent with the request so the product stays the same.</p>
             </div>
-            <button type="button" className="icon-btn" aria-label="Remove reference image" onClick={() => setReferenceId(null)}><X size={14} /></button>
+            <button type="button" className="icon-btn" aria-label="Remove product reference" onClick={() => setProductRef(null)}><X size={14} /></button>
           </div>
         ) : (
-          <Popover.Root open={pickerOpen} onOpenChange={setPickerOpen}>
-            <Popover.Trigger asChild>
-              <Button variant="secondary" className="w-full justify-start" type="button">
-                <ImageIcon size={15} /> Use a Reference Image
-              </Button>
-            </Popover.Trigger>
-            <Popover.Portal>
-              <Popover.Content className="menu-content w-[300px]" sideOffset={4} align="start">
-                <p className="section-label px-2 pb-1 pt-1">Project images</p>
-                <div className="max-h-[220px] overflow-y-auto">
-                  {images.filter((image) => image.status === 'ready').length === 0 ? (
-                    <p className="meta px-2 py-2">No images yet.</p>
-                  ) : (
-                    images.filter((image) => image.status === 'ready').map((image) => (
-                      <Popover.Close asChild key={image.id}>
-                        <button type="button" className="menu-item w-full" onClick={() => {
-                          setReferenceId(image.id)
-                          void window.moss.images.setSource({ projectId: project.id, imageId: image.id }).then(() => useWorkspaceStore.getState().refresh()).catch(() => toast.error('That photo could not be used.'))
-                        }}>
-                          {image.thumbUrl && <img src={image.thumbUrl} alt="" className="h-7 w-7 rounded object-cover" />}
-                          <span className="min-w-0 flex-1 truncate text-left">{image.label}</span>
-                        </button>
-                      </Popover.Close>
-                    ))
-                  )}
-                </div>
-                <Popover.Close asChild>
-                  <button type="button" className="menu-item w-full" onClick={() => void chooseFile()}>
-                    <Plus size={14} /> Choose a File
-                  </button>
-                </Popover.Close>
-              </Popover.Content>
-            </Popover.Portal>
-          </Popover.Root>
+          <Button variant="secondary" className="w-full justify-start" type="button" onClick={() => setPickerOpen(true)}>
+            <ImageIcon size={15} /> Choose a Product Photo
+          </Button>
         )}
       </div>
+
+      <div className="mt-4">
+        <p className="field-label">Person reference <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+        {selectedPerson ? (
+          <div className="flex items-center gap-2 rounded-[8px] border p-2" style={{ borderColor: 'var(--border)' }}>
+            <img src={selectedPerson.portraitUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[11px] font-medium">{selectedPerson.name}{selectedPerson.ageBand ? ` · ${selectedPerson.ageBand}` : ''}</p>
+              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>Sent with the request so the person stays the same.</p>
+            </div>
+            <button type="button" className="icon-btn" aria-label="Remove person reference" onClick={() => setPersonId(null)}><X size={14} /></button>
+          </div>
+        ) : people.length === 0 ? (
+          <p className="hint">Add a person on the People page to use one here.</p>
+        ) : (
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <Button variant="secondary" className="w-full justify-start" type="button">
+                <Plus size={15} /> Choose a Person
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content className="menu-content min-w-[240px]" sideOffset={4}>
+                {people.map((person) => (
+                  <DropdownMenu.Item key={person.id} className="menu-item" onSelect={() => setPersonId(person.id)}>
+                    <img src={person.portraitUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
+                    <span className="min-w-0 flex-1 truncate">{person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}</span>
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        )}
+      </div>
+
+      {hasReference && (
+        <p className="hint mt-2">A product and a person can be sent together. References make one image at a time.</p>
+      )}
 
       <div className="mt-5 space-y-4 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
         <div>
@@ -417,8 +464,13 @@ export function CreateWorkspace(): React.JSX.Element {
             label="How many images"
             value={String(count) as '1' | '2' | '3' | '4'}
             onChange={(value) => setCount(Number(value))}
-            options={[1, 2, 3, 4].map((value) => ({ value: String(value) as '1' | '2' | '3' | '4', label: String(value) }))}
+            options={[1, 2, 3, 4].map((value) => ({
+              value: String(value) as '1' | '2' | '3' | '4',
+              label: String(value),
+              disabled: hasReference && value !== 1
+            }))}
           />
+          {hasReference && <p className="hint mt-1">References make one image at a time.</p>}
         </div>
         <div>
           <p className="field-label">Shape</p>
@@ -533,6 +585,7 @@ export function CreateWorkspace(): React.JSX.Element {
                         <button type="button" className="canvas-btn" onClick={() => void download(image)}><Download size={13} /> Download</button>
                         <button type="button" className="canvas-btn" onClick={() => navigate(`/project/${project.id}?view=photo&image=${image.id}`)}><Pencil size={13} /> Edit</button>
                         <button type="button" className="canvas-btn" onClick={() => void useAsSet(image)}><Layers size={13} /> Use as a Set's Photo</button>
+                        <button type="button" className="canvas-btn" onClick={() => setSaveProductImage(image)}><Package size={13} /> Save as Product</button>
                         <button type="button" className="canvas-btn" onClick={() => void remove(image)} aria-label={`Delete ${image.label}`}><Trash2 size={13} /></button>
                       </div>
                     </div>
@@ -553,7 +606,7 @@ export function CreateWorkspace(): React.JSX.Element {
 
       <div className="ws-bottom">
         <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/usage')}>
-          <span className="tabular">{count} {count === 1 ? 'image' : 'images'} · {usd(estimateCents(count))}</span>
+          <span className="tabular">{requestedCount} {requestedCount === 1 ? 'image' : 'images'} · {usd(estimateCents(requestedCount))}</span>
         </button>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {overBudget ? (
@@ -561,7 +614,7 @@ export function CreateWorkspace(): React.JSX.Element {
           ) : (
             <Button variant="primary" disabled={!canSubmit || isRunning || promptTooLongForReference} onClick={() => void submit()}>
               {isRunning ? <Loader2 size={14} className="animate-spin" /> : null}
-              Create {count} {count === 1 ? 'Image' : 'Images'} · {usd(estimateCents(count))}
+              Create {requestedCount} {requestedCount === 1 ? 'Image' : 'Images'} · {usd(estimateCents(requestedCount))}
             </Button>
           )}
           {!secrets?.hasKey && <button type="button" className="hint underline" onClick={() => navigate('/settings/studio')}>Add your Muse key in Settings to make images.</button>}
@@ -569,10 +622,24 @@ export function CreateWorkspace(): React.JSX.Element {
         </div>
       </div>
 
+      <SourcePickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onChoose={chooseProductRef}
+        onUpload={() => void chooseFile()}
+        title="Choose a Product Photo"
+        description="Use a saved product or any ready image in your library."
+      />
+      <SaveProductDialog
+        open={Boolean(saveProductImage)}
+        onOpenChange={(open) => { if (!open) setSaveProductImage(null) }}
+        imageId={saveProductImage?.id ?? null}
+        defaultName={project.name}
+      />
       <FirstRunConfirm
         open={firstOpen}
-        runLabel={`Create ${count} ${count === 1 ? 'Image' : 'Images'} · ${usd(estimateCents(count))}`}
-        imageCount={count}
+        runLabel={`Create ${requestedCount} ${requestedCount === 1 ? 'Image' : 'Images'} · ${usd(estimateCents(requestedCount))}`}
+        imageCount={requestedCount}
         onOpenChange={setFirstOpen}
         onConfirm={() => void confirmFirst()}
         onGotIt={() => {

@@ -27,6 +27,14 @@ export function exportDirRelative(projectId: string, timestamp = Date.now()): st
   return path.posix.join(projectDir(projectId), 'exports', String(timestamp))
 }
 
+export function productRelative(productId: string): string {
+  return path.posix.join('products', `${productId}.webp`)
+}
+
+export function productThumbRelative(productId: string): string {
+  return path.posix.join('products', `${productId}-thumb.webp`)
+}
+
 export function absoluteInLibrary(libraryPath: string, relative: string): string {
   const root = path.resolve(libraryPath)
   const resolved = path.resolve(root, relative)

@@ -4,6 +4,7 @@ import type {
   Brand,
   LicenseState,
   Person,
+  Product,
   SettingsAll,
   ThemeSetting,
   Format,
@@ -27,6 +28,7 @@ interface AppStore {
   secrets: SecretStatus | null
   brand: Brand | null
   people: Person[]
+  products: Product[]
   readonlyBypass: boolean
   onboardingBypass: boolean
   initialLicenseValid: boolean
@@ -38,6 +40,7 @@ interface AppStore {
   refreshSecrets: () => Promise<void>
   refreshBrand: () => Promise<void>
   refreshPeople: () => Promise<void>
+  refreshProducts: () => Promise<void>
   setTheme: (theme: ThemeSetting) => Promise<void>
   setDefaultFormat: (format: Format) => Promise<void>
   setDefaultShape: (shape: Shape) => Promise<void>
@@ -65,19 +68,21 @@ export const useAppStore = create<AppStore>((set, get) => ({
   secrets: null,
   brand: null,
   people: [],
+  products: [],
   readonlyBypass: false,
   onboardingBypass: false,
   initialLicenseValid: false,
   canGenerate: false,
   boot: async () => {
     try {
-      const [appInfo, settings, license, secrets, brand, people] = await Promise.all([
+      const [appInfo, settings, license, secrets, brand, people, products] = await Promise.all([
         unwrap(window.moss.app.info()),
         unwrap(window.moss.settings.all()),
         unwrap(window.moss.license.state()),
         unwrap(window.moss.secrets.status()),
         unwrap(window.moss.brand.get()),
-        unwrap(window.moss.people.list())
+        unwrap(window.moss.people.list()),
+        unwrap(window.moss.products.list())
       ])
       applyThemeToDocument(settings.theme)
       document.documentElement.dataset.density = settings.density
@@ -91,6 +96,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         secrets,
         brand,
         people,
+        products,
         canGenerate: license.status === 'licensed' || license.status === 'grace',
         initialLicenseValid: license.status === 'licensed' || license.status === 'grace'
       })
@@ -126,6 +132,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
   refreshPeople: async () => {
     set({ people: await unwrap(window.moss.people.list()) })
+  },
+  refreshProducts: async () => {
+    set({ products: await unwrap(window.moss.products.list()) })
   },
   setTheme: async (theme) => {
     await unwrap(window.moss.settings.set({ key: 'theme', value: theme }))

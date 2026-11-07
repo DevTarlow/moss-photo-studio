@@ -21,6 +21,21 @@ export function wrapModelPrompt(description: string): string {
   return `Use @Image1 as the product and @Image2 as the person. ${description.trim()} Keep the product exactly as it is in @Image1 - same shape, colour, material, pattern and details. Keep the person exactly as they are in @Image2 - same face, hair, skin tone and body. Make it a realistic photograph.`
 }
 
+export interface ComposeCreatePromptOptions {
+  text: string
+  hasProduct: boolean
+  hasPerson: boolean
+}
+
+/** The created image can send a product reference, a person reference, or both. */
+export function composeCreatePrompt({ text, hasProduct, hasPerson }: ComposeCreatePromptOptions): string {
+  const trimmed = text.trim()
+  if (hasProduct && hasPerson) return wrapModelPrompt(trimmed)
+  if (hasPerson) return `${trimmed}${PERSON_REF_GUARD}`
+  if (hasProduct) return `${trimmed}${REF_GUARD}`
+  return trimmed
+}
+
 /** The gift composition rule (see the brief §7.3). */
 export const GIFT_CLAUSE =
   ' Show the product itself being wrapped in tissue paper, or sitting upright inside an open gift box with tissue paper around it - the product must stay clearly visible, not a finished wrapped present beside it. If the product is drinkware, show it clean and empty, with no drink inside it, ready to wrap.'

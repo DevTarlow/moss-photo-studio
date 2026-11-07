@@ -1,17 +1,18 @@
 # Moss Photo Studio
 
-A local-first photo studio for people who sell things. Turn one product photo into a full listing set, change a photo you already have, or describe a new image. The library lives in a folder you own. Images, plans, people, and usage stay on the computer.
+A local-first photo studio for people who sell things. Turn one product photo into a full listing set, change a photo you already have, or describe a new image. The library lives in a folder you own. Images, plans, products, people, and usage stay on the computer.
 
 This is the sibling application to `../moss-toolbox`. It is an Electron desktop app built with React, TypeScript, Vite, and SQLite.
 
 ## What is in the app
 
 - **Library** with sets, photos, and images, search, filters, sorting, grid and list views, project duplication, rename, hover-select multi-delete, delete, and export. Above 200 projects the grid and list mount only viewport rows.
-- **Set Creator** from 1 to 8 listing shots. Each shot can be switched off, renamed, described, assigned a person, or given a feature line. The plan saves automatically.
+- **Set Creator** from 1 to 8 listing shots. Start from an upload, a saved Product, or any ready library image. Each shot can be switched off, renamed, described, assigned a person, or given a feature line. The plan saves automatically.
 - **Connection icons** for Main shot, In use, Close-up, Size reference, Flat lay, Gift-ready, Feature callout, and On a person.
-- **Image Editor** with 32 tiles in six groups, 12 bundled people plus your own, a free local adjust panel, version labels, branching, a filmstrip, compare, export, and copy.
-- **Image Generator** with 24 starters, optional reference images, one to four images, three shapes, and three formats.
+- **Image Editor** with 32 tiles in six groups, 12 bundled people plus your own, a free local adjust panel, version labels, branching, a filmstrip, compare, export, and copy. Start from a file, a Product, or a library image, and add another source later as a new version.
+- **Image Generator** with 24 starters, one to four images, three shapes, and three formats. A product reference and a person reference can be sent together, so a person can hold a product.
 - **Local adjust** for crop, rotate, flip, brightness, contrast, saturation, warmth, sharpen, and vignette. It makes a new version and never resends the product to an image service.
+- **Products** for saving a generated image, editor version, or set shot as a named, reusable product photo. Products and any library image can be chosen wherever a source photo is needed.
 - **Logo & Colors** with up to six colors, a logo, and corner badge position, size, and opacity. Colors steer backgrounds and props in sets and photo changes while their toggle is on; turning it off keeps the saved colors but adds none to a prompt. The badge is composited locally.
 - **First run** opens in light mode. The theme can be chosen during onboarding; density and reduce-motion stay in Settings.
 - **Usage ledger** with the real returned-image cost, $0.01 per returned image, a monthly budget, and CSV export.
@@ -90,6 +91,7 @@ The SQLite database is in the application data folder. The library contains:
 library/
   brand/
   people/
+  products/       saved product copies and thumbnails
   projects/<project-id>/
     original/       byte-for-byte imported product photos
     working/        sharp-normalized copies used for requests and thumbnails

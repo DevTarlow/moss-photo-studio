@@ -22,6 +22,9 @@ import { FirstRunConfirm } from '../../components/ui/FirstRunConfirm'
 import { BudgetWarning } from '../../components/ui/BudgetWarning'
 import { Lightbox } from '../../components/ui/Lightbox'
 import { PlanPanel } from './PlanPanel'
+import { SourcePickerDialog } from '../../components/sources/SourcePickerDialog'
+import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
+import { SaveProductDialog } from '../../components/products/SaveProductDialog'
 import { SetExportDialog } from './SetExportDialog'
 import { unwrap, messageOf } from '../../lib/ipc'
 import { toast } from '../../lib/toast'
@@ -105,6 +108,8 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
   const [monthCents, setMonthCents] = useState(0)
   const [exportOpen, setExportOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [sourcePickerOpen, setSourcePickerOpen] = useState(false)
+  const [saveProductImage, setSaveProductImage] = useState<Image | null>(null)
   const [interruptedDismissed, setInterruptedDismissed] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const phaseInitialized = useRef(false)
@@ -261,6 +266,29 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
       confirmLabel: 'Replace Photo'
     })
     if (!ok) return
+    setSourcePickerOpen(true)
+  }
+
+  const chooseReplacement = async (choice: SourceChoice): Promise<void> => {
+    try {
+      if (choice.kind === 'product') {
+        await unwrap(window.moss.products.importIntoProject({ productId: choice.productId, projectId: project.id }))
+      } else {
+        const image = images.find((entry) => entry.id === choice.imageId)
+        if (image?.projectId === project.id) {
+          await unwrap(window.moss.images.setSource({ projectId: project.id, imageId: image.id }))
+        } else {
+          await unwrap(window.moss.media.importFromImage({ projectId: project.id, imageId: choice.imageId }))
+        }
+      }
+      await refresh()
+      toast.status('Product photo replaced.')
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    }
+  }
+
+  const replaceWithFile = async (): Promise<void> => {
     try {
       const result = await unwrap(window.moss.dialogs.importImage({ projectId: project.id, kind: 'source' }))
       if (result?.imageId) {
@@ -775,6 +803,20 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
           await loadMonth()
         }}
       />
+      <SaveProductDialog
+        open={Boolean(saveProductImage)}
+        onOpenChange={(open) => { if (!open) setSaveProductImage(null) }}
+        imageId={saveProductImage?.id ?? null}
+        defaultName={project.name}
+      />
+      <SourcePickerDialog
+        open={sourcePickerOpen}
+        onOpenChange={setSourcePickerOpen}
+        onChoose={(choice) => void chooseReplacement(choice)}
+        onUpload={() => void replaceWithFile()}
+        title="Replace the product photo"
+        description="Use a saved product or any ready image in your library."
+      />
       <Lightbox
         open={lightboxIndex !== null}
         onOpenChange={(open) => { if (!open) setLightboxIndex(null) }}
@@ -784,6 +826,7 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
         onDownload={(image) => void downloadImage(image)}
         onSetCover={(image) => void setCover(image)}
         onEdit={openEditor}
+        onSaveProduct={setSaveProductImage}
         onDelete={(image) => void deleteImage(image)}
       />
     </>

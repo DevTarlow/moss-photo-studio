@@ -107,7 +107,7 @@ The app deliberately does not retry 401, 402, 403, policy refusals, 5xx, or malf
 
 - Originals are copied byte for byte and never sent.
 - The working copy is normalised to WebP with the long edge at most 2048 pixels, quality 88, EXIF orientation applied, and metadata stripped.
-- One image is sent per set shot. Edits send exactly one image. Create may send zero images, one current product image, or one uploaded product image, plus an optional person reference when the chosen tile uses a person.
+- One image is sent per set shot. Edits send exactly one image. Create may send zero images, one product image (a saved Product, a library image, or an uploaded file), plus an optional person reference. The Image Generator can send a product and a person together; that path is a one-image edit request with the product first and the person second.
 - The combined reference set is capped by the brief at two images. The current tiles use at most one product plus one person.
 - The app user id for the API `user` field is a random installation id, not an email address.
 - The prompt is assembled in `src/shared/prompts/guards.ts`. The reference guard is appended before the palette clause. If the palette clause does not fit under 2,000 characters it is dropped. The user's words are never truncated. The planner limits set directions to 400 characters, so a normal plan cannot make the guard not fit.

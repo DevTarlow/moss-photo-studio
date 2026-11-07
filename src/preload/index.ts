@@ -67,6 +67,15 @@ const api: MossApi = {
     clearLogo: invokeVoid('brand:clearLogo'),
     chooseLogo: invokeVoid('dialog:pickLogo')
   },
+  products: {
+    list: invokeVoid('products:list'),
+    createFromImage: invoke('products:createFromImage'),
+    createFromBytes: invoke('products:createFromBytes'),
+    rename: invoke('products:rename'),
+    delete: invoke('products:delete'),
+    createProject: invoke('products:createProject'),
+    importIntoProject: invoke('products:importIntoProject')
+  },
   projects: {
     list: invoke('projects:list'),
     get: invoke('projects:get'),
@@ -78,10 +87,12 @@ const api: MossApi = {
     recent: invoke('projects:recent')
   },
   dialogs: {
-    importImage: invoke('dialog:importImage')
+    importImage: invoke('dialog:importImage'),
+    pickProduct: invokeVoid('dialog:pickProduct')
   },
   media: {
-    importBytes: invoke('media:importBytes')
+    importBytes: invoke('media:importBytes'),
+    importFromImage: invoke('media:importFromImage')
   },
   plans: {
     get: invoke('plans:get'),
@@ -89,6 +100,7 @@ const api: MossApi = {
   },
   images: {
     list: invoke('images:list'),
+    library: invoke('images:library'),
     get: invoke('images:get'),
     delete: invoke('images:delete'),
     setCover: invoke('images:setCover'),

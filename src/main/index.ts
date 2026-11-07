@@ -13,6 +13,8 @@ import { JobRepository } from './db/repositories/jobs'
 import { UsageRepository } from './db/repositories/usage'
 import { BrandRepository } from './db/repositories/brand'
 import { PeopleRepository } from './db/repositories/people'
+import { ProductRepository } from './db/repositories/products'
+import { ProductService } from './products/service'
 import { LicenseRepository } from './db/repositories/license'
 import { SecretStore } from './secrets'
 import { SafeTextCipher } from './secretCipher'
@@ -152,6 +154,7 @@ async function boot(): Promise<void> {
   const usage = new UsageRepository(db)
   const brand = new BrandRepository(db)
   const people = new PeopleRepository(db)
+  const products = new ProductRepository(db)
   const licenseRepo = new LicenseRepository(db)
   const cipher = new SafeTextCipher(userDataDir)
   const secrets = new SecretStore({ userDataDir, db, logger, cipher })
@@ -193,6 +196,15 @@ async function boot(): Promise<void> {
     logger
   })
 
+  const productService = new ProductService({
+    products,
+    images,
+    projects,
+    plans,
+    media,
+    libraryPath
+  })
+
   const queue = new JobQueue({
     projects,
     images,
@@ -201,6 +213,7 @@ async function boot(): Promise<void> {
     usage,
     brand,
     people,
+    products,
     settings,
     secrets,
     license,
@@ -225,6 +238,8 @@ async function boot(): Promise<void> {
     usage,
     brand,
     people,
+    products,
+    productService,
     media,
     queue,
     license,

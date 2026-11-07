@@ -175,6 +175,32 @@ export interface Person {
   usedIn: number
 }
 
+export interface Product {
+  id: string
+  name: string
+  imageUrl: string
+  thumbUrl: string
+  width: number
+  height: number
+  createdAt: number
+  updatedAt: number
+}
+
+export interface LibraryImage {
+  id: string
+  projectId: string
+  projectName: string
+  projectType: ProjectType
+  label: string
+  url: string | null
+  thumbUrl: string | null
+  width: number | null
+  height: number | null
+  personId: string | null
+  kind: ImageKind
+  createdAt: number
+}
+
 export interface Brand {
   colors: string[]
   colorsEnabled: boolean
@@ -394,6 +420,8 @@ export interface CreateJobInput {
   shape: Shape
   format: Format
   sourceImageId?: string
+  productId?: string
+  personId?: string
 }
 
 export interface EditJobInput {

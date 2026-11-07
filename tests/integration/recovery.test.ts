@@ -32,7 +32,7 @@ describe('migrations', () => {
     seed.pragma('user_version = 0')
     seed.close()
     const db = openDatabase({ file, libraryPath: path.join(dir, 'library'), logger: logger() })
-    expect(fs.existsSync(`${file}.bak-1`)).toBe(true)
+    expect(fs.existsSync(`${file}.bak-${SCHEMA_VERSION}`)).toBe(true)
     expect(db.pragma('user_version', { simple: true })).toBe(SCHEMA_VERSION)
     const custom = db.prepare('SELECT value FROM meta WHERE key = ?').get('custom') as { value: string }
     expect(custom.value).toBe('kept')

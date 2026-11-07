@@ -7,6 +7,8 @@ import { warnIfSmallPhoto } from '../../lib/photoWarnings'
 import { Dialog } from '../ui/Dialog'
 import { Dropzone } from '../ui/Dropzone'
 import { Button } from '../ui/Button'
+import { SourcePickerDialog } from '../sources/SourcePickerDialog'
+import type { SourceChoice } from '../sources/SourcePickerDialog'
 
 export function NewProjectDialog({
   open,
@@ -22,6 +24,7 @@ export function NewProjectDialog({
   const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const finish = (result: ImportResult | null): void => {
     if (!result?.projectId) return
@@ -67,6 +70,23 @@ export function NewProjectDialog({
     }
   }
 
+  const chooseSaved = async (choice: SourceChoice): Promise<void> => {
+    if (!type) return
+    setBusy(true)
+    setError(null)
+    try {
+      const detail = choice.kind === 'product'
+        ? await unwrap(window.moss.products.createProject({ productId: choice.productId, type }))
+        : await unwrap(window.moss.projects.createFromImage({ sourceImageId: choice.imageId, type }))
+      onOpenChange(false)
+      navigate(`/project/${detail.project.id}${personId ? `?person=${encodeURIComponent(personId)}` : ''}`)
+    } catch (caught) {
+      setError(messageOf(caught))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <Dialog
       open={open}
@@ -83,10 +103,21 @@ export function NewProjectDialog({
         onClick={() => void openPicker()}
         label="Choose a photo"
       />
+      <div className="mt-3 flex justify-center">
+        <Button variant="secondary" size="sm" disabled={busy} onClick={() => setPickerOpen(true)}>
+          Choose a Saved Photo
+        </Button>
+      </div>
       {error && <p className="error-text mt-2" role="alert">{error}</p>}
       {type === 'set' && (
         <p className="hint mt-3">Next you'll pick what you sell. The studio plans six images and tells you the cost before it starts.</p>
       )}
+      <SourcePickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onChoose={(choice) => void chooseSaved(choice)}
+        title={type === 'set' ? 'Choose a Set Photo' : 'Choose a Photo to Edit'}
+      />
     </Dialog>
   )
 }

@@ -15,6 +15,8 @@ import { JobRepository } from '@main/db/repositories/jobs'
 import { UsageRepository } from '@main/db/repositories/usage'
 import { BrandRepository } from '@main/db/repositories/brand'
 import { PeopleRepository } from '@main/db/repositories/people'
+import { ProductRepository } from '@main/db/repositories/products'
+import { ProductService } from '@main/products/service'
 import { MediaService } from '@main/media/service'
 import { MuseClient } from '@main/muse/client'
 import { JobQueue, JobStartError } from '@main/jobs/queue'
@@ -37,6 +39,8 @@ let jobs: JobRepository
 let usage: UsageRepository
 let brand: BrandRepository
 let people: PeopleRepository
+let products: ProductRepository
+let productService: ProductService
 let media: MediaService
 let queue: JobQueue
 let keyPresent = true
@@ -65,7 +69,9 @@ beforeEach(async () => {
   usage = new UsageRepository(db)
   brand = new BrandRepository(db)
   people = new PeopleRepository(db)
+  products = new ProductRepository(db)
   media = new MediaService({ projects, images, plans, people, brand, libraryPath, logger })
+  productService = new ProductService({ products, images, projects, plans, media, libraryPath })
   keyPresent = true
   licensed = true
   updates = []
@@ -83,6 +89,7 @@ beforeEach(async () => {
     usage,
     brand,
     people,
+    products,
     settings,
     secrets: {
       hasKey: () => keyPresent,
@@ -284,6 +291,45 @@ describe('job queue create', () => {
     await expect(
       queue.startCreate({ projectId: imageProject().id, prompt: 'x', count: 1, shape: 'square', format: 'webp' })
     ).rejects.toMatchObject({ code: 'unlicensed' })
+  })
+
+  it('sends a product and a person reference together', async () => {
+    const product = await productService.addFromBytes({
+      bytes: await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 140, g: 120, b: 100 } } }).jpeg().toBuffer(),
+      name: 'Ceramic mug'
+    })
+    const project = imageProject()
+    const { jobId } = await queue.startCreate({
+      projectId: project.id,
+      prompt: 'Hold the mug',
+      count: 1,
+      shape: 'square',
+      format: 'webp',
+      productId: product.id,
+      personId: 'maya'
+    })
+    const state = await waitForJob(jobId)
+    expect(state.status).toBe('done')
+    const request = server.requests()[0]!
+    expect(request.path).toContain('/edits')
+    expect((request.body ?? {}).images as unknown[]).toHaveLength(2)
+    expect(String((request.body ?? {}).prompt)).toContain('@Image1 as the product')
+    expect(String((request.body ?? {}).prompt)).toContain('@Image2 as the person')
+  })
+
+  it('refuses more than one image when a reference is present', async () => {
+    const project = imageProject()
+    await expect(
+      queue.startCreate({
+        projectId: project.id,
+        prompt: 'Hold the mug',
+        count: 2,
+        shape: 'square',
+        format: 'webp',
+        personId: 'maya'
+      })
+    ).rejects.toMatchObject({ code: 'invalid_payload' })
+    expect(server.requests()).toHaveLength(0)
   })
 
   it('refuses mega prompts before spending', async () => {

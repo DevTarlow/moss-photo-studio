@@ -13,6 +13,7 @@ import type {
   JobState,
   LicenseState,
   PlanJson,
+  Product,
   Project,
   ProjectDetail,
   SettingsAll,
@@ -522,38 +523,122 @@ export function registerIpcHandlers(context: AppContext): void {
     }
   )
 
-  registerIpc(context, 'projects:createFromImage', z.object({ sourceImageId: idSchema, name: z.string().max(140).optional() }), async ({ sourceImageId, name }) => {
+  registerIpc(context, 'projects:createFromImage', z.object({ sourceImageId: idSchema, name: z.string().max(140).optional(), type: projectTypeSchema.optional() }), async ({ sourceImageId, name, type }) => {
     const image = context.images.get(sourceImageId)
     if (!image || image.status !== 'ready' || !image.url) throw new IpcFault('not_found')
     const sourceProject = context.projects.get(image.projectId)
     if (!sourceProject) throw new IpcFault('not_found')
     const relative = decodeURI(image.url.replace('moss-media://library/', ''))
     const bytes = await fs.readFile(path.join(context.libraryPath(), relative))
-    const setProject = context.projects.create({
-      type: 'set',
+    const createdType = type ?? 'set'
+    const defaults = settings.all()
+    const project = context.projects.create({
+      type: createdType,
       name: name?.trim() || sourceProject.name,
-      category: 'other',
-      shape: image.width && image.height ? shapeForImage(image.width, image.height) : sourceProject.shape,
-      format: sourceProject.format
+      category: createdType === 'set' ? 'other' : null,
+      shape: createdType === 'set' && image.width && image.height
+        ? shapeForImage(image.width, image.height)
+        : defaults.defaultShape,
+      format: createdType === 'set' ? sourceProject.format : defaults.defaultFormat
     })
     try {
-      await context.media.importSource({ projectId: setProject.id, bytes, name: `${setProject.name}.${image.format === 'jpeg' ? 'jpg' : image.format}` })
-      const plan = createDefaultPlan({
-        category: 'other',
-        productName: setProject.name,
-        shape: setProject.shape,
-        format: setProject.format
+      await context.media.importSource({
+        projectId: project.id,
+        bytes,
+        name: `${project.name}.${image.format === 'jpeg' ? 'jpg' : image.format}`
       })
-      context.plans.save(setProject.id, plan)
+      if (createdType === 'set') {
+        const plan = createDefaultPlan({
+          category: 'other',
+          productName: project.name,
+          shape: project.shape,
+          format: project.format
+        })
+        context.plans.save(project.id, plan)
+      }
       context.refreshMenu()
     } catch (error) {
-      await context.media.deleteProjectFiles(setProject.id)
-      context.projects.delete(setProject.id)
+      await context.media.deleteProjectFiles(project.id)
+      context.projects.delete(project.id)
       throw error
     }
     context.refreshMenu()
-    return buildDetail(context, context.projects.get(setProject.id)!)
+    return buildDetail(context, context.projects.get(project.id)!)
   })
+
+  registerIpc(context, 'products:list', voidSchema, (): Product[] => context.products.list())
+
+  registerIpc(
+    context,
+    'products:createFromImage',
+    z.object({ imageId: idSchema, name: z.string().trim().min(1).max(80) }),
+    ({ imageId, name }) => context.productService.saveFromImage({ imageId, name })
+  )
+
+  registerIpc(
+    context,
+    'products:createFromBytes',
+    z.object({ bytes: bytesSchema, name: z.string().trim().min(1).max(80) }),
+    ({ bytes, name }) => context.productService.addFromBytes({ bytes, name })
+  )
+
+  registerIpc(context, 'dialog:pickProduct', voidSchema, async (): Promise<Product | null> => {
+    const opened = await openFolderDialog(context, {
+      title: 'Choose a product photo',
+      properties: ['openFile'],
+      filters: [{ name: 'Photos', extensions: ['jpg', 'jpeg', 'png', 'webp'] }]
+    })
+    if (opened.canceled || !opened.filePaths[0]) return null
+    const filePath = opened.filePaths[0]
+    const stat = await fs.stat(filePath)
+    if (stat.size > 40 * 1024 * 1024) throw new IpcFault('too_large')
+    const bytes = await fs.readFile(filePath)
+    return context.productService.addFromBytes({
+      bytes,
+      name: path.parse(filePath).name.slice(0, 80) || 'Product'
+    })
+  })
+
+  registerIpc(
+    context,
+    'products:rename',
+    z.object({ id: idSchema, name: z.string().trim().min(1).max(80) }),
+    ({ id, name }): Product => {
+      const product = context.products.rename(id, name.trim())
+      if (!product) throw new IpcFault('not_found')
+      return product
+    }
+  )
+
+  registerIpc(context, 'products:delete', z.object({ id: idSchema }), async ({ id }) => {
+    await context.productService.delete(id)
+    return { ok: true as const }
+  })
+
+  registerIpc(
+    context,
+    'products:createProject',
+    z.object({ productId: idSchema, type: projectTypeSchema, name: z.string().max(140).optional() }),
+    async ({ productId, type, name }) => {
+      const defaults = settings.all()
+      const created = await context.productService.createProject({
+        productId,
+        type,
+        name,
+        shape: defaults.defaultShape,
+        format: defaults.defaultFormat
+      })
+      context.refreshMenu()
+      return buildDetail(context, context.projects.get(created.projectId)!)
+    }
+  )
+
+  registerIpc(
+    context,
+    'products:importIntoProject',
+    z.object({ productId: idSchema, projectId: idSchema, label: z.string().max(120).optional() }),
+    ({ productId, projectId, label }) => context.productService.importIntoProject({ productId, projectId, label })
+  )
 
   registerIpc(
     context,
@@ -675,6 +760,13 @@ export function registerIpcHandlers(context: AppContext): void {
     context.projects.recent(limit)
   )
 
+  registerIpc(
+    context,
+    'media:importFromImage',
+    z.object({ projectId: idSchema, imageId: idSchema }),
+    ({ projectId, imageId }) => context.media.importFromImage({ projectId, imageId })
+  )
+
   registerIpc(context, 'plans:get', z.object({ projectId: idSchema }), ({ projectId }) => {
     if (!context.projects.get(projectId)) throw new IpcFault('not_found')
     return context.plans.getActive(projectId)
@@ -696,6 +788,17 @@ export function registerIpcHandlers(context: AppContext): void {
       if (!context.projects.get(projectId)) throw new IpcFault('not_found')
       return context.images.list(projectId, includeFailed ?? false)
     }
+  )
+
+  registerIpc(
+    context,
+    'images:library',
+    z.object({
+      search: z.string().max(120).optional(),
+      limit: z.number().int().min(1).max(200).optional(),
+      offset: z.number().int().min(0).optional()
+    }),
+    (request) => context.images.listLibrary(request)
   )
 
   registerIpc(context, 'images:get', z.object({ id: idSchema }), ({ id }) => {
@@ -761,7 +864,9 @@ export function registerIpcHandlers(context: AppContext): void {
       count: z.number().int().min(1).max(4),
       shape: shapeSchema,
       format: formatSchema,
-      sourceImageId: z.string().optional()
+      sourceImageId: z.string().optional(),
+      productId: z.string().optional(),
+      personId: z.string().optional()
     }),
     (request) => context.queue.startCreate(request)
   )
@@ -869,7 +974,7 @@ export function registerIpcHandlers(context: AppContext): void {
       return person
     }
   )
-  registerIpc(context, 'people:rename', z.object({ id: idSchema, name: z.string().min(1).max(80) }), ({ id, name }) => {
+  registerIpc(context, 'people:rename', z.object({ id: idSchema, name: z.string().trim().min(1).max(80) }), ({ id, name }) => {
     const person = context.people.rename(id, name.trim())
     if (!person) throw new IpcFault('not_found')
     return person

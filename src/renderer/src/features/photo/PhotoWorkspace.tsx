@@ -21,8 +21,12 @@ import { AdjustPanel } from './AdjustPanel'
 import { VersionDetails } from './VersionDetails'
 import { ExportDialog } from './ExportDialog'
 import { CropOverlay } from './CropOverlay'
+import { SourcePickerDialog } from '../../components/sources/SourcePickerDialog'
+import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
+import { SaveProductDialog } from '../../components/products/SaveProductDialog'
 import { unwrap, messageOf } from '../../lib/ipc'
 import { toast } from '../../lib/toast'
+import { warnIfSmallPhoto } from '../../lib/photoWarnings'
 import { elapsedLabel, formatDate, usd as usdMoney } from '../../lib/format'
 import { previewFilter, previewTransform, isIdentity } from '../../lib/adjustPreview'
 import { onCommand } from '../../lib/commands'
@@ -71,6 +75,8 @@ export function PhotoWorkspace(): React.JSX.Element {
   const [redoStack, setRedoStack] = useState<AdjustTransform[]>([])
   const [compare, setCompare] = useState(false)
   const [compareValue, setCompareValue] = useState(50)
+  const [addPhotoOpen, setAddPhotoOpen] = useState(false)
+  const [saveProductImageId, setSaveProductImageId] = useState<string | null>(null)
   const [showOriginal, setShowOriginal] = useState(false)
   const [zoom, setZoom] = useState(1)
   const [currentJobId, setCurrentJobId] = useState<string | null>(null)
@@ -281,6 +287,39 @@ export function PhotoWorkspace(): React.JSX.Element {
     }
   }
 
+  const chooseAddedPhoto = async (choice: SourceChoice): Promise<void> => {
+    try {
+      if (choice.kind === 'product') {
+        const imported = await unwrap(window.moss.products.importIntoProject({ productId: choice.productId, projectId: project.id }))
+        if (imported?.imageId) await refresh(imported.imageId)
+      } else {
+        const image = images.find((entry) => entry.id === choice.imageId)
+        if (image?.projectId === project.id) {
+          selectImage(image.id)
+          return
+        }
+        const imported = await unwrap(window.moss.media.importFromImage({ projectId: project.id, imageId: choice.imageId }))
+        if (imported?.imageId) await refresh(imported.imageId)
+      }
+      toast.status('Photo added.')
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    }
+  }
+
+  const addPhotoWithFile = async (): Promise<void> => {
+    try {
+      const result = await unwrap(window.moss.dialogs.importImage({ projectId: project.id, kind: 'source' }))
+      if (result?.imageId) {
+        warnIfSmallPhoto(result)
+        await refresh(result.imageId)
+        toast.status('Photo added.')
+      }
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    }
+  }
+
   const onCanvasKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
     if (event.target !== event.currentTarget) return
     if (event.code === 'Space') {
@@ -471,6 +510,7 @@ export function PhotoWorkspace(): React.JSX.Element {
       onSelect={(id) => selectImage(id)}
       onNewVersion={startNewVersion}
       onFormatChange={(format) => { void useWorkspaceStore.getState().updateProject({ format }).catch(() => toast.error('The format could not be saved.')) }}
+      onSaveProduct={selected ? () => setSaveProductImageId(selected.id) : undefined}
     />
   )
 
@@ -642,6 +682,9 @@ export function PhotoWorkspace(): React.JSX.Element {
           <p className="meta">{formatDate(selected?.createdAt ?? Date.now())}{isRunning ? ' · making' : ''}</p>
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-2">
+          <Button variant="ghost" size="sm" disabled={isRunning} onClick={() => setAddPhotoOpen(true)}>
+            <Plus size={14} /> Add Photo
+          </Button>
           {tab === 'adjust' ? (
             <Button variant="primary" disabled={applyDisabled} onClick={() => void applyAdjust()}>
               {applyBusy ? <Loader2 size={14} className="animate-spin" /> : null} Apply Locally · Free
@@ -672,6 +715,20 @@ export function PhotoWorkspace(): React.JSX.Element {
           setConfirmFirst(false)
           void window.moss.settings.set({ key: 'firstRunConfirmShown', value: true }).then(() => refreshSettings()).catch(() => undefined)
         }}
+      />
+      <SourcePickerDialog
+        open={addPhotoOpen}
+        onOpenChange={setAddPhotoOpen}
+        onChoose={(choice) => void chooseAddedPhoto(choice)}
+        onUpload={() => void addPhotoWithFile()}
+        title="Add a Photo"
+        description="Use a saved product or any ready image in your library."
+      />
+      <SaveProductDialog
+        open={Boolean(saveProductImageId)}
+        onOpenChange={(open) => { if (!open) setSaveProductImageId(null) }}
+        imageId={saveProductImageId}
+        defaultName={project.name}
       />
       <ExportDialog open={exportOpen} onOpenChange={setExportOpen} project={project} image={selected} />
     </>

@@ -4,6 +4,7 @@ import {
   BarChart3,
   Image as ImageIcon,
   Images,
+  Package,
   Layers,
   PanelLeftClose,
   PanelLeftOpen,
@@ -21,6 +22,7 @@ import { cn } from '../../lib/cn'
 const items = [
   { to: '/library', label: 'Library', icon: Images },
   { to: '/people', label: 'People', icon: Users },
+  { to: '/products', label: 'Products', icon: Package },
   { to: '/usage', label: 'Usage', icon: BarChart3 }
 ]
 

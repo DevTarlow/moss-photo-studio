@@ -4,6 +4,7 @@ import { Activation } from './screens/Activation'
 import { Onboarding } from './screens/Onboarding'
 import { Library } from './screens/Library'
 import { People } from './screens/People'
+import { Products } from './screens/Products'
 import { Usage } from './screens/Usage'
 import { Settings } from './screens/Settings'
 import { Workspace } from './screens/Workspace'
@@ -19,6 +20,7 @@ export const router = createHashRouter([
       { path: 'onboarding', element: <Onboarding /> },
       { path: 'library', element: <Library /> },
       { path: 'people', element: <People /> },
+      { path: 'products', element: <Products /> },
       { path: 'usage', element: <Usage /> },
       { path: 'settings', element: <Navigate to="/settings/studio" replace /> },
       { path: 'settings/:section', element: <Settings /> },

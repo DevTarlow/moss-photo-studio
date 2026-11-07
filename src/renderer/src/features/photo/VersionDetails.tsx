@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { Package, Plus } from 'lucide-react'
 import type { Image, Project } from '@shared/types'
 import { templateById } from '@shared/prompts/templates'
 import { shapeLabel } from '@shared/shapes'
@@ -12,7 +12,8 @@ export function VersionDetails({
   parentLabel,
   onSelect,
   onNewVersion,
-  onFormatChange
+  onFormatChange,
+  onSaveProduct
 }: {
   project: Project
   selected: Image | null
@@ -21,6 +22,7 @@ export function VersionDetails({
   onSelect: (id: string) => void
   onNewVersion: () => void
   onFormatChange: (format: Project['format']) => void
+  onSaveProduct?: () => void
 }): React.JSX.Element {
   const template = selected?.templateId ? templateById(selected.templateId) : undefined
   const templateName = selected?.templateId === 'quick-fix' ? 'Quick fix' : template?.label
@@ -57,6 +59,11 @@ export function VersionDetails({
             {selected.badge && <p className="meta">Logo badge added.</p>}
             {parentLabel && <p className="meta">From {parentLabel}</p>}
           </div>
+          {onSaveProduct && (
+            <Button variant="secondary" size="sm" className="mt-3" onClick={onSaveProduct}>
+              <Package size={14} /> Save as Product
+            </Button>
+          )}
         </>
       ) : (
         <p className="meta mt-2">Choose a version.</p>

@@ -11,8 +11,8 @@ The app turns off Chromium's background networking, component updates, domain re
 
 ## What is sent with a Muse request
 
-- The product photo reference, normalised to WebP with the long edge at most 2,048 pixels.
-- An optional person reference, normalised the same way.
+- The product photo reference (an uploaded photo, a saved Product, or a ready library image), normalised to WebP with the long edge at most 2,048 pixels.
+- An optional person reference, normalised the same way. Product and person references can be sent together.
 - The composed prompt. It contains the words you typed and the guard text that tells the model to keep the product unchanged.
 - The model, shape, output format, and image count.
 - Your Muse key in an authorization header.
@@ -34,7 +34,7 @@ The license validation request happens no more than once per 24 hours automatica
 The application data folder contains:
 
 - `library.sqlite` and its WAL and backup files: projects, images, plans, jobs, usage, people, brand, settings, and license metadata.
-- `library/`: all original and working images and exports made inside the library.
+- `library/`: all original and working images, saved Products, and exports made inside the library.
 - `secrets.bin`: the Muse key, encrypted with the system keyring, or with the documented AES-256-GCM fallback if no keyring is available.
 - `license.json`: the license key and instance id, encrypted.
 - `logs/`: local logs. They contain request ids, status codes, counts, durations, and error codes. They do not contain keys, prompts, or full responses. Log rotation keeps the last two files.
@@ -44,6 +44,7 @@ Encrypted files are readable only by your operating-system user. The fallback ke
 ## Deleting data
 
 - **Delete a project** removes its folder and database rows. Usage rows remain, because the ledger is an accounting record, and they keep the project name that was recorded at the time of the action. Use **Delete all usage history** in Privacy if you need the ledger removed.
+- **Delete a Product** removes only its saved copy under `library/products/`. Projects and images already made from it stay.
 - **Delete an image** removes the working files and thumbnail for that version. The original product photo stays until the project is deleted.
 - **Delete all usage history** removes the ledger rows. It does not delete images or projects.
 - **Delete logs** removes the local log files.

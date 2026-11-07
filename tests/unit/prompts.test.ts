@@ -10,7 +10,8 @@ import {
   appendWithinCap,
   paletteClause,
   composeChange,
-  composeSetPrompt
+  composeSetPrompt,
+  composeCreatePrompt
 } from '@shared/prompts/guards'
 
 describe('the preservation guards', () => {
@@ -48,6 +49,24 @@ describe('the preservation guards', () => {
     expect(GIFT_CLAUSE).toContain('sitting upright inside an open gift box')
     expect(GIFT_CLAUSE).toContain('must stay clearly visible')
     expect(GIFT_CLAUSE).toContain('clean and empty')
+  })
+})
+
+describe('the created-image prompt', () => {
+  it('keeps plain text unchanged without references', () => {
+    expect(composeCreatePrompt({ text: ' A mug on a table ', hasProduct: false, hasPerson: false })).toBe('A mug on a table')
+  })
+
+  it('adds the product guard for a product reference', () => {
+    expect(composeCreatePrompt({ text: 'A mug', hasProduct: true, hasPerson: false })).toBe(`A mug${REF_GUARD}`)
+  })
+
+  it('adds the person guard for a person reference', () => {
+    expect(composeCreatePrompt({ text: 'A mug', hasProduct: false, hasPerson: true })).toContain('Keep the person exactly as pictured')
+  })
+
+  it('wraps both references with the model prompt', () => {
+    expect(composeCreatePrompt({ text: ' holding it ', hasProduct: true, hasPerson: true })).toBe(wrapModelPrompt('holding it'))
   })
 })
 

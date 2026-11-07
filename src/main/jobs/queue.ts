@@ -17,7 +17,7 @@ import type {
 import { estimateCents, monthBounds, monthKey } from '@shared/cost'
 import { MAX_CREATE_VARIANTS, MAX_PROMPT } from '@shared/constants'
 import { DEFAULT_PERSON_ID } from '@shared/people'
-import { composeChange, composeSetPrompt, PERSON_REF_GUARD, PROMPT_MAX, REF_GUARD } from '@shared/prompts/guards'
+import { composeChange, composeCreatePrompt, composeSetPrompt, PROMPT_MAX } from '@shared/prompts/guards'
 import { directionForPrompt, shotDefinition } from '@shared/prompts/shots'
 import { nextCountedLabel, setImageLabel } from '@shared/labels'
 import { templateById, templateWord } from '@shared/prompts/templates'
@@ -32,10 +32,11 @@ import type { JobRepository, JobSnapshot } from '../db/repositories/jobs'
 import type { UsageRepository } from '../db/repositories/usage'
 import type { BrandRepository } from '../db/repositories/brand'
 import type { PeopleRepository } from '../db/repositories/people'
+import type { ProductRepository } from '../db/repositories/products'
 import type { SettingsStore } from '../settings'
 import type { SecretStore } from '../secrets'
 import type { LicenseController } from '../license/controller'
-import { workingFor, imageRelative } from '../media/paths'
+import { absoluteInLibrary, workingFor, imageRelative } from '../media/paths'
 import { applyBadge } from '../media/badge'
 import { generateThumbnail, saveResultImage } from '../media/import'
 
@@ -58,6 +59,7 @@ interface WorkItemSpec {
   prompt: string
   requested: number
   sourceImageId: string | null
+  productId: string | null
   personId: string | null
   shape: Shape
   format: Format
@@ -106,6 +108,7 @@ interface QueueDeps {
   usage: UsageRepository
   brand: BrandRepository
   people: PeopleRepository
+  products: ProductRepository
   settings: SettingsStore
   secrets: SecretStore
   license: LicenseController
@@ -200,6 +203,7 @@ export class JobQueue {
         prompt,
         requested: 1,
         sourceImageId: sourceId,
+        productId: null,
         personId,
         shape: plan.shape,
         format: plan.format,
@@ -239,19 +243,33 @@ export class JobQueue {
     if (!Number.isInteger(input.count) || input.count < 1 || input.count > MAX_CREATE_VARIANTS) {
       throw new JobStartError('invalid_payload', 'Choose between 1 and 4 images.')
     }
+    if (input.sourceImageId && input.productId) {
+      throw new JobStartError('invalid_payload', 'Choose one product reference, not two.')
+    }
     let source: Image | null = null
     if (input.sourceImageId) {
       source = this.deps.images.get(input.sourceImageId)
-      if (!source || source.status !== 'ready' || source.projectId !== project.id) {
+      if (!source || source.status !== 'ready') {
         throw new JobStartError('invalid_payload', 'That photo is not here anymore.')
       }
     }
-    const referenceGuard = source?.personId ? PERSON_REF_GUARD : REF_GUARD
-    const prompt = source ? `${text}${referenceGuard}` : text
+    if (input.productId && !this.deps.products.exists(input.productId)) {
+      throw new JobStartError('invalid_payload', 'That product is not here anymore.')
+    }
+    if (input.personId && !this.deps.people.exists(input.personId)) {
+      throw new JobStartError('invalid_payload', 'Choose a person first.')
+    }
+    const legacyPerson = !input.personId && Boolean(source?.personId)
+    const hasPerson = Boolean(input.personId) || legacyPerson
+    const hasProduct = Boolean(source || input.productId) && !legacyPerson
+    if ((hasPerson || hasProduct) && input.count !== 1) {
+      throw new JobStartError('invalid_payload', 'References make one image at a time.')
+    }
+    const prompt = composeCreatePrompt({ text, hasProduct, hasPerson })
     if (prompt.length > PROMPT_MAX) {
       throw new JobStartError(
         'invalid_payload',
-        `This reference adds ${referenceGuard.length} characters. Shorten your description by ${prompt.length - PROMPT_MAX}.`
+        `This reference adds ${prompt.length - text.length} characters. Shorten your description by ${prompt.length - PROMPT_MAX}.`
       )
     }
     this.requireBudget(estimateCents(input.count))
@@ -267,7 +285,8 @@ export class JobQueue {
           prompt,
           requested: input.count,
           sourceImageId: source?.id ?? null,
-          personId: null,
+          productId: input.productId ?? null,
+          personId: input.personId ?? null,
           shape: input.shape,
           format: input.format,
           userText: text,
@@ -339,6 +358,7 @@ export class JobQueue {
           prompt,
           requested: 1,
           sourceImageId: source.id,
+          productId: null,
           personId: input.personId ?? null,
           shape: project.shape,
           format: project.format,
@@ -583,8 +603,13 @@ export class JobQueue {
       return
     }
     try {
-      const product = item.spec.sourceImageId ? this.deps.images.get(item.spec.sourceImageId) : null
-      const productPath = product ? this.productWorkingPath(product) : null
+      const sourceImage = item.spec.sourceImageId ? this.deps.images.get(item.spec.sourceImageId) : null
+      const productRow = item.spec.productId ? this.deps.products.getRow(item.spec.productId) : null
+      const productPath = sourceImage
+        ? this.productWorkingPath(sourceImage)
+        : productRow
+          ? absoluteInLibrary(this.deps.libraryPath(), productRow.file)
+          : null
       const images: Buffer[] = []
       if (productPath) {
         images.push(await fs.readFile(productPath))
@@ -599,7 +624,7 @@ export class JobQueue {
         this.persist(run)
         this.deps.onUpdate(this.snapshotState(run))
       }
-      const result = item.spec.createMode && !item.spec.sourceImageId
+      const result = item.spec.createMode && !item.spec.sourceImageId && !item.spec.productId && !item.spec.personId
         ? await this.deps.provider.generate({
             prompt: item.spec.prompt,
             count: item.spec.requested,

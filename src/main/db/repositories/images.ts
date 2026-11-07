@@ -1,5 +1,5 @@
 import type { Db } from '../connection'
-import type { AdjustTransform, Format, Image, ImageKind, ImageStatus } from '@shared/types'
+import type { AdjustTransform, Format, Image, ImageKind, ImageStatus, LibraryImage, ProjectType } from '@shared/types'
 import { libraryUrl } from '@shared/files'
 import { mimeForFormat } from '@shared/shapes'
 
@@ -206,6 +206,66 @@ export class ImageRepository {
       .prepare('SELECT * FROM images WHERE job_id = ? AND deleted_at IS NULL ORDER BY seq ASC')
       .all(jobId) as ImageRow[]
     return rows.map(mapImage)
+  }
+
+  listLibrary(options: { search?: string; limit?: number; offset?: number } = {}): {
+    items: LibraryImage[]
+    total: number
+  } {
+    const limit = Math.min(200, Math.max(1, options.limit ?? 60))
+    const offset = Math.max(0, options.offset ?? 0)
+    const clauses = ['i.deleted_at IS NULL', "i.status = 'ready'", 'p.archived_at IS NULL']
+    const params: unknown[] = []
+    const search = options.search?.trim()
+    if (search) {
+      const like = `%${search.replace(/[\\%_]/g, (char) => `\\${char}`)}%`
+      clauses.push("(p.name LIKE ? ESCAPE '\\' OR i.label LIKE ? ESCAPE '\\')")
+      params.push(like, like)
+    }
+    const where = `WHERE ${clauses.join(' AND ')}`
+    const total = this.db
+      .prepare(`SELECT COUNT(*) AS count FROM images i JOIN projects p ON p.id = i.project_id ${where}`)
+      .get(...params) as { count: number }
+    const rows = this.db
+      .prepare(
+        `SELECT i.id, i.project_id, p.name AS project_name, p.type AS project_type, i.label,
+                i.file, i.thumb, i.width, i.height, i.kind, i.person_id, i.created_at
+         FROM images i JOIN projects p ON p.id = i.project_id
+         ${where}
+         ORDER BY i.created_at DESC, i.seq DESC
+         LIMIT ? OFFSET ?`
+      )
+      .all(...params, limit, offset) as Array<{
+      id: string
+      project_id: string
+      project_name: string
+      project_type: ProjectType
+      label: string | null
+      file: string | null
+      thumb: string | null
+      width: number | null
+      height: number | null
+      kind: ImageKind
+      person_id: string | null
+      created_at: number
+    }>
+    return {
+      total: Number(total.count),
+      items: rows.map((row) => ({
+        id: row.id,
+        projectId: row.project_id,
+        projectName: row.project_name,
+        projectType: row.project_type,
+        label: row.label ?? 'Image',
+        url: row.file ? libraryUrl(row.file) : null,
+        thumbUrl: row.thumb ? libraryUrl(row.thumb) : row.file ? libraryUrl(row.file) : null,
+        width: row.width,
+        height: row.height,
+        personId: row.person_id,
+        kind: row.kind,
+        createdAt: Number(row.created_at)
+      }))
+    }
   }
 
   markReady(

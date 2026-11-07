@@ -89,3 +89,10 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Library selection
 
 61. **Projects are selected with a hover checkbox and deleted in bulk.** The checkbox appears on hover or keyboard focus, and every checkbox stays visible while at least one project is selected. While a selection exists, clicking anywhere on another card or row toggles it instead of opening the project; card links are intercepted in the capture phase so they cannot navigate first. The bulk delete uses the same danger confirmation as the single-project delete and leaves failed projects selected for a retry. Selection is pruned to the loaded list after every refresh, so a filter or deletion cannot leave a hidden project selected.
+
+## Products and reusable sources
+
+62. **A Product is a saved copy, not a reference to a project image.** Saving normalizes the source into `library/products/<id>.webp` and a thumbnail. Deleting the source project does not break the Product, and deleting the Product does not delete projects or images made from it. A Product is one photo; it is not a multi-product set.
+63. **The source picker offers saved Products and every ready library image.** A Product is curation, not a gate: the seller can reuse a generated image, editor version, or set shot without saving it first. Images already in the target project are reused instead of copied; images from another project are copied in.
+64. **The Image Generator has independent product and person references.** The product slot accepts a saved Product or any library image; the person slot accepts People. One of each may be sent. The product image is read directly from its library file or product file, so a reference does not clutter the project with hidden uploads.
+65. **A referenced run makes one image.** The edit endpoint returns one image, so the count control is fixed at one while a product or person reference is selected. The queue rejects a larger count instead of charging for images that cannot come back.
