@@ -6,6 +6,7 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: [['list']],
+  globalTeardown: './tests/e2e/global-teardown.ts',
   snapshotPathTemplate: 'tests/screenshots/{arg}{ext}',
   expect: {
     timeout: 15_000,
