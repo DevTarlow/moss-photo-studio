@@ -68,12 +68,12 @@ export function Workspace(): React.JSX.Element {
   }
   const content = project.type === 'set'
     ? photoView
-      ? <PhotoWorkspace key="set-photo" preferredPersonId={preferredPersonId} />
+      ? <PhotoWorkspace key="set-photo" />
       : <SetWorkspace key="set" preferredPersonId={preferredPersonId} />
     : project.type === 'photo'
-      ? <PhotoWorkspace key="photo" preferredPersonId={preferredPersonId} />
+      ? <PhotoWorkspace key="photo" />
       : photoView
-        ? <PhotoWorkspace key="image-photo" preferredPersonId={preferredPersonId} />
+        ? <PhotoWorkspace key="image-photo" />
         : <CreateWorkspace key="image" />
 
   return (

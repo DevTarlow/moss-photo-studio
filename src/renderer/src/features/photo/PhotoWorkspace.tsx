@@ -41,7 +41,7 @@ function readyInProject(images: Image[]): Image[] {
     .sort((a, b) => a.seq - b.seq || a.createdAt - b.createdAt)
 }
 
-export function PhotoWorkspace({ preferredPersonId }: { preferredPersonId?: string | null }): React.JSX.Element {
+export function PhotoWorkspace(): React.JSX.Element {
   const project = useWorkspaceStore((state) => state.project) as Project
   const images = useWorkspaceStore((state) => state.images)
   const selectedImageId = useWorkspaceStore((state) => state.selectedImageId)
@@ -65,7 +65,7 @@ export function PhotoWorkspace({ preferredPersonId }: { preferredPersonId?: stri
   const [textSource, setTextSource] = useState<TextSource>('user')
   const [kind, setKind] = useState<ChangeKind>('')
   const [templateId, setTemplateId] = useState<string | null>(null)
-  const [personId, setPersonId] = useState(preferredPersonId ?? 'maya')
+  const [personId, setPersonId] = useState('maya')
   const [adjust, setAdjust] = useState<AdjustTransform>(emptyAdjust())
   const [undoStack, setUndoStack] = useState<AdjustTransform[]>([])
   const [redoStack, setRedoStack] = useState<AdjustTransform[]>([])
@@ -479,7 +479,7 @@ export function PhotoWorkspace({ preferredPersonId }: { preferredPersonId?: stri
   const displayImage = showParent ? parent : selected
   const jobItem = runningJob?.items[0]
 
-  const backLabel = project.type === 'set' ? 'Back to Set' : project.type === 'image' ? 'Back to Create' : null
+  const backLabel = project.type === 'set' ? 'Back to Set' : project.type === 'image' ? 'Back to Image Generator' : null
   const goBackToProject = (): void => {
     void navigate(`/project/${project.id}`)
   }

@@ -4,7 +4,7 @@ import { Popover } from 'radix-ui'
 import { ChevronDown, Download, Image as ImageIcon, Layers, Loader2, Pencil, Plus, Sparkles, Trash2, X } from 'lucide-react'
 import type { Format, Image, JobState, Project, Shape } from '@shared/types'
 import { MAX_PROMPT } from '@shared/constants'
-import { REF_GUARD } from '@shared/prompts/guards'
+import { PERSON_REF_GUARD, REF_GUARD } from '@shared/prompts/guards'
 import { startersByCategory } from '@shared/starters'
 import type { Starter } from '@shared/starters'
 import { estimateCents, usd } from '@shared/cost'
@@ -89,6 +89,7 @@ export function CreateWorkspace(): React.JSX.Element {
   const isRunning = Boolean(job)
   const completeJobs = runs.filter((run) => run.status !== 'running')
   const reference = images.find((image) => image.id === referenceId && image.status === 'ready') ?? null
+  const referenceGuard = reference?.personId ? PERSON_REF_GUARD : REF_GUARD
   const results = images
     .filter((image) => image.status === 'ready' && image.kind !== 'upload')
     .filter((image) => {
@@ -98,7 +99,7 @@ export function CreateWorkspace(): React.JSX.Element {
     })
     .sort((a, b) => b.createdAt - a.createdAt || b.seq - a.seq)
   const overBudget = (settings?.budgetCents ?? null) !== null && monthCents + estimateCents(count) > (settings?.budgetCents ?? 0)
-  const promptTooLongForReference = Boolean(reference) && prompt.length + REF_GUARD.length > MAX_PROMPT
+  const promptTooLongForReference = Boolean(reference) && prompt.length + referenceGuard.length > MAX_PROMPT
   const canSubmit = Boolean(prompt.trim()) && prompt.length <= MAX_PROMPT && !promptTooLongForReference && Boolean(secrets?.hasKey) && canGenerate
 
   useEffect(() => {
@@ -313,7 +314,7 @@ export function CreateWorkspace(): React.JSX.Element {
           hint="Meta makes the picture. You pay a cent for every image that comes back."
         />
         {promptTooLongForReference && (
-          <p className="error-text mt-1" role="alert">This photo adds {REF_GUARD.length} characters. Shorten your description.</p>
+          <p className="error-text mt-1" role="alert">This reference adds {referenceGuard.length} characters. Shorten your description.</p>
         )}
       </div>
 
@@ -355,29 +356,29 @@ export function CreateWorkspace(): React.JSX.Element {
       </div>
 
       <div className="mt-5">
-        <p className="field-label">Use a product photo <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+        <p className="field-label">Use a reference image <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
         {reference ? (
           <div className="flex items-center gap-2 rounded-[8px] border p-2" style={{ borderColor: 'var(--border)' }}>
-            {reference.thumbUrl && <img src={reference.thumbUrl} alt="The product reference" className="h-10 w-10 rounded object-cover" />}
+            {reference.thumbUrl && <img src={reference.thumbUrl} alt="The reference image" className="h-10 w-10 rounded object-cover" />}
             <div className="min-w-0 flex-1">
               <p className="truncate text-[11px] font-medium">{reference.label}</p>
-              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>Sent with the request so the product stays the same.</p>
+              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>Sent with the request so its subject stays the same.</p>
             </div>
-            <button type="button" className="icon-btn" aria-label="Remove product photo" onClick={() => setReferenceId(null)}><X size={14} /></button>
+            <button type="button" className="icon-btn" aria-label="Remove reference image" onClick={() => setReferenceId(null)}><X size={14} /></button>
           </div>
         ) : (
           <Popover.Root open={pickerOpen} onOpenChange={setPickerOpen}>
             <Popover.Trigger asChild>
               <Button variant="secondary" className="w-full justify-start" type="button">
-                <ImageIcon size={15} /> Use a Product Photo
+                <ImageIcon size={15} /> Use a Reference Image
               </Button>
             </Popover.Trigger>
             <Popover.Portal>
               <Popover.Content className="menu-content w-[300px]" sideOffset={4} align="start">
-                <p className="section-label px-2 pb-1 pt-1">Project photos</p>
+                <p className="section-label px-2 pb-1 pt-1">Project images</p>
                 <div className="max-h-[220px] overflow-y-auto">
                   {images.filter((image) => image.status === 'ready').length === 0 ? (
-                    <p className="meta px-2 py-2">No photos yet.</p>
+                    <p className="meta px-2 py-2">No images yet.</p>
                   ) : (
                     images.filter((image) => image.status === 'ready').map((image) => (
                       <Popover.Close asChild key={image.id}>
@@ -472,7 +473,7 @@ export function CreateWorkspace(): React.JSX.Element {
         {!leftHidden && <aside className="ws-left">{leftPanel}</aside>}
         <section className="ws-center">
           <div className="flex items-center gap-2 border-b px-4" style={{ height: 44, borderColor: 'var(--border)', background: 'var(--bg)' }}>
-            <p className="min-w-0 flex-1 truncate text-[12px] font-medium">{runFilter ? `One run · ${formatDate(runFilter.startedAt, true)}` : 'Create'}</p>
+            <p className="min-w-0 flex-1 truncate text-[12px] font-medium">{runFilter ? `One run · ${formatDate(runFilter.startedAt, true)}` : 'Image Generator'}</p>
             {leftHidden && <Button variant="ghost" size="sm" onClick={() => setLeftSheet(true)}>Describe</Button>}
             {(rightHidden || rightCollapsed) && <Button variant="ghost" size="sm" onClick={() => { if (rightHidden) setRightSheet(true); else setRightCollapsed(false) }}>Runs</Button>}
             {isRunning && job && <span className="badge" data-tone="success">Making</span>}
@@ -541,7 +542,7 @@ export function CreateWorkspace(): React.JSX.Element {
         </section>
         {!rightHidden && !rightCollapsed && <aside className="ws-right">{rightPanel}</aside>}
       </div>
-      <Sheet open={leftSheet} onOpenChange={setLeftSheet} side="left" title="Create">{leftPanel}</Sheet>
+      <Sheet open={leftSheet} onOpenChange={setLeftSheet} side="left" title="Image Generator">{leftPanel}</Sheet>
       <Sheet open={rightSheet} onOpenChange={setRightSheet} side="right" title="Runs">{rightPanel}</Sheet>
 
       <div className="ws-bottom">

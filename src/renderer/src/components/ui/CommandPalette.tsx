@@ -66,7 +66,7 @@ export function CommandPalette(): React.JSX.Element {
         id: `project-${project.id}`,
         group: 'Projects',
         label: project.name,
-        hint: project.type === 'set' ? 'Set' : project.type === 'photo' ? 'Photo' : 'Image',
+        hint: project.type === 'set' ? 'Set' : project.type === 'photo' ? 'Image Editor' : 'Image Generator',
         run: () => go(`/project/${project.id}`)
       })
     }
@@ -74,21 +74,21 @@ export function CommandPalette(): React.JSX.Element {
       {
         id: 'new-set',
         group: 'Actions',
-        label: 'New set',
+        label: 'New Set',
         hint: 'One photo in, a full set out',
         run: () => go('/library?new=set')
       },
       {
         id: 'new-photo',
         group: 'Actions',
-        label: 'New photo',
+        label: 'New Image Editor',
         hint: 'Change a photo you have',
         run: () => go('/library?new=photo')
       },
       {
         id: 'new-image',
         group: 'Actions',
-        label: 'New image',
+        label: 'New Image Generator',
         hint: 'Describe a picture and make it',
         run: async () => {
           const detail = await unwrap(window.moss.projects.create({ type: 'image' }))

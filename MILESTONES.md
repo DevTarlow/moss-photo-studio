@@ -54,7 +54,7 @@ Verified by:
 - E2E five-shot set, failed retry, price checks, and budget
 - prompt and labels unit tests
 
-## M3: Photo editor and local adjust
+## M3: Image Editor and local adjust
 
 Delivered:
 
@@ -72,7 +72,7 @@ Verified by:
 - `tests/integration/adjust.test.ts`
 - version label and recovery tests
 
-## M4: Create from words
+## M4: Image Generator
 
 Delivered:
 

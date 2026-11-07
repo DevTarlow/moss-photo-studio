@@ -3,6 +3,9 @@ export const PROMPT_MAX = 2000
 export const REF_GUARD =
   ' Keep the product exactly as pictured in the reference.'
 
+export const PERSON_REF_GUARD =
+  ' Keep the person exactly as pictured in the reference - same face, hair, skin tone and body.'
+
 export const EDIT_GUARD =
   ' Keep the product itself exactly the same - same shape, colours and details.'
 

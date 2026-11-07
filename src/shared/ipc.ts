@@ -149,6 +149,10 @@ export interface IpcChannels {
   }
   'people:rename': { request: { id: string; name: string }; response: Person }
   'people:delete': { request: { id: string }; response: { ok: true } }
+  'people:createImageProject': {
+    request: { id: string }
+    response: { projectId: string; imageId: string }
+  }
   'usage:summary': { request: { month: string }; response: UsageSummary }
   'usage:list': {
     request: { month: string; projectId?: string; limit?: number; offset?: number }
@@ -263,6 +267,7 @@ export interface MossApi {
     create: Call<'people:create'>
     rename: Call<'people:rename'>
     delete: Call<'people:delete'>
+    createImageProject: Call<'people:createImageProject'>
   }
   usage: {
     summary: Call<'usage:summary'>

@@ -156,11 +156,23 @@ export function People(): React.JSX.Element {
     }
   }
 
-  const startProject = (type: 'set' | 'photo'): void => {
+  const startSet = (): void => {
     if (!previewPerson) return
     const personId = previewPerson.id
     setPreviewPerson(null)
-    navigate(`/library?new=${type}&person=${encodeURIComponent(personId)}`)
+    navigate(`/library?new=set&person=${encodeURIComponent(personId)}`)
+  }
+
+  const createImage = async (): Promise<void> => {
+    if (!previewPerson) return
+    const person = previewPerson
+    setPreviewPerson(null)
+    try {
+      const result = await unwrap(window.moss.people.createImageProject({ id: person.id }))
+      navigate(`/project/${result.projectId}`)
+    } catch {
+      toast.error('That image project could not be created.')
+    }
   }
 
   const rename = async (): Promise<void> => {
@@ -317,10 +329,10 @@ export function People(): React.JSX.Element {
               className="mx-auto max-h-[60vh] w-full rounded-[12px] object-contain"
             />
             <div className="mt-4 flex flex-wrap gap-2">
-              <Button variant="primary" onClick={() => startProject('set')}>Create a Set</Button>
-              <Button variant="secondary" onClick={() => startProject('photo')}>Create a Photo</Button>
+              <Button variant="primary" onClick={startSet}>Create a Set</Button>
+              <Button variant="secondary" onClick={() => void createImage()}>Create an Image</Button>
             </div>
-            <p className="hint mt-2">The person is preselected when you add your product photo.</p>
+            <p className="hint mt-2">A set preselects this person for On a person shots. An image starts the Image Generator with this portrait as its reference.</p>
           </>
         )}
       </Dialog>

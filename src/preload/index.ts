@@ -111,7 +111,8 @@ const api: MossApi = {
     list: invokeVoid('people:list'),
     create: invoke('people:create'),
     rename: invoke('people:rename'),
-    delete: invoke('people:delete')
+    delete: invoke('people:delete'),
+    createImageProject: invoke('people:createImageProject')
   },
   usage: {
     summary: invoke('usage:summary'),

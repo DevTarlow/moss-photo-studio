@@ -305,11 +305,11 @@ export function Library(): React.JSX.Element {
                       <span className="pl-6 text-[11px]" style={{ color: 'var(--text-faint)' }}>One photo in, a full set out.</span>
                     </DropdownMenu.Item>
                     <DropdownMenu.Item className="menu-item h-auto flex-col items-start py-2" onSelect={() => openNew('photo')}>
-                      <span className="flex items-center gap-2 font-semibold"><ImageIcon size={15} /> Photo</span>
-                      <span className="pl-6 text-[11px]" style={{ color: 'var(--text-faint)' }}>Change a photo you have.</span>
+                      <span className="flex items-center gap-2 font-semibold"><ImageIcon size={15} /> Image Editor</span>
+                      <span className="pl-6 text-[11px]" style={{ color: 'var(--text-faint)' }}>Change a photo you already have.</span>
                     </DropdownMenu.Item>
                     <DropdownMenu.Item className="menu-item h-auto flex-col items-start py-2" onSelect={() => openNew('image')}>
-                      <span className="flex items-center gap-2 font-semibold"><Sparkles size={15} /> Image</span>
+                      <span className="flex items-center gap-2 font-semibold"><Sparkles size={15} /> Image Generator</span>
                       <span className="pl-6 text-[11px]" style={{ color: 'var(--text-faint)' }}>Describe a picture and make it.</span>
                     </DropdownMenu.Item>
                   </DropdownMenu.Content>
@@ -418,9 +418,9 @@ export function Library(): React.JSX.Element {
                   <p className="text-center text-[12px]" style={{ color: 'var(--text-muted)' }}>Start with a photo of something you sell.</p>
                   <div className="mx-auto mt-4 grid max-w-[900px] gap-4 md:grid-cols-3">
                     {[
-                      { type: 'set' as const, icon: Layers, title: 'Make a set', line: 'One photo in, a full set out.' },
-                      { type: 'photo' as const, icon: ImageIcon, title: 'Change a photo', line: 'New scene, new light, same product.' },
-                      { type: 'image' as const, icon: Sparkles, title: 'Create an image', line: 'Describe it, and Meta makes it.' }
+                      { type: 'set' as const, icon: Layers, title: 'Set', line: 'One photo in, a full set out.' },
+                      { type: 'photo' as const, icon: ImageIcon, title: 'Image Editor', line: 'New scene, new light, same product.' },
+                      { type: 'image' as const, icon: Sparkles, title: 'Image Generator', line: 'Describe it, and Meta makes it.' }
                     ].map((card) => {
                       const Icon = card.icon
                       return (

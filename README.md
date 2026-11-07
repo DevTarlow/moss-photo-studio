@@ -7,10 +7,10 @@ This is the sibling application to `../moss-toolbox`. It is an Electron desktop 
 ## What is in the app
 
 - **Library** with sets, photos, and images, search, filters, sorting, grid and list views, project duplication, rename, delete, and export. Above 200 projects the grid and list mount only viewport rows.
-- **Sets** from 1 to 8 listing shots. Each shot can be switched off, renamed, described, assigned a person, or given a feature line. The plan saves automatically.
+- **Set** from 1 to 8 listing shots. Each shot can be switched off, renamed, described, assigned a person, or given a feature line. The plan saves automatically.
 - **Connection icons** for Main shot, In use, Close-up, Size reference, Flat lay, Gift-ready, Feature callout, and On a person.
-- **Photo editor** with 32 tiles in six groups, 12 bundled people plus your own, a free local adjust panel, version labels, branching, a filmstrip, compare, export, and copy.
-- **Create from words** with 24 starters, optional product references, one to four images, three shapes, and three formats.
+- **Image Editor** with 32 tiles in six groups, 12 bundled people plus your own, a free local adjust panel, version labels, branching, a filmstrip, compare, export, and copy.
+- **Image Generator** with 24 starters, optional reference images, one to four images, three shapes, and three formats.
 - **Local adjust** for crop, rotate, flip, brightness, contrast, saturation, warmth, sharpen, and vignette. It makes a new version and never resends the product to an image service.
 - **Logo & Colors** with up to six colors, a logo, and corner badge position, size, and opacity. Colors steer backgrounds and props in sets and photo changes. The badge is composited locally.
 - **First run** opens in light mode. The theme can be chosen during onboarding; density and reduce-motion stay in Settings.

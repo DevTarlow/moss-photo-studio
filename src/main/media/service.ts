@@ -36,6 +36,8 @@ export class MediaService {
     projectId: string
     bytes: Uint8Array
     name?: string
+    label?: string
+    personId?: string | null
   }): Promise<ImportResult> {
     const project = this.deps.projects.get(input.projectId)
     if (!project) throw new ImageImportError('unreadable', 'That project is not here anymore.')
@@ -78,7 +80,8 @@ export class MediaService {
       width: normalised.width,
       height: normalised.height,
       format,
-      label: uploadLabel(labels),
+      personId: input.personId ?? null,
+      label: input.label ?? uploadLabel(labels),
       isOriginal: first,
       costCents: 0
     })

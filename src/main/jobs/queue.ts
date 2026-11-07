@@ -17,7 +17,7 @@ import type {
 import { estimateCents, monthBounds, monthKey } from '@shared/cost'
 import { MAX_CREATE_VARIANTS, MAX_PROMPT } from '@shared/constants'
 import { DEFAULT_PERSON_ID } from '@shared/people'
-import { composeChange, composeSetPrompt, PROMPT_MAX, REF_GUARD } from '@shared/prompts/guards'
+import { composeChange, composeSetPrompt, PERSON_REF_GUARD, PROMPT_MAX, REF_GUARD } from '@shared/prompts/guards'
 import { directionForPrompt, shotDefinition } from '@shared/prompts/shots'
 import { nextCountedLabel, setImageLabel } from '@shared/labels'
 import { templateById, templateWord } from '@shared/prompts/templates'
@@ -246,11 +246,12 @@ export class JobQueue {
         throw new JobStartError('invalid_payload', 'That photo is not here anymore.')
       }
     }
-    const prompt = source ? `${text}${REF_GUARD}` : text
+    const referenceGuard = source?.personId ? PERSON_REF_GUARD : REF_GUARD
+    const prompt = source ? `${text}${referenceGuard}` : text
     if (prompt.length > PROMPT_MAX) {
       throw new JobStartError(
         'invalid_payload',
-        `This photo adds ${REF_GUARD.length} characters. Shorten your description by ${prompt.length - PROMPT_MAX}.`
+        `This reference adds ${referenceGuard.length} characters. Shorten your description by ${prompt.length - PROMPT_MAX}.`
       )
     }
     this.requireBudget(estimateCents(input.count))

@@ -5,7 +5,7 @@ import path from 'node:path'
 
 const productPhoto = path.resolve(__dirname, '../../resources/tiles/examples/product.webp')
 
-test('a person opens larger and preselects set and photo projects', async () => {
+test('a person opens larger, seeds a set, and seeds the image generator', async () => {
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-people-e2e-'))
   const app = await electron.launch({
     args: ['.', '--no-sandbox'],
@@ -39,11 +39,18 @@ test('a person opens larger and preselects set and photo projects', async () => 
     await page.getByRole('link', { name: 'People', exact: true }).click()
     await page.getByRole('button', { name: 'Open Mei larger' }).click()
     await expect(preview.getByRole('heading', { name: 'Mei · 30s' })).toBeVisible()
-    await preview.getByRole('button', { name: 'Create a Photo' }).click()
-    await page.locator('input[type=file]').setInputFiles(productPhoto)
-    await page.getByText('CHANGE THIS PHOTO').waitFor({ timeout: 20_000 })
-    await page.getByRole('button', { name: /Worn, waist-up/ }).click()
-    await expect(page.locator('#editor-person')).toHaveValue('mei')
+    await preview.getByRole('button', { name: 'Create an Image' }).click()
+    await page.getByText('Describe the image').waitFor({ timeout: 20_000 })
+    await expect(page.getByText('Image Generator', { exact: true }).first()).toBeVisible()
+    const seeded = await page.evaluate(async () => {
+      const id = window.location.hash.split('/project/')[1]?.split(/[?#]/)[0]
+      if (!id) return null
+      const result = await window.moss.projects.get({ id })
+      if (!result.ok) return null
+      const source = result.data.images.find((image) => image.id === result.data.project.sourceImageId)
+      return { type: result.data.project.type, personId: source?.personId, label: source?.label }
+    })
+    expect(seeded).toEqual({ type: 'image', personId: 'mei', label: 'Mei' })
   } finally {
     await app.close().catch(() => undefined)
     fs.rmSync(userData, { recursive: true, force: true })
