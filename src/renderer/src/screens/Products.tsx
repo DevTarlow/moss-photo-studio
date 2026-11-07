@@ -10,11 +10,13 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Field } from '../components/ui/Field'
 import { Skeleton } from '../components/ui/Skeleton'
+import { Pagination } from '../components/ui/Pagination'
 import { useConfirm } from '../components/ui/ConfirmProvider'
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
 import { formatDate } from '../lib/format'
 import { toast } from '../lib/toast'
+import { COLLECTION_PAGE_SIZE } from '@shared/constants'
 
 function ProductCard({
   product,
@@ -63,6 +65,7 @@ export function Products(): React.JSX.Element {
   const [loading, setLoading] = useState(products.length === 0)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [page, setPage] = useState(1)
   const [preview, setPreview] = useState<Product | null>(null)
   const [renaming, setRenaming] = useState<Product | null>(null)
   const [renameValue, setRenameValue] = useState('')
@@ -82,6 +85,16 @@ export function Products(): React.JSX.Element {
   useEffect(() => {
     void load()
   }, [])
+
+  useEffect(() => {
+    const pages = Math.max(1, Math.ceil(products.length / COLLECTION_PAGE_SIZE))
+    if (page > pages) setPage(pages)
+  }, [products.length, page])
+
+  const visibleProducts = products.slice(
+    (page - 1) * COLLECTION_PAGE_SIZE,
+    page * COLLECTION_PAGE_SIZE
+  )
 
   const addProduct = async (): Promise<void> => {
     setBusy(true)
@@ -178,7 +191,7 @@ export function Products(): React.JSX.Element {
             />
           ) : (
             <div className="mt-8 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
-              {products.map((product) => (
+              {visibleProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
@@ -189,6 +202,12 @@ export function Products(): React.JSX.Element {
               ))}
             </div>
           )}
+          <Pagination
+            page={page}
+            total={products.length}
+            onPage={setPage}
+            label="Product pages"
+          />
         </div>
       </div>
 

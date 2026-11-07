@@ -39,7 +39,7 @@ import { showExportToast } from '../lib/exportFeedback'
 import { onCommand } from '../lib/commands'
 import { fileToBytes } from '../lib/files'
 import { warnIfSmallPhoto } from '../lib/photoWarnings'
-import { VirtualLibrary } from '../components/library/VirtualLibrary'
+import { Pagination } from '../components/ui/Pagination'
 
 const filters: Array<{ id: ProjectFilter; label: string }> = [
   { id: 'all', label: 'All' },
@@ -292,6 +292,11 @@ export function Library(): React.JSX.Element {
 
   const selectedProjects = store.items.filter((project) => selected.has(project.id))
 
+  const changePage = (page: number): void => {
+    store.goToPage(page)
+    scrollRef.current?.scrollTo({ top: 0 })
+  }
+
   const empty = !store.loading && store.items.length === 0
   const filtering = Boolean(store.search.trim()) || store.filter !== 'all'
 
@@ -512,14 +517,6 @@ export function Library(): React.JSX.Element {
                   </div>
                 </div>
               )
-            ) : store.items.length > 200 ? (
-              store.view === 'grid' ? (
-                <VirtualLibrary items={store.items} view="grid" scrollElement={scrollRef} renderCard={renderProject} />
-              ) : (
-                <div className="card overflow-hidden">
-                  <VirtualLibrary items={store.items} view="list" scrollElement={scrollRef} renderCard={renderProject} />
-                </div>
-              )
             ) : store.view === 'grid' ? (
               <div className="grid-library">
                 {store.items.map((project) => (
@@ -535,12 +532,14 @@ export function Library(): React.JSX.Element {
             )}
           </div>
 
-          {!store.loading && store.items.length < store.total && (
-            <div className="mt-6 flex justify-center">
-              <Button variant="secondary" disabled={store.loadingMore} onClick={() => void store.loadMore()}>
-                {store.loadingMore ? 'Loading...' : `Show More Projects (${store.total - store.items.length} left)`}
-              </Button>
-            </div>
+          {!empty && (
+            <Pagination
+              page={store.page}
+              total={store.total}
+              onPage={changePage}
+              busy={store.loading}
+              label="Library pages"
+            />
           )}
 
           {!secrets?.hasKey && !store.loading && !empty && (

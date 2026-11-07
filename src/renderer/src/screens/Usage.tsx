@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Progress } from '../components/ui/Progress'
+import { Pagination } from '../components/ui/Pagination'
 import { Skeleton } from '../components/ui/Skeleton'
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
@@ -14,6 +15,7 @@ import { usd, monthLabel, shortMonthLabel, formatDateTime } from '../lib/format'
 import { toast } from '../lib/toast'
 import { currentMonth } from '../store/library'
 import { errorMessage } from '@shared/errors'
+import { COLLECTION_PAGE_SIZE } from '@shared/constants'
 
 function lastMonths(count: number): string[] {
   const result: string[] = []
@@ -35,7 +37,9 @@ export function Usage(): React.JSX.Element {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [loadingMore, setLoadingMore] = useState(false)
+  const [page, setPage] = useState(1)
+  const [projectPage, setProjectPage] = useState(1)
+  const [loadingEvents, setLoadingEvents] = useState(false)
   const [budget, setBudget] = useState('')
   const [savingBudget, setSavingBudget] = useState(false)
   const months = useMemo(() => lastMonths(12), [])
@@ -46,11 +50,13 @@ export function Usage(): React.JSX.Element {
     try {
       const [nextSummary, list] = await Promise.all([
         unwrap(window.moss.usage.summary({ month })),
-        unwrap(window.moss.usage.list({ month, limit: 50, offset: 0 }))
+        unwrap(window.moss.usage.list({ month, limit: COLLECTION_PAGE_SIZE, offset: 0 }))
       ])
       setSummary(nextSummary)
       setEvents(list.items)
       setTotal(list.total)
+      setPage(1)
+      setProjectPage(1)
       setBudget(nextSummary.budgetCents === null ? '' : (nextSummary.budgetCents / 100).toFixed(2))
     } catch {
       setError('Could not load usage. Try again.')
@@ -63,16 +69,26 @@ export function Usage(): React.JSX.Element {
     void load()
   }, [month])
 
-  const showMore = async (): Promise<void> => {
-    setLoadingMore(true)
+  const goToPage = async (requestedPage: number): Promise<void> => {
+    setLoadingEvents(true)
     try {
-      const next = await unwrap(window.moss.usage.list({ month, limit: 50, offset: events.length }))
-      setEvents((current) => [...current, ...next.items])
+      const listAt = (target: number) =>
+        unwrap(window.moss.usage.list({
+          month,
+          limit: COLLECTION_PAGE_SIZE,
+          offset: (target - 1) * COLLECTION_PAGE_SIZE
+        }))
+      let next = await listAt(requestedPage)
+      const pages = Math.max(1, Math.ceil(next.total / COLLECTION_PAGE_SIZE))
+      const target = Math.min(Math.max(1, requestedPage), pages)
+      if (target !== requestedPage) next = await listAt(target)
+      setEvents(next.items)
       setTotal(next.total)
+      setPage(target)
     } catch {
-      toast.error('Could not load more usage.')
+      toast.error('Could not load that usage page.')
     } finally {
-      setLoadingMore(false)
+      setLoadingEvents(false)
     }
   }
 
@@ -111,6 +127,10 @@ export function Usage(): React.JSX.Element {
 
   const budgetCents = summary?.budgetCents ?? null
   const maxProject = Math.max(1, ...(summary?.projects.map((project) => project.spendCents) ?? [0]))
+  const visibleProjects = (summary?.projects ?? []).slice(
+    (projectPage - 1) * COLLECTION_PAGE_SIZE,
+    projectPage * COLLECTION_PAGE_SIZE
+  )
 
   return (
     <AppFrame>
@@ -192,7 +212,7 @@ export function Usage(): React.JSX.Element {
                   {(summary?.projects.length ?? 0) === 0 ? (
                     <p className="meta p-4">Nothing yet this month.</p>
                   ) : (
-                    summary?.projects.map((project) => (
+                    visibleProjects.map((project) => (
                       <div key={`${project.projectId}-${project.name}`} className="flex items-center gap-3 border-b px-4 py-3 last:border-b-0" style={{ borderColor: 'var(--border)' }}>
                         {project.projectId ? (
                           <Link to={`/project/${project.projectId}`} className="min-w-[160px] max-w-[260px] truncate text-[12px] font-medium">{project.name}</Link>
@@ -208,6 +228,12 @@ export function Usage(): React.JSX.Element {
                     ))
                   )}
                 </div>
+                <Pagination
+                  page={projectPage}
+                  total={summary?.projects.length ?? 0}
+                  onPage={setProjectPage}
+                  label="Project usage pages"
+                />
               </section>
 
               <section className="mt-8">
@@ -264,13 +290,13 @@ export function Usage(): React.JSX.Element {
                     </table>
                   </div>
                 )}
-                {events.length < total && (
-                  <div className="mt-3 flex justify-center">
-                    <Button variant="secondary" disabled={loadingMore} onClick={() => void showMore()}>
-                      {loadingMore ? 'Loading...' : 'Show more'}
-                    </Button>
-                  </div>
-                )}
+                <Pagination
+                  page={page}
+                  total={total}
+                  onPage={(next) => void goToPage(next)}
+                  busy={loadingEvents}
+                  label="Ledger pages"
+                />
               </section>
 
               <section className="mt-8 max-w-[640px]">

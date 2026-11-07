@@ -424,6 +424,11 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await expect(page.getByText('Images made', { exact: true })).toBeVisible()
     await screenshot('usage')
     await assertNoSeriousA11y('usage')
+    const ledgerRows = page.locator('table tbody tr')
+    await expect(ledgerRows).toHaveCount(20)
+    await page.getByRole('button', { name: 'Next', exact: true }).click()
+    await expect(page.getByText(/Page 2 of \d+/)).toBeVisible({ timeout: 15_000 })
+    expect(await ledgerRows.count()).toBeGreaterThan(0)
     const before = await spendCents()
     expect(before).toBeGreaterThan(0)
     await stubDialogs()
@@ -698,7 +703,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     expect(pageErrors).toEqual([])
   })
 
-  test('a library above 200 projects virtualizes its rows', async () => {
+  test('a library above 500 projects is paginated', async () => {
     await page.evaluate(async () => {
       for (let index = 0; index < 510; index += 1) {
         await window.moss.projects.create({ type: 'image', name: `Perf project ${index}` })
@@ -712,19 +717,20 @@ test.describe.serial('Moss Photo Studio journey', () => {
     })
     expect(total).toBeGreaterThan(500)
     await expect(page.getByText(`${total} projects`, { exact: true })).toBeVisible({ timeout: 20_000 })
-    const showMore = page.getByRole('button', { name: /Show More Projects/ })
-    await expect(showMore).toBeVisible({ timeout: 20_000 })
-    for (let step = 0; step < 3; step += 1) {
-      const button = page.getByRole('button', { name: /Show More Projects/ })
-      if (!(await button.isVisible())) break
-      await button.click()
-      await page.waitForTimeout(1_500)
-    }
-    await expect(showMore).not.toBeVisible({ timeout: 20_000 })
-    expect(await page.locator('article.lib-card').count()).toBeLessThan(80)
-    await page.locator('.page-scroll').evaluate((element) => element.scrollTo({ top: element.scrollHeight }))
-    await page.waitForTimeout(300)
-    await expect(page.getByText('Perf project 0', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText(/Page 1 of \d+/)).toBeVisible({ timeout: 20_000 })
+    await expect(page.locator('article.lib-card')).toHaveCount(20)
+
+    await page.getByRole('button', { name: 'Next', exact: true }).click()
+    await expect(page.getByText(/Page 2 of \d+/)).toBeVisible({ timeout: 20_000 })
+    await expect(page.locator('article.lib-card')).toHaveCount(20)
+    await page.getByRole('button', { name: 'Previous', exact: true }).click()
+    await expect(page.getByText(/Page 1 of \d+/)).toBeVisible({ timeout: 20_000 })
+
+    await page.getByRole('button', { name: 'List view' }).click()
+    await expect(page.locator('.lib-list-row')).toHaveCount(20)
+    await page.getByLabel('Search projects').fill('Perf project 0')
+    await expect(page.getByText('Perf project 0', { exact: true }).first()).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByText(/Page 1 of \d+/)).toHaveCount(0)
     expect(pageErrors).toEqual([])
   })
 })

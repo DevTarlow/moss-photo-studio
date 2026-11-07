@@ -3,16 +3,16 @@ import { Loader2, Package, Plus, Search } from 'lucide-react'
 import type { LibraryImage } from '@shared/types'
 import { Dialog } from '../ui/Dialog'
 import { Button } from '../ui/Button'
+import { Pagination } from '../ui/Pagination'
 import { Segmented } from '../ui/Segmented'
 import { useAppStore } from '../../store/app'
 import { unwrap, messageOf } from '../../lib/ipc'
 import { cn } from '../../lib/cn'
+import { COLLECTION_PAGE_SIZE } from '@shared/constants'
 
 export type SourceChoice =
   | { kind: 'product'; productId: string; name: string; thumbUrl: string }
   | { kind: 'image'; imageId: string; label: string; thumbUrl: string | null }
-
-const PAGE_SIZE = 60
 
 export function SourcePickerDialog({
   open,
@@ -35,26 +35,31 @@ export function SourcePickerDialog({
   const [items, setItems] = useState<LibraryImage[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [libraryPage, setLibraryPage] = useState(1)
+  const [productPage, setProductPage] = useState(1)
 
-  const loadLibrary = async (query: string, offset: number): Promise<void> => {
-    if (offset === 0) setLoading(true)
-    else setLoadingMore(true)
-    if (offset === 0) setError(null)
+  const loadLibrary = async (query: string, requestedPage: number): Promise<void> => {
+    setLoading(true)
+    setError(null)
     try {
-      const result = await unwrap(window.moss.images.library({
-        search: query.trim() || undefined,
-        limit: PAGE_SIZE,
-        offset
-      }))
-      setItems((previous) => offset === 0 ? result.items : [...previous, ...result.items])
+      const listAt = (page: number) =>
+        unwrap(window.moss.images.library({
+          search: query.trim() || undefined,
+          limit: COLLECTION_PAGE_SIZE,
+          offset: (page - 1) * COLLECTION_PAGE_SIZE
+        }))
+      let result = await listAt(requestedPage)
+      const pages = Math.max(1, Math.ceil(result.total / COLLECTION_PAGE_SIZE))
+      const target = Math.min(Math.max(1, requestedPage), pages)
+      if (target !== requestedPage) result = await listAt(target)
+      setItems(result.items)
       setTotal(result.total)
+      setLibraryPage(target)
     } catch (caught) {
-      if (offset === 0) setError(messageOf(caught))
+      setError(messageOf(caught))
     } finally {
       setLoading(false)
-      setLoadingMore(false)
     }
   }
 
@@ -62,14 +67,29 @@ export function SourcePickerDialog({
     if (!open) return
     setTab('products')
     setSearch('')
-    void loadLibrary('', 0)
+    setLibraryPage(1)
+    setProductPage(1)
+    void loadLibrary('', 1)
   }, [open])
 
   useEffect(() => {
     if (!open || tab !== 'library') return
-    const timer = window.setTimeout(() => { void loadLibrary(search, 0) }, 150)
+    const timer = window.setTimeout(() => {
+      setLibraryPage(1)
+      void loadLibrary(search, 1)
+    }, 150)
     return () => window.clearTimeout(timer)
   }, [open, tab, search])
+
+  useEffect(() => {
+    const pages = Math.max(1, Math.ceil(products.length / COLLECTION_PAGE_SIZE))
+    if (productPage > pages) setProductPage(pages)
+  }, [products.length, productPage])
+
+  const visibleProducts = products.slice(
+    (productPage - 1) * COLLECTION_PAGE_SIZE,
+    productPage * COLLECTION_PAGE_SIZE
+  )
 
   const choose = (choice: SourceChoice): void => {
     onChoose(choice)
@@ -129,7 +149,7 @@ export function SourcePickerDialog({
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {products.map((product) => (
+              {visibleProducts.map((product) => (
                 <button
                   key={product.id}
                   type="button"
@@ -144,6 +164,13 @@ export function SourcePickerDialog({
                   </span>
                 </button>
               ))}
+              <Pagination
+                page={productPage}
+                total={products.length}
+                onPage={setProductPage}
+                className="col-span-2 sm:col-span-3"
+                label="Product source pages"
+              />
             </div>
           )
         ) : loading ? (
@@ -180,13 +207,12 @@ export function SourcePickerDialog({
                 </button>
               ))}
             </div>
-            {items.length < total && (
-              <div className="mt-4 flex justify-center">
-                <Button variant="secondary" size="sm" disabled={loadingMore} onClick={() => void loadLibrary(search, items.length)}>
-                  {loadingMore ? 'Loading...' : `Show More (${total - items.length} left)`}
-                </Button>
-              </div>
-            )}
+            <Pagination
+              page={libraryPage}
+              total={total}
+              onPage={(next) => void loadLibrary(search, next)}
+              label="Library source pages"
+            />
           </>
         )}
       </div>

@@ -83,6 +83,26 @@ test('a generated image becomes a reusable product across the editor and generat
     await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
     await expect(page.getByText('Mug generator', { exact: true })).toBeVisible()
     await expect(page.getByText('Ceramic Mug', { exact: true }).first()).toBeVisible()
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = 800
+      canvas.height = 600
+      const context = canvas.getContext('2d')!
+      context.fillStyle = '#e8e0d4'
+      context.fillRect(0, 0, 800, 600)
+      const blob = await new Promise<Blob>((resolve) => canvas.toBlob((value) => resolve(value!), 'image/png'))
+      const bytes = new Uint8Array(await blob.arrayBuffer())
+      for (let index = 0; index < 21; index += 1) {
+        await window.moss.products.createFromBytes({ bytes, name: `Paged product ${index}` })
+      }
+    })
+    await page.getByRole('link', { name: 'Products', exact: true }).click()
+    await expect(page.getByText('Page 1 of 2', { exact: false })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Open Paged product/ })).toHaveCount(20)
+    await page.getByRole('button', { name: 'Next', exact: true }).click()
+    await expect(page.getByText('Page 2 of 2', { exact: false })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Open Paged product/ })).toHaveCount(1)
   } finally {
     await app.close().catch(() => undefined)
     fs.rmSync(userData, { recursive: true, force: true })

@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Skeleton } from '../components/ui/Skeleton'
+import { Pagination } from '../components/ui/Pagination'
 import { Dialog } from '../components/ui/Dialog'
 import { Dropzone } from '../components/ui/Dropzone'
 import { Field } from '../components/ui/Field'
@@ -15,6 +16,7 @@ import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
 import { fileToBytes } from '../lib/files'
 import { toast } from '../lib/toast'
+import { COLLECTION_PAGE_SIZE } from '@shared/constants'
 import { DropdownMenu } from 'radix-ui'
 
 function PersonCard({
@@ -73,6 +75,7 @@ export function People(): React.JSX.Element {
   const [renameValue, setRenameValue] = useState('')
   const [loading, setLoading] = useState(people.length === 0)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [yoursPage, setYoursPage] = useState(1)
 
   const loadPeople = async (): Promise<void> => {
     setLoading(true)
@@ -92,6 +95,12 @@ export function People(): React.JSX.Element {
 
   const included = people.filter((person) => person.source === 'bundled')
   const yours = people.filter((person) => person.source === 'user')
+  const visibleYours = yours.slice((yoursPage - 1) * COLLECTION_PAGE_SIZE, yoursPage * COLLECTION_PAGE_SIZE)
+
+  useEffect(() => {
+    const pages = Math.max(1, Math.ceil(yours.length / COLLECTION_PAGE_SIZE))
+    if (yoursPage > pages) setYoursPage(pages)
+  }, [yours.length, yoursPage])
 
   const addWithPicker = async (): Promise<void> => {
     if (!name.trim()) {
@@ -245,7 +254,7 @@ export function People(): React.JSX.Element {
               </div>
             ) : (
               <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
-                {yours.map((person) => (
+                {visibleYours.map((person) => (
                   <PersonCard
                     key={person.id}
                     person={person}
@@ -256,6 +265,12 @@ export function People(): React.JSX.Element {
                 ))}
               </div>
             )}
+            <Pagination
+              page={yoursPage}
+              total={yours.length}
+              onPage={setYoursPage}
+              label="Your people pages"
+            />
           </section>
           </>
           )}

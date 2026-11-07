@@ -8,7 +8,7 @@ This is the record of what was run, what passed, and what the acceptance owner s
 | --- | --- |
 | `npm run typecheck` | Pass |
 | `npm test` | 100 tests pass in 10 files |
-| `npm run test:e2e` | 13 serial tests pass, including axe on dialogs, 510-project virtualization, all-screen 1024 and 150% layout, and screenshot comparison |
+| `npm run test:e2e` | 16 serial tests pass, including axe on dialogs, 510-project pagination, all-screen 1024 and 150% layout, and screenshot comparison |
 | `npm run audit:tokens` | All foreground/background token pairs pass AA in light and dark |
 | `npm run lint` | 0 errors, warnings for unused locals and preferences |
 | `npm run build` | Pass |
@@ -58,7 +58,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - License grace: with the stored validation moved back 13 days and the store down, the app opened the library with the grace banner. At 15 days it opened Activation, Browse My Library worked, and a project showed the read-only message.
 - Axe: activation, onboarding, set plan, set review, image editor, adjusted photo, Create empty, Create results, Usage, People, Settings light, Library light, Library dark, Library at 1024, Library at 150% zoom, the first-run confirmation dialog, and the set export dialog were checked. No serious or critical violations remained after fixing the onboarding step group, progress bar names, and dialog animation timing in the check.
 - Screenshot comparison passed on a second run with the live app.
-- Large library: 510 created projects loaded through every page. The virtual list mounted fewer than 80 cards and scrolling to the bottom exposed the oldest project.
+- Large library: 510 created projects loaded 20 at a time. Previous and Next moved between pages, and search found the oldest project.
 - Application menu: Export, Undo, Redo, Copy Image, zoom, and Toggle Panel enabled only in the correct editor states. Paste stayed available in the Library. The test read the native menu item state through Electron.
 
 ## Coverage gaps in the automated artifact
@@ -67,7 +67,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - Every main screen is captured at 1024 by 700 light. Every main screen also passes a 150% zoom layout and overflow assertion, including the panels as sheets where the viewport hides them.
 - The screenshot matrix was added after the bulk of development. The baseline images reflect the final build states only for the visited journey states.
 - Dialog states are covered by axe during their normal use but are not each captured as standalone screenshots.
-- The library virtualizes above 200 loaded projects and the journey proves a 510-project library mounts fewer than 80 cards. A 2,000 image scroll frame-time profile and a 2,000-version single project were not run.
+- The library paginates 20 projects at a time and the journey proves a 510-project library renders 20 cards per page and moves between pages. A 2,000 image scroll frame-time profile and a 2,000-version single project were not run.
 
 ## Acceptance checklist
 
