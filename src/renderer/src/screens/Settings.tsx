@@ -12,12 +12,13 @@ import {
   UserRound
 } from 'lucide-react'
 import type { Brand, LicenseState } from '@shared/types'
-import { APP_NAME, LICENSE_STORE_URL, MUSE_KEY_ORIGIN, SUPPORT_EMAIL, isStoreUrlPlaceholder } from '@shared/constants'
+import { APP_NAME, LICENSE_STORE_URL, SUPPORT_EMAIL, isStoreUrlPlaceholder } from '@shared/constants'
 import { AppFrame } from '../components/ui/AppFrame'
 import { Button } from '../components/ui/Button'
 import { Field } from '../components/ui/Field'
 import { Segmented } from '../components/ui/Segmented'
 import { useConfirm } from '../components/ui/ConfirmProvider'
+import { MuseKeyGuideDialog } from '../components/ui/MuseKeyGuideDialog'
 import { BrandFields } from '../components/brand/BrandFields'
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
@@ -97,6 +98,7 @@ function StudioSection(): React.JSX.Element {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [backendDismissed, setBackendDismissed] = useState(false)
+  const [keyGuideOpen, setKeyGuideOpen] = useState(false)
 
   useEffect(() => {
     void refreshSecrets()
@@ -232,7 +234,7 @@ function StudioSection(): React.JSX.Element {
                 type="button"
                 className="inline-flex items-center gap-1 text-[12px]"
                 style={{ color: 'var(--accent)' }}
-                onClick={() => void window.moss.app.openExternal({ url: MUSE_KEY_ORIGIN })}
+                onClick={() => setKeyGuideOpen(true)}
               >
                 Where do I get a key? <ExternalLink size={12} />
               </button>
@@ -252,6 +254,7 @@ function StudioSection(): React.JSX.Element {
           </div>
         </div>
       </SectionCard>
+      <MuseKeyGuideDialog open={keyGuideOpen} onOpenChange={setKeyGuideOpen} />
     </div>
   )
 }

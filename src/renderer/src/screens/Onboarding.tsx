@@ -6,7 +6,6 @@ import { CATEGORY_CHIPS, recipeById } from '@shared/prompts/recipes'
 import { shotDefinition } from '@shared/prompts/shots'
 import { createDefaultPlan } from '@shared/plans'
 import { estimateCents, usd } from '@shared/cost'
-import { MUSE_KEY_ORIGIN } from '@shared/constants'
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
 import { fileToBytes } from '../lib/files'
@@ -21,6 +20,7 @@ import { Dropzone } from '../components/ui/Dropzone'
 import { Segmented } from '../components/ui/Segmented'
 import { BrandFields } from '../components/brand/BrandFields'
 import { FirstRunConfirm } from '../components/ui/FirstRunConfirm'
+import { MuseKeyGuideDialog } from '../components/ui/MuseKeyGuideDialog'
 import { Progress } from '../components/ui/Progress'
 import { Spinner } from '../components/ui/Spinner'
 
@@ -48,6 +48,7 @@ export function Onboarding(): React.JSX.Element {
   const [revealKey, setRevealKey] = useState(false)
   const [keyError, setKeyError] = useState<string | null>(null)
   const [keyBusy, setKeyBusy] = useState(false)
+  const [keyGuideOpen, setKeyGuideOpen] = useState(false)
   const [localBrand, setLocalBrand] = useState<Brand>(brand ?? emptyBrand)
   const [category, setCategory] = useState('other')
   const [photoProject, setPhotoProject] = useState<ProjectDetail | null>(null)
@@ -356,7 +357,7 @@ export function Onboarding(): React.JSX.Element {
                 <button type="button" className="text-[11px]" style={{ color: 'var(--text-faint)' }} onClick={() => setRevealKey((value) => !value)}>
                   {revealKey ? 'Hide key' : 'Show key'}
                 </button>
-                <button type="button" className="inline-flex items-center gap-1 text-[11px]" style={{ color: 'var(--accent)' }} onClick={() => void window.moss.app.openExternal({ url: MUSE_KEY_ORIGIN })}>
+                <button type="button" className="inline-flex items-center gap-1 text-[11px]" style={{ color: 'var(--accent)' }} onClick={() => setKeyGuideOpen(true)}>
                   Where do I get a key? <ChevronRight size={12} />
                 </button>
               </div>
@@ -515,6 +516,8 @@ export function Onboarding(): React.JSX.Element {
           {showNav && <Button variant="ghost" size="sm" onClick={skip}>Skip</Button>}
         </div>
       </footer>
+
+      <MuseKeyGuideDialog open={keyGuideOpen} onOpenChange={setKeyGuideOpen} />
 
       <FirstRunConfirm
         open={confirmOpen}
