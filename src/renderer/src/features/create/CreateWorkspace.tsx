@@ -62,7 +62,7 @@ export function CreateWorkspace(): React.JSX.Element {
   const [prompt, setPrompt] = useState('')
   const [promptSource, setPromptSource] = useState<'user' | 'starter'>('user')
   const [pendingStarter, setPendingStarter] = useState<Starter | null>(null)
-  const [count, setCount] = useState(4)
+  const [count, setCount] = useState(1)
   const [shape, setShape] = useState<Shape>(settings?.defaultShape ?? 'square')
   const [format, setFormat] = useState<Format>(project.format ?? settings?.defaultFormat ?? 'webp')
   const [referenceId, setReferenceId] = useState<string | null>(sourceImageId)
@@ -508,7 +508,7 @@ export function CreateWorkspace(): React.JSX.Element {
                         <button
                           key={example.image}
                           type="button"
-                          className="card card-hover overflow-hidden text-left"
+                          className="card card-hover generator-example overflow-hidden text-left"
                           onClick={() => { if (starter) chooseStarter(starter) }}
                         >
                           <img src={exampleUrl(example.image)} alt="" className="aspect-[4/3] w-full object-cover" />
