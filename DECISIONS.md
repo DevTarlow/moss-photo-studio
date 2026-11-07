@@ -85,3 +85,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Brand colors
 
 60. **Saved brand colors have their own on/off switch.** The switch lives with the colors in Logo & Colors and defaults to on, so existing installs keep their behavior. Turning it off never deletes the palette; it only stops the first three colors from being added to a set or photo-change prompt. The queue enforces the switch, so a stale renderer cannot send a palette while it is off.
+
+## Library selection
+
+61. **Projects are selected with a hover checkbox and deleted in bulk.** The checkbox appears on hover or keyboard focus, and every checkbox stays visible while at least one project is selected. The bulk delete uses the same danger confirmation as the single-project delete and leaves failed projects selected for a retry. Selection is pruned to the loaded list after every refresh, so a filter or deletion cannot leave a hidden project selected.

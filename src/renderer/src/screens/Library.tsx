@@ -9,9 +9,11 @@ import {
   Image as ImageIcon,
   Layers,
   List,
+  Loader2,
   Plus,
   Search,
   Sparkles,
+  Trash2,
   TriangleAlert
 } from 'lucide-react'
 import type { Project, ProjectFilter, ProjectSort } from '@shared/types'
@@ -70,6 +72,8 @@ export function Library(): React.JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [dragOver, setDragOver] = useState(false)
   const dragDepth = useRef(0)
+  const [selected, setSelected] = useState<Set<string>>(() => new Set())
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     void store.load()
@@ -120,6 +124,14 @@ export function Library(): React.JSX.Element {
     })
   }, [])
 
+  useEffect(() => {
+    const loaded = new Set(store.items.map((item) => item.id))
+    setSelected((previous) => {
+      const next = new Set([...previous].filter((id) => loaded.has(id)))
+      return next.size === previous.size ? previous : next
+    })
+  }, [store.items])
+
   const createImageProject = async (): Promise<void> => {
     try {
       const detail = await unwrap(window.moss.projects.create({ type: 'image' }))
@@ -164,6 +176,45 @@ export function Library(): React.JSX.Element {
       toast.status('Project deleted.')
     } catch (caught) {
       toast.error(messageOf(caught))
+    }
+  }
+
+  const toggleSelect = (id: string, next: boolean): void => {
+    setSelected((previous) => {
+      const updated = new Set(previous)
+      if (next) updated.add(id)
+      else updated.delete(id)
+      return updated
+    })
+  }
+
+  const removeSelected = async (): Promise<void> => {
+    const projects = store.items.filter((project) => selected.has(project.id))
+    if (!projects.length) return
+    const count = projects.length
+    const images = projects.reduce((sum, project) => sum + project.imageCount, 0)
+    const ok = await confirm({
+      title: count === 1 ? `Delete "${projects[0]!.name}"?` : `Delete ${count} projects?`,
+      body: `${count === 1 ? 'Its' : 'Their'} ${images} ${images === 1 ? 'image leaves' : 'images leave'} this computer. This can't be undone.`,
+      confirmLabel: 'Delete',
+      danger: true
+    })
+    if (!ok) return
+    setDeleting(true)
+    try {
+      const failed = await store.removeMany(projects.map((project) => project.id))
+      const deleted = count - failed.length
+      if (deleted > 0) {
+        toast.status(`${deleted} ${deleted === 1 ? 'project' : 'projects'} deleted.`)
+      }
+      if (failed.length > 0) {
+        setSelected(new Set(failed))
+        toast.error(`${failed.length === 1 ? 'One project' : `${failed.length} projects`} could not be deleted. Stop any run and try again.`)
+      } else {
+        setSelected(new Set())
+      }
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -239,6 +290,8 @@ export function Library(): React.JSX.Element {
       .filter((job) => job.projectId === projectId && job.status === 'running')
       .sort((a, b) => b.startedAt - a.startedAt)[0]
 
+  const selectedProjects = store.items.filter((project) => selected.has(project.id))
+
   const empty = !store.loading && store.items.length === 0
   const filtering = Boolean(store.search.trim()) || store.filter !== 'all'
 
@@ -247,6 +300,9 @@ export function Library(): React.JSX.Element {
       project={project}
       view={view}
       job={jobFor(project.id)}
+      selected={selected.has(project.id)}
+      selecting={selected.size > 0}
+      onSelect={(next) => toggleSelect(project.id, next)}
       onRename={() => { setRenameProject(project); setRenameValue(project.name) }}
       onDuplicate={() => void duplicate(project)}
       onExport={() => void exportProject(project)}
@@ -399,6 +455,25 @@ export function Library(): React.JSX.Element {
               </div>
             </div>
           </div>
+
+          {selectedProjects.length > 0 && (
+            <div
+              className="mt-4 flex flex-wrap items-center gap-3 rounded-[10px] border px-3 py-2"
+              style={{ borderColor: 'var(--border-strong)', background: 'var(--surface)' }}
+              role="status"
+              aria-live="polite"
+            >
+              <p className="text-[12px] font-semibold">{selectedProjects.length} selected</p>
+              <div className="ml-auto flex items-center gap-2">
+                <Button variant="ghost" size="sm" disabled={deleting} onClick={() => setSelected(new Set())}>
+                  Clear
+                </Button>
+                <Button variant="danger" size="sm" disabled={deleting} onClick={() => void removeSelected()}>
+                  {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />} Delete
+                </Button>
+              </div>
+            </div>
+          )}
 
           <div className="mt-5">
             {store.loading ? (

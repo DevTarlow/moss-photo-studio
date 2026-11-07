@@ -24,6 +24,7 @@ interface LibraryStore {
   rename: (id: string, name: string) => Promise<void>
   duplicate: (id: string) => Promise<void>
   remove: (id: string) => Promise<void>
+  removeMany: (ids: string[]) => Promise<string[]>
 }
 
 export function currentMonth(): string {
@@ -123,5 +124,18 @@ export const useLibraryStore = create<LibraryStore>((set, get) => ({
     await unwrap(window.moss.projects.delete({ id }))
     await get().refresh()
     await get().refreshMonth()
+  },
+  removeMany: async (ids) => {
+    const failed: string[] = []
+    for (const id of ids) {
+      try {
+        await unwrap(window.moss.projects.delete({ id }))
+      } catch {
+        failed.push(id)
+      }
+    }
+    await get().refresh()
+    await get().refreshMonth()
+    return failed
   }
 }))

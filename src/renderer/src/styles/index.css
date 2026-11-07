@@ -248,6 +248,37 @@ html[data-motion='reduce'] .skeleton { background: var(--surface-2); }
 .lib-list-row { content-visibility: auto; contain-intrinsic-size: 56px 56px; display: flex; align-items: center; gap: 12px; height: 56px; border-bottom: 1px solid var(--border); padding: 0 8px; cursor: pointer; }
 .lib-list-row:hover { background: var(--surface); }
 .lib-thumb { width: 64px; height: 48px; border-radius: 6px; object-fit: cover; background: var(--surface-2); }
+.project-check {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms var(--ease-moss);
+}
+.project-check[data-checked='true'] { opacity: 1; pointer-events: auto; border-color: var(--accent); }
+.lib-card:hover .project-check,
+.lib-card:focus-within .project-check,
+.lib-card[data-selecting='true'] .project-check,
+.lib-list-row:hover .project-check,
+.lib-list-row:focus-within .project-check,
+.lib-list-row[data-selecting='true'] .project-check {
+  opacity: 1;
+  pointer-events: auto;
+}
+.project-check input { width: 14px; height: 14px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.project-check input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.lib-card[data-selected='true'] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.lib-list-row[data-selected='true'] { background: var(--accent-soft); }
 
 /* Workspace */
 .workspace { display: flex; flex: 1; min-height: 0; }

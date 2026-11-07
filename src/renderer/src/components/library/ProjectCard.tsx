@@ -15,6 +15,9 @@ export interface ProjectCardProps {
   project: Project
   view: 'grid' | 'list'
   job?: JobState
+  selected: boolean
+  selecting: boolean
+  onSelect: (selected: boolean) => void
   onRename: () => void
   onDuplicate: () => void
   onExport: () => void
@@ -25,6 +28,9 @@ export function ProjectCard({
   project,
   view,
   job,
+  selected,
+  selecting,
+  onSelect,
   onRename,
   onDuplicate,
   onExport,
@@ -34,6 +40,17 @@ export function ProjectCard({
   const menuRef = useRef<HTMLButtonElement>(null)
   const Icon = TypeIcon[project.type]
   const progress = job ? Math.min(100, job.total ? ((job.done + job.failed) / job.total) * 100 : 0) : 0
+  const check = (
+    <label className="project-check" data-checked={selected}>
+      <input
+        type="checkbox"
+        checked={selected}
+        aria-label={`Select ${project.name}`}
+        onChange={(event) => onSelect(event.target.checked)}
+        onClick={(event) => event.stopPropagation()}
+      />
+    </label>
+  )
   const menu = (
     <DropdownMenu.Root open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenu.Trigger asChild>
@@ -51,11 +68,14 @@ export function ProjectCard({
     return (
       <div
         className="lib-list-row group relative"
+        data-selected={selected}
+        data-selecting={selecting}
         onContextMenu={(event) => {
           event.preventDefault()
           setMenuOpen(true)
         }}
       >
+        {check}
         <Link to={`/project/${project.id}`} className="absolute inset-0 z-0" aria-label={`Open ${project.name}`} />
         {project.coverUrl ? (
           <img src={project.coverUrl} alt="" className="lib-thumb relative z-10 pointer-events-none" />
@@ -89,11 +109,14 @@ export function ProjectCard({
   return (
     <article
       className="lib-card card card-hover group relative"
+      data-selected={selected}
+      data-selecting={selecting}
       onContextMenu={(event) => {
         event.preventDefault()
         setMenuOpen(true)
       }}
     >
+      {check}
       <Link to={`/project/${project.id}`} aria-label={`Open ${project.name}`} className="block">
         {project.coverUrl ? (
           <img src={project.coverUrl} alt="" className="lib-cover" />
