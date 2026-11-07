@@ -113,6 +113,25 @@ export function removeShotFromPlan(plan: PlanJson, shotId: string): PlanJson {
   return { ...plan, shots: plan.shots.filter((shot) => shot.id !== shotId) }
 }
 
+function clampedShotCount(plan: PlanJson, count: number): number {
+  return Math.max(0, Math.min(Math.floor(count), plan.shots.length))
+}
+
+/** Enables the first `count` shots in plan order and turns the rest off. */
+export function enableFirstShots(plan: PlanJson, count: number): PlanJson {
+  const limit = clampedShotCount(plan, count)
+  return {
+    ...plan,
+    shots: plan.shots.map((shot, index) => ({ ...shot, enabled: index < limit }))
+  }
+}
+
+/** True when exactly the first `count` shots are enabled. */
+export function firstShotsEnabled(plan: PlanJson, count: number): boolean {
+  const limit = clampedShotCount(plan, count)
+  return plan.shots.every((shot, index) => shot.enabled === index < limit)
+}
+
 export function setShotType(plan: PlanJson, shotId: string, type: ShotType): PlanJson {
   if (plan.shots.some((shot) => shot.id !== shotId && shot.type === type)) return plan
   return {

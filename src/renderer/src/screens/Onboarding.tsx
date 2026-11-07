@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react'
-import type { Brand, JobState, ProjectDetail } from '@shared/types'
+import type { Brand, JobState, PlanJson, ProjectDetail } from '@shared/types'
 import { CATEGORY_CHIPS, recipeById } from '@shared/prompts/recipes'
-import { shotDefinition } from '@shared/prompts/shots'
 import { createDefaultPlan } from '@shared/plans'
 import { estimateCents, usd } from '@shared/cost'
 import { useAppStore } from '../store/app'
@@ -19,6 +18,7 @@ import { Chip } from '../components/ui/Chip'
 import { Dropzone } from '../components/ui/Dropzone'
 import { Segmented } from '../components/ui/Segmented'
 import { BrandFields } from '../components/brand/BrandFields'
+import { FirstSetPicker } from '../features/onboarding/FirstSetPicker'
 import { FirstRunConfirm } from '../components/ui/FirstRunConfirm'
 import { MuseKeyGuideDialog } from '../components/ui/MuseKeyGuideDialog'
 import { Progress } from '../components/ui/Progress'
@@ -53,6 +53,8 @@ export function Onboarding(): React.JSX.Element {
   const [localBrand, setLocalBrand] = useState<Brand>(brand ?? emptyBrand)
   const [category, setCategory] = useState('other')
   const [photoProject, setPhotoProject] = useState<ProjectDetail | null>(null)
+  const [planDraft, setPlanDraft] = useState<PlanJson | null>(null)
+  const [planSaving, setPlanSaving] = useState(false)
   const [photoBusy, setPhotoBusy] = useState(false)
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [job, setJob] = useState<JobState | null>(null)
@@ -165,6 +167,33 @@ export function Onboarding(): React.JSX.Element {
   const loadProject = async (projectId: string): Promise<void> => {
     const detail = await unwrap(window.moss.projects.get({ id: projectId }))
     setPhotoProject(detail)
+    setPlanDraft(detail.plan?.json ?? null)
+  }
+
+  const updatePlanDraft = (next: PlanJson): void => {
+    setPlanDraft(next)
+    setRunError(null)
+    if (!photoProject) return
+    void unwrap(window.moss.plans.save({ projectId: photoProject.project.id, plan: next })).catch(
+      (caught) => setRunError(messageOf(caught))
+    )
+  }
+
+  const savePlanDraft = async (): Promise<boolean> => {
+    if (!photoProject || !planDraft) return true
+    setPlanSaving(true)
+    try {
+      const saved = await unwrap(
+        window.moss.plans.save({ projectId: photoProject.project.id, plan: planDraft })
+      )
+      setPhotoProject((current) => (current ? { ...current, plan: saved } : current))
+      return true
+    } catch (caught) {
+      setRunError(messageOf(caught))
+      return false
+    } finally {
+      setPlanSaving(false)
+    }
   }
 
   const afterImport = async (projectId: string): Promise<void> => {
@@ -217,15 +246,17 @@ export function Onboarding(): React.JSX.Element {
     }
   }
 
-  const enabledShots = photoProject?.plan?.json.shots.filter((shot) => shot.enabled) ?? []
-  const imageCount = enabledShots.length
-  const runLabel = `Make ${imageCount} ${imageCount === 1 ? 'Image' : 'Images'} · ${usd(estimateCents(imageCount))}`
+  const imageCount = planDraft?.shots.filter((shot) => shot.enabled).length ?? 0
+  const runLabel = imageCount === 0
+    ? 'Choose at least one image'
+    : `Make ${imageCount} ${imageCount === 1 ? 'Image' : 'Images'} · ${usd(estimateCents(imageCount))}`
   const running = job?.status === 'running'
   const sourceImage = photoProject?.images.find((image) => image.id === photoProject.project.sourceImageId)
 
   const beginRun = async (): Promise<void> => {
-    if (!photoProject) return
+    if (!photoProject || !planDraft || imageCount === 0) return
     setRunError(null)
+    if (!(await savePlanDraft())) return
     try {
       const started = await unwrap(window.moss.jobs.startSet({ projectId: photoProject.project.id, mode: 'make' }))
       const initial = await unwrap(window.moss.jobs.state({ jobId: started.jobId }))
@@ -260,7 +291,7 @@ export function Onboarding(): React.JSX.Element {
   }
 
   const onMainRun = async (): Promise<void> => {
-    if (!photoProject) return
+    if (!photoProject || !planDraft || imageCount === 0) return
     if (!secrets?.hasKey) {
       setRunError('Add your Muse key in Settings to make images.')
       return
@@ -298,7 +329,8 @@ export function Onboarding(): React.JSX.Element {
   }
 
   const justAddPhoto = async (): Promise<void> => {
-    if (!photoProject) return
+    if (!photoProject || !planDraft) return
+    if (!(await savePlanDraft())) return
     try {
       await unwrap(window.moss.settings.set({ key: 'onboardingDone', value: true }))
       await refreshSettings()
@@ -425,7 +457,7 @@ export function Onboarding(): React.JSX.Element {
             <p className="section-label">Step 5 of 6</p>
             <h1 className="page-title mt-2 text-[24px]">Make your first set</h1>
             <p className="mt-2 text-[13px]" style={{ color: 'var(--text-muted)' }}>
-              Drop one photo of a product. The studio plans six images and tells you the cost before it starts.
+              Drop one photo of a product. Then pick the images you want. The price is on the button before it starts.
             </p>
             {!secrets?.hasKey ? (
               <div className="card mt-6 p-5">
@@ -447,19 +479,18 @@ export function Onboarding(): React.JSX.Element {
                 {photoError && <p className="error-text mt-2" role="alert">{photoError}</p>}
                 <p className="hint mt-3">Your recipe: {recipeById(category).label}. You can edit the plan before it runs.</p>
               </>
-            ) : (
+            ) : planDraft ? (
               <>
-                <div className="mt-5 overflow-hidden rounded-[14px] border" style={{ borderColor: 'var(--border)', background: 'var(--canvas)' }}>
-                  {sourceImage?.url && <img src={sourceImage.url} alt="The product photo" className="max-h-[300px] w-full object-contain" />}
+                <div className="mt-4 overflow-hidden rounded-[14px] border" style={{ borderColor: 'var(--border)', background: 'var(--canvas)' }}>
+                  {sourceImage?.url && <img src={sourceImage.url} alt="The product photo" className="max-h-[220px] w-full object-contain" />}
                 </div>
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {enabledShots.map((shot) => (
-                    <span key={shot.id} className="badge">{shotDefinition(shot.type).label}</span>
-                  ))}
-                </div>
-                <p className="mt-3 text-[13px] font-medium">
-                  {imageCount} images. Meta charges {usd(estimateCents(imageCount))}.
-                </p>
+                <p className="hint mt-2">Your recipe: {recipeById(planDraft.category).label}. You can change every shot later in the set.</p>
+                <FirstSetPicker
+                  plan={planDraft}
+                  disabled={running || finishing || planSaving}
+                  saving={planSaving}
+                  onChange={updatePlanDraft}
+                />
                 {running && job ? (
                   <div className="card mt-4 p-4">
                     <div className="flex items-center justify-between gap-3">
@@ -471,13 +502,22 @@ export function Onboarding(): React.JSX.Element {
                   </div>
                 ) : (
                   <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <Button variant="primary" onClick={() => void onMainRun()}>{runLabel}</Button>
-                    <Button variant="ghost" onClick={() => void justAddPhoto()}>Just Add the Photo</Button>
+                    <Button
+                      variant="primary"
+                      disabled={imageCount === 0 || planSaving || finishing}
+                      onClick={() => void onMainRun()}
+                    >
+                      {runLabel}
+                    </Button>
+                    <Button variant="ghost" disabled={planSaving || finishing} onClick={() => void justAddPhoto()}>Just Add the Photo</Button>
                   </div>
                 )}
+                {!running && <p className="hint mt-2">Just the photo, no images. You can make the set later.</p>}
                 {runError && <p className="error-text mt-2" role="alert">{runError}</p>}
                 {finishing && <p className="hint mt-2 flex items-center gap-2"><Spinner /> Finishing setup.</p>}
               </>
+            ) : (
+              <p className="error-text mt-4" role="alert">The plan could not be prepared. Try another photo.</p>
             )}
           </div>
         )}

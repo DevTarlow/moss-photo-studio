@@ -8,7 +8,7 @@ import { SHOT_TYPES, shotDefinition, directionForPrompt } from '@shared/prompts/
 import { STARTERS } from '@shared/starters'
 import { BUNDLED_PEOPLE } from '@shared/people'
 import { wrapScenePrompt, wrapModelPrompt, PROMPT_MAX } from '@shared/prompts/guards'
-import { createDefaultPlan, makeShots, normalisePlan } from '@shared/plans'
+import { createDefaultPlan, makeShots, normalisePlan, enableFirstShots, firstShotsEnabled } from '@shared/plans'
 import { nextCountedLabel, setImageLabel } from '@shared/labels'
 import { shapeForImage, sizeForShape } from '@shared/shapes'
 import { safeBaseName, uniqueFileName, numberedFileName } from '@shared/files'
@@ -115,6 +115,44 @@ describe('shot directions', () => {
     expect(normalisePlan(plan).shots[0]!.direction).toBe(
       shotDefinition(plan.shots[0]!.type).defaultDirection
     )
+  })
+})
+
+describe('first-set shot count', () => {
+  function defaultPlan() {
+    return createDefaultPlan({
+      category: 'ceramics',
+      productName: 'Mug',
+      shape: 'square',
+      format: 'webp'
+    })
+  }
+
+  it('turns on exactly the first shots in recipe order', () => {
+    const plan = defaultPlan()
+    const next = enableFirstShots(plan, 3)
+    expect(next.shots.map((shot) => shot.enabled)).toEqual([true, true, true, false, false, false])
+    expect(next.shots.map((shot) => shot.id)).toEqual(plan.shots.map((shot) => shot.id))
+    expect(next.shots.map((shot) => shot.direction)).toEqual(plan.shots.map((shot) => shot.direction))
+    expect(firstShotsEnabled(next, 3)).toBe(true)
+    expect(firstShotsEnabled(next, 6)).toBe(false)
+  })
+
+  it('clamps the count to the plan and can turn everything off', () => {
+    const plan = defaultPlan()
+    expect(enableFirstShots(plan, 99).shots.every((shot) => shot.enabled)).toBe(true)
+    expect(enableFirstShots(plan, 0).shots.every((shot) => !shot.enabled)).toBe(true)
+    expect(firstShotsEnabled(enableFirstShots(plan, plan.shots.length), plan.shots.length)).toBe(true)
+  })
+
+  it('does not treat a custom mix as a count preset', () => {
+    const plan = defaultPlan()
+    const custom = {
+      ...plan,
+      shots: plan.shots.map((shot, index) => ({ ...shot, enabled: index !== 1 }))
+    }
+    expect(firstShotsEnabled(custom, 6)).toBe(false)
+    expect(firstShotsEnabled(custom, 5)).toBe(false)
   })
 })
 

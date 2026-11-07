@@ -354,6 +354,21 @@ describe('job queue set', () => {
     expect(updates.some((entry) => entry.status === 'running')).toBe(true)
   })
 
+  it('makes only the shots left enabled in the saved plan', async () => {
+    const project = await setProject()
+    const plan = plans.getActive(project.id)!.json
+    plans.save(project.id, {
+      ...plan,
+      shots: plan.shots.map((shot, index) => ({ ...shot, enabled: index < 3 }))
+    })
+    const { jobId } = await queue.startSet({ projectId: project.id, mode: 'make' })
+    const state = await waitForJob(jobId)
+    expect(state.status).toBe('done')
+    expect(state.done).toBe(3)
+    expect(server.requests()).toHaveLength(3)
+    expect(images.list(project.id, true).filter((image) => image.shotId)).toHaveLength(3)
+  })
+
   it('adds saved colors to a set prompt only while brand colors are on', async () => {
     brand.update({ colors: ['#112233'] })
     const project = await setProject()

@@ -101,3 +101,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Collection pages
 
 66. **Collection pages show 20 items at a time.** Library projects, saved Products, user-added People, both Usage lists, and the source picker use Previous/Next pagination with a range indicator. The library's old Show More and virtual-list path were removed because 20 rows never need viewport windowing.
+
+## Onboarding first set
+
+67. **Onboarding's first-set step is a compact recipe picker, not the full plan editor.** It offers 1, 3, or all image counts and one toggle per recipe shot, with all six selected by default. Directions, format, people, and off-recipe shots stay in the set editor. The draft saves as the seller changes it and is saved again as a barrier before the run or Just Add, so a skipped or closed onboarding does not lose the choice.
