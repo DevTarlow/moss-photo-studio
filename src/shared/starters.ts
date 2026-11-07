@@ -1,5 +1,6 @@
 export type StarterCategory =
   | 'Main listing image'
+  | 'With a person'
   | 'Etsy & handmade'
   | 'eBay & resale'
   | 'Home & lifestyle'
@@ -16,6 +17,7 @@ export interface Starter {
 
 export const STARTER_CATEGORIES: readonly StarterCategory[] = [
   'Main listing image',
+  'With a person',
   'Etsy & handmade',
   'eBay & resale',
   'Home & lifestyle',
@@ -40,6 +42,36 @@ export const STARTERS: readonly Starter[] = [
     category: 'Main listing image',
     label: 'Four items on white',
     text: 'A set of four small items evenly spaced on a pure white background, filling most of the frame, no props or text, soft even lighting, product photo.'
+  },
+  {
+    category: 'With a person',
+    label: 'Holding it',
+    text: 'The person is holding the product in one hand at chest height, turned toward the camera, with the product fully visible and in focus, against a plain light studio backdrop with soft, even light.'
+  },
+  {
+    category: 'With a person',
+    label: 'Wearing it',
+    text: 'The person is wearing the product and shown from the waist up, facing the camera, with the product clearly visible, against a plain warm-grey studio backdrop with soft, even light.'
+  },
+  {
+    category: 'With a person',
+    label: 'Using it',
+    text: 'The person is using the product naturally in a bright home setting with daylight, with the product clearly visible and in focus, in a relaxed everyday photo.'
+  },
+  {
+    category: 'With a person',
+    label: 'Close-up in hand',
+    text: "A close-up of the person's hand holding the product, filling the frame with the product and its detail, against a soft neutral background."
+  },
+  {
+    category: 'With a person',
+    label: 'Full-length wearing',
+    text: 'A full-length portrait of the person wearing the product, head to toe, against a plain light studio backdrop with soft, even light.'
+  },
+  {
+    category: 'With a person',
+    label: 'Walking with it',
+    text: 'The person is walking toward the camera in a bright, uncluttered space, carrying the product so it is clearly visible, in natural daylight.'
   },
   {
     category: 'Etsy & handmade',

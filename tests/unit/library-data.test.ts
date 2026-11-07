@@ -119,9 +119,16 @@ describe('shot directions', () => {
 })
 
 describe('starters and people', () => {
-  it('ships 24 starters, each under 240 characters', () => {
-    expect(STARTERS).toHaveLength(24)
+  it('ships 30 starters, each under 240 characters', () => {
+    expect(STARTERS).toHaveLength(30)
     for (const starter of STARTERS) expect(starter.text.length).toBeLessThanOrEqual(240)
+  })
+
+  it('includes person ideas for holding, wearing, and using the item', () => {
+    const personStarters = STARTERS.filter((starter) => starter.category === 'With a person')
+    expect(personStarters.map((starter) => starter.label)).toEqual(
+      expect.arrayContaining(['Holding it', 'Wearing it', 'Using it'])
+    )
   })
 
   it('ships twelve adults with stable ids and descriptions', () => {
