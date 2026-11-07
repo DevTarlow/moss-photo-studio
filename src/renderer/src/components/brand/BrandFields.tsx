@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { Pipette, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import type { Brand } from '@shared/types'
 import { exampleUrl } from '../../lib/assets'
 import { Button } from '../ui/Button'
-import { Dialog } from '../ui/Dialog'
 import { Dropzone } from '../ui/Dropzone'
 import { Field } from '../ui/Field'
 import { Segmented } from '../ui/Segmented'
@@ -54,8 +53,6 @@ export function BrandFields({
   const [newColor, setNewColor] = useState(cssColor('--accent'))
   const [hex, setHex] = useState('')
   const [logoBusy, setLogoBusy] = useState(false)
-  const [logoPickerOpen, setLogoPickerOpen] = useState(false)
-  const [logoData, setLogoData] = useState<string | null>(null)
 
   const patch = (next: Partial<Brand>): void => onChange({ ...value, ...next })
 
@@ -76,35 +73,6 @@ export function BrandFields({
 
   const addColor = (): void => {
     if (addColorValue(hex.trim() || newColor)) setHex('')
-  }
-
-  const sampleLogoColor = (event: React.MouseEvent<HTMLImageElement>): void => {
-    const image = event.currentTarget
-    if (!image.naturalWidth || !image.naturalHeight) return
-    const rect = image.getBoundingClientRect()
-    const scale = Math.min(rect.width / image.naturalWidth, rect.height / image.naturalHeight)
-    const drawnWidth = image.naturalWidth * scale
-    const drawnHeight = image.naturalHeight * scale
-    const x = Math.floor((event.clientX - rect.left - (rect.width - drawnWidth) / 2) / scale)
-    const y = Math.floor((event.clientY - rect.top - (rect.height - drawnHeight) / 2) / scale)
-    if (x < 0 || y < 0 || x >= image.naturalWidth || y >= image.naturalHeight) return
-    try {
-      const canvas = document.createElement('canvas')
-      canvas.width = image.naturalWidth
-      canvas.height = image.naturalHeight
-      const context = canvas.getContext('2d', { willReadFrequently: true })
-      if (!context) throw new Error('canvas_unavailable')
-      context.drawImage(image, 0, 0)
-      const [red = 0, green = 0, blue = 0, alpha = 0] = context.getImageData(x, y, 1, 1).data
-      if (alpha < 32) {
-        toast.error('That spot is transparent. Try another spot.')
-        return
-      }
-      const color = `#${[red, green, blue].map((part) => part.toString(16).padStart(2, '0')).join('')}`
-      if (addColorValue(color)) setLogoPickerOpen(false)
-    } catch {
-      toast.error('That logo could not be sampled. Type the hex value instead.')
-    }
   }
 
   const chooseLogo = async (): Promise<void> => {
@@ -129,20 +97,6 @@ export function BrandFields({
       toast.error(messageOf(caught))
     } finally {
       setLogoBusy(false)
-    }
-  }
-
-  const openLogoPicker = async (): Promise<void> => {
-    try {
-      const result = await unwrap(window.moss.brand.logoData())
-      if (!result.dataUrl) {
-        toast.error('Add a logo first.')
-        return
-      }
-      setLogoData(result.dataUrl)
-      setLogoPickerOpen(true)
-    } catch {
-      toast.error('The logo could not be opened for sampling.')
     }
   }
 
@@ -189,15 +143,6 @@ export function BrandFields({
             </div>
             <Button variant="secondary" size="sm" onClick={addColor} disabled={value.colors.length >= maxColors}>
               <Plus size={14} /> Add Color
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => void openLogoPicker()}
-              disabled={!value.logoUrl}
-              title={value.logoUrl ? 'Pick a color from your logo' : 'Add a logo first'}
-            >
-              <Pipette size={14} /> Pick from Logo
             </Button>
           </div>
         </div>
@@ -276,25 +221,6 @@ export function BrandFields({
         <p className="hint">A sample image with the badge exactly where a made image would show it.</p>
       </div>
 
-      <Dialog
-        open={logoPickerOpen}
-        onOpenChange={setLogoPickerOpen}
-        title="Pick a color from your logo"
-        description="Click a spot on the logo to add that color. Transparent areas are skipped."
-        width={560}
-        footer={<Button variant="secondary" onClick={() => setLogoPickerOpen(false)}>Cancel</Button>}
-      >
-        {logoData && (
-          <div className="logo-picker">
-            <img
-              src={logoData}
-              alt="Your logo. Click a spot to sample its color."
-              className="logo-picker-image"
-              onClick={sampleLogoColor}
-            />
-          </div>
-        )}
-      </Dialog>
     </div>
   )
 }

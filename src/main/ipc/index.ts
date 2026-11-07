@@ -432,21 +432,6 @@ export function registerIpcHandlers(context: AppContext): void {
   registerIpc(context, 'license:deactivate', voidSchema, async () => context.license.deactivate())
 
   registerIpc(context, 'brand:get', voidSchema, (): Brand => context.brand.get())
-  registerIpc(context, 'brand:logoData', voidSchema, async () => {
-    const row = context.brand.getRow()
-    if (!row?.logo_file) return { dataUrl: null }
-    try {
-      const bytes = await fs.readFile(absoluteInLibrary(context.libraryPath(), row.logo_file))
-      const resized = await sharp(bytes)
-        .resize({ width: 512, height: 512, fit: 'inside', withoutEnlargement: true })
-        .png()
-        .toBuffer()
-      return { dataUrl: `data:image/png;base64,${resized.toString('base64')}` }
-    } catch {
-      return { dataUrl: null }
-    }
-  })
-
   registerIpc(context, 'brand:update', brandPatchSchema, (patch) => context.brand.update(patch))
   registerIpc(
     context,
