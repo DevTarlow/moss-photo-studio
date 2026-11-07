@@ -205,14 +205,16 @@ export function BrandFields({
         <div>
           <p className="field-label">Logo <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
           {value.logoUrl ? (
-            <div className="flex items-center gap-3 rounded-[10px] border p-3" style={{ borderColor: 'var(--border)' }}>
-              <img src={value.logoUrl} alt="Your logo" className="h-12 w-12 rounded object-contain" style={{ background: 'var(--surface-2)' }} />
-              <p className="min-w-0 flex-1 text-[12px]">A logo is saved. The corner badge is free and applied after an image is made.</p>
-              <Button variant="secondary" size="sm" onClick={() => void chooseLogo()}>Replace</Button>
-              <Button variant="ghost" size="sm" onClick={() => void window.moss.brand.clearLogo().then(async () => {
-                const brand = await unwrap(window.moss.brand.get())
-                patch({ logoUrl: brand.logoUrl })
-              })}>Remove</Button>
+            <div className="flex flex-wrap items-center gap-3 rounded-[10px] border p-3" style={{ borderColor: 'var(--border)' }}>
+              <img src={value.logoUrl} alt="Your logo" className="h-12 w-12 shrink-0 rounded object-contain" style={{ background: 'var(--surface-2)' }} />
+              <p className="min-w-[150px] flex-1 text-[12px]">A logo is saved. The corner badge is free and applied after an image is made.</p>
+              <div className="ml-auto flex items-center gap-1">
+                <Button variant="secondary" size="sm" onClick={() => void chooseLogo()}>Replace</Button>
+                <Button variant="ghost" size="sm" onClick={() => void window.moss.brand.clearLogo().then(async () => {
+                  const brand = await unwrap(window.moss.brand.get())
+                  patch({ logoUrl: brand.logoUrl })
+                })}>Remove</Button>
+              </div>
             </div>
           ) : (
             <Dropzone

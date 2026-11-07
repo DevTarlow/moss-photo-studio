@@ -115,7 +115,7 @@ Delivered:
 - Usage summary, by-project rollup, paginated ledger, CSV, budget, and unknown-billing display.
 - Activation, grace, expiry, deactivation, 24-hour validation, and read-only library.
 - Fake license and Muse hosts for tests.
-- Onboarding key step, optional appearance, logo, and colors step, category choice, six-image preview, first paid set, Got It confirmation, and skip behavior.
+- Onboarding key step, optional theme, logo, and colors step, category choice, six-image preview, first paid set, Got It confirmation, and skip behavior.
 - Setup card completion rules.
 
 Verified by:

@@ -160,15 +160,6 @@ export function Onboarding(): React.JSX.Element {
     }
   }
 
-  const saveSetting = async (key: 'density' | 'reduceMotion', value: unknown): Promise<void> => {
-    try {
-      await unwrap(window.moss.settings.set({ key, value }))
-      await refreshSettings()
-    } catch {
-      toast.error('That setting could not be saved.')
-    }
-  }
-
   const loadProject = async (projectId: string): Promise<void> => {
     const detail = await unwrap(window.moss.projects.get({ id: projectId }))
     setPhotoProject(detail)
@@ -382,57 +373,24 @@ export function Onboarding(): React.JSX.Element {
           <div className="py-8">
             <p className="section-label">Step 3 of 6</p>
             <h1 className="page-title mt-2 text-[24px]">Make it yours</h1>
-            <p className="mt-2 text-[13px]" style={{ color: 'var(--text-muted)' }}>Choose how the studio looks, then add your logo and colors. Optional; you can change this in Settings later.</p>
+            <p className="mt-2 text-[13px]" style={{ color: 'var(--text-muted)' }}>Choose a theme, then add your logo and colors. Optional; you can change this in Settings later.</p>
             <div className="card mt-5 p-4">
               <p className="section-label">Appearance</p>
-              <div className="mt-3 space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[12px] font-semibold">Theme</p>
-                    <p className="hint">Light, dark, or follow the system.</p>
-                  </div>
-                  <Segmented
-                    label="Theme"
-                    value={settings?.theme ?? 'light'}
-                    onChange={(value) => void setTheme(value).catch(() => toast.error('The theme could not be saved.'))}
-                    options={[
-                      { value: 'system' as const, label: 'System' },
-                      { value: 'light' as const, label: 'Light' },
-                      { value: 'dark' as const, label: 'Dark' }
-                    ]}
-                  />
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[12px] font-semibold">Theme</p>
+                  <p className="hint">Light, dark, or follow the system.</p>
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[12px] font-semibold">Density</p>
-                    <p className="hint">Compact tightens list rows. Photos keep their space.</p>
-                  </div>
-                  <Segmented
-                    label="Density"
-                    value={settings?.density ?? 'comfortable'}
-                    onChange={(value) => void saveSetting('density', value)}
-                    options={[
-                      { value: 'comfortable' as const, label: 'Comfortable' },
-                      { value: 'compact' as const, label: 'Compact' }
-                    ]}
-                  />
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[12px] font-semibold">Reduce motion</p>
-                    <p className="hint">Use the system preference, or choose for this app.</p>
-                  </div>
-                  <select
-                    className="field w-[180px]"
-                    aria-label="Reduce motion"
-                    value={settings?.reduceMotion ?? 'system'}
-                    onChange={(event) => void saveSetting('reduceMotion', event.target.value)}
-                  >
-                    <option value="system">Use system setting</option>
-                    <option value="reduce">Reduce motion</option>
-                    <option value="full">Full motion</option>
-                  </select>
-                </div>
+                <Segmented
+                  label="Theme"
+                  value={settings?.theme ?? 'light'}
+                  onChange={(value) => void setTheme(value).catch(() => toast.error('The theme could not be saved.'))}
+                  options={[
+                    { value: 'system' as const, label: 'System' },
+                    { value: 'light' as const, label: 'Light' },
+                    { value: 'dark' as const, label: 'Dark' }
+                  ]}
+                />
               </div>
             </div>
             <div className="mt-5">
