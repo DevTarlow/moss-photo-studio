@@ -135,6 +135,7 @@ describe('logo badge compositing', () => {
       format: 'webp',
       brand: {
         colors: [],
+        colorsEnabled: true,
         logoUrl: 'moss-media://library/brand/logo.png',
         badgeEnabled: true,
         badgeCorner: 'br',

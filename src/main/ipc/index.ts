@@ -80,6 +80,7 @@ const exportOptionsSchema = z.object({
 })
 const brandPatchSchema = z.object({
   colors: z.array(z.string().regex(/^#[0-9a-fA-F]{6}$/)).max(6).optional(),
+  colorsEnabled: z.boolean().optional(),
   logoUrl: z.string().nullable().optional(),
   badgeEnabled: z.boolean().optional(),
   badgeCorner: z.enum(['br', 'bl', 'tr', 'tl']).optional(),

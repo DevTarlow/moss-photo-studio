@@ -308,6 +308,24 @@ describe('job queue set', () => {
     expect(updates.some((entry) => entry.status === 'running')).toBe(true)
   })
 
+  it('adds saved colors to a set prompt only while brand colors are on', async () => {
+    brand.update({ colors: ['#112233'] })
+    const project = await setProject()
+    const shot = plans.getActive(project.id)!.json.shots.find((entry) => entry.type === 'hero')!
+
+    const on = await queue.startSet({ projectId: project.id, mode: 'remake', shotIds: [shot.id] })
+    await waitForJob(on.jobId)
+    expect(String(server.requests()[0]?.body?.prompt)).toContain('#112233')
+
+    server.reset()
+    brand.update({ colorsEnabled: false })
+    const off = await queue.startSet({ projectId: project.id, mode: 'remake', shotIds: [shot.id] })
+    await waitForJob(off.jobId)
+    const prompt = String(server.requests()[0]?.body?.prompt)
+    expect(prompt).not.toContain('#112233')
+    expect(prompt).not.toContain('this shop')
+  })
+
   it('cancels queued items, lets the in-flight image finish, and bills once', async () => {
     settings.set('concurrency', 1)
     server.control('slow')

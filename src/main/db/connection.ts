@@ -154,6 +154,12 @@ const migrations: Migration[] = [
         );
       `)
     }
+  },
+  {
+    version: 2,
+    up(db) {
+      db.exec('ALTER TABLE brand ADD COLUMN colors_enabled INTEGER NOT NULL DEFAULT 1')
+    }
   }
 ]
 

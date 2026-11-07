@@ -177,6 +177,7 @@ export interface Person {
 
 export interface Brand {
   colors: string[]
+  colorsEnabled: boolean
   logoUrl: string | null
   badgeEnabled: boolean
   badgeCorner: BadgeCorner

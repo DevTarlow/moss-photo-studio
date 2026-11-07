@@ -175,7 +175,7 @@ export class JobQueue {
       )
     }
     const brand = this.deps.brand.get()
-    const palette = brand.colors.slice(0, 3)
+    const palette = brand.colorsEnabled ? brand.colors.slice(0, 3) : []
     const source = this.deps.images.get(sourceId)
     if (!source || source.status !== 'ready') {
       throw new JobStartError('invalid_payload', 'Add a photo of the product first.')
@@ -309,7 +309,9 @@ export class JobQueue {
     }
     const template = input.templateId ? templateById(input.templateId) : undefined
     const brand = this.deps.brand.get()
-    const palette = (input.palette?.length ? input.palette : brand.colors).slice(0, 3)
+    const palette = brand.colorsEnabled
+      ? (input.palette?.length ? input.palette : brand.colors).slice(0, 3)
+      : []
     const prompt = composeChange({
       text,
       kind: input.kind,

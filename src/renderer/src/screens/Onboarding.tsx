@@ -26,6 +26,7 @@ import { Spinner } from '../components/ui/Spinner'
 
 const emptyBrand: Brand = {
   colors: [],
+  colorsEnabled: true,
   logoUrl: null,
   badgeEnabled: false,
   badgeCorner: 'br',

@@ -5,6 +5,7 @@ import { libraryUrl } from '@shared/files'
 interface BrandRow {
   id: string
   colors: string | null
+  colors_enabled: number
   logo_file: string | null
   badge_enabled: number
   badge_corner: string
@@ -34,6 +35,7 @@ export class BrandRepository {
     if (!row) {
       return {
         colors: [],
+        colorsEnabled: true,
         logoUrl: null,
         badgeEnabled: false,
         badgeCorner: 'br',
@@ -43,6 +45,7 @@ export class BrandRepository {
     }
     return {
       colors: parseArray(row.colors).slice(0, 6),
+      colorsEnabled: Boolean(row.colors_enabled),
       logoUrl: row.logo_file ? libraryUrl(row.logo_file) : null,
       badgeEnabled: Boolean(row.badge_enabled),
       badgeCorner: corners.includes(row.badge_corner as BadgeCorner) ? (row.badge_corner as BadgeCorner) : 'br',
@@ -63,15 +66,17 @@ export class BrandRepository {
       colors: (patch.colors ?? current.colors)
         .filter((color) => /^#[0-9a-fA-F]{6}$/.test(color))
         .slice(0, 6),
+      colorsEnabled: patch.colorsEnabled ?? current.colorsEnabled,
       badgeOpacity: Math.max(60, Math.min(100, patch.badgeOpacity ?? current.badgeOpacity))
     }
     this.db
       .prepare(
-        `UPDATE brand SET colors = ?, badge_enabled = ?, badge_corner = ?, badge_scale = ?,
+        `UPDATE brand SET colors = ?, colors_enabled = ?, badge_enabled = ?, badge_corner = ?, badge_scale = ?,
           badge_opacity = ?, updated_at = ? WHERE id = 'default'`
       )
       .run(
         JSON.stringify(next.colors),
+        next.colorsEnabled ? 1 : 0,
         next.badgeEnabled ? 1 : 0,
         next.badgeCorner,
         next.badgeScale,

@@ -104,14 +104,28 @@ export function BrandFields({
     <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div className="space-y-5">
         <div>
-          <p className="field-label">Colors <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
-          <p className="hint mb-2">Up to {maxColors} saved. The first {Math.min(3, maxColors)} steer backgrounds and props when the studio makes a set or changes a photo. They never tint the product.</p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="field-label">Colors <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+              <p className="hint mb-2">
+                Up to {maxColors} saved.{' '}
+                {value.colorsEnabled
+                  ? `The first ${Math.min(3, maxColors)} steer backgrounds and props when the studio makes a set or changes a photo.`
+                  : 'Colors are off; they stay saved but are not added to a prompt.'}{' '}
+                They never tint the product.
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2 pt-0.5">
+              <span className="text-[12px] font-medium" style={{ color: 'var(--text-muted)' }}>Use colors</span>
+              <Switch checked={value.colorsEnabled} onCheckedChange={(checked) => patch({ colorsEnabled: checked })} label="Use brand colors" />
+            </div>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             {value.colors.map((color, index) => (
               <span key={color} className="inline-flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2" style={{ borderColor: 'var(--border)' }}>
                 <span className="color-dot" style={{ background: color }} aria-hidden />
                 <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>{color}</span>
-                {index < 3 && <span className="badge pill-sm">Used</span>}
+                {index < 3 && value.colorsEnabled && <span className="badge pill-sm">Used</span>}
                 <button type="button" className="icon-btn h-5 w-5" aria-label={`Remove ${color}`} onClick={() => patch({ colors: value.colors.filter((entry) => entry !== color) })}>
                   <Trash2 size={12} />
                 </button>
