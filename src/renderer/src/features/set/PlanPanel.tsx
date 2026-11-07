@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import { DropdownMenu } from 'radix-ui'
 import {
+  Check,
+  ChevronDown,
   Gift,
   Image as ImageIcon,
   LayoutGrid,
@@ -19,6 +22,7 @@ import { SHOT_TYPES, shotDefinition } from '@shared/prompts/shots'
 import { recipeById } from '@shared/prompts/recipes'
 import { bundledUrl } from '../../lib/assets'
 import { Button } from '../../components/ui/Button'
+import { Dialog } from '../../components/ui/Dialog'
 import { Switch } from '../../components/ui/Switch'
 import { useConfirm } from '../../components/ui/ConfirmProvider'
 
@@ -34,6 +38,10 @@ const glyphs = {
   feature: Type,
   onmodel: UserRound
 } as const
+
+function personPortrait(person: Person): string {
+  return person.portraitUrl || bundledUrl(`people/${person.id}-portrait.webp`)
+}
 
 function DirectionEditor({
   shot,
@@ -95,6 +103,8 @@ function ShotCard({
   const Glyph = glyphs[shot.type]
   const usedElsewhere = new Set(plan.shots.filter((entry) => entry.id !== shot.id).map((entry) => entry.type))
   const noPeople = people.length === 0
+  const selectedPerson = people.find((person) => person.id === (shot.personId ?? 'maya')) ?? people[0]
+  const [previewOpen, setPreviewOpen] = useState(false)
   const changeType = (type: PlanShot['type']): void => {
     const next = shotDefinition(type)
     onChange({
@@ -144,24 +154,67 @@ function ShotCard({
       )}
       {shot.type === 'onmodel' && (
         <div className="mt-2 flex items-center gap-2">
-          <label className="sr-only" htmlFor={`person-${shot.id}`}>Person</label>
           {noPeople ? (
             <p className="text-[11px]" style={{ color: 'var(--warning)' }}>Add a person to use this shot.</p>
           ) : (
-            <select
-              id={`person-${shot.id}`}
-              className="field h-7 text-[11px]"
-              value={shot.personId ?? 'maya'}
-              disabled={readOnly}
-              onChange={(event) => { onChange({ ...shot, personId: event.target.value }); onSaveBlur() }}
-            >
-              {people.map((person) => (
-                <option key={person.id} value={person.id}>{person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}</option>
-              ))}
-            </select>
-          )}
-          {shot.personId && (
-            <img src={people.find((person) => person.id === shot.personId)?.portraitUrl ?? bundledUrl(`people/${shot.personId}-portrait.webp`)} alt="" className="h-7 w-7 rounded-full object-cover" onError={(event) => { event.currentTarget.style.display = 'none' }} />
+            <>
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <button
+                    type="button"
+                    id={`person-${shot.id}`}
+                    className="field flex h-7 min-w-0 flex-1 items-center justify-between gap-2 text-[11px]"
+                    disabled={readOnly}
+                    aria-label={`Person for ${definition.label}`}
+                  >
+                    <span className="truncate">
+                      {selectedPerson
+                        ? `${selectedPerson.name}${selectedPerson.ageBand ? ` · ${selectedPerson.ageBand}` : ''}`
+                        : 'Choose a person'}
+                    </span>
+                    <ChevronDown size={13} className="shrink-0" />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content className="menu-content" sideOffset={4} style={{ minWidth: 200 }}>
+                    {people.map((person) => {
+                      const selected = person.id === (shot.personId ?? 'maya')
+                      return (
+                        <DropdownMenu.Item
+                          key={person.id}
+                          className="menu-item"
+                          onSelect={() => {
+                            onChange({ ...shot, personId: person.id })
+                            onSaveBlur()
+                          }}
+                        >
+                          <img src={personPortrait(person)} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
+                          <span className="min-w-0 flex-1 truncate">
+                            {person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}
+                          </span>
+                          {selected && <Check size={14} className="ml-auto shrink-0" />}
+                        </DropdownMenu.Item>
+                      )
+                    })}
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+              {selectedPerson && (
+                <button
+                  type="button"
+                  className="shrink-0 cursor-pointer rounded-full border-0 bg-transparent p-0 hover:opacity-80"
+                  aria-label={`See ${selectedPerson.name} larger`}
+                  onClick={() => setPreviewOpen(true)}
+                >
+                  <img
+                    src={personPortrait(selectedPerson)}
+                    alt=""
+                    className="h-7 w-7 rounded-full object-cover"
+                    onError={(event) => { event.currentTarget.style.visibility = 'hidden' }}
+                  />
+                </button>
+              )}
+            </>
           )}
         </div>
       )}
@@ -187,6 +240,22 @@ function ShotCard({
         onChange={(direction) => onChange({ ...shot, direction })}
         onBlur={onSaveBlur}
       />
+      {shot.type === 'onmodel' && selectedPerson && (
+        <Dialog
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          title={selectedPerson.name}
+          description={selectedPerson.ageBand ?? undefined}
+          width={460}
+          footer={<Button variant="secondary" onClick={() => setPreviewOpen(false)}>Close</Button>}
+        >
+          <img
+            src={personPortrait(selectedPerson)}
+            alt={`${selectedPerson.name} portrait`}
+            className="mx-auto max-h-[60vh] w-full rounded-[12px] object-contain"
+          />
+        </Dialog>
+      )}
     </div>
   )
 }
