@@ -40,8 +40,20 @@ export function ProjectCard({
   const menuRef = useRef<HTMLButtonElement>(null)
   const Icon = TypeIcon[project.type]
   const progress = job ? Math.min(100, job.total ? ((job.done + job.failed) / job.total) * 100 : 0) : 0
+  // While a selection exists, a click anywhere on the card toggles it instead
+  // of opening the project. Use the capture phase so the card's links never
+  // navigate before the toggle runs.
+  const cardClick = selecting
+    ? (event: React.MouseEvent<HTMLElement>): void => {
+        const target = event.target as HTMLElement
+        if (target.closest('button, .project-check')) return
+        event.preventDefault()
+        event.stopPropagation()
+        onSelect(!selected)
+      }
+    : undefined
   const check = (
-    <label className="project-check" data-checked={selected}>
+    <label className="project-check" data-checked={selected} onClick={(event) => event.stopPropagation()}>
       <input
         type="checkbox"
         checked={selected}
@@ -70,6 +82,7 @@ export function ProjectCard({
         className="lib-list-row group relative"
         data-selected={selected}
         data-selecting={selecting}
+        onClickCapture={cardClick}
         onContextMenu={(event) => {
           event.preventDefault()
           setMenuOpen(true)
@@ -111,6 +124,7 @@ export function ProjectCard({
       className="lib-card card card-hover group relative"
       data-selected={selected}
       data-selecting={selecting}
+      onClickCapture={cardClick}
       onContextMenu={(event) => {
         event.preventDefault()
         setMenuOpen(true)

@@ -464,6 +464,7 @@ export function Library(): React.JSX.Element {
               aria-live="polite"
             >
               <p className="text-[12px] font-semibold">{selectedProjects.length} selected</p>
+              <p className="meta">Click a project to add or remove it.</p>
               <div className="ml-auto flex items-center gap-2">
                 <Button variant="ghost" size="sm" disabled={deleting} onClick={() => setSelected(new Set())}>
                   Clear
