@@ -57,10 +57,10 @@ export function Rail({ collapsed, onToggle }: { collapsed: boolean; onToggle: ()
   return (
     <nav className={cn('app-rail', collapsed && 'rail-collapsed')} data-collapsed={collapsed} aria-label="Studio">
       <div className={cn('flex flex-col', collapsed ? 'items-center pt-3' : 'px-3 pt-3')}>
-        <Link to="/library" className={cn('flex items-center gap-2 rounded-lg px-2 py-1', !collapsed && 'w-full')} aria-label="Moss Photo Studio Library">
+        <div className={cn('flex items-center gap-2 px-2 py-1', !collapsed && 'w-full')}>
           <img src={markUrl()} alt="" width={24} height={24} className="h-6 w-6 object-contain" />
-          {!collapsed && <span className="wordmark">Moss</span>}
-        </Link>
+          {!collapsed && <span className="wordmark" style={{ color: 'var(--accent)' }}>Moss</span>}
+        </div>
       </div>
       <div className={cn('mt-4 flex flex-col gap-1', collapsed ? 'items-center px-2' : 'px-2')}>
         {workspace && (
