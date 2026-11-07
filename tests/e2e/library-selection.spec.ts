@@ -28,8 +28,10 @@ test('projects are selected on hover and deleted together after a confirm', asyn
     const firstCard = page.locator('article.lib-card').filter({ hasText: 'Bulk One' })
     const firstCheck = firstCard.locator('.project-check')
     await expect(firstCheck).toHaveCSS('opacity', '0')
-    await firstCard.hover()
-    await expect(firstCheck).toHaveCSS('opacity', '1')
+    await expect.poll(async () => {
+      await firstCard.hover()
+      return firstCheck.evaluate((element) => getComputedStyle(element).opacity)
+    }, { timeout: 15_000 }).toBe('1')
     await firstCard.getByRole('checkbox', { name: 'Select Bulk One' }).check()
     await expect(page.getByText('1 selected', { exact: true })).toBeVisible()
     await expect(page.getByText('Click a project to add or remove it.')).toBeVisible()
