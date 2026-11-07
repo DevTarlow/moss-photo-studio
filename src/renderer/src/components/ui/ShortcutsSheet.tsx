@@ -3,8 +3,8 @@ import { useUiStore } from '../../store/ui'
 
 const rows: Array<[string, string]> = [
   ['Ctrl K', 'Command palette'],
-  ['Ctrl N', 'New set'],
-  ['Ctrl 1 / 2 / 3', 'New Set / Image Editor / Image Generator'],
+  ['Ctrl N', 'New Set Creator'],
+  ['Ctrl 1 / 2 / 3', 'New Set Creator / Image Editor / Image Generator'],
   ['Ctrl F', 'Focus search'],
   ['Ctrl E', 'Export the current project'],
   ['Ctrl Enter', 'Run the primary action'],

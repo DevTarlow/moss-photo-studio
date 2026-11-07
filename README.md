@@ -7,7 +7,7 @@ This is the sibling application to `../moss-toolbox`. It is an Electron desktop 
 ## What is in the app
 
 - **Library** with sets, photos, and images, search, filters, sorting, grid and list views, project duplication, rename, delete, and export. Above 200 projects the grid and list mount only viewport rows.
-- **Set** from 1 to 8 listing shots. Each shot can be switched off, renamed, described, assigned a person, or given a feature line. The plan saves automatically.
+- **Set Creator** from 1 to 8 listing shots. Each shot can be switched off, renamed, described, assigned a person, or given a feature line. The plan saves automatically.
 - **Connection icons** for Main shot, In use, Close-up, Size reference, Flat lay, Gift-ready, Feature callout, and On a person.
 - **Image Editor** with 32 tiles in six groups, 12 bundled people plus your own, a free local adjust panel, version labels, branching, a filmstrip, compare, export, and copy.
 - **Image Generator** with 24 starters, optional reference images, one to four images, three shapes, and three formats.

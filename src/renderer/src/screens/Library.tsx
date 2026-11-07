@@ -301,7 +301,7 @@ export function Library(): React.JSX.Element {
                 <DropdownMenu.Portal>
                   <DropdownMenu.Content className="menu-content" align="end" sideOffset={6}>
                     <DropdownMenu.Item className="menu-item h-auto flex-col items-start py-2" onSelect={() => openNew('set')}>
-                      <span className="flex items-center gap-2 font-semibold"><Layers size={15} /> Set</span>
+                      <span className="flex items-center gap-2 font-semibold"><Layers size={15} /> Set Creator</span>
                       <span className="pl-6 text-[11px]" style={{ color: 'var(--text-faint)' }}>One photo in, a full set out.</span>
                     </DropdownMenu.Item>
                     <DropdownMenu.Item className="menu-item h-auto flex-col items-start py-2" onSelect={() => openNew('photo')}>
@@ -418,7 +418,7 @@ export function Library(): React.JSX.Element {
                   <p className="text-center text-[12px]" style={{ color: 'var(--text-muted)' }}>Start with a photo of something you sell.</p>
                   <div className="mx-auto mt-4 grid max-w-[900px] gap-4 md:grid-cols-3">
                     {[
-                      { type: 'set' as const, icon: Layers, title: 'Set', line: 'One photo in, a full set out.' },
+                      { type: 'set' as const, icon: Layers, title: 'Set Creator', line: 'One photo in, a full set out.' },
                       { type: 'photo' as const, icon: ImageIcon, title: 'Image Editor', line: 'New scene, new light, same product.' },
                       { type: 'image' as const, icon: Sparkles, title: 'Image Generator', line: 'Describe it, and Meta makes it.' }
                     ].map((card) => {

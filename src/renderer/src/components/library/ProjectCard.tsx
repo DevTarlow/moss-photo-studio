@@ -8,7 +8,7 @@ import { Progress } from '../ui/Progress'
 import { DropdownMenu } from 'radix-ui'
 import { ProjectMenuContent } from './ProjectMenu'
 
-const typeLabel = { set: 'Set', photo: 'Image Editor', image: 'Image Generator' } as const
+const typeLabel = { set: 'Set Creator', photo: 'Image Editor', image: 'Image Generator' } as const
 const TypeIcon = { set: Layers, photo: ImageIcon, image: Sparkles } as const
 
 export interface ProjectCardProps {

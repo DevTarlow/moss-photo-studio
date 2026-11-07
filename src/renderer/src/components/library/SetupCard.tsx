@@ -44,7 +44,7 @@ export function SetupCard({ onNewSet }: { onNewSet: () => void }): React.JSX.Ele
       done: Boolean(hasSet),
       label: 'Make a first set',
       detail: 'One photo in, a full set out.',
-      action: 'New Set',
+      action: 'New Set Creator',
       run: onNewSet
     }
   ]
