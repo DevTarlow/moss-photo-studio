@@ -118,7 +118,7 @@ Notes that save time:
 
 - Vitest tests import source directly through aliases. They do **not** need a build. This is the fastest feedback loop.
 - `npm run build` already runs `typecheck`; do not run both back to back.
-- `npm run test:e2e` rebuilds the app every time and runs one serial journey with screenshots. Avoid it for a single behavior; build once with `npm run build:test`, then use `npx playwright test -g "<test title>"`.
+- `npm run test:e2e` rebuilds the app every time and runs one serial journey with screenshots. It is a cross-state/release check, not a default. Avoid it for a single behavior; build once with `npm run build:test`, then use `npx playwright test -g "<test title>"`. If the target state is only reachable after earlier serial steps, run the journey once after batching known fixes, not after every one-line change.
 - The 1024×700 and 150% zoom screenshots are capture-only and are rewritten on every E2E run. After an E2E run, check `git status tests/screenshots`; commit only intentional visual changes and revert incidental churn.
 - The E2E journey is stateful and serial (`workers: 1`). Do not parallelize it or run two specs against the same user-data directory.
 - `MOSS_RELEASE=1` is required before the release gate does anything; normal builds skip it.
@@ -136,15 +136,23 @@ You must strictly manage test execution efficiency. Treat test runs as a scarce 
 
 ### 2. Scope Isolation (WHAT to run)
 - **Default to the smallest unit:** Always isolate your test command to the exact file, class, or individual test case matching your edits (e.g., `npx vitest run tests/unit/prompts.test.ts -t "test name"`).
+- **Change-size ladder (default):**
+  - Copy-only change: run `typecheck` when TS/TSX changed and lint the touched files. Do not run unit, integration, or E2E tests.
+  - CSS-only or visual-only change: do the same checks and inspect the screen. If a tracked screenshot baseline changes, run the narrowest E2E capture once to regenerate it, then inspect it.
+  - Isolated logic with unit coverage: run only the matching Vitest file or test.
+  - Renderer behavior observable only in E2E: build once, then run the narrowest `-g "<test title>"` case.
+  - Cross-state or late serial-journey behavior: run one full serial journey for the change, after batching known fixes.
 - **Escalation Path:** You may only expand the scope to a directory or full suite if:
   1. The isolated unit test passes.
   2. The code change affects shared utilities, global state, or public interfaces.
+- **Screenshot baselines are expected output, not failures to chase.** When a UI change intentionally changes a tracked baseline, regenerate that baseline, inspect it, and commit it. Do not re-run the full journey just to re-compare a baseline you already accepted.
 
 ### 3. Error Recovery Loops (HOW to handle failure)
 - If a test fails, do not blindly modify code and re-run the same command instantly. You must:
   1. Read and parse the exact failure line/assertion.
   2. Apply a targeted fix.
   3. Re-run *only* the failing test case.
+- **Serial E2E exception:** When the failing case cannot run without earlier serial tests, fix all known issues in one pass and re-run the journey once. Do not re-run the full journey after each one-line fix.
 - **Hard Stop:** If a test fails 3 times consecutively with the same error, **STOP** execution immediately, do not run any further commands, and present your findings to the user for guidance.
 
 ### 4. Output Summary Format
