@@ -173,7 +173,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 ### 17. Accessibility and layout
 
-- [x] **A half** No serious or critical axe findings on the visited screens in light and dark. Keyboard focus is visible. Every control is reachable. Every main screen passes at 1024 by 700 and at 150% zoom with no horizontal overflow. Resizable panels and keyboard crop are covered. System reduced motion is covered; a 200% text-only resize pass is still not separately captured. The Set running and export dialog states are not separately captured at 150%.
+- [x] **A half** No serious or critical axe findings on the visited screens in light and dark. Keyboard focus is visible. Every control is reachable. Every main screen passes at 1024 by 700 and at 150% zoom with no horizontal overflow. Resizable panels and keyboard crop are covered. System reduced motion is covered. A 200% text-only resize cannot be simulated through Electron's page-zoom API, so that remains a manual screen-reader/text-scaling check. The Set running and export dialog states are not separately captured at 150%.
   - A real screen-reader pass is still an O check.
 - [ ] **O** Screen reader pass with NVDA and VoiceOver on the target machines.
 
