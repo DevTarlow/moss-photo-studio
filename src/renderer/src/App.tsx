@@ -401,7 +401,7 @@ export function RootLayout(): React.JSX.Element {
   if (bootError) return <BootError />
 
   const licenseInvalid = !license || license.status === 'unlicensed' || license.status === 'offline_unlicensed' || license.status === 'expired'
-  if (licenseInvalid && !initialLicenseValid && !readonlyBypass && location.pathname !== '/activation' && location.pathname !== '/mockups') {
+  if (licenseInvalid && !initialLicenseValid && !readonlyBypass && location.pathname !== '/activation') {
     return <Navigate to="/activation" replace />
   }
   if (
@@ -412,8 +412,7 @@ export function RootLayout(): React.JSX.Element {
     !settings.onboardingDismissed &&
     !onboardingBypass &&
     location.pathname !== '/onboarding' &&
-    location.pathname !== '/activation' &&
-    location.pathname !== '/mockups'
+    location.pathname !== '/activation'
   ) {
     return <Navigate to="/onboarding" replace />
   }

@@ -73,14 +73,6 @@ export function Rail({
       resizable={{ defaultWidth: 232, minWidth: 200, maxWidth: 320, autoSaveId: 'moss-side-nav' }}
       footer={
         <div className="flex flex-col gap-1">
-          {import.meta.env.DEV && (
-            <SideNavItem
-              label="Design mockups"
-              icon={<Palette size={18} strokeWidth={1.75} />}
-              href="/mockups"
-              isSelected={location.pathname === '/mockups'}
-            />
-          )}
           {appInfo && !appInfo.isPackaged && !appInfo.e2e && (
             <SideNavItem
               label="Reset App"

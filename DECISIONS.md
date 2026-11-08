@@ -114,7 +114,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 
 ## Design system
 
-70. **Astryx is the component foundation, pinned and themed as Moss.** The app uses Astryx 0.7.11 for generic UI, with a custom Moss theme that keeps the warm paper, forest-green selection, burnt-rust primary action, Inter, and Plus Jakarta Sans. The dev-only `/mockups` gallery renders the three onboarding directions before the production flow changes. The custom dark canvas, crop overlay, filmstrip, brand badge preview, and file-drop logic stay custom. Astryx is beta, so versions are pinned and upgrades are deliberate.
+70. **Astryx is the component foundation, pinned and themed as Moss.** The app uses Astryx 0.7.11 for generic UI, with a custom Moss theme that keeps the warm paper, forest-green selection, burnt-rust primary action, Inter, and Plus Jakarta Sans. The custom dark canvas, crop overlay, filmstrip, brand badge preview, and file-drop logic stay custom. Astryx is beta, so versions are pinned and upgrades are deliberate.
 
 71. **The app has one create entry point and one navigation.** The rail Tools block is gone. The TopNav New menu launches Set Creator, Image Editor, and Image Generator from anywhere; the Library keeps contextual start cards only when empty. Settings sections live in the same SideNav while the Settings route is open; the second settings aside is gone.
 

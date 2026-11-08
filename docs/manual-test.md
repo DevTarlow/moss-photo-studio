@@ -76,7 +76,6 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 ## Design system
 
 - Astryx 0.7.11 is pinned and themed as Moss. The custom canvas, crop overlay, filmstrip, brand badge preview, and file-drop logic stay custom.
-- The dev-only `/mockups` route renders the three onboarding directions at 1440 and 1024 in light and dark. It is not linked from the packaged UI and is not part of the production route flow.
 - The UI migration is phased: the shell, onboarding, and collections are Astryx-based; the editor canvases remain custom and now use the fitted workspace chrome.
 
 ### 3b. App shell and collections

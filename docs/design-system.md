@@ -77,13 +77,9 @@ CSP is unchanged: all Astryx CSS, fonts, and icons are bundled; there are no rem
 7. Add axe coverage for portals, dialogs, the command palette, dropzones, and reduced-motion states.
 8. Before a release, build the theme statically and measure the renderer bundle and first paint.
 
-## Dev mockup gallery
-
-`/mockups` is a development-only route (it is registered only when Vite is running in development, and it appears in the rail as Design mockups in development only). It renders the three onboarding directions in the real Moss theme, with step switching and a light/dark preview. The recommended direction A has been implemented in the production onboarding; the gallery remains as a design reference for the next phases.
-
 ## Current status
 
-- Foundation, theme, providers, CSS layer order, and the development-only mockup gallery are in place.
+- Foundation, theme, providers, and CSS layer order are in place.
 - Onboarding is redesigned with four setup steps, product-first behavior, key-later, a persisted category, sticky actions, and Ready.
 - The Astryx AppShell, TopNav, and SideNav now wrap the app; Library, Products, People, Usage, and Settings use Astryx controls and shared collection patterns.
 - Set Creator has Plan and Set phases, a plan preview board, a read-only review, and no duplicate right panel. Photo has a fitted canvas, exporter-aligned rotate/crop preview, a draggable compare divider, and keyboard crop controls. Create results have persistent Edit, Download, Save as Product, and More actions plus a lightbox. Workspace panels can be resized and persist their widths. The custom canvas, crop overlay, filmstrip, and brand preview remain custom.

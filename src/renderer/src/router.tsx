@@ -9,13 +9,11 @@ import { Usage } from './screens/Usage'
 import { Settings } from './screens/Settings'
 import { Workspace } from './screens/Workspace'
 import { BootRedirect } from './screens/BootRedirect'
-import { Mockups } from './screens/Mockups'
 
 const children = [
   { index: true, element: <BootRedirect /> },
   { path: 'activation', element: <Activation /> },
   { path: 'onboarding', element: <Onboarding /> },
-  ...(import.meta.env.DEV ? [{ path: 'mockups', element: <Mockups /> }] : []),
   { path: 'library', element: <Library /> },
   { path: 'people', element: <People /> },
   { path: 'products', element: <Products /> },
