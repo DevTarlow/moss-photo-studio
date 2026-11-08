@@ -121,3 +121,11 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 72. **Library selection has an explicit Select mode as well as the hover shortcut.** Select pins the checkboxes visible and makes the bulk bar persistent; Select all, Clear, Delete, and Escape are supported. Hover checkboxes remain a shortcut for experienced users. The documented 20-per-page pagination and delete copy are unchanged.
 
 73. **Products and People have search, sort, and count parity with Library.** The Settings storage section is called Storage so it cannot be confused with the Library page. Usage keeps its budget control inside the summary card instead of a second form at the bottom.
+
+74. **Set Creator is a two-mode workspace.** Plan shows the plan preview board and the editable plan. Set review is read-only until Edit Plan or Make More. The duplicate right summary panel is gone; the center owns the canvas. Running hides the phase switch and keeps the plan read-only.
+
+75. **The Photo canvas uses one fitted stage.** The preview sizes the image to the measured stage instead of clipping at `maxWidth: none`. Rotation and flips follow the exporter's order (rotate, then flop/flip), so the crop overlay lives in the rotated display box and matches the applied result. The compare divider is draggable and the range slider remains for keyboard use.
+
+76. **Create results keep their actions.** A result opens the lightbox and always shows Edit, Download, and a More menu for Use as a Set's Photo, Save as Product, and Delete. Failed runs get their own retry card. Budget "Make Fewer Images" reduces the set run to one shot or the Create count by one, and disappears when only one image is possible.
+
+77. **Workspace inspectors are optional below 1440.** Photo and Create hide the right inspector at 1024-1439 and expose it as a sheet; Set has no right inspector. Panel widths clamp with the window, and sheets close when the viewport grows back.

@@ -114,5 +114,5 @@ export function previewTransform(t: AdjustTransform): string {
   const rotate = t.rotate ?? 0
   const scaleX = t.flipH ? -1 : 1
   const scaleY = t.flipV ? -1 : 1
-  return `rotate(${rotate}deg) scale(${scaleX}, ${scaleY})`
+  return `scale(${scaleX}, ${scaleY}) rotate(${rotate}deg)`
 }

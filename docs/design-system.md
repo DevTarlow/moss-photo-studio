@@ -86,4 +86,4 @@ CSP is unchanged: all Astryx CSS, fonts, and icons are bundled; there are no rem
 - Foundation, theme, providers, CSS layer order, and the development-only mockup gallery are in place.
 - Onboarding is redesigned with four setup steps, product-first behavior, key-later, a persisted category, sticky actions, and Ready.
 - The Astryx AppShell, TopNav, and SideNav now wrap the app; Library, Products, People, Usage, and Settings use Astryx controls and shared collection patterns.
-- The Set, Photo, and Create workspaces still use the legacy internal panels and canvas; they are the next phase. The shell and the custom canvas/crop/filmstrip remain separate.
+- Set Creator has Plan and Set phases, a plan preview board, a read-only review, and no duplicate right panel. Photo has a fitted canvas, exporter-aligned rotate/crop preview, and a draggable compare divider. Create results have persistent Edit, Download, and More actions plus a lightbox. The custom canvas, crop overlay, filmstrip, and brand preview remain custom.

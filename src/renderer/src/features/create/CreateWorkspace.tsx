@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DropdownMenu, Popover } from 'radix-ui'
-import { ChevronDown, Download, Image as ImageIcon, Layers, Loader2, Package, Pencil, Plus, Sparkles, Trash2, X } from 'lucide-react'
+import { MoreMenu } from '@astryxdesign/core'
+import { ChevronDown, Download, Image as ImageIcon, Loader2, Package, Pencil, Plus, Sparkles, X } from 'lucide-react'
 import type { Format, Image, JobState, Project, Shape } from '@shared/types'
 import { MAX_PROMPT } from '@shared/constants'
 import { composeCreatePrompt } from '@shared/prompts/guards'
@@ -15,7 +16,7 @@ import { SourcePickerDialog } from '../../components/sources/SourcePickerDialog'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { SaveProductDialog } from '../../components/products/SaveProductDialog'
 import { useJobsStore } from '../../store/jobs'
-import { useViewportTier } from '../../lib/viewport'
+import { useIsWideWorkspace, useViewportTier } from '../../lib/viewport'
 import { useConfirm } from '../../components/ui/ConfirmProvider'
 import { Button } from '../../components/ui/Button'
 import { Segmented } from '../../components/ui/Segmented'
@@ -24,6 +25,7 @@ import { Progress } from '../../components/ui/Progress'
 import { FirstRunConfirm } from '../../components/ui/FirstRunConfirm'
 import { BudgetWarning } from '../../components/ui/BudgetWarning'
 import { TextareaCounter } from '../../components/ui/TextareaCounter'
+import { Lightbox } from '../../components/ui/Lightbox'
 import { exampleUrl } from '../../lib/assets'
 import { unwrap, messageOf } from '../../lib/ipc'
 import { toast } from '../../lib/toast'
@@ -62,7 +64,7 @@ export function CreateWorkspace(): React.JSX.Element {
   const confirm = useConfirm()
   const tier = useViewportTier()
   const leftHidden = tier === 'tiny'
-  const rightHidden = tier === 'narrow' || tier === 'tiny'
+  const rightHidden = !useIsWideWorkspace()
   const [prompt, setPrompt] = useState('')
   const [promptSource, setPromptSource] = useState<'user' | 'starter'>('user')
   const [pendingStarter, setPendingStarter] = useState<Starter | null>(null)
@@ -72,6 +74,7 @@ export function CreateWorkspace(): React.JSX.Element {
   const [productRef, setProductRef] = useState<SourceChoice | null>(null)
   const [personId, setPersonId] = useState<string | null>(null)
   const [saveProductImage, setSaveProductImage] = useState<Image | null>(null)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [firstOpen, setFirstOpen] = useState(false)
   const [currentJobId, setCurrentJobId] = useState<string | null>(null)
   const [runs, setRuns] = useState<JobState[]>([])
@@ -81,6 +84,10 @@ export function CreateWorkspace(): React.JSX.Element {
   const [leftSheet, setLeftSheet] = useState(false)
   const [rightSheet, setRightSheet] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
+  useEffect(() => {
+    if (!leftHidden) setLeftSheet(false)
+    if (!rightHidden) setRightSheet(false)
+  }, [leftHidden, rightHidden])
   const [pickerOpen, setPickerOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const handled = useRef<Set<string>>(new Set())
@@ -299,6 +306,7 @@ export function CreateWorkspace(): React.JSX.Element {
     try {
       await unwrap(window.moss.images.delete({ id: image.id }))
       await refresh()
+      if (lightboxIndex !== null) setLightboxIndex(null)
       toast.status('Image deleted.')
     } catch (caught) {
       toast.error(messageOf(caught))
@@ -548,7 +556,17 @@ export function CreateWorkspace(): React.JSX.Element {
                 <p className="meta mt-1" aria-live="polite">{job.done} made · {job.failed} failed · {job.total} total</p>
               </div>
             )}
-            {error && <p className="mb-4 rounded-[8px] border p-3 text-[12px]" style={{ borderColor: 'var(--border)', color: 'var(--danger)' }} role="alert">{error}</p>}
+            {error && !isRunning && results.length === 0 ? (
+              <div className="mb-4 rounded-[10px] border p-3" style={{ borderColor: 'var(--danger)', background: 'var(--danger-soft)' }} role="alert">
+                <p className="text-[12px] font-semibold">That did not come through.</p>
+                <p className="mt-1 text-[12px]">{error}</p>
+                <div className="mt-2">
+                  <Button variant="secondary" size="sm" onClick={() => void submit()}>Try Again</Button>
+                </div>
+              </div>
+            ) : error ? (
+              <p className="mb-4 rounded-[8px] border p-3 text-[12px]" style={{ borderColor: 'var(--border)', color: 'var(--danger)' }} role="alert">{error}</p>
+            ) : null}
             {results.length === 0 ? (
               !isRunning && (
                 <div>
@@ -578,19 +596,38 @@ export function CreateWorkspace(): React.JSX.Element {
             ) : (
               <div className="mx-auto grid max-w-[900px] grid-cols-2 gap-4">
                 {results.map((image, index) => (
-                  <div key={image.id} className="card group overflow-hidden">
-                    <div className="relative">
-                      {image.url && <img src={image.url} alt={`Created image, ${image.label}`} className="aspect-[4/3] w-full object-cover" />}
+                  <div key={image.id} className="card overflow-hidden">
+                    <button
+                      type="button"
+                      className="relative block w-full cursor-zoom-in"
+                      onClick={() => setLightboxIndex(index)}
+                    >
+                      <span className="sr-only">Open {image.label} larger</span>
+                      {image.url && <img src={image.url} alt="" className="aspect-[4/3] w-full object-cover" />}
                       {index === 0 && !runFilter && <span className="badge absolute left-2 top-2" data-tone="canvas">Newest</span>}
-                      <div className="absolute inset-x-2 bottom-2 flex flex-wrap gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-                        <button type="button" className="canvas-btn" onClick={() => void download(image)}><Download size={13} /> Download</button>
-                        <button type="button" className="canvas-btn" onClick={() => navigate(`/project/${project.id}?view=photo&image=${image.id}`)}><Pencil size={13} /> Edit</button>
-                        <button type="button" className="canvas-btn" onClick={() => void useAsSet(image)}><Layers size={13} /> Use as a Set's Photo</button>
-                        <button type="button" className="canvas-btn" onClick={() => setSaveProductImage(image)}><Package size={13} /> Save as Product</button>
-                        <button type="button" className="canvas-btn" onClick={() => void remove(image)} aria-label={`Delete ${image.label}`}><Trash2 size={13} /></button>
+                    </button>
+                    <div className="flex flex-wrap items-center gap-1 border-t px-2 py-2" style={{ borderColor: 'var(--border)' }}>
+                      <Button variant="ghost" size="sm" onClick={() => navigate(`/project/${project.id}?view=photo&image=${image.id}`)}>
+                        <Pencil size={13} /> Edit
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => void download(image)}>
+                        <Download size={13} /> Download
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setSaveProductImage(image)}>
+                        <Package size={13} /> Save as Product
+                      </Button>
+                      <div className="ml-auto">
+                        <MoreMenu
+                          label={`More actions for ${image.label}`}
+                          size="sm"
+                          items={[
+                            { label: "Use as a Set's Photo", onClick: () => void useAsSet(image) },
+                            { label: 'Delete', onClick: () => void remove(image) }
+                          ]}
+                        />
                       </div>
                     </div>
-                    <div className="flex items-center justify-between gap-2 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2 px-3 pb-2">
                       <span className="text-[11px] font-medium">{image.label}</span>
                       <span className="meta">1 image</span>
                     </div>
@@ -606,12 +643,13 @@ export function CreateWorkspace(): React.JSX.Element {
       <Sheet open={rightSheet} onOpenChange={setRightSheet} side="right" title="Runs">{rightPanel}</Sheet>
 
       <div className="ws-bottom">
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/usage')}>
-          <span className="tabular">{requestedCount} {requestedCount === 1 ? 'image' : 'images'} · {usd(estimateCents(requestedCount))}</span>
+        <button type="button" className="min-w-0 text-left" onClick={() => navigate('/usage')}>
+          <p className="truncate text-[12px] font-medium tabular">{requestedCount} {requestedCount === 1 ? 'image' : 'images'} · {usd(estimateCents(requestedCount))}</p>
+          <p className="meta tabular">Month {usd(monthCents)}{settings?.budgetCents != null ? ` of ${usd(settings.budgetCents)}` : ''}</p>
         </button>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {overBudget ? (
-            <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => navigate('/usage')} onFewer={() => setCount(1)} />
+            <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => navigate('/usage')} onFewer={requestedCount > 1 ? () => setCount((current) => Math.max(1, current - 1)) : undefined} />
           ) : (
             <Button variant="primary" disabled={!canSubmit || isRunning || promptTooLongForReference} onClick={() => void submit()}>
               {isRunning ? <Loader2 size={14} className="animate-spin" /> : null}
@@ -636,6 +674,17 @@ export function CreateWorkspace(): React.JSX.Element {
         onOpenChange={(open) => { if (!open) setSaveProductImage(null) }}
         imageId={saveProductImage?.id ?? null}
         defaultName={project.name}
+      />
+      <Lightbox
+        open={lightboxIndex !== null}
+        onOpenChange={(open) => { if (!open) setLightboxIndex(null) }}
+        images={results}
+        index={lightboxIndex ?? 0}
+        onIndex={setLightboxIndex}
+        onDownload={(image) => void download(image)}
+        onEdit={(image) => navigate(`/project/${project.id}?view=photo&image=${image.id}`)}
+        onSaveProduct={setSaveProductImage}
+        onDelete={(image) => void remove(image)}
       />
       <FirstRunConfirm
         open={firstOpen}

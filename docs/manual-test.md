@@ -7,16 +7,16 @@ This is the record of what was run, what passed, and what the acceptance owner s
 | Check | Result |
 | --- | --- |
 | `npm run typecheck` | Pass |
-| `npm test` | 100 tests pass in 10 files |
-| `npm run test:e2e` | 16 serial tests pass, including axe on dialogs, 510-project pagination, all-screen 1024 and 150% layout, and screenshot comparison |
+| `npm test` | 122 tests pass in 12 files |
+| `npm run test:e2e` | 13 serial tests pass, including axe on dialogs, 510-project pagination, all-screen 1024 and 150% layout, and screenshot comparison |
 | `npm run audit:tokens` | All foreground/background token pairs pass AA in light and dark |
-| `npm run lint` | 0 errors, warnings for unused locals and preferences |
+| `npm run lint` | 0 errors, 0 warnings |
 | `npm run build` | Pass |
 | `npm run build:linux` | AppImage and deb produced |
 | Packaged override test | A packaged release launched to Activation with `MOSS_DEV_UNLOCK=1`, `MOSS_MUSE_FAKE=1`, and `MOSS_E2E=1` set, proving the build gate ignores them. `fakeMode` was false |
 | AppImage launch smoke | Extracted AppImage launched to Activation through Playwright with `APPIMAGE_EXTRACT_AND_RUN=1` |
 | deb launch smoke | `.deb` was unpacked with `dpkg-deb -x` and its executable launched to Activation. The package metadata, desktop entry, icons, and control scripts were inspected |
-| Screenshot baselines | 41 images in `tests/screenshots`. The 1440 by 900 light and dark images are compared with a maximum diff ratio of 0.01. The 1024 by 700 and 150% zoom images are captured fresh because Playwright can restore the Electron viewport under that helper |
+| Screenshot baselines | 47 images in `tests/screenshots`. The 1440 by 900 light and dark images are compared with a maximum diff ratio of 0.01. The 1024 by 700 and 150% zoom images are captured fresh because Playwright can restore the Electron viewport under that helper |
 
 ### Commands used
 
@@ -46,12 +46,13 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - Onboarding: four setup steps (connect Meta, add the first product, make an optional first set, ready), a first-set picker with 1/3/6 count presets and per-shot toggles, first-run confirmation, first paid set. The first photo is saved as a Product and no set project exists until Make. The first paid set was started with Space on the focused primary button and finished through the first-run dialog with Tab and Enter.
 - Onboarding product-only path: Save product only creates one Product, no set, marks onboarding done, and opens Products. This is covered by a focused E2E test.
 - A five-shot set costs `$0.05`. The primary button says the price before the click. Five requests produced five images.
+- Set Creator has a Plan/Set phase control, a plan preview board, a read-only review with an Edit Plan action, and no duplicate right inspector. Running hides the phase switch and keeps the plan read-only.
 - A two-shot failure set showed the partial review, the failed cards, and `Try Again · $0.02`. The retry made exactly two requests. Total set requests were eight. Older ready images were preserved.
-- Image Editor: Kitchen table tile, compare slider with pointer and keyboard, hold Space for the earlier version, local 1:1 crop, rotate, brightness, sharpen, apply locally free, version labels, and new version. Copy Image writes a PNG and Paste Image reads it back through the main-process clipboard.
+- Image Editor: Kitchen table tile, a fitted canvas, a compare divider that can be dragged or moved with the slider and arrow keys, hold Space for the earlier version, local 1:1 crop, rotate, brightness, sharpen, apply locally free, version labels, and new version. The crop/rotate preview follows the exporter order; the adjust-preview state is captured and axe-checked. Copy Image writes a PNG and Paste Image reads it back through the main-process clipboard.
 - Set preview: the lightbox opens on a blurred glass scrim, closes when clicking outside the image, and still closes with the X.
-- Create: four images, run cost, first result gets Newest, Edit opens the editor, Back to Create returns to the result. The empty state labels the four starting cards Examples, and the idea menu groups use darker bold titles.
+- Create: four images, run cost, first result gets Newest, persistent Edit/Download/More actions, a result lightbox, Edit opens the editor, Back to Create returns to the result. The empty state labels the four starting cards Examples, and the idea menu groups use darker bold titles. A failed run gets its own retry card.
 - Set export: six named WebP files and a UTF-8 `set.txt`, no overwrite, format and quality controls. The toast names the folder and count and offers Open Folder.
-- Usage: month total equals returned images times one cent, by-project rows, ledger, CSV totals sum to the displayed month spend, budget warning at `$10.00`, reset budget.
+- Usage: month total equals returned images times one cent, by-project rows, ledger, CSV totals sum to the displayed month spend, budget warning at `$10.00`, reset budget. A low budget exposes Make Fewer Images; in Set it reduces the run to one shot and removes the warning when one fits.
 - People: 12 bundled people, user section, Maya's included card, descriptions, and the synthetic-people note.
 - Settings: light and dark theme, persisted after restart, window bounds remembered, 1024 by 700 and 150% zoom coverage for every main screen, keyring warning visible when safeStorage is unavailable.
 - Settings key: Test Connection, Replace, Test and Save, Remove with confirmation. The full key never appears in the page after saving.
@@ -59,7 +60,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - Stray network: no renderer request left for an unexpected host. Only `moss-media://` and the local fake hosts appeared.
 - License grace: with the stored validation moved back 13 days and the store down, the app opened the library with the grace banner. At 15 days it opened Activation, Browse My Library worked, and a project showed the read-only message.
 - Setup prompt: while onboarding is incomplete, the Library shows a Finish setting up banner with Resume Setup; it no longer marks onboarding done when a key exists.
-- Axe: activation, the new onboarding steps (welcome, key, product, set, ready), set plan, set review, image editor, adjusted photo, Create empty, Create results, Usage, People, Settings light, Library light, Library dark, Library at 1024, Library at 150% zoom, the first-run confirmation dialog (scoped to the dialog), and the set export dialog were checked. No serious or critical violations remained.
+- Axe: activation, the new onboarding steps (welcome, key, product, set, ready), set plan, set review, image editor, adjust preview, adjusted photo, Create empty, Create results, Usage, People, Settings light, Library light, Library dark, Library at 1024, Library at 150% zoom, the first-run confirmation dialog (scoped to the dialog), and the set export dialog were checked. No serious or critical violations remained.
 - Screenshot comparison passed on a second run with the live app.
 - Large library: 510 created projects loaded 20 at a time. Previous and Next moved between pages, and search found the oldest project.
 - Application menu: Export, Undo, Redo, Copy Image, zoom, and Toggle Panel enabled only in the correct editor states. Paste stayed available in the Library. The test read the native menu item state through Electron.
@@ -76,7 +77,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 
 - Astryx 0.7.11 is pinned and themed as Moss. The custom canvas, crop overlay, filmstrip, brand badge preview, and file-drop logic stay custom.
 - The dev-only `/mockups` route renders the three onboarding directions at 1440 and 1024 in light and dark. It is not linked from the packaged UI and is not part of the production route flow.
-- The full UI migration is phased; only the onboarding and the shared Astryx foundation are part of this change.
+- The UI migration is phased: the shell, onboarding, and collections are Astryx-based; the editor canvases remain custom and now use the fitted workspace chrome.
 
 ### 3b. App shell and collections
 
@@ -136,7 +137,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 ### 9. Compare
 
-- [x] **A** Mouse and arrow keys move the compare handle. Space holds the earlier version.
+- [x] **A** The compare divider can be dragged; the slider and arrow keys move it too. Space holds the earlier version.
 
 ### 10. Local adjust
 
@@ -145,7 +146,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 ### 11. Create
 
-- [x] **A** Fill the describe box, choose four images, create. Four results appear. Edit opens one. Back to Create returns.
+- [x] **A** Fill the describe box, choose four images, create. Four results appear with persistent Edit, Download, Save as Product, and More actions; the image opens a lightbox; Edit opens one; Back to Create returns.
 - [x] **A** The empty state shows an Examples title, and the Start from an idea menu has darker bold category titles.
 
 ### 12. Set export

@@ -9,7 +9,7 @@ import { shapeLabel } from '@shared/shapes'
 import { useWorkspaceStore } from '../../store/workspace'
 import { useAppStore } from '../../store/app'
 import { useJobsStore } from '../../store/jobs'
-import { useViewportTier } from '../../lib/viewport'
+import { useIsWideWorkspace, useViewportTier } from '../../lib/viewport'
 import { useConfirm } from '../../components/ui/ConfirmProvider'
 import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
@@ -63,7 +63,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const navigate = useNavigate()
   const tier = useViewportTier()
   const leftHidden = tier === 'tiny'
-  const rightHidden = tier === 'narrow' || tier === 'tiny'
+  const rightHidden = !useIsWideWorkspace()
   const [tab, setTab] = useState<Tab>('change')
   const [text, setText] = useState('')
   const [textSource, setTextSource] = useState<TextSource>('user')
@@ -87,10 +87,16 @@ export function PhotoWorkspace(): React.JSX.Element {
   const [leftSheet, setLeftSheet] = useState(false)
   const [rightSheet, setRightSheet] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
+  useEffect(() => {
+    if (!leftHidden) setLeftSheet(false)
+    if (!rightHidden) setRightSheet(false)
+  }, [leftHidden, rightHidden])
   const [applyBusy, setApplyBusy] = useState(false)
   const [now, setNow] = useState(() => Date.now())
+  const [stageSize, setStageSize] = useState({ width: 0, height: 0 })
   const handledJob = useRef<string | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
+  const compareRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!people.some((person) => person.id === personId) && people[0]) setPersonId(people[0].id)
@@ -142,6 +148,16 @@ export function PhotoWorkspace(): React.JSX.Element {
     return () => {
       // No request is fired here. Pending saves live in the plan editor only.
     }
+  }, [])
+  useEffect(() => {
+    const stage = canvasRef.current
+    if (!stage) return
+    const observer = new ResizeObserver(([entry]) => {
+      const box = entry?.contentRect
+      if (box) setStageSize({ width: box.width, height: box.height })
+    })
+    observer.observe(stage)
+    return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
@@ -524,6 +540,43 @@ export function PhotoWorkspace(): React.JSX.Element {
     void navigate(`/project/${project.id}`)
   }
 
+  const rotate = tab === 'adjust' ? (adjust.rotate ?? 0) : 0
+  const swapped = rotate === 90 || rotate === 270
+  const baseWidth = swapped ? (selected?.height ?? 0) : (selected?.width ?? 0)
+  const baseHeight = swapped ? (selected?.width ?? 0) : (selected?.height ?? 0)
+  const fit = stageSize.width > 0 && stageSize.height > 0 && baseWidth > 0 && baseHeight > 0
+    ? Math.min((stageSize.width - 56) / baseWidth, (stageSize.height - (compare ? 96 : 48)) / baseHeight)
+    : 0
+  const displayWidth = Math.max(1, Math.round(baseWidth * fit))
+  const displayHeight = Math.max(1, Math.round(baseHeight * fit))
+  const imageStyle: React.CSSProperties = {
+    position: 'absolute',
+    left: swapped ? (displayWidth - displayHeight) / 2 : 0,
+    top: swapped ? (displayHeight - displayWidth) / 2 : 0,
+    width: swapped ? displayHeight : displayWidth,
+    height: swapped ? displayWidth : displayHeight,
+    objectFit: compare ? 'contain' : 'fill',
+    transform: tab === 'adjust' && !showParent ? previewTransform(adjust) : undefined,
+    transformOrigin: 'center',
+    filter: tab === 'adjust' && !showParent ? previewFilter(adjust) : undefined
+  }
+  const updateCompare = (clientX: number): void => {
+    const rect = compareRef.current?.getBoundingClientRect()
+    if (!rect || rect.width <= 0) return
+    setCompareValue(Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100)))
+  }
+  const startCompareDrag = (event: React.PointerEvent<HTMLDivElement>): void => {
+    event.preventDefault()
+    updateCompare(event.clientX)
+    const move = (moveEvent: PointerEvent): void => updateCompare(moveEvent.clientX)
+    const up = (): void => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+  }
+
   return (
     <>
       <div className="workspace">
@@ -560,33 +613,35 @@ export function PhotoWorkspace(): React.JSX.Element {
               onKeyUp={onCanvasKeyUp}
               onBlur={() => setShowOriginal(false)}
             >
-              {displayImage?.url ? (
-                <div className="relative inline-flex max-h-[86%] max-w-[92%] items-center justify-center">
+              {displayImage?.url && fit > 0 ? (
+                <div
+                  ref={compareRef}
+                  className="relative"
+                  style={{ width: displayWidth, height: displayHeight, transform: `scale(${zoom})`, transformOrigin: 'center' }}
+                >
                   {compare && parent?.url && selected?.url ? (
                     <>
-                      <img src={parent.url} alt="The version before this change" className="canvas-image" style={{ maxWidth: 'none', maxHeight: '76vh', transform: `scale(${zoom})` }} />
+                      <img src={parent.url} alt="The version before this change" style={imageStyle} />
                       <img
                         src={selected.url}
                         alt="The version after this change"
-                        className="canvas-image absolute inset-0 m-auto"
-                        style={{ maxWidth: 'none', maxHeight: '76vh', clipPath: `inset(0 ${100 - compareValue}% 0 0)`, transform: `scale(${zoom})` }}
+                        style={{ ...imageStyle, clipPath: `inset(0 0 0 ${compareValue}%)` }}
                       />
-                      <div className="absolute bottom-0 top-0 w-px" style={{ left: `${compareValue}%`, background: 'var(--canvas-text)' }} aria-hidden />
-                      <span className="absolute left-2 top-2 badge" data-tone="canvas">Before</span>
-                      <span className="absolute right-2 top-2 badge" data-tone="canvas">After</span>
+                      <div
+                        className="compare-divider"
+                        style={{ left: `${compareValue}%` }}
+                        onPointerDown={startCompareDrag}
+                        aria-hidden
+                      >
+                        <span className="compare-divider-knob" />
+                      </div>
                     </>
                   ) : (
-                    <div className="relative inline-flex" style={{ transform: `scale(${zoom})` }}>
+                    <>
                       <img
                         src={displayImage.url}
                         alt={showParent ? 'The source version' : `${selected?.label ?? 'Selected'} image`}
-                        className="canvas-image"
-                        style={{
-                          maxWidth: 'none',
-                          maxHeight: '74vh',
-                          filter: tab === 'adjust' ? previewFilter(adjust) : undefined,
-                          transform: tab === 'adjust' ? previewTransform(adjust) : undefined
-                        }}
+                        style={{ ...imageStyle, boxShadow: 'var(--shadow-dark)' }}
                       />
                       {crop && (
                         <CropOverlay
@@ -596,11 +651,11 @@ export function PhotoWorkspace(): React.JSX.Element {
                         />
                       )}
                       {showParent && <span className="absolute left-2 top-2 badge" data-tone="canvas">Original</span>}
-                    </div>
+                    </>
                   )}
                 </div>
               ) : (
-                <p className="canvas-meta">No version selected.</p>
+                <p className="canvas-meta">{displayImage?.url ? 'Fitting the photo…' : 'No version selected.'}</p>
               )}
               {isRunning && runningJob && (
                 <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'var(--scrim)' }} role="status" aria-live="polite">
@@ -625,17 +680,20 @@ export function PhotoWorkspace(): React.JSX.Element {
                   value={compareValue}
                   onChange={(event) => setCompareValue(Number(event.target.value))}
                   className="w-full"
-                  aria-valuetext={`${compareValue}% after`}
+                  aria-valuetext={`${Math.round(compareValue)}% after`}
                 />
                 <div className="flex justify-between text-[11px]" style={{ color: 'var(--white-60)' }}>
                   <span>Before</span>
                   <span>After</span>
                 </div>
+                <p className="mt-1 text-center text-[11px]" style={{ color: 'var(--white-60)' }}>Drag the line on the photo, or use the slider.</p>
               </div>
             )}
-            <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px]" style={{ color: 'var(--white-60)' }}>
-              {selected?.width && selected?.height ? `${selected.width} × ${selected.height}` : ''} {zoom !== 1 ? `· ${Math.round(zoom * 100)}%` : ''} · {shapeLabel(project.shape)}
-            </div>
+            {!compare && (
+              <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px]" style={{ color: 'var(--white-60)' }}>
+                {selected?.width && selected?.height ? `${selected.width} × ${selected.height}` : ''} {zoom !== 1 ? `· ${Math.round(zoom * 100)}%` : ''} · {shapeLabel(project.shape)}
+              </div>
+            )}
           </div>
           <div className="ws-filmstrip" role="list" aria-label="Versions">
             {ready.map((image, index) => {
@@ -680,6 +738,7 @@ export function PhotoWorkspace(): React.JSX.Element {
         <div className="min-w-0">
           <p className="truncate text-[12px] font-medium">{selected?.label ?? 'No version'}</p>
           <p className="meta">{formatDate(selected?.createdAt ?? Date.now())}{isRunning ? ' · making' : ''}</p>
+          <p className="meta tabular">Month {usd(monthCents)}{settings?.budgetCents != null ? ` of ${usd(settings.budgetCents)}` : ''}</p>
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Button variant="ghost" size="sm" disabled={isRunning} onClick={() => setAddPhotoOpen(true)}>
@@ -690,7 +749,7 @@ export function PhotoWorkspace(): React.JSX.Element {
               {applyBusy ? <Loader2 size={14} className="animate-spin" /> : null} Apply Locally · Free
             </Button>
           ) : overBudget ? (
-            <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => navigate('/usage')} onFewer={() => setTab('change')} />
+            <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => navigate('/usage')} />
           ) : (
             <Button variant="primary" disabled={changePrimaryDisabled || isRunning} onClick={() => void startChange()}>
               Make This Change · {usdMoney(estimateCents(1))}

@@ -32,7 +32,7 @@ function Slider({
     <div>
       <div className="flex items-center justify-between">
         <label className="text-[11px] font-medium" htmlFor={`slider-${label}`}>{label}</label>
-        <button type="button" className="tabular text-[11px]" style={{ color: 'var(--text-faint)' }} onClick={() => { onBegin(); onChange(0) }} aria-label={`Reset ${label}`}>
+        <button type="button" className="tabular text-[11px]" style={{ color: 'var(--text-faint)' }} onClick={() => { onBegin(); onChange(0) }} aria-label={`Reset ${label}, ${value > 0 ? '+' : ''}${value}`}>
           {value > 0 ? '+' : ''}{value}
         </button>
       </div>

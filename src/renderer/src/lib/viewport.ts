@@ -18,3 +18,14 @@ export function useViewportTier(): ViewportTier {
   }, [])
   return tier
 }
+
+/** The workspace inspector is only shown when there is room for the canvas. */
+export function useIsWideWorkspace(): boolean {
+  const [wide, setWide] = useState(() => window.innerWidth >= 1440)
+  useEffect(() => {
+    const update = (): void => setWide(window.innerWidth >= 1440)
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+  return wide
+}

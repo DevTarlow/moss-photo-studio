@@ -13,7 +13,7 @@ export function previewTransform(transform: AdjustTransform): string {
   const rotate = transform.rotate ?? 0
   const scaleX = transform.flipH ? -1 : 1
   const scaleY = transform.flipV ? -1 : 1
-  return `rotate(${rotate}deg) scale(${scaleX}, ${scaleY})`
+  return `scale(${scaleX}, ${scaleY}) rotate(${rotate}deg)`
 }
 
 export function isIdentity(transform: AdjustTransform): boolean {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertCircle, Check, Clock, PanelLeft, PanelRight, Sparkles } from 'lucide-react'
+import { AlertCircle, PanelLeft, Sparkles } from 'lucide-react'
 import type { Image, JobItemState, JobState, PlanJson, PlanShot, Project } from '@shared/types'
 import { MAX_SET_SHOTS } from '@shared/constants'
 import { CATEGORY_CHIPS, recipeById } from '@shared/prompts/recipes'
@@ -32,6 +32,7 @@ import { showExportToast } from '../../lib/exportFeedback'
 import { warnIfSmallPhoto } from '../../lib/photoWarnings'
 import { elapsedLabel } from '../../lib/format'
 import { currentMonth } from '../../store/library'
+import { ToggleButton, ToggleButtonGroup } from '@astryxdesign/core'
 
 type Phase = 'plan' | 'review'
 interface PendingRun {
@@ -46,13 +47,6 @@ function latestReady(images: Image[], shotId: string): Image | null {
   return images
     .filter((image) => image.status === 'ready' && image.shotId === shotId)
     .sort((a, b) => a.createdAt - b.createdAt || a.seq - b.seq)
-    .at(-1) ?? null
-}
-
-function latestFailed(images: Image[], shotId: string): Image | null {
-  return images
-    .filter((image) => image.status === 'failed' && image.shotId === shotId)
-    .sort((a, b) => a.createdAt - b.createdAt)
     .at(-1) ?? null
 }
 
@@ -96,11 +90,12 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
   const confirm = useConfirm()
   const tier = useViewportTier()
   const leftHidden = tier === 'tiny'
-  const rightHidden = tier === 'narrow' || tier === 'tiny'
   const [leftSheet, setLeftSheet] = useState(false)
-  const [rightSheet, setRightSheet] = useState(false)
-  const [rightCollapsed, setRightCollapsed] = useState(false)
+  useEffect(() => {
+    if (!leftHidden) setLeftSheet(false)
+  }, [leftHidden])
   const [phase, setPhase] = useState<Phase>('plan')
+  const [runLimit, setRunLimit] = useState<number | null>(null)
   const [currentJobId, setCurrentJobId] = useState<string | null>(null)
   const [pending, setPending] = useState<PendingRun | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -199,12 +194,9 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
   useEffect(() => {
     return onCommand((command) => {
       if (command === 'export' && madeCount > 0) setExportOpen(true)
-      if (command === 'toggle-panel') {
-        if (rightHidden) setRightSheet((open) => !open)
-        else setRightCollapsed((collapsed) => !collapsed)
-      }
+      if (command === 'toggle-panel' && leftHidden) setLeftSheet((open) => !open)
     })
-  }, [madeCount, rightHidden])
+  }, [madeCount, leftHidden])
 
   useEffect(() => {
     void window.moss.app.setMenuContext({
@@ -244,12 +236,14 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
         }
       : next
     setPlanDraft(withPerson)
+    setRunLimit(null)
     await savePlan()
     phaseInitialized.current = true
     setPhase('plan')
   }
 
   const updatePlan = (next: PlanJson): void => {
+    setRunLimit(null)
     setPlanDraft(next)
   }
 
@@ -426,11 +420,14 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
         ? 'No images came through. A refusal costs nothing. A timeout may still show on your Meta bill.'
         : ''
 
-  const primaryPaidCount = phase === 'review' && madeCount === 0 && missingShots.length > 0
-    ? 1
-    : missingShots.length
-  const phasePlanCount = missingShots.length || enabledShots.length
-  const paidCount = phase === 'plan' ? phasePlanCount : primaryPaidCount
+  const reviewPaidCount = madeCount === 0 && missingShots.length > 0 ? 1 : missingShots.length
+  const paidCount = runLimit ?? (phase === 'plan' ? missingShots.length || enabledShots.length : reviewPaidCount)
+  const planRunCount = runLimit
+    ? Math.min(runLimit, missingShots.length || enabledShots.length)
+    : missingShots.length || enabledShots.length
+  const planRunShots = runLimit
+    ? (missingShots.length ? missingShots : enabledShots).slice(0, runLimit)
+    : missingShots
   const over = overBudget(paidCount)
 
   const lightboxImages = exportableImages
@@ -494,7 +491,8 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
           plan={plan}
           images={images}
           people={people}
-          readOnly={Boolean(job?.status === 'running')}
+          readOnly={isRunning || phase === 'review'}
+          running={isRunning}
           sourceUrl={source?.thumbUrl ?? source?.url ?? null}
           onChange={updatePlan}
           onSaveNow={() => void saveNow()}
@@ -513,62 +511,6 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
     </>
   )
 
-  const rightContent = (
-    <div className="p-4">
-      <p className="section-label">Set</p>
-      <div className="mt-3 space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <span className="meta">Recipe</span>
-          <span className="text-[12px] font-medium">{plan ? recipeById(plan.category).label : 'Not chosen'}</span>
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <span className="meta">Shots</span>
-          <span className="text-[12px] font-medium tabular">{enabledShots.length}</span>
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <span className="meta">Made</span>
-          <span className="text-[12px] font-medium tabular">{madeCount} of {enabledShots.length}</span>
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <span className="meta">Spent on this set</span>
-          <span className="text-[12px] font-medium tabular">{usd(usageCents)}</span>
-        </div>
-      </div>
-      {job && job.status !== 'running' && (
-        <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
-          <p className="section-label">Last run</p>
-          <p className="meta mt-2">{job.done} made, {job.failed} failed · {usd(job.costCents)}</p>
-        </div>
-      )}
-      {isRunning && job && (
-        <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
-          <p className="section-label">Making</p>
-          <p className="meta mt-2">{job.currentLabel ?? 'Working'}</p>
-          <p className="meta">Cost so far {usd(job.costCents)}</p>
-        </div>
-      )}
-      {plan && (
-        <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
-          <p className="section-label">Shots</p>
-          <div className="mt-2 space-y-1.5">
-            {enabledShots.map((shot) => {
-              const ready = latestReady(images, shot.id)
-              const failed = latestFailed(images, shot.id)
-              return (
-                <div key={shot.id} className="flex items-center gap-2 text-[11px]">
-                  <span style={{ color: ready ? 'var(--accent)' : failed ? 'var(--danger)' : 'var(--text-faint)' }} aria-hidden>
-                    {ready ? <Check size={13} /> : failed ? <AlertCircle size={13} /> : <Clock size={13} />}
-                  </span>
-                  <span className="flex-1 truncate">{shotDefinition(shot.type).label}</span>
-                  <span style={{ color: 'var(--text-faint)' }}>{ready ? 'Made' : failed ? 'Failed' : 'Not made'}</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  )
 
   return (
     <>
@@ -576,15 +518,28 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
         {!leftHidden && <aside className="ws-left">{leftContent}</aside>}
         <section className="ws-center">
           <div className="flex items-center gap-2 border-b px-4" style={{ height: 44, borderColor: 'var(--border)', background: 'var(--bg)' }}>
-            <p className="min-w-0 flex-1 truncate text-[12px] font-medium">{isRunning ? 'Making the set' : phase === 'review' ? 'Set' : 'Plan the set'}</p>
-            {(leftHidden || rightHidden) && (
-              <div className="flex items-center gap-1">
-                {leftHidden && <IconButton label="Open plan" onClick={() => setLeftSheet(true)}><PanelLeft size={16} /></IconButton>}
-                {(rightHidden || rightCollapsed) && <IconButton label="Open set details" onClick={() => { if (rightHidden) setRightSheet(true); else setRightCollapsed(false) }}><PanelRight size={16} /></IconButton>}
-              </div>
+            {!isRunning && (
+              <ToggleButtonGroup
+                type="single"
+                label="Set phase"
+                value={phase}
+                onChange={(value) => {
+                  if (value !== 'plan' && value !== 'review') return
+                  setPhase(value)
+                  setRunLimit(null)
+                }}
+              >
+                <ToggleButton value="plan" label="Plan" size="sm" />
+                <ToggleButton value="review" label="Set" size="sm" isDisabled={!hasAttempts && madeCount === 0} />
+              </ToggleButtonGroup>
             )}
+            <p className="min-w-0 flex-1 truncate text-[12px] font-medium">{isRunning ? 'Making the set' : phase === 'review' ? 'Set review' : 'Plan the set'}</p>
+            {leftHidden && <IconButton label="Open plan" onClick={() => setLeftSheet(true)}><PanelLeft size={16} /></IconButton>}
             {isRunning && <span className="badge" data-tone="success">Making</span>}
             {!isRunning && phase === 'review' && <span className="badge">{madeCount} of {enabledShots.length}</span>}
+            {!isRunning && phase === 'review' && (
+              <Button variant="ghost" size="sm" onClick={() => { setPhase('plan'); setRunLimit(null) }}>Edit Plan</Button>
+            )}
           </div>
           <div className="canvas-wrap canvas-surface">
             {interrupted && (
@@ -700,27 +655,47 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
                 </div>
               </div>
             ) : plan ? (
-              <div className="flex flex-1 flex-col items-center justify-center p-5">
-                {source?.url ? (
-                  <img src={source.url} alt="The product photo" className="canvas-image" style={{ maxHeight: '78%' }} />
-                ) : (
-                  <p className="canvas-meta">No source photo.</p>
-                )}
-                <p className="canvas-meta mt-3 text-[11px]">{source ? `${source.width ?? ''} × ${source.height ?? ''}` : ''} · The source of every shot</p>
+              <div className="plan-board">
+                <div className="plan-board-head">
+                  <div className="min-w-0">
+                    <p className="section-label">Plan preview</p>
+                    <p className="mt-1 truncate text-[13px] font-semibold">{recipeById(plan.category).label}</p>
+                    <p className="meta mt-0.5">{planRunCount} {planRunCount === 1 ? 'shot' : 'shots'} · {usd(estimate(planRunCount))} to make</p>
+                  </div>
+                  {source?.thumbUrl && <img src={source.thumbUrl} alt="The product photo" className="plan-board-source" />}
+                </div>
+                <div className="plan-board-grid">
+                  {enabledShots.map((shot, index) => {
+                    const definition = shotDefinition(shot.type)
+                    const person = shot.personId ? people.find((entry) => entry.id === shot.personId) : null
+                    return (
+                      <article key={shot.id} className="plan-shot">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-semibold tabular" style={{ color: 'var(--text-faint)' }}>{String(index + 1).padStart(2, '0')}</span>
+                          <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">{definition.label}</span>
+                          <span className="badge">On</span>
+                        </div>
+                        <p className="mt-2 line-clamp-3 text-[11px]" style={{ color: 'var(--text-muted)' }}>{shot.direction || definition.defaultDirection}</p>
+                        {person && <p className="meta mt-2 truncate">Person · {person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}</p>}
+                        {shot.type === 'feature' && shot.featureText && <p className="meta mt-2 truncate">Text · {shot.featureText}</p>}
+                      </article>
+                    )
+                  })}
+                </div>
+                <p className="meta mt-3">The source photo is the starting point. Every shot you turn on is one image and one cent.</p>
               </div>
             ) : null}
           </div>
         </section>
-        {!rightHidden && !rightCollapsed && <aside className="ws-right">{rightContent}</aside>}
       </div>
 
       <Sheet open={leftSheet} onOpenChange={setLeftSheet} side="left" title="Plan">{leftContent}</Sheet>
-      <Sheet open={rightSheet} onOpenChange={setRightSheet} side="right" title="Set">{rightContent}</Sheet>
 
       <div className="ws-bottom">
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => (leftHidden ? setLeftSheet(true) : undefined)}>
-          <span className="tabular">{enabledShots.length} shots · {enabledShots.length} images</span>
-        </button>
+        <div className="min-w-0">
+          <p className="truncate text-[12px] font-medium tabular">{enabledShots.length} shots · {enabledShots.length} images</p>
+          <p className="meta tabular">Set {usd(usageCents)} · Month {usd(monthCents)}{limit !== null ? ` of ${usd(limit)}` : ''}</p>
+        </div>
         <div className="ml-auto flex items-center gap-2">
           {isRunning && job ? (
             <>
@@ -742,16 +717,16 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
               {(madeCount > 0 && madeCount < enabledShots.length) || (exportableImages.length > 0 && madeCount === 0) ? (
                 <Button variant="secondary" onClick={() => setExportOpen(true)}>Export What I Have</Button>
               ) : null}
-              <Button variant="secondary" onClick={() => setPhase('plan')}>Make More</Button>
+              <Button variant="secondary" onClick={() => { setPhase('plan'); setRunLimit(null) }}>Make More</Button>
               {madeCount === enabledShots.length && enabledShots.length > 0 ? (
                 <Button variant="primary" onClick={() => setExportOpen(true)}>Export Set</Button>
               ) : over ? (
-                <BudgetWarning limitCents={limit!} onRaise={() => navigate('/usage')} onFewer={() => setPhase('plan')} />
+                <BudgetWarning limitCents={limit!} onRaise={() => navigate('/usage')} onFewer={paidCount > 1 ? () => setRunLimit(1) : undefined} />
               ) : (
                 <Button
                   variant="primary"
                   disabled={!secrets?.hasKey || !canGenerate || !plan}
-                  onClick={() => startRetryMissing(madeCount === 0 ? 1 : missingShots.length)}
+                  onClick={() => startRetryMissing(runLimit ?? (madeCount === 0 ? 1 : missingShots.length))}
                 >
                   {madeCount === 0 ? `Try Again · ${usd(1)}` : `Try the ${missingShots.length} Again · ${usd(estimate(missingShots.length))}`}
                 </Button>
@@ -768,14 +743,14 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
               {!plan ? null : enabledShots.length === 0 ? (
                 <Button variant="primary" disabled>Turn on at least one shot.</Button>
               ) : over ? (
-                <BudgetWarning limitCents={limit!} onRaise={() => navigate('/usage')} onFewer={() => {}} />
+                <BudgetWarning limitCents={limit!} onRaise={() => navigate('/usage')} onFewer={paidCount > 1 ? () => setRunLimit(1) : undefined} />
               ) : (
                 <Button
                   variant="primary"
                   disabled={!secrets?.hasKey || !canGenerate}
-                  onClick={() => void requestRun(missingCount ? 'make' : 'remake', missingShots.map((shot) => shot.id), missingCount || enabledShots.length)}
+                  onClick={() => void requestRun(missingCount ? 'make' : 'remake', (runLimit ? planRunShots : missingShots).map((shot) => shot.id), planRunCount)}
                 >
-                  {missingCount ? `Make ${missingCount} ${missingCount === 1 ? 'Image' : 'Images'} · ${usd(estimate(missingCount))}` : `Remake ${enabledShots.length} ${enabledShots.length === 1 ? 'Image' : 'Images'} · ${usd(estimate(enabledShots.length))}`}
+                  {missingCount ? `Make ${planRunCount} ${planRunCount === 1 ? 'Image' : 'Images'} · ${usd(estimate(planRunCount))}` : `Remake ${planRunCount} ${planRunCount === 1 ? 'Image' : 'Images'} · ${usd(estimate(planRunCount))}`}
                 </Button>
               )}
               {!secrets?.hasKey && <button type="button" className="hint underline" onClick={goSettings}>Add your Muse key in Settings to make images.</button>}

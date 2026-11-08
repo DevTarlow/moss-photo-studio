@@ -265,6 +265,7 @@ export function PlanPanel({
   images,
   people,
   readOnly,
+  running = false,
   sourceUrl,
   onChange,
   onSaveNow,
@@ -276,6 +277,7 @@ export function PlanPanel({
   images: Image[]
   people: Person[]
   readOnly: boolean
+  running?: boolean
   sourceUrl: string | null
   onChange: (plan: PlanJson) => void
   onSaveNow: () => void
@@ -293,7 +295,7 @@ export function PlanPanel({
       <div className="border-b p-4" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center justify-between gap-2">
           <p className="section-label">Plan</p>
-          {readOnly && <span className="badge" data-tone="success">Making</span>}
+          {running ? <span className="badge" data-tone="success">Making</span> : readOnly ? <span className="badge">Read-only</span> : null}
         </div>
         {sourceUrl ? (
           <div className="mt-3 overflow-hidden rounded-[8px]" style={{ background: 'var(--canvas)' }}>
@@ -326,7 +328,7 @@ export function PlanPanel({
           </select>
         </div>
       </div>
-      <div className="scroll-area flex-1 p-3">
+      <div className="scroll-area flex-1 p-3" tabIndex={readOnly ? 0 : undefined} aria-label={readOnly ? 'Set plan' : undefined} role={readOnly ? 'region' : undefined}>
         <div className="space-y-2">
           {plan.shots.map((shot, index) => (
             <ShotCard
