@@ -485,6 +485,10 @@ export function Onboarding(): React.JSX.Element {
                   {sourceImage?.url && <img src={sourceImage.url} alt="The product photo" className="max-h-[220px] w-full object-contain" />}
                 </div>
                 <p className="hint mt-2">Your recipe: {recipeById(planDraft.category).label}. You can change every shot later in the set.</p>
+                <div className="mt-4">
+                  <h2 className="text-[15px] font-semibold">Build your first set</h2>
+                  <p className="hint mt-1">Choose the images to make with this product, or just add the photo.</p>
+                </div>
                 <FirstSetPicker
                   plan={planDraft}
                   disabled={running || finishing || planSaving}
