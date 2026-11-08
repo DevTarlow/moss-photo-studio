@@ -28,7 +28,7 @@ import { markUrl } from '../lib/assets'
 import { Skeleton } from '../components/ui/Skeleton'
 
 const sections = [
-  { id: 'studio', label: 'Studio' },
+  { id: 'studio', label: 'API key' },
   { id: 'brand', label: 'Logo & Colors' },
   { id: 'library', label: 'Library' },
   { id: 'appearance', label: 'Appearance' },
@@ -177,7 +177,7 @@ function StudioSection(): React.JSX.Element {
   const checked = secrets.validatedAt ? `Checked ${relativeTime(secrets.validatedAt)}` : 'Not checked yet'
   return (
     <div>
-      <SettingsTitle title="Studio" line="Your Meta key and how making an image is priced." />
+      <SettingsTitle title="API key" line="Your Muse key and how making an image is priced." />
       {secrets.backend === 'basic_text' && !backendDismissed && secrets.hasKey && (
         <div className="verify-banner mb-4 flex items-start gap-2" role="status">
           <AlertTriangle size={16} className="mt-0.5" style={{ color: 'var(--warning)' }} aria-hidden />
