@@ -180,6 +180,56 @@ export const STARTERS: readonly Starter[] = [
   }
 ]
 
+export type ExampleSceneKey = 'product' | 'lifestyle' | 'flatlay' | 'gift'
+
+export interface ExampleScene {
+  key: ExampleSceneKey
+  label: string
+  /** The scene as the example image shows it. */
+  exampleText: string
+  /** The same scene written for a product that arrives as a reference. */
+  productText: string
+}
+
+export const EXAMPLE_SCENES: readonly ExampleScene[] = [
+  {
+    key: 'product',
+    label: 'A product shot',
+    exampleText:
+      'A ceramic mug of coffee alone on a pure white background, centred and filling most of the frame, no props or text, soft even lighting, product photo.',
+    productText:
+      'A single product alone on a pure white background, centred and filling most of the frame, no props or text, soft even lighting, catalogue product photo.'
+  },
+  {
+    key: 'lifestyle',
+    label: 'A lifestyle scene',
+    exampleText:
+      'A lit scented candle on a wooden bedside table beside a book and a mug, warm evening light, cosy handmade style.',
+    productText:
+      'The product on a wooden bedside table beside a book and dried flowers, warm evening light, cosy handmade style, product photo.'
+  },
+  {
+    key: 'flatlay',
+    label: 'A flat lay',
+    exampleText:
+      'A flat lay of a ceramic mug of coffee on a checked cloth with scattered coffee beans and a spoon, soft daylight, square photo.',
+    productText:
+      'A flat lay of the product on a checked cloth with a few small props, soft daylight, empty space at the top for text, square photo.'
+  },
+  {
+    key: 'gift',
+    label: 'A gift shot',
+    exampleText:
+      'A lit scented candle sitting inside an open black gift box lined with white tissue paper, warm festive light, shallow depth of field, product photo.',
+    productText:
+      'The product sitting inside an open gift box lined with white tissue paper, warm festive light, shallow depth of field, product photo.'
+  }
+]
+
+export function exampleTextFor(scene: ExampleScene, useProduct: boolean): string {
+  return useProduct ? scene.productText : scene.exampleText
+}
+
 export function startersByCategory(): Array<{ category: StarterCategory; items: Starter[] }> {
   return STARTER_CATEGORIES.map((category) => ({
     category,

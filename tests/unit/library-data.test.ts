@@ -5,7 +5,7 @@ import { SCENES, SCENE_CATEGORIES } from '@shared/prompts/scenes'
 import { ALL_TEMPLATES, TEMPLATE_GROUPS, QUICK_FIX, templateAsset, templateById } from '@shared/prompts/templates'
 import { RECIPES, recipeById, CATEGORY_CHIPS, recipeShotTypes } from '@shared/prompts/recipes'
 import { SHOT_TYPES, shotDefinition, directionForPrompt } from '@shared/prompts/shots'
-import { STARTERS } from '@shared/starters'
+import { EXAMPLE_SCENES, STARTERS, exampleTextFor } from '@shared/starters'
 import { BUNDLED_PEOPLE } from '@shared/people'
 import { wrapScenePrompt, wrapModelPrompt, PROMPT_MAX } from '@shared/prompts/guards'
 import { createDefaultPlan, makeShots, normalisePlan, enableFirstShots, firstShotsEnabled } from '@shared/plans'
@@ -175,6 +175,33 @@ describe('starters and people', () => {
     for (const person of BUNDLED_PEOPLE) {
       expect(fs.existsSync(path.join(root, 'resources', 'people', `${person.id}.webp`))).toBe(true)
       expect(fs.existsSync(path.join(root, 'resources', 'people', `${person.id}-portrait.webp`))).toBe(true)
+    }
+  })
+})
+
+describe('image generator examples', () => {
+  it('ships four example scenes with unique keys and short copy', () => {
+    expect(EXAMPLE_SCENES).toHaveLength(4)
+    expect(new Set(EXAMPLE_SCENES.map((scene) => scene.key)).size).toBe(4)
+    for (const scene of EXAMPLE_SCENES) {
+      expect(scene.exampleText.length).toBeGreaterThan(0)
+      expect(scene.exampleText.length).toBeLessThanOrEqual(240)
+      expect(scene.productText.length).toBeGreaterThan(0)
+      expect(scene.productText.length).toBeLessThanOrEqual(240)
+    }
+  })
+
+  it('writes the product variant for any product, not the example object', () => {
+    for (const scene of EXAMPLE_SCENES) {
+      expect(scene.productText.toLowerCase()).toContain('product')
+      expect(scene.productText.toLowerCase()).not.toMatch(/\b(mug|candle|bottle)\b/)
+    }
+  })
+
+  it('selects the copy that matches whether a product reference is used', () => {
+    for (const scene of EXAMPLE_SCENES) {
+      expect(exampleTextFor(scene, true)).toBe(scene.productText)
+      expect(exampleTextFor(scene, false)).toBe(scene.exampleText)
     }
   })
 })

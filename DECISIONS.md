@@ -139,3 +139,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Project drafts
 
 81. **A new Image Generator project is a hidden draft until it has an image.** The Tools rail, the New menu, the Ctrl/Cmd+3 shortcut, and the command palette create the project with `draft = 1` and it is hidden from every project list and count, so opening the generator and leaving again does not add an empty Images card. The first image stored for the project clears the flag, including a reference file added from the generator. A failed run that stores nothing stays hidden. Untouched drafts (no images and no jobs) are deleted at startup.
+
+## Image Generator examples
+
+82. **The four example cards load scene descriptions, and their product switch is scoped to example runs.** Each card has two texts: the scene as photographed (its mug or candle) and the same scene written for a referenced product. With a product reference selected, "Use my product photo" starts on and the run sends the reference; turning it off loads the photographed text and leaves the reference out of that run while keeping it selected for normal prompts. Editing the description returns to the normal reference rules. The switch is repeated in the product card while the example grid is hidden so it stays reachable. The 30 "Start from an idea" starters keep their specific-product copy.

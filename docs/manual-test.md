@@ -148,6 +148,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 - [x] **A** Fill the describe box, choose four images, create. Four results appear with persistent Edit, Download, Save as Product, and More actions; the image opens a lightbox; Edit opens one; Back to Create returns.
 - [x] **A** The empty state shows an Examples title, and the Start from an idea menu has darker bold category titles.
 - [x] **A** Open Image Generator and leave without making an image. No Images project appears and the Library count is unchanged. Make one image, and the project appears.
+- [x] **A** With a product photo selected, click an example. The description is written for the product and the run sends it. Turn Use my product photo off: the example's own description loads, the run leaves the photo out, and the reference card says so. Editing the description returns to the normal reference rules.
 
 ### 12. Set export
 

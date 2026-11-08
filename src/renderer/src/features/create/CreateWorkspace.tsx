@@ -6,8 +6,8 @@ import { ChevronDown, Download, Image as ImageIcon, Loader2, Package, Pencil, Pl
 import type { Format, Image, JobState, Project, Shape } from '@shared/types'
 import { MAX_PROMPT } from '@shared/constants'
 import { composeCreatePrompt } from '@shared/prompts/guards'
-import { startersByCategory } from '@shared/starters'
-import type { Starter } from '@shared/starters'
+import { EXAMPLE_SCENES, exampleTextFor, startersByCategory } from '@shared/starters'
+import type { ExampleScene, Starter } from '@shared/starters'
 import { estimateCents, usd } from '@shared/cost'
 import { errorMessage, billingUncertain } from '@shared/errors'
 import { useWorkspaceStore } from '../../store/workspace'
@@ -23,6 +23,7 @@ import { Button } from '../../components/ui/Button'
 import { Segmented } from '../../components/ui/Segmented'
 import { Sheet } from '../../components/ui/Sheet'
 import { Progress } from '../../components/ui/Progress'
+import { Switch } from '../../components/ui/Switch'
 import { FirstRunConfirm } from '../../components/ui/FirstRunConfirm'
 import { BudgetWarning } from '../../components/ui/BudgetWarning'
 import { TextareaCounter } from '../../components/ui/TextareaCounter'
@@ -36,16 +37,12 @@ import { elapsedLabel, formatDate } from '../../lib/format'
 import { currentMonth } from '../../store/library'
 import { onCommand } from '../../lib/commands'
 
-const examples = [
-  { image: 'product' as const, starter: 'Mug on pure white', label: 'A product shot' },
-  { image: 'lifestyle' as const, starter: 'Candle on a bedside table', label: 'A lifestyle scene' },
-  { image: 'flatlay' as const, starter: 'Flat lay for a post', label: 'A flat lay' },
-  { image: 'gift' as const, starter: 'Gift box with tissue paper', label: 'A gift shot' }
-]
-const fromAllStarters = startersByCategory().flatMap((group) => group.items)
+type PromptSource = 'user' | 'starter' | 'example'
 
-function starterByLabel(label: string): Starter | undefined {
-  return fromAllStarters.find((starter) => starter.label === label)
+type PendingApply = {
+  text: string
+  source: 'starter' | 'example'
+  scene?: ExampleScene
 }
 
 export function CreateWorkspace(): React.JSX.Element {
@@ -68,8 +65,10 @@ export function CreateWorkspace(): React.JSX.Element {
   const rightHidden = !useIsWideWorkspace()
   const canResizeLeft = tier === 'wide' || tier === 'medium'
   const [prompt, setPrompt] = useState('')
-  const [promptSource, setPromptSource] = useState<'user' | 'starter'>('user')
-  const [pendingStarter, setPendingStarter] = useState<Starter | null>(null)
+  const [promptSource, setPromptSource] = useState<PromptSource>('user')
+  const [pendingApply, setPendingApply] = useState<PendingApply | null>(null)
+  const [exampleUsesProduct, setExampleUsesProduct] = useState(true)
+  const [loadedExample, setLoadedExample] = useState<{ scene: ExampleScene; text: string } | null>(null)
   const [count, setCount] = useState(1)
   const [shape, setShape] = useState<Shape>(settings?.defaultShape ?? 'square')
   const [format, setFormat] = useState<Format>(project.format ?? settings?.defaultFormat ?? 'webp')
@@ -105,10 +104,14 @@ export function CreateWorkspace(): React.JSX.Element {
   const job = running ?? (currentJob?.status === 'running' ? currentJob : null)
   const isRunning = Boolean(job)
   const completeJobs = runs.filter((run) => run.status !== 'running')
-  const hasReference = Boolean(productRef || personId)
+  // An example-started prompt can leave the selected product photo out of the run.
+  const productReferenceActive = promptSource !== 'example' || exampleUsesProduct
+  const activeProductRef = productReferenceActive ? productRef : null
+  const exampleUsesReference = Boolean(productRef) && exampleUsesProduct
+  const hasReference = Boolean(activeProductRef || personId)
   const requestedCount = hasReference ? 1 : count
   const selectedPerson = people.find((person) => person.id === personId) ?? null
-  const composedPrompt = composeCreatePrompt({ text: prompt, hasProduct: Boolean(productRef), hasPerson: Boolean(personId) })
+  const composedPrompt = composeCreatePrompt({ text: prompt, hasProduct: Boolean(activeProductRef), hasPerson: Boolean(personId) })
   const guardChars = composedPrompt.length - prompt.trim().length
   const results = images
     .filter((image) => image.status === 'ready' && image.kind !== 'upload')
@@ -118,6 +121,7 @@ export function CreateWorkspace(): React.JSX.Element {
       return image.createdAt >= runFilter.startedAt - 100 && image.createdAt <= end + 100
     })
     .sort((a, b) => b.createdAt - a.createdAt || b.seq - a.seq)
+  const examplesVisible = results.length === 0 && !isRunning
   const overBudget = (settings?.budgetCents ?? null) !== null && monthCents + estimateCents(requestedCount) > (settings?.budgetCents ?? 0)
   const promptTooLongForReference = hasReference && composedPrompt.length > MAX_PROMPT
   const canSubmit = Boolean(prompt.trim()) && composedPrompt.length <= MAX_PROMPT && Boolean(secrets?.hasKey) && canGenerate
@@ -141,6 +145,8 @@ export function CreateWorkspace(): React.JSX.Element {
       return
     }
     setProductRef({ kind: 'image', imageId: image.id, label: image.label, thumbUrl: image.thumbUrl })
+    setExampleUsesProduct(true)
+    syncExampleText(true, true)
   }, [sourceImageId, images])
 
   useEffect(() => {
@@ -218,18 +224,52 @@ export function CreateWorkspace(): React.JSX.Element {
     }
   }
 
-  const applyStarter = (starter: Starter): void => {
-    setPrompt(starter.text)
-    setPromptSource('starter')
-    setPendingStarter(null)
+  const applyText = (text: string, source: 'starter' | 'example', scene?: ExampleScene): void => {
+    setPrompt(text)
+    setPromptSource(source)
+    setPendingApply(null)
+    setLoadedExample(source === 'example' && scene ? { scene, text } : null)
+    setError(null)
+    if (source === 'example') {
+      if (leftHidden) setLeftSheet(true)
+      window.setTimeout(() => textareaRef.current?.focus(), 0)
+    }
+  }
+
+  /** Keep an untouched example description in step with the product reference. */
+  const syncExampleText = (usesProduct: boolean, productAvailable: boolean): void => {
+    if (promptSource !== 'example' || !loadedExample) return
+    if (prompt !== loadedExample.scene.exampleText && prompt !== loadedExample.scene.productText) return
+    const next = exampleTextFor(loadedExample.scene, productAvailable && usesProduct)
+    if (next === prompt) return
+    setPrompt(next)
+    setLoadedExample({ scene: loadedExample.scene, text: next })
+  }
+
+  const applyExampleToggle = (next: boolean): void => {
+    setExampleUsesProduct(next)
+    setPendingApply(null)
+    syncExampleText(next, Boolean(productRef))
+  }
+
+  const requestApply = (entry: PendingApply): void => {
+    if (prompt.trim() && promptSource === 'user') {
+      setPendingApply(entry)
+      return
+    }
+    applyText(entry.text, entry.source, entry.scene)
   }
 
   const chooseStarter = (starter: Starter): void => {
-    if (prompt.trim() && promptSource === 'user') {
-      setPendingStarter(starter)
-      return
-    }
-    applyStarter(starter)
+    requestApply({ text: starter.text, source: 'starter' })
+  }
+
+  const chooseExample = (scene: ExampleScene): void => {
+    requestApply({
+      text: exampleTextFor(scene, exampleUsesReference),
+      source: 'example',
+      scene
+    })
   }
 
   const submit = async (): Promise<void> => {
@@ -261,8 +301,8 @@ export function CreateWorkspace(): React.JSX.Element {
         count: requestedCount,
         shape,
         format,
-        sourceImageId: productRef?.kind === 'image' ? productRef.imageId : undefined,
-        productId: productRef?.kind === 'product' ? productRef.productId : undefined,
+        sourceImageId: activeProductRef?.kind === 'image' ? activeProductRef.imageId : undefined,
+        productId: activeProductRef?.kind === 'product' ? activeProductRef.productId : undefined,
         personId: personId ?? undefined
       }))
       const state = await unwrap(window.moss.jobs.state({ jobId: result.jobId }))
@@ -328,6 +368,9 @@ export function CreateWorkspace(): React.JSX.Element {
 
   const chooseProductRef = (choice: SourceChoice): void => {
     setProductRef(choice)
+    setExampleUsesProduct(true)
+    setPendingApply(null)
+    syncExampleText(true, true)
     if (choice.kind !== 'image') return
     const image = images.find((entry) => entry.id === choice.imageId)
     if (!image || image.projectId !== project.id || image.personId) return
@@ -348,6 +391,9 @@ export function CreateWorkspace(): React.JSX.Element {
         const added = useWorkspaceStore.getState().images.find((image) => image.id === result.imageId)
         if (added) {
           setProductRef({ kind: 'image', imageId: added.id, label: added.label, thumbUrl: added.thumbUrl })
+          setExampleUsesProduct(true)
+          setPendingApply(null)
+          syncExampleText(true, true)
         }
       }
     } catch (caught) {
@@ -359,7 +405,7 @@ export function CreateWorkspace(): React.JSX.Element {
     <div className="scroll-area p-4">
       <div className="flex items-center justify-between">
         <p className="section-label">Describe the image</p>
-        {prompt && <button type="button" className="text-[11px]" style={{ color: 'var(--text-faint)' }} onClick={() => { setPrompt(''); setPromptSource('user') }}>Clear</button>}
+        {prompt && <button type="button" className="text-[11px]" style={{ color: 'var(--text-faint)' }} onClick={() => { setPrompt(''); setPromptSource('user'); setLoadedExample(null); setPendingApply(null) }}>Clear</button>}
       </div>
       <div className="mt-2">
         <TextareaCounter
@@ -367,7 +413,7 @@ export function CreateWorkspace(): React.JSX.Element {
           value={prompt}
           max={MAX_PROMPT}
           rows={5}
-          onChange={(event) => { setPrompt(event.target.value); setPromptSource('user'); setError(null) }}
+          onChange={(event) => { setPrompt(event.target.value); setPromptSource('user'); setLoadedExample(null); setPendingApply(null); setError(null) }}
           placeholder="Describe the picture you want. For example: a ceramic mug on a warm kitchen table, soft morning light."
           hint="Meta makes the picture. You pay a cent for every image that comes back."
         />
@@ -402,12 +448,14 @@ export function CreateWorkspace(): React.JSX.Element {
             </Popover.Content>
           </Popover.Portal>
         </Popover.Root>
-        {pendingStarter && (
+        {pendingApply && (
           <div className="mt-2 rounded-[8px] border p-3" style={{ borderColor: 'var(--border-strong)', background: 'var(--surface-2)' }} role="alert">
-            <p className="text-[12px] font-medium">Replace your words with this idea?</p>
+            <p className="text-[12px] font-medium">
+              Replace your words with this {pendingApply.source === 'example' ? 'example' : 'idea'}?
+            </p>
             <div className="mt-2 flex gap-2">
-              <Button size="sm" variant="secondary" onClick={() => applyStarter(pendingStarter)}>Replace</Button>
-              <Button size="sm" variant="ghost" onClick={() => setPendingStarter(null)}>Keep</Button>
+              <Button size="sm" variant="secondary" onClick={() => applyText(pendingApply.text, pendingApply.source, pendingApply.scene)}>Replace</Button>
+              <Button size="sm" variant="ghost" onClick={() => setPendingApply(null)}>Keep</Button>
             </div>
           </div>
         )}
@@ -420,9 +468,28 @@ export function CreateWorkspace(): React.JSX.Element {
             {productRef.thumbUrl && <img src={productRef.thumbUrl} alt="The product reference" className="h-10 w-10 rounded object-cover" />}
             <div className="min-w-0 flex-1">
               <p className="truncate text-[11px] font-medium">{productRef.kind === 'product' ? productRef.name : productRef.label}</p>
-              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>Sent with the request so the product stays the same.</p>
+              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
+                {activeProductRef ? 'Sent with the request so the product stays the same.' : 'Not used with this example.'}
+              </p>
+              {!examplesVisible && (
+                <div className="mt-1.5 flex items-center gap-2 text-[11px]" style={{ color: 'var(--text-faint)' }}>
+                  <Switch checked={exampleUsesProduct} onCheckedChange={applyExampleToggle} label="Use my product photo in examples" />
+                  <span>Use in examples</span>
+                </div>
+              )}
             </div>
-            <button type="button" className="icon-btn" aria-label="Remove product reference" onClick={() => setProductRef(null)}><X size={14} /></button>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Remove product reference"
+              onClick={() => {
+                setProductRef(null)
+                setPendingApply(null)
+                syncExampleText(exampleUsesProduct, false)
+              }}
+            >
+              <X size={14} />
+            </button>
           </div>
         ) : (
           <Button variant="secondary" className="w-full justify-start" type="button" onClick={() => setPickerOpen(true)}>
@@ -580,25 +647,34 @@ export function CreateWorkspace(): React.JSX.Element {
               !isRunning && (
                 <div>
                   <p className="text-center text-[12px]" style={{ color: 'var(--text-muted)' }}>Describe the picture you want. Meta makes it, and you pay a cent an image.</p>
-                  <p className="mx-auto mt-4 max-w-[760px] text-center text-[13px] font-semibold">Examples</p>
+                  {productRef ? (
+                    <div className="mx-auto mt-4 flex max-w-[760px] flex-wrap items-center justify-center gap-3">
+                      <p className="text-center text-[13px] font-semibold">Examples</p>
+                      <div className="flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px]" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                        <Switch checked={exampleUsesProduct} onCheckedChange={applyExampleToggle} label="Use my product photo in examples" />
+                        <span>Use my product photo</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mx-auto mt-4 max-w-[760px] text-center text-[13px] font-semibold">Examples</p>
+                  )}
                   <div className="mx-auto mt-2 grid max-w-[760px] grid-cols-2 gap-4">
-                    {examples.map((example) => {
-                      const starter = starterByLabel(example.starter)
-                      return (
-                        <button
-                          key={example.image}
-                          type="button"
-                          className="card card-hover generator-example overflow-hidden text-left"
-                          onClick={() => { if (starter) chooseStarter(starter) }}
-                        >
-                          <img src={exampleUrl(example.image)} alt="" className="aspect-[4/3] w-full object-cover" />
-                          <div className="p-3">
-                            <p className="text-[12px] font-semibold">{example.label}</p>
-                            <p className="meta mt-0.5">Loads a starting description.</p>
-                          </div>
-                        </button>
-                      )
-                    })}
+                    {EXAMPLE_SCENES.map((scene) => (
+                      <button
+                        key={scene.key}
+                        type="button"
+                        className="card card-hover generator-example overflow-hidden text-left"
+                        onClick={() => chooseExample(scene)}
+                      >
+                        <img src={exampleUrl(scene.key)} alt="" className="aspect-[4/3] w-full object-cover" />
+                        <div className="p-3">
+                          <p className="text-[12px] font-semibold">{scene.label}</p>
+                          <p className="meta mt-0.5">
+                            {exampleUsesReference ? 'Loads a description for your product.' : 'Loads a starting description.'}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )
