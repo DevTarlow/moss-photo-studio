@@ -6,15 +6,17 @@ This is the sibling application to `../moss-toolbox`. It is an Electron desktop 
 
 ## What is in the app
 
-- **Library** with sets, photos, and images, search, filters, sorting, grid and list views, project duplication, rename, hover-select multi-delete, delete, and export. Projects show 20 per page with Previous/Next controls.
+- **App shell** with one rail: Studio (Library, Products, People, Usage), Tools (Set Creator, Image Editor, Image Generator), and Settings. The top-bar New menu launches the same three tools from any main screen. While Settings is open, its sections use the same rail.
+- **Library** with sets, photos, and images, search, filters, sorting, grid and list views, project duplication, rename, hover-select multi-delete, an explicit Select mode, delete, and export. Projects show 20 per page with Previous/Next controls.
 - **Set Creator** from 1 to 8 listing shots. Start from an upload, a saved Product, or any ready library image. Each shot can be switched off, renamed, described, assigned a person, or given a feature line. The plan saves automatically.
 - **Connection icons** for Main shot, In use, Close-up, Size reference, Flat lay, Gift-ready, Feature callout, and On a person.
-- **Image Editor** with 32 tiles in six groups, 12 bundled people plus your own, a free local adjust panel, version labels, branching, a filmstrip, compare, export, and copy. Start from a file, a Product, or a library image, and add another source later as a new version.
+- **Image Editor** with 32 tiles in six groups, 12 bundled people plus your own, a free local adjust panel with arrow-key crop, resizable panels, version labels, branching, a filmstrip, compare, export, and copy. Start from a file, a Product, or a library image, and add another source later as a new version.
 - **Image Generator** with 30 starters, including person ideas for holding, wearing, and using the item, one to four images, three shapes, and three formats. A product reference and a person reference can be sent together, so a person can hold a product.
 - **Local adjust** for crop, rotate, flip, brightness, contrast, saturation, warmth, sharpen, and vignette. It makes a new version and never resends the product to an image service.
-- **Products** for saving a generated image, editor version, or set shot as a named, reusable product photo. Products and any library image can be chosen wherever a source photo is needed; the Products page shows 20 per page.
+- **Products** for saving a generated image, editor version, or set shot as a named, reusable product photo. Products and any library image can be chosen wherever a source photo is needed; the page has search, sort, counts, and 20 per page.
+- **People** with 12 included synthetic reference people plus your own portraits, search, sort, counts, and rename or remove for your own. A person is reused as a reference in sets, the editor, and the generator.
 - **Logo & Colors** with up to six colors, a logo, and corner badge position, size, and opacity. Colors steer backgrounds and props in sets and photo changes while their toggle is on; turning it off keeps the saved colors but adds none to a prompt. The badge is composited locally.
-- **First run** opens in light mode and walks the seller through four setup steps: connect Meta, add the first product, make an optional first set, and a ready screen. The first photo is saved as a reusable Product; a set project is created only when the seller chooses to make images. All six recipe shots start selected, with 1, 3, or all presets. The theme, logo, colors, density, and reduce-motion live in Settings.
+- **First run** opens in light mode with a Welcome screen and four setup steps: connect Meta, add the first product, make an optional first set, and a ready screen. The first photo is saved as a reusable Product; a set project is created only when the seller chooses to make images. All six recipe shots start selected, with 1, 3, or all presets. Opening Logo & Colors from setup leaves the setup resumable from the Library. The theme, logo, colors, density, and reduce-motion live in Settings.
 - **Usage ledger** with the real returned-image cost, $0.01 per returned image, a monthly budget, and CSV export. Project spending and ledger rows show 20 per page.
 - **License activation** with a 14 day offline grace window and a read-only library when the license ends.
 - **Desktop packaging** for Linux AppImage and deb. Windows NSIS and macOS DMG configuration is present and unverified.
@@ -34,24 +36,29 @@ npm run dev
 
 The `dev` and `start` scripts pass electron-vite's `--noSandbox`, which launches Electron without Chromium's sandbox. This avoids the startup failure when the repository lives on a filesystem that cannot provide a root-owned setuid `chrome-sandbox` helper, such as an NTFS mount with `nosuid`. It affects local development only; packaged builds keep the sandbox.
 
-The dev app uses a separate development data set. Set `MOSS_DEV_UNLOCK=1` and `MOSS_MUSE_FAKE=1` to work without a license or a Muse key:
+The dev app uses the same application data folder as an installed build, so `npm run dev` opens the same library. Point `MOSS_USER_DATA_DIR` at a scratch folder to keep development data separate:
+
+```bash
+MOSS_USER_DATA_DIR="$HOME/moss-dev-data" npm run dev
+```
+
+`MOSS_DEV_UNLOCK=1` skips the license check, and `MOSS_MUSE_FAKE=1` uses a local fake image client instead of Meta. With the fake client, nothing leaves the computer and a red **FAKE MODE** chip appears in Settings and Help, About:
 
 ```bash
 MOSS_DEV_UNLOCK=1 MOSS_MUSE_FAKE=1 npm run dev
 ```
 
-`MOSS_MUSE_FAKE=1` uses a local fake image client. Nothing leaves the computer. A red **FAKE MODE** chip appears in Settings and Help, About.
-
 ## Test it
 
 ```bash
 npm test
+npm run typecheck
 npm run test:e2e
 npm run audit:tokens
 npm run lint
 ```
 
-`npm test` runs the unit and integration suites against the fake Muse and Lemon Squeezy hosts. `npm run test:e2e` builds the app, launches Electron with Playwright, activates with a fake key, walks the whole studio, runs axe checks, and compares the screenshots under `tests/screenshots`. Set `MOSS_UPDATE_SCREENS=1` on the first run after an intentional visual change to write new baselines. The 1440 by 900 light and dark images are compared with a maximum diff ratio of 0.01. The 1024 by 700 and 150% zoom images are captured fresh each run because Playwright's screenshot helper can restore the Electron viewport before taking them.
+`npm test` runs the unit and integration suites against the fake Muse and Lemon Squeezy hosts. `npm run test:e2e` builds the app and runs the serial studio journey — activation with a fake key, onboarding, the library, set, editor, generator, usage, products, people, settings, dark theme, and the 1024 and 150% layouts — plus focused specs for onboarding, products, people, and library selection. The journey runs axe checks and compares the screenshots under `tests/screenshots`. Set `MOSS_UPDATE_SCREENS=1` on the first run after an intentional visual change to write new baselines. The 1440 by 900 light and dark images are compared with a maximum diff ratio of 0.01. The 1024 by 700 images are captured fresh each run because Playwright's screenshot helper can restore the Electron viewport, and the 150% zoom images are capture-only.
 
 The E2E suite uses `MOSS_E2E=1`, `MOSS_MUSE_BASE_URL`, and `MOSS_LICENSE_API_BASE` only in an unpackaged development build. `MOSS-E2E-VALID-KEY` is a fake key. No test sends a real key or reaches Meta or Lemon Squeezy.
 
@@ -79,7 +86,7 @@ Those targets are configured but were not built in this environment. They will n
 
 ## Data and secrets
 
-The default library is under the application data folder shown in **Settings, Library**:
+The default library is under the application data folder shown in **Settings, Storage**:
 
 - Linux: usually `~/.config/Moss Photo Studio/library`
 - Windows: `%APPDATA%\Moss Photo Studio\library`
@@ -93,10 +100,11 @@ library/
   people/
   products/       saved product copies and thumbnails
   projects/<project-id>/
-    original/       byte-for-byte imported product photos
+    source.<ext>    byte-for-byte imported source images
     working/        sharp-normalized copies used for requests and thumbnails
     images/         edited and generated images
     thumbs/         visible thumbnails
+    exports/        exported images by timestamp
   ...
 ```
 
@@ -115,7 +123,7 @@ src/
   shared/        constants, types, IPC map, guards, recipes, prompts, costs
 ```
 
-The renderer reaches the outside world only through named IPC methods. Every request payload is parsed by zod in the main process. Only three renderer-to-main events are exposed: job progress, license state, and menu commands, plus the close-time plan flush. External links open in the system browser and only for an allowlisted set of hosts.
+The renderer reaches the outside world only through named IPC methods. Every request payload is parsed by zod in the main process. Only three main-to-renderer events are exposed: job progress, license state, and menu commands, plus the close-time plan flush request. External links open in the system browser and only for an allowlisted set of hosts.
 
 The Muse client sends one request per set shot. Edits omit `n` and never send a moderation field. Generations include `n`. The client retries only a 429, at most three times, honours `Retry-After`, and shows **Waiting for Meta** while it waits. A 401, 402, 403, or 5xx is never retried. A timeout is recorded with unknown billing and the request is not aborted, because aborting does not undo a bill.
 
