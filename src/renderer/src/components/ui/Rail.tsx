@@ -3,15 +3,18 @@ import { useLocation } from 'react-router-dom'
 import {
   BarChart3,
   FolderOpen,
+  Image as ImageIcon,
   Images,
   Info,
   KeyRound,
+  Layers,
   Monitor,
   Package,
   Palette,
   RotateCcw,
   Settings,
   ShieldCheck,
+  Sparkles,
   Users
 } from 'lucide-react'
 import { SideNav, SideNavItem, SideNavSection } from '@astryxdesign/core'
@@ -35,6 +38,12 @@ const items = [
   { to: '/products', label: 'Products', icon: <Package size={18} strokeWidth={1.75} /> },
   { to: '/people', label: 'People', icon: <Users size={18} strokeWidth={1.75} /> },
   { to: '/usage', label: 'Usage', icon: <BarChart3 size={18} strokeWidth={1.75} /> }
+]
+
+const tools = [
+  { to: '/library?new=set', label: 'Set Creator', icon: <Layers size={18} strokeWidth={1.75} /> },
+  { to: '/library?new=photo', label: 'Image Editor', icon: <ImageIcon size={18} strokeWidth={1.75} /> },
+  { to: '/library?new=image', label: 'Image Generator', icon: <Sparkles size={18} strokeWidth={1.75} /> }
 ]
 
 export function Rail({
@@ -100,6 +109,17 @@ export function Rail({
             icon={item.icon}
             href={item.to}
             isSelected={location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)}
+          />
+        ))}
+      </SideNavSection>
+      <SideNavSection title="Tools">
+        {tools.map((tool) => (
+          <SideNavItem
+            key={tool.to}
+            label={tool.label}
+            icon={tool.icon}
+            href={tool.to}
+            isSelected={false}
           />
         ))}
       </SideNavSection>

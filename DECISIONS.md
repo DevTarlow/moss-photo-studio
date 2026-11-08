@@ -116,7 +116,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 
 70. **Astryx is the component foundation, pinned and themed as Moss.** The app uses Astryx 0.7.11 for generic UI, with a custom Moss theme that keeps the warm paper, forest-green selection, burnt-rust primary action, Inter, and Plus Jakarta Sans. The custom dark canvas, crop overlay, filmstrip, brand badge preview, and file-drop logic stay custom. Astryx is beta, so versions are pinned and upgrades are deliberate.
 
-71. **The app has one create entry point and one navigation.** The rail Tools block is gone. The TopNav New menu launches Set Creator, Image Editor, and Image Generator from anywhere; the Library keeps contextual start cards only when empty. Settings sections live in the same SideNav while the Settings route is open; the second settings aside is gone.
+71. **The app has one create vocabulary and one navigation.** Set Creator, Image Editor, and Image Generator are available from the TopNav New menu and from the Tools section under Studio in the rail; both launch the same flows. The Library keeps contextual start cards only when empty. Settings sections live in the same SideNav while the Settings route is open; the second settings aside is gone.
 
 72. **Library selection has an explicit Select mode as well as the hover shortcut.** Select pins the checkboxes visible and makes the bulk bar persistent; Select all, Clear, Delete, and Escape are supported. Hover checkboxes remain a shortcut for experienced users. The documented 20-per-page pagination and delete copy are unchanged.
 

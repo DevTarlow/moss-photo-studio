@@ -80,7 +80,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 
 ### 3b. App shell and collections
 
-- [x] **A** The rail has Library, Products, People, Usage, and Settings. The Tools block is gone; the top-bar New menu launches Set Creator, Image Editor, and Image Generator from every main screen.
+- [x] **A** The rail has Library, Products, People, Usage, a Tools section with Set Creator, Image Editor, and Image Generator, and Settings. The top-bar New menu launches the same three tools from every main screen.
 - [x] **A** Library has one New entry point, one key/setup banner area, a Select mode, Select all, Clear, Delete, and a sticky bulk bar. The hover checkbox still works.
 - [x] **A** Products and People have search, sort, and result counts. The Settings storage section is named Storage.
 - [x] **A** Settings uses the same SideNav as the rest of the app; the second settings aside is gone and the content is centered at 1440 and 1024.

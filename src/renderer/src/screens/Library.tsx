@@ -454,7 +454,7 @@ export function Library(): React.JSX.Element {
                   status="warning"
                   title="Add your Muse key"
                   description="Making images needs a Meta Muse key. Your library and local edits still work."
-                  endContent={<Button label="Open Studio" variant="secondary" size="sm" onClick={() => navigate('/settings/studio')} />}
+                  endContent={<Button label="Open Settings" variant="secondary" size="sm" onClick={() => navigate('/settings/studio')} />}
                   collapsible={false}
                 />
               )}
