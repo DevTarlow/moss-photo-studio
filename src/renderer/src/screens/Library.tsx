@@ -574,8 +574,8 @@ export function Library(): React.JSX.Element {
                           >
                             <Icon size={20} />
                           </span>
-                          <Text weight="bold" className="mt-4">{card.title}</Text>
-                          <Text type="supporting" color="secondary" className="mt-1">{card.line}</Text>
+                          <Text weight="bold" display="block" className="mt-4">{card.title}</Text>
+                          <Text type="supporting" color="secondary" display="block" className="mt-1">{card.line}</Text>
                         </ClickableCard>
                       )
                     })}
