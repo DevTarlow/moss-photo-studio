@@ -135,3 +135,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 79. **Crop is keyboard-operable.** The crop box is a focusable group; arrow keys move it, Alt+arrow resizes it, and Shift takes bigger steps. The visible hint and the described-by text state the controls. Pointer dragging remains, and the rule-of-thirds grid stays.
 
 80. **System reduced motion is resolved.** The `system` preference reads `prefers-reduced-motion` and listens for changes; `reduce` and `full` still override. The document gets `data-motion="reduce"` or `"full"`, never `"system"`.
+
+## Project drafts
+
+81. **A new Image Generator project is a hidden draft until it has an image.** The Tools rail, the New menu, the Ctrl/Cmd+3 shortcut, and the command palette create the project with `draft = 1` and it is hidden from every project list and count, so opening the generator and leaving again does not add an empty Images card. The first image stored for the project clears the flag, including a reference file added from the generator. A failed run that stores nothing stays hidden. Untouched drafts (no images and no jobs) are deleted at startup.

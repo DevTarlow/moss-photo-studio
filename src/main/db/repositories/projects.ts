@@ -26,6 +26,7 @@ export interface CreateProjectInput {
   category?: string | null
   shape?: 'square' | 'portrait' | 'landscape'
   format?: 'webp' | 'jpeg' | 'png'
+  draft?: boolean
   now?: number
 }
 
@@ -70,8 +71,8 @@ export class ProjectRepository {
     const id = crypto.randomUUID()
     this.db
       .prepare(
-        `INSERT INTO projects (id, type, name, created_at, updated_at, category, shape, format)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO projects (id, type, name, created_at, updated_at, category, shape, format, draft)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         id,
@@ -81,7 +82,8 @@ export class ProjectRepository {
         timestamp,
         input.category ?? null,
         input.shape ?? 'square',
-        input.format ?? 'webp'
+        input.format ?? 'webp',
+        input.draft ? 1 : 0
       )
     return this.get(id)!
   }
@@ -98,7 +100,7 @@ export class ProjectRepository {
     limit?: number
     offset?: number
   } = {}): { items: Project[]; total: number } {
-    const clauses: string[] = ['p.archived_at IS NULL']
+    const clauses: string[] = ['p.archived_at IS NULL', 'p.draft = 0']
     const params: unknown[] = []
     const filter = options.filter ?? 'all'
     if (filter === 'sets') clauses.push("p.type = 'set'")
@@ -143,7 +145,7 @@ export class ProjectRepository {
 
   recent(limit: number): Project[] {
     const rows = this.db
-      .prepare(`${this.baseSelect()} WHERE p.archived_at IS NULL ORDER BY p.last_opened_at DESC, p.updated_at DESC LIMIT ?`)
+      .prepare(`${this.baseSelect()} WHERE p.archived_at IS NULL AND p.draft = 0 ORDER BY p.last_opened_at DESC, p.updated_at DESC LIMIT ?`)
       .all(Math.max(1, Math.min(20, limit))) as ProjectRow[]
     return rows.map((row) => this.map(row))
   }
@@ -235,6 +237,21 @@ export class ProjectRepository {
 
   delete(id: string): boolean {
     return this.db.prepare('DELETE FROM projects WHERE id = ?').run(id).changes > 0
+  }
+
+  /**
+   * An Image Generator draft is hidden until its first image. A draft that was
+   * never touched has no images and no jobs, so it is safe to drop at startup.
+   */
+  deleteEmptyDrafts(): number {
+    return this.db
+      .prepare(
+        `DELETE FROM projects
+         WHERE draft = 1
+           AND NOT EXISTS (SELECT 1 FROM images i WHERE i.project_id = projects.id)
+           AND NOT EXISTS (SELECT 1 FROM jobs j WHERE j.project_id = projects.id)`
+      )
+      .run().changes
   }
 
   countImages(id: string): number {

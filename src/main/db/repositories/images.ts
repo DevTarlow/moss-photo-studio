@@ -162,12 +162,14 @@ export class ImageRepository {
             `UPDATE projects SET
               source_image_id = ?,
               cover_image_id = CASE WHEN cover_image_id IS NULL AND type = 'photo' THEN ? ELSE cover_image_id END,
+              draft = 0,
               updated_at = ?
              WHERE id = ?`
           )
           .run(id, id, created, input.projectId)
       } else {
-        this.db.prepare('UPDATE projects SET updated_at = ? WHERE id = ?').run(created, input.projectId)
+        // The first image makes a hidden Image Generator draft a real project.
+        this.db.prepare('UPDATE projects SET draft = 0, updated_at = ? WHERE id = ?').run(created, input.projectId)
       }
     })
     insert()

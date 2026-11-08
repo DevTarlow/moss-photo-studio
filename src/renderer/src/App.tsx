@@ -246,7 +246,7 @@ export function RootLayout(): React.JSX.Element {
         event.preventDefault()
         const type = event.key === '1' ? 'set' : event.key === '2' ? 'photo' : 'image'
         if (type === 'image') {
-          void unwrap(window.moss.projects.create({ type: 'image' })).then((detail) => navigate(`/project/${detail.project.id}`)).catch(() => toast.error('A new project could not be opened.'))
+          void unwrap(window.moss.projects.create({ type: 'image', draft: true })).then((detail) => navigate(`/project/${detail.project.id}`)).catch(() => toast.error('A new project could not be opened.'))
         } else {
           navigate(`/library?new=${type}`)
         }
@@ -317,7 +317,7 @@ export function RootLayout(): React.JSX.Element {
           navigate('/library?new=photo')
           break
         case 'new-image':
-          void unwrap(window.moss.projects.create({ type: 'image' })).then((detail) => navigate(`/project/${detail.project.id}`)).catch(() => toast.error('A new project could not be opened.'))
+          void unwrap(window.moss.projects.create({ type: 'image', draft: true })).then((detail) => navigate(`/project/${detail.project.id}`)).catch(() => toast.error('A new project could not be opened.'))
           break
         case 'open-project':
           if (event.projectId) navigate(`/project/${event.projectId}`)

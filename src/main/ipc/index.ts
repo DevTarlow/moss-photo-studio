@@ -509,16 +509,18 @@ export function registerIpcHandlers(context: AppContext): void {
     z.object({
       type: projectTypeSchema,
       name: z.string().max(140).optional(),
-      category: z.string().max(40).optional()
+      category: z.string().max(40).optional(),
+      draft: z.boolean().optional()
     }),
-    ({ type, name, category }): ProjectDetail => {
+    ({ type, name, category, draft }): ProjectDetail => {
       const defaults = settings.all()
       const project = context.projects.create({
         type,
         name: name?.trim() || (type === 'set' ? 'Untitled set' : type === 'photo' ? 'Untitled photo' : 'Untitled image'),
         category: category ?? null,
         shape: defaults.defaultShape,
-        format: defaults.defaultFormat
+        format: defaults.defaultFormat,
+        draft
       })
       context.refreshMenu()
       return buildDetail(context, project)

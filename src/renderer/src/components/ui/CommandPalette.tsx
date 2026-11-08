@@ -91,7 +91,7 @@ export function CommandPalette(): React.JSX.Element {
         label: 'New Image Generator',
         hint: 'Describe a picture and make it',
         run: async () => {
-          const detail = await unwrap(window.moss.projects.create({ type: 'image' }))
+          const detail = await unwrap(window.moss.projects.create({ type: 'image', draft: true }))
           setOpen(false)
           navigate(`/project/${detail.project.id}`)
         }

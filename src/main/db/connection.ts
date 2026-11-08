@@ -179,6 +179,12 @@ const migrations: Migration[] = [
         CREATE INDEX IF NOT EXISTS idx_images_library ON images(deleted_at, status, created_at);
       `)
     }
+  },
+  {
+    version: 4,
+    up(db) {
+      db.exec('ALTER TABLE projects ADD COLUMN draft INTEGER NOT NULL DEFAULT 0')
+    }
   }
 ]
 

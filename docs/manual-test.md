@@ -147,6 +147,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 - [x] **A** Fill the describe box, choose four images, create. Four results appear with persistent Edit, Download, Save as Product, and More actions; the image opens a lightbox; Edit opens one; Back to Create returns.
 - [x] **A** The empty state shows an Examples title, and the Start from an idea menu has darker bold category titles.
+- [x] **A** Open Image Generator and leave without making an image. No Images project appears and the Library count is unchanged. Make one image, and the project appears.
 
 ### 12. Set export
 

@@ -161,7 +161,7 @@ export function Library(): React.JSX.Element {
 
   const createImageProject = async (): Promise<void> => {
     try {
-      const detail = await unwrap(window.moss.projects.create({ type: 'image' }))
+      const detail = await unwrap(window.moss.projects.create({ type: 'image', draft: true }))
       navigate(`/project/${detail.project.id}`)
     } catch (caught) {
       toast.error(messageOf(caught))

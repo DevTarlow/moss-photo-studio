@@ -161,6 +161,8 @@ async function boot(): Promise<void> {
   const resourceRoot = appResourceRoot()
 
   reconcileOnStartup({ jobs, images, logger })
+  const emptyDrafts = projects.deleteEmptyDrafts()
+  if (emptyDrafts) logger.info('app', 'removed_empty_drafts', { count: emptyDrafts })
   if (settings.budgetCents() === null) {
     // A null budget is explicit; do not overwrite it.
   } else if (!Number.isFinite(settings.budgetCents())) {

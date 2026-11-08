@@ -83,7 +83,7 @@ export interface IpcChannels {
   }
   'projects:get': { request: { id: string }; response: ProjectDetail }
   'projects:create': {
-    request: { type: 'set' | 'photo' | 'image'; name?: string; category?: string }
+    request: { type: 'set' | 'photo' | 'image'; name?: string; category?: string; draft?: boolean }
     response: ProjectDetail
   }
   'projects:createFromImage': {
