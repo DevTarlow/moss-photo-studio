@@ -179,7 +179,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 ### 18. Products and cross-tool sources
 
 - [ ] **A** Save a generated image, an editor version, and a set shot as Products. Each appears on the Products page after a restart.
-- [ ] **A** Start a New Set and a New Image Editor from a Product, then from a ready library image. The chosen photo becomes the project source.
+- [ ] **A** From a Product, use Use in a Set, Edit This Photo, and New Image from Reference; then repeat from a ready library image. The chosen photo becomes the source or reference.
 - [ ] **A** Replace a set's product photo from a Product and from a library image. Images already made stay.
 - [ ] **A** Add a photo to an existing Image Editor from a Product and from a library image. It becomes a new version.
 - [ ] **A** In the Image Generator, choose a Product and a Person from People. The run makes one image and the person is holding the product.

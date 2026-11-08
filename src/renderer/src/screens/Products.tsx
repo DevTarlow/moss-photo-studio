@@ -284,16 +284,19 @@ export function Products(): React.JSX.Element {
             <div className="overflow-hidden rounded-[10px]" style={{ background: 'var(--canvas)' }}>
               <img src={preview.imageUrl} alt={preview.name} className="mx-auto max-h-[420px] w-full object-contain" />
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button variant="primary" disabled={busy} onClick={() => void startProject(preview, 'set')}>
-                <Layers size={15} /> New Set
-              </Button>
-              <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'photo')}>
-                <ImageIcon size={15} /> New Photo
-              </Button>
-              <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'image')}>
-                <Sparkles size={15} /> New Image
-              </Button>
+            <div className="mt-4">
+              <p className="section-label">Start with this product</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button variant="primary" disabled={busy} onClick={() => void startProject(preview, 'set')}>
+                  <Layers size={15} /> Use in a Set
+                </Button>
+                <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'photo')}>
+                  <ImageIcon size={15} /> Edit This Photo
+                </Button>
+                <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'image')}>
+                  <Sparkles size={15} /> New Image from Reference
+                </Button>
+              </div>
             </div>
           </>
         )}

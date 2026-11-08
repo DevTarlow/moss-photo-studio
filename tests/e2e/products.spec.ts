@@ -59,7 +59,7 @@ test('a generated image becomes a reusable product across the editor and generat
 
     await page.getByRole('link', { name: 'Products', exact: true }).click()
     await page.getByRole('button', { name: 'Open Ceramic Mug larger' }).click()
-    await page.getByRole('dialog').getByRole('button', { name: 'New Image' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'New Image from Reference' }).click()
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
 
     await page.getByRole('button', { name: 'Choose a Person' }).click()
