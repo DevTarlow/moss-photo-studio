@@ -701,6 +701,8 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.getByRole('link', { name: 'Library', exact: true }).first().click()
     await expect(page.getByText(/Working offline\. License checks resume when you're connected\./)).toBeVisible({ timeout: 20_000 })
     await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
+    await expect(page.getByText('Add your Meta key', { exact: true })).toBeVisible()
+    await expect(page.getByText('Make a first set')).toHaveCount(0)
     await screenshot('license-grace')
     await app.close()
     updateValidation(15)

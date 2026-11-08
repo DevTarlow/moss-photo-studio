@@ -57,6 +57,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - Offline: with both fake hosts down, generation shows the approved offline copy, no images, no cost. The library, local adjust, and export remain usable.
 - Stray network: no renderer request left for an unexpected host. Only `moss-media://` and the local fake hosts appeared.
 - License grace: with the stored validation moved back 13 days and the store down, the app opened the library with the grace banner. At 15 days it opened Activation, Browse My Library worked, and a project showed the read-only message.
+- Setup card: after the key is removed, the library shows Finish setting up with one Add your Meta key step; the Make a first set row is gone.
 - Axe: activation, onboarding, set plan, set review, image editor, adjusted photo, Create empty, Create results, Usage, People, Settings light, Library light, Library dark, Library at 1024, Library at 150% zoom, the first-run confirmation dialog, and the set export dialog were checked. No serious or critical violations remained after fixing the onboarding step group, progress bar names, and dialog animation timing in the check.
 - Screenshot comparison passed on a second run with the live app.
 - Large library: 510 created projects loaded 20 at a time. Previous and Next moved between pages, and search found the oldest project.

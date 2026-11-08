@@ -410,7 +410,7 @@ export function Library(): React.JSX.Element {
           )}
 
           <div className="mt-4">
-            <SetupCard onNewSet={() => openNew('set')} />
+            <SetupCard />
           </div>
 
           <div className="mt-1 flex flex-wrap items-center gap-2">
