@@ -396,6 +396,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
   test('create makes four images and opens one in the editor', async () => {
     await page.keyboard.press('Control+3')
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByText('Examples', { exact: true })).toBeVisible()
     await expect.poll(() => menuEnabled('menu-toggle-panel')).toBe(true)
     expect(await menuEnabled('menu-zoom-in')).toBe(false)
     expect(await menuEnabled('menu-export')).toBe(false)
@@ -403,7 +404,9 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await assertNoSeriousA11y('create-empty')
     await expect(page.getByRole('button', { name: /Create 1 Image · \$0\.01/ })).toBeVisible()
     await page.getByRole('button', { name: 'Start from an Idea' }).click()
-    await expect(page.getByText('With a person', { exact: true })).toBeVisible()
+    const personCategory = page.getByText('With a person', { exact: true })
+    await expect(personCategory).toBeVisible()
+    await expect(personCategory).toHaveCSS('font-weight', '700')
     await page.getByRole('button', { name: 'Holding it', exact: true }).click()
     await expect(page.locator('textarea').first()).toHaveValue(/holding the product/i)
     await page.getByRole('group', { name: 'How many images' }).getByRole('button', { name: '4', exact: true }).click()

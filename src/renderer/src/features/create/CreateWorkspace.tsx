@@ -377,7 +377,7 @@ export function CreateWorkspace(): React.JSX.Element {
             <Popover.Content className="menu-content max-h-[420px] w-[330px] overflow-y-auto" sideOffset={4} align="start">
               {startersByCategory().map((group) => (
                 <div key={group.category}>
-                  <p className="section-label px-2 pb-1 pt-2">{group.category}</p>
+                  <p className="menu-group-title">{group.category}</p>
                   {group.items.map((starter) => (
                     <Popover.Close asChild key={starter.label}>
                       <button type="button" className="menu-item w-full text-left" onClick={() => chooseStarter(starter)}>
@@ -553,7 +553,8 @@ export function CreateWorkspace(): React.JSX.Element {
               !isRunning && (
                 <div>
                   <p className="text-center text-[12px]" style={{ color: 'var(--text-muted)' }}>Describe the picture you want. Meta makes it, and you pay a cent an image.</p>
-                  <div className="mx-auto mt-4 grid max-w-[760px] grid-cols-2 gap-4">
+                  <p className="mx-auto mt-4 max-w-[760px] text-center text-[13px] font-semibold">Examples</p>
+                  <div className="mx-auto mt-2 grid max-w-[760px] grid-cols-2 gap-4">
                     {examples.map((example) => {
                       const starter = starterByLabel(example.starter)
                       return (
