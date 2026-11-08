@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { Dialog } from './Dialog'
 import { Button } from './Button'
 import { CENTS_PER_IMAGE, estimateCents, usd } from '@shared/cost'
@@ -19,6 +20,7 @@ export function FirstRunConfirm({
 }): React.JSX.Element {
   const perImage = usd(CENTS_PER_IMAGE)
   const total = usd(estimateCents(imageCount))
+  const confirmRef = useRef<HTMLButtonElement>(null)
   return (
     <Dialog
       open={open}
@@ -26,12 +28,13 @@ export function FirstRunConfirm({
       title="Before your first run"
       description={`Meta charges your key ${perImage} for every image that comes back. This run makes ${imageCount} ${imageCount === 1 ? 'image' : 'images'}, about ${total}. Nothing is charged until you press ${runLabel.split(' · ')[0]}.`}
       width={460}
+      initialFocusRef={confirmRef}
       footer={
         <>
           <Button type="button" variant="ghost" onClick={onGotIt}>
             Got it
           </Button>
-          <Button type="button" variant="primary" onClick={onConfirm}>
+          <Button ref={confirmRef} type="button" variant="primary" onClick={onConfirm}>
             {runLabel}
           </Button>
         </>

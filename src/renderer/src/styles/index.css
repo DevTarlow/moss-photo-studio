@@ -1,4 +1,10 @@
-@import 'tailwindcss';
+@layer reset, theme, base, astryx-base, astryx-theme, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import '@astryxdesign/core/reset.css';
+@import '@astryxdesign/core/astryx.css';
+@import 'tailwindcss/utilities.css' layer(utilities);
 @import './tokens.css';
 @import './fonts.css';
 
@@ -23,7 +29,7 @@ body {
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
-button, input, textarea, select { font: inherit; color: inherit; }
+button, input, textarea, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: default; }
 a { color: var(--accent); text-decoration: none; }

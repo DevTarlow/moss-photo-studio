@@ -6,6 +6,7 @@ import {
   Images,
   Package,
   Layers,
+  Palette,
   PanelLeftClose,
   PanelLeftOpen,
   RotateCcw,
@@ -111,6 +112,17 @@ export function Rail({ collapsed, onToggle }: { collapsed: boolean; onToggle: ()
             <RotateCcw size={18} strokeWidth={1.75} />
             {!collapsed && <span className="rail-label">Reset App</span>}
           </button>
+        )}
+        {import.meta.env.DEV && (
+          <NavLink
+            to="/mockups"
+            className="rail-item"
+            data-active={location.pathname === '/mockups'}
+            aria-label={collapsed ? 'Design mockups' : undefined}
+          >
+            <Palette size={18} strokeWidth={1.75} />
+            {!collapsed && <span className="rail-label">Design mockups</span>}
+          </NavLink>
         )}
         <NavLink
           to="/settings/studio"

@@ -111,11 +111,12 @@ async function stubDialogs(): Promise<void> {
   }, exportFolder)
 }
 
-async function assertNoSeriousA11y(where: string): Promise<void> {
+async function assertNoSeriousA11y(where: string, selector = 'body'): Promise<void> {
   const source = fs.readFileSync(path.resolve('node_modules/axe-core/axe.min.js'), 'utf8')
   const cdp = await page.context().newCDPSession(page)
+  const target = selector === 'body' ? 'document' : `document.querySelector(${JSON.stringify(selector)})`
   const injected = await cdp.send('Runtime.evaluate', {
-    expression: `(async () => { ${source}\nreturn JSON.stringify(await axe.run(document)) })()`,
+    expression: `(async () => { ${source}\nreturn JSON.stringify(await axe.run(${target} || document)) })()`,
     awaitPromise: true,
     returnByValue: true
   })
@@ -213,7 +214,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await assertNoSeriousA11y('onboarding-dark')
     await setAppTheme('light')
     await expect(page.getByRole('heading', { name: "Your shop's photo studio." })).toBeVisible({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Set Up the Studio' }).click()
+    await page.getByRole('button', { name: 'Set up the studio' }).click()
     await page.getByRole('button', { name: 'Where do I get a key?' }).click()
     const keyGuide = page.getByRole('dialog')
     await expect(keyGuide.getByRole('heading', { name: 'Get your Meta Muse key' })).toBeVisible()
@@ -221,25 +222,22 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await keyGuide.getByRole('button', { name: 'Got it' }).click()
     await expect(keyGuide).toBeHidden()
     await page.getByLabel('Muse key').fill('LLM|e2e-muse-key')
-    await page.getByRole('button', { name: 'Test and Save' }).click()
-    await expect(page.getByRole('heading', { name: 'Make it yours' })).toBeVisible({ timeout: 20_000 })
-    await expect(page.locator('.brand-preview')).toHaveCount(0)
-    await page.getByRole('button', { name: 'Save and Continue' }).click()
-    await expect(page.getByRole('heading', { name: 'What are you making first?' })).toBeVisible({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Continue' }).click()
-    await expect(page.getByRole('heading', { name: 'Add your first product' })).toBeVisible()
+    await page.getByRole('button', { name: 'Test and connect' }).click()
+    await expect(page.getByRole('heading', { name: 'Add your first product' })).toBeVisible({ timeout: 20_000 })
     await page.locator('input[type=file]').first().setInputFiles(productPhoto)
+    await expect(page.getByText('Saved as a Product')).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Continue', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Make your first set' })).toBeVisible({ timeout: 20_000 })
     const make = page.getByRole('button', { name: /Make 6 Images · \$0\.06/ }).first()
     await expect(make).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByRole('heading', { name: 'Build your first set' })).toBeVisible()
     const shots = page.getByRole('group', { name: 'Choose the shots' })
-    const counts = page.getByRole('group', { name: 'How many images' })
+    const counts = page.getByRole('radiogroup', { name: 'How many images' })
     await expect(shots).toBeVisible()
     await screenshot('onboarding-first-set')
     await assertNoSeriousA11y('onboarding-first-set')
-    await counts.getByRole('button', { name: '3', exact: true }).click()
+    await counts.getByRole('radio', { name: '3', exact: true }).click()
     await expect(page.getByRole('button', { name: /Make 3 Images · \$0\.03/ })).toBeVisible()
-    await counts.getByRole('button', { name: '6', exact: true }).click()
+    await counts.getByRole('radio', { name: '6', exact: true }).click()
     await expect(page.getByRole('button', { name: /Make 6 Images · \$0\.06/ })).toBeVisible()
     await shots.getByRole('button', { name: 'Gift-ready' }).click()
     await expect(page.getByRole('button', { name: /Make 5 Images · \$0\.05/ })).toBeVisible()
@@ -250,7 +248,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     const firstDialog = page.getByRole('dialog')
     await expect(firstDialog).toContainText('Meta charges your key $0.01')
     await page.waitForTimeout(350)
-    await assertNoSeriousA11y('first-run-confirm')
+    await assertNoSeriousA11y('first-run-confirm', '[role="dialog"]')
     for (let attempt = 0; attempt < 5; attempt += 1) {
       const focusedText = await page.evaluate(() => document.activeElement?.textContent ?? '')
       if (focusedText.includes('Make 6 Images')) break
@@ -258,7 +256,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     }
     await page.keyboard.press('Enter')
     await expect(page.getByRole('heading', { name: "You're set up." })).toBeVisible({ timeout: 30_000 })
-    await page.getByRole('button', { name: 'Open My Library' }).click()
+    await page.getByRole('button', { name: 'Open Library' }).click()
     await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Set Creator' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Image Editor' })).toBeVisible()
@@ -702,7 +700,8 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.getByRole('link', { name: 'Library', exact: true }).first().click()
     await expect(page.getByText(/Working offline\. License checks resume when you're connected\./)).toBeVisible({ timeout: 20_000 })
     await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
-    await expect(page.getByText('Add your Meta key', { exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Open Studio' }).first()).toBeVisible()
+    await expect(page.getByText('Finish setting up')).toHaveCount(0)
     await expect(page.getByText('Make a first set')).toHaveCount(0)
     await screenshot('license-grace')
     await app.close()

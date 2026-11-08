@@ -2,8 +2,7 @@ import type { PlanJson } from '@shared/types'
 import { enableFirstShots, firstShotsEnabled } from '@shared/plans'
 import { shotDefinition } from '@shared/prompts/shots'
 import { estimateCents, usd } from '@shared/cost'
-import { Chip } from '../../components/ui/Chip'
-import { Segmented } from '../../components/ui/Segmented'
+import { Badge, SegmentedControl, SegmentedControlItem, Stack, Text, ToggleButton } from '@astryxdesign/core'
 
 export function FirstSetPicker({
   plan,
@@ -34,57 +33,70 @@ export function FirstSetPicker({
   }
 
   return (
-    <div className="card mt-4 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="section-label">Images in this set</p>
-          <p className="hint mt-1">Pick how many, then switch off anything you do not need.</p>
-        </div>
-        <span className="badge shrink-0">
-          {selectedPreset === null ? `Custom · ${count} of ${total}` : `${count} of ${total}`}
-        </span>
-      </div>
+    <Stack gap={4}>
+      <Stack direction="horizontal" gap={3} align="start" justify="between" wrap="wrap">
+        <Stack gap={1}>
+          <Text weight="bold">Images in this set</Text>
+          <Text type="supporting" color="secondary">
+            Pick how many, then switch off anything you do not need.
+          </Text>
+        </Stack>
+        <Badge
+          label={selectedPreset === null ? `Custom · ${count} of ${total}` : `${count} of ${total}`}
+          variant="neutral"
+        />
+      </Stack>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="field-label">How many images</p>
-        <Segmented
+      <Stack direction="horizontal" gap={3} align="center" justify="between" wrap="wrap">
+        <Text weight="bold">How many images</Text>
+        <SegmentedControl
           label="How many images"
           value={presetValue}
           onChange={(value) => {
-            if (value === presetValue) return
+            if (value === presetValue || value === 'custom') return
             onChange(enableFirstShots(plan, Number(value)))
           }}
-          options={presets.map((preset) => ({ value: String(preset), label: String(preset), disabled }))}
-        />
-      </div>
+          isDisabled={disabled}
+        >
+          {presets.map((preset) => (
+            <SegmentedControlItem key={preset} value={String(preset)} label={String(preset)} isDisabled={disabled} />
+          ))}
+        </SegmentedControl>
+      </Stack>
 
-      <div className="mt-3">
-        <p className="field-label">Choose the shots</p>
-        <div className="mt-1.5 flex flex-wrap gap-1.5" role="group" aria-label="Choose the shots">
+      <Stack gap={2}>
+        <Text weight="bold">Choose the shots</Text>
+        <Stack direction="horizontal" gap={1.5} wrap="wrap" role="group" aria-label="Choose the shots">
           {plan.shots.map((shot) => {
             const definition = shotDefinition(shot.type)
             return (
-              <Chip
+              <ToggleButton
                 key={shot.id}
-                selected={shot.enabled}
-                disabled={disabled}
-                title={definition.question}
-                onClick={() => toggleShot(shot.id)}
-              >
-                {definition.label}
-              </Chip>
+                label={definition.label}
+                size="sm"
+                isPressed={shot.enabled}
+                isDisabled={disabled}
+                onPressedChange={() => toggleShot(shot.id)}
+                tooltip={definition.question}
+              />
             )
           })}
-        </div>
-      </div>
+        </Stack>
+      </Stack>
 
-      <p className="mt-3 text-[13px] font-medium">
+      <Text weight="bold">
         {count} {count === 1 ? 'image' : 'images'} · Meta charges {usd(estimateCents(count))}
-      </p>
+      </Text>
       {count === 0 && (
-        <p className="error-text mt-1" role="alert">Turn on at least one shot, or just add the photo.</p>
+        <Text role="alert" style={{ color: 'var(--color-text-error)' }}>
+          Turn on at least one shot, or save the product only.
+        </Text>
       )}
-      {saving && <p className="hint mt-1">Saving...</p>}
-    </div>
+      {saving && (
+        <Text type="supporting" color="secondary">
+          Saving...
+        </Text>
+      )}
+    </Stack>
   )
 }

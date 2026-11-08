@@ -43,7 +43,8 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 ## What the automated journey proved
 
 - Invalid activation key shows the approved "That key wasn't accepted" copy. A valid fake key activates. The key is not returned to the renderer.
-- Onboarding: key step, optional theme, logo, and colors step (no sample preview; Settings keeps it), category choice, a first-set picker with 1/3/6 count presets and per-shot toggles, first-run confirmation, first paid set. The first paid set was started with Space on the focused primary button and finished through the first-run dialog with Tab and Enter.
+- Onboarding: four setup steps (connect Meta, add the first product, make an optional first set, ready), a first-set picker with 1/3/6 count presets and per-shot toggles, first-run confirmation, first paid set. The first photo is saved as a Product and no set project exists until Make. The first paid set was started with Space on the focused primary button and finished through the first-run dialog with Tab and Enter.
+- Onboarding product-only path: Save product only creates one Product, no set, marks onboarding done, and opens Products. This is covered by a focused E2E test.
 - A five-shot set costs `$0.05`. The primary button says the price before the click. Five requests produced five images.
 - A two-shot failure set showed the partial review, the failed cards, and `Try Again · $0.02`. The retry made exactly two requests. Total set requests were eight. Older ready images were preserved.
 - Image Editor: Kitchen table tile, compare slider with pointer and keyboard, hold Space for the earlier version, local 1:1 crop, rotate, brightness, sharpen, apply locally free, version labels, and new version. Copy Image writes a PNG and Paste Image reads it back through the main-process clipboard.
@@ -57,8 +58,8 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - Offline: with both fake hosts down, generation shows the approved offline copy, no images, no cost. The library, local adjust, and export remain usable.
 - Stray network: no renderer request left for an unexpected host. Only `moss-media://` and the local fake hosts appeared.
 - License grace: with the stored validation moved back 13 days and the store down, the app opened the library with the grace banner. At 15 days it opened Activation, Browse My Library worked, and a project showed the read-only message.
-- Setup card: after the key is removed, the library shows Finish setting up with one Add your Meta key step; the Make a first set row is gone.
-- Axe: activation, onboarding, set plan, set review, image editor, adjusted photo, Create empty, Create results, Usage, People, Settings light, Library light, Library dark, Library at 1024, Library at 150% zoom, the first-run confirmation dialog, and the set export dialog were checked. No serious or critical violations remained after fixing the onboarding step group, progress bar names, and dialog animation timing in the check.
+- Setup card: while onboarding is incomplete, the library shows Finish setting up with Resume Setup; it no longer marks onboarding done when a key exists.
+- Axe: activation, the new onboarding steps (welcome, key, product, set, ready), set plan, set review, image editor, adjusted photo, Create empty, Create results, Usage, People, Settings light, Library light, Library dark, Library at 1024, Library at 150% zoom, the first-run confirmation dialog (scoped to the dialog), and the set export dialog were checked. No serious or critical violations remained.
 - Screenshot comparison passed on a second run with the live app.
 - Large library: 510 created projects loaded 20 at a time. Previous and Next moved between pages, and search found the oldest project.
 - Application menu: Export, Undo, Redo, Copy Image, zoom, and Toggle Panel enabled only in the correct editor states. Paste stayed available in the Library. The test read the native menu item state through Electron.
@@ -70,6 +71,12 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - The screenshot matrix was added after the bulk of development. The baseline images reflect the final build states only for the visited journey states.
 - Dialog states are covered by axe during their normal use but are not each captured as standalone screenshots.
 - The library paginates 20 projects at a time and the journey proves a 510-project library renders 20 cards per page and moves between pages. A 2,000 image scroll frame-time profile and a 2,000-version single project were not run.
+
+## Design system
+
+- Astryx 0.7.11 is pinned and themed as Moss. The custom canvas, crop overlay, filmstrip, brand badge preview, and file-drop logic stay custom.
+- The dev-only `/mockups` route renders the three onboarding directions at 1440 and 1024 in light and dark. It is not linked from the packaged UI and is not part of the production route flow.
+- The full UI migration is phased; only the onboarding and the shared Astryx foundation are part of this change.
 
 ## Acceptance checklist
 
@@ -91,10 +98,10 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 ### 3. Onboarding
 
-- [x] **A** Under three minutes: paste a key, optionally choose a theme and add a logo or colors, choose a category, choose the images (all six start selected), make six images, see Setup complete.
+- [x] **A** Under three minutes: paste a key, add a product, choose a category, choose the images (all six start selected), make six images, see Setup complete. The first photo is saved as a Product; no set exists until Make.
   - The automated journey completes this in seconds with the fake image host. Human timing with a real key is still an O check.
-- [x] **A** The onboarding Logo & Colors step has no sample preview; Settings → Logo & Colors still shows it.
-- [ ] **O** On the first-set step, changing the count or switching a shot updates the price, and Just Add the Photo opens the set without charging.
+- [x] **A** Onboarding has no Logo & Colors step; Settings → Logo & Colors still shows the preview.
+- [ ] **O** On the first-set step, changing the count or switching a shot updates the price, and Save product only saves the Product, opens Products, and creates no set.
 
 ### 4. Key management
 

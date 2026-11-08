@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode, RefObject } from 'react'
 import { Dialog as RadixDialog } from 'radix-ui'
 import { X } from 'lucide-react'
 import { cn } from '../../lib/cn'
@@ -14,6 +14,7 @@ export interface DialogProps {
   className?: string
   hideClose?: boolean
   closeLabel?: string
+  initialFocusRef?: RefObject<HTMLElement | null>
 }
 
 export function Dialog({
@@ -26,13 +27,22 @@ export function Dialog({
   width = 420,
   className,
   hideClose = false,
-  closeLabel = 'Close'
+  closeLabel = 'Close',
+  initialFocusRef
 }: DialogProps): React.JSX.Element {
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
         <RadixDialog.Overlay className="dialog-overlay" />
-        <RadixDialog.Content className={cn('dialog-content', className)} style={{ width }}>
+        <RadixDialog.Content
+          className={cn('dialog-content', className)}
+          style={{ width }}
+          onOpenAutoFocus={(event) => {
+            if (!initialFocusRef?.current) return
+            event.preventDefault()
+            initialFocusRef.current.focus()
+          }}
+        >
           <RadixDialog.Title className="dialog-title pr-8">{title}</RadixDialog.Title>
           {description ? (
             <RadixDialog.Description className="dialog-body">{description}</RadixDialog.Description>

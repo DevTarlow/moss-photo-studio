@@ -331,6 +331,8 @@ export interface SettingsAll {
   density: DensitySetting
   onboardingStep: number
   onboardingDone: boolean
+  onboardingDismissed: boolean
+  onboardingCategory: string
   setupDismissed: boolean
   firstRunConfirmShown: boolean
   concurrency: number

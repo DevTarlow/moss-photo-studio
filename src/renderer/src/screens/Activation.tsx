@@ -46,7 +46,7 @@ export function Activation(): React.JSX.Element {
       const next = await unwrap(window.moss.license.activate({ key: key.trim() }))
       applyLicense(next)
       toast.status('License activated.')
-      navigate(settings?.onboardingDone ? '/library' : '/onboarding', { replace: true })
+      navigate(settings?.onboardingDone || settings?.onboardingDismissed ? '/library' : '/onboarding', { replace: true })
     } catch (caught) {
       const code = caught instanceof CallError ? caught.code : null
       if (code === 'license_limit') {

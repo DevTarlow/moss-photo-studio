@@ -32,6 +32,9 @@
     "release:gate": "node scripts/release-gate.mjs"
   },
   "dependencies": {
+    "@astryxdesign/core": "0.7.11",
+    "@astryxdesign/theme-neutral": "0.7.11",
+    "@stylexjs/stylex": "0.19.0",
     "better-sqlite3": "^13.0.3",
     "clsx": "^2.1.1",
     "lucide-react": "^1.70.0",
@@ -44,6 +47,7 @@
     "zustand": "^5.1.0"
   },
   "devDependencies": {
+    "@astryxdesign/cli": "0.7.11",
     "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.65.0",

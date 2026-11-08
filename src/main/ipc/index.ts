@@ -90,7 +90,7 @@ const brandPatchSchema = z.object({
 })
 
 const rendererSettingKeys = [
-  'theme', 'density', 'onboardingStep', 'onboardingDone', 'setupDismissed',
+  'theme', 'density', 'onboardingStep', 'onboardingDone', 'onboardingDismissed', 'onboardingCategory', 'setupDismissed',
   'firstRunConfirmShown', 'licenseGraceNotified', 'concurrency', 'budgetCents',
   'defaultFormat', 'defaultShape', 'lastProjectId', 'exportDefaults', 'reduceMotion'
 ] as const
@@ -100,6 +100,8 @@ const settingSchemas: Partial<Record<SettingKey, z.ZodTypeAny>> = {
   density: z.enum(['comfortable', 'compact']),
   onboardingStep: z.number().int().min(0).max(10),
   onboardingDone: z.boolean(),
+  onboardingDismissed: z.boolean(),
+  onboardingCategory: z.string().max(40),
   setupDismissed: z.boolean(),
   firstRunConfirmShown: z.boolean(),
   licenseGraceNotified: z.boolean(),

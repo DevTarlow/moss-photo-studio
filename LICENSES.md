@@ -15,6 +15,7 @@ Third-party components keep their own licenses. The full text of each package's 
 | React Router | MIT | https://github.com/remix-run/react-router |
 | Zustand | MIT | https://github.com/pmndrs/zustand |
 | Radix UI | MIT | https://github.com/radix-ui/primitives |
+| Astryx (`@astryxdesign/core`, `@astryxdesign/theme-neutral`, `@astryxdesign/cli`) | MIT | https://github.com/meta/astryx |
 | lucide-react and Lucide icons | ISC | https://github.com/lucide-icons/lucide |
 | clsx | MIT | https://github.com/lukeed/clsx |
 | zod | MIT | https://github.com/colinhacks/zod |

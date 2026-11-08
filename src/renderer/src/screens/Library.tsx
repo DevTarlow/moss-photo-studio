@@ -402,7 +402,7 @@ export function Library(): React.JSX.Element {
               </Button>
             </div>
           )}
-          {license?.status !== 'grace' && secrets?.hasKey === false && (
+          {secrets?.hasKey === false && (
             <div className="readonly-banner mt-4" role="status">
               <span>Add your Muse key in Settings to make images.</span>
               <Button size="sm" variant="secondary" onClick={() => navigate('/settings/studio')}>Open Studio</Button>

@@ -28,7 +28,7 @@ export function BootRedirect(): React.JSX.Element {
         navigate('/activation', { replace: true })
         return
       }
-      if (!settings.onboardingDone && !onboardingBypass && (license.status === 'licensed' || license.status === 'grace')) {
+      if (!settings.onboardingDone && !settings.onboardingDismissed && !onboardingBypass && (license.status === 'licensed' || license.status === 'grace')) {
         navigate('/onboarding', { replace: true })
         return
       }
