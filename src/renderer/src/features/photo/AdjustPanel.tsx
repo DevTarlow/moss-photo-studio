@@ -150,7 +150,7 @@ export function AdjustPanel({
             <Chip key={aspect.id} selected={currentAspect === aspect.id} onClick={() => setAspect(aspect.ratio)}>{aspect.label}</Chip>
           ))}
         </div>
-        <p className="mt-1.5 text-[11px]" style={{ color: 'var(--text-faint)' }}>Drag the edges on the photo. Rule-of-thirds lines stay visible.</p>
+        <p className="mt-1.5 text-[11px]" style={{ color: 'var(--text-faint)' }}>Drag the edges, or focus the crop and use arrow keys. Hold Alt to resize and Shift for bigger steps.</p>
       </section>
 
       <section className="mt-5">

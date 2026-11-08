@@ -46,15 +46,15 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - Onboarding: four setup steps (connect Meta, add the first product, make an optional first set, ready), a first-set picker with 1/3/6 count presets and per-shot toggles, first-run confirmation, first paid set. The first photo is saved as a Product and no set project exists until Make. The first paid set was started with Space on the focused primary button and finished through the first-run dialog with Tab and Enter.
 - Onboarding product-only path: Save product only creates one Product, no set, marks onboarding done, and opens Products. This is covered by a focused E2E test.
 - A five-shot set costs `$0.05`. The primary button says the price before the click. Five requests produced five images.
-- Set Creator has a Plan/Set phase control, a plan preview board, a read-only review with an Edit Plan action, and no duplicate right inspector. Running hides the phase switch and keeps the plan read-only.
+- Set Creator has a Plan/Set phase control, a plan preview board, a read-only review with an Edit Plan action, and no duplicate right inspector. Running hides the phase switch and keeps the plan read-only. The plan panel separator resizes with the mouse or arrow keys and persists its width.
 - A two-shot failure set showed the partial review, the failed cards, and `Try Again · $0.02`. The retry made exactly two requests. Total set requests were eight. Older ready images were preserved.
-- Image Editor: Kitchen table tile, a fitted canvas, a compare divider that can be dragged or moved with the slider and arrow keys, hold Space for the earlier version, local 1:1 crop, rotate, brightness, sharpen, apply locally free, version labels, and new version. The crop/rotate preview follows the exporter order; the adjust-preview state is captured and axe-checked. Copy Image writes a PNG and Paste Image reads it back through the main-process clipboard.
+- Image Editor: Kitchen table tile, a fitted canvas, a compare divider that can be dragged or moved with the slider and arrow keys, hold Space for the earlier version, local 1:1 crop, rotate, brightness, sharpen, apply locally free, version labels, and new version. The crop/rotate preview follows the exporter order; the crop box moves with arrow keys and resizes with Alt+arrow. The adjust-preview state is captured and axe-checked. Copy Image writes a PNG and Paste Image reads it back through the main-process clipboard.
 - Set preview: the lightbox opens on a blurred glass scrim, closes when clicking outside the image, and still closes with the X.
 - Create: four images, run cost, first result gets Newest, persistent Edit/Download/More actions, a result lightbox, Edit opens the editor, Back to Create returns to the result. The empty state labels the four starting cards Examples, and the idea menu groups use darker bold titles. A failed run gets its own retry card.
 - Set export: six named WebP files and a UTF-8 `set.txt`, no overwrite, format and quality controls. The toast names the folder and count and offers Open Folder.
 - Usage: month total equals returned images times one cent, by-project rows, ledger, CSV totals sum to the displayed month spend, budget warning at `$10.00`, reset budget. A low budget exposes Make Fewer Images; in Set it reduces the run to one shot and removes the warning when one fits.
 - People: 12 bundled people, user section, Maya's included card, descriptions, and the synthetic-people note.
-- Settings: light and dark theme, persisted after restart, window bounds remembered, 1024 by 700 and 150% zoom coverage for every main screen, keyring warning visible when safeStorage is unavailable.
+- Settings: light and dark theme, persisted after restart, window bounds remembered, 1024 by 700 and 150% zoom coverage for every main screen, keyring warning visible when safeStorage is unavailable. The system reduced-motion preference drives `data-motion`; overriding to full restores motion.
 - Settings key: Test Connection, Replace, Test and Save, Remove with confirmation. The full key never appears in the page after saving.
 - Offline: with both fake hosts down, generation shows the approved offline copy, no images, no cost. The library, local adjust, and export remain usable.
 - Stray network: no renderer request left for an unexpected host. Only `moss-media://` and the local fake hosts appeared.
@@ -137,7 +137,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 ### 9. Compare
 
-- [x] **A** The compare divider can be dragged; the slider and arrow keys move it too. Space holds the earlier version.
+- [x] **A** The compare divider can be dragged; the slider and arrow keys move it too. Space holds the earlier version. The crop box can be focused and moved with arrow keys; Alt+arrow resizes it.
 
 ### 10. Local adjust
 
@@ -173,7 +173,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 ### 17. Accessibility and layout
 
-- [x] **A half** No serious or critical axe findings on the visited screens in light and dark. Keyboard focus is visible. Every control is reachable. Every main screen passes at 1024 by 700 and at 150% zoom with no horizontal overflow. The Set running and export dialog states are not separately captured at 150%.
+- [x] **A half** No serious or critical axe findings on the visited screens in light and dark. Keyboard focus is visible. Every control is reachable. Every main screen passes at 1024 by 700 and at 150% zoom with no horizontal overflow. Resizable panels and keyboard crop are covered. System reduced motion is covered; a 200% text-only resize pass is still not separately captured. The Set running and export dialog states are not separately captured at 150%.
   - A real screen-reader pass is still an O check.
 - [ ] **O** Screen reader pass with NVDA and VoiceOver on the target machines.
 

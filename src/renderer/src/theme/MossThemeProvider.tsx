@@ -37,8 +37,32 @@ function useResolvedMode(): 'light' | 'dark' {
   return systemDark ? 'dark' : 'light'
 }
 
+function useResolvedMotion(): 'reduce' | 'full' {
+  const preference = useAppStore((state) => state.settings?.reduceMotion ?? 'system')
+  const [systemReduce, setSystemReduce] = useState(
+    () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+  )
+
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const onChange = (): void => setSystemReduce(query.matches)
+    query.addEventListener('change', onChange)
+    return () => query.removeEventListener('change', onChange)
+  }, [])
+
+  if (preference === 'reduce') return 'reduce'
+  if (preference === 'full') return 'full'
+  return systemReduce ? 'reduce' : 'full'
+}
+
 export function MossThemeProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const mode = useResolvedMode()
+  const motion = useResolvedMotion()
+
+  useEffect(() => {
+    document.documentElement.dataset.motion = motion
+  }, [motion])
+
   return (
     <Theme theme={mossTheme} mode={mode}>
       <LinkProvider component={RouterLink}>{children}</LinkProvider>

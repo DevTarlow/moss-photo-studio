@@ -86,7 +86,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
       ])
       applyThemeToDocument(settings.theme)
       document.documentElement.dataset.density = settings.density
-      document.documentElement.dataset.motion = settings.reduceMotion
       set({
         booted: true,
         bootError: null,
@@ -111,7 +110,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const settings = await unwrap(window.moss.settings.all())
     applyThemeToDocument(settings.theme)
     document.documentElement.dataset.density = settings.density
-    document.documentElement.dataset.motion = settings.reduceMotion
     set({ settings })
   },
   applyLicense: (license) => {

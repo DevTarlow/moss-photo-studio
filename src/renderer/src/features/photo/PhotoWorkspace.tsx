@@ -10,6 +10,7 @@ import { useWorkspaceStore } from '../../store/workspace'
 import { useAppStore } from '../../store/app'
 import { useJobsStore } from '../../store/jobs'
 import { useIsWideWorkspace, useViewportTier } from '../../lib/viewport'
+import { usePanelWidth, WorkspaceResizeHandle } from '../../components/ui/WorkspaceResizeHandle'
 import { useConfirm } from '../../components/ui/ConfirmProvider'
 import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
@@ -64,6 +65,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const tier = useViewportTier()
   const leftHidden = tier === 'tiny'
   const rightHidden = !useIsWideWorkspace()
+  const canResizeLeft = tier === 'wide' || tier === 'medium'
   const [tab, setTab] = useState<Tab>('change')
   const [text, setText] = useState('')
   const [textSource, setTextSource] = useState<TextSource>('user')
@@ -87,6 +89,8 @@ export function PhotoWorkspace(): React.JSX.Element {
   const [leftSheet, setLeftSheet] = useState(false)
   const [rightSheet, setRightSheet] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
+  const leftPanelWidth = usePanelWidth('moss.workspace.photo.left', 300)
+  const rightPanelWidth = usePanelWidth('moss.workspace.photo.right', 300, 260, 360)
   useEffect(() => {
     if (!leftHidden) setLeftSheet(false)
     if (!rightHidden) setRightSheet(false)
@@ -580,7 +584,12 @@ export function PhotoWorkspace(): React.JSX.Element {
   return (
     <>
       <div className="workspace">
-        {!leftHidden && <aside className="ws-left">{leftPanel}</aside>}
+        {!leftHidden && (
+          <>
+            <aside className="ws-left" style={canResizeLeft ? { width: leftPanelWidth.width, minWidth: leftPanelWidth.width } : undefined}>{leftPanel}</aside>
+            {canResizeLeft && <WorkspaceResizeHandle label="Resize edit panel" side="left" width={leftPanelWidth.width} onPointerDown={leftPanelWidth.onPointerDown} onKeyDown={leftPanelWidth.onKeyDown} onReset={leftPanelWidth.reset} />}
+          </>
+        )}
         <section className="ws-center">
           <div className="flex items-center gap-2 border-b px-4" style={{ height: 44, borderColor: 'var(--border)', background: 'var(--bg)' }}>
             {backLabel && (
@@ -728,7 +737,12 @@ export function PhotoWorkspace(): React.JSX.Element {
             })}
           </div>
         </section>
-        {!rightHidden && !rightCollapsed && <aside className="ws-right">{rightPanel}</aside>}
+        {!rightHidden && !rightCollapsed && (
+          <>
+            <WorkspaceResizeHandle label="Resize version panel" side="right" width={rightPanelWidth.width} min={260} max={360} onPointerDown={rightPanelWidth.onPointerDown} onKeyDown={rightPanelWidth.onKeyDown} onReset={rightPanelWidth.reset} />
+            <aside className="ws-right" style={{ width: rightPanelWidth.width, minWidth: rightPanelWidth.width }}>{rightPanel}</aside>
+          </>
+        )}
       </div>
 
       <Sheet open={leftSheet} onOpenChange={setLeftSheet} side="left" title="Edit">{leftPanel}</Sheet>

@@ -129,3 +129,9 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 76. **Create results keep their actions.** A result opens the lightbox and always shows Edit, Download, and a More menu for Use as a Set's Photo, Save as Product, and Delete. Failed runs get their own retry card. Budget "Make Fewer Images" reduces the set run to one shot or the Create count by one, and disappears when only one image is possible.
 
 77. **Workspace inspectors are optional below 1440.** Photo and Create hide the right inspector at 1024-1439 and expose it as a sheet; Set has no right inspector. Panel widths clamp with the window, and sheets close when the viewport grows back.
+
+78. **Workspace panels are user-sized.** Set, Photo, and Create left panels and the Photo/Create inspector use a draggable separator with arrow/Home/End keyboard support and double-click reset. Widths persist in localStorage. At narrow widths the fixed 300px panel is used and the handle is hidden so the canvas cannot be squeezed into overflow.
+
+79. **Crop is keyboard-operable.** The crop box is a focusable group; arrow keys move it, Alt+arrow resizes it, and Shift takes bigger steps. The visible hint and the described-by text state the controls. Pointer dragging remains, and the rule-of-thirds grid stays.
+
+80. **System reduced motion is resolved.** The `system` preference reads `prefers-reduced-motion` and listens for changes; `reduce` and `full` still override. The document gets `data-motion="reduce"` or `"full"`, never `"system"`.

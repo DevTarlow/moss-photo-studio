@@ -17,6 +17,7 @@ import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { SaveProductDialog } from '../../components/products/SaveProductDialog'
 import { useJobsStore } from '../../store/jobs'
 import { useIsWideWorkspace, useViewportTier } from '../../lib/viewport'
+import { usePanelWidth, WorkspaceResizeHandle } from '../../components/ui/WorkspaceResizeHandle'
 import { useConfirm } from '../../components/ui/ConfirmProvider'
 import { Button } from '../../components/ui/Button'
 import { Segmented } from '../../components/ui/Segmented'
@@ -65,6 +66,7 @@ export function CreateWorkspace(): React.JSX.Element {
   const tier = useViewportTier()
   const leftHidden = tier === 'tiny'
   const rightHidden = !useIsWideWorkspace()
+  const canResizeLeft = tier === 'wide' || tier === 'medium'
   const [prompt, setPrompt] = useState('')
   const [promptSource, setPromptSource] = useState<'user' | 'starter'>('user')
   const [pendingStarter, setPendingStarter] = useState<Starter | null>(null)
@@ -84,6 +86,8 @@ export function CreateWorkspace(): React.JSX.Element {
   const [leftSheet, setLeftSheet] = useState(false)
   const [rightSheet, setRightSheet] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
+  const leftPanelWidth = usePanelWidth('moss.workspace.create.left', 300)
+  const rightPanelWidth = usePanelWidth('moss.workspace.create.right', 300, 260, 360)
   useEffect(() => {
     if (!leftHidden) setLeftSheet(false)
     if (!rightHidden) setRightSheet(false)
@@ -536,7 +540,12 @@ export function CreateWorkspace(): React.JSX.Element {
   return (
     <>
       <div className="workspace">
-        {!leftHidden && <aside className="ws-left">{leftPanel}</aside>}
+        {!leftHidden && (
+          <>
+            <aside className="ws-left" style={canResizeLeft ? { width: leftPanelWidth.width, minWidth: leftPanelWidth.width } : undefined}>{leftPanel}</aside>
+            {canResizeLeft && <WorkspaceResizeHandle label="Resize describe panel" side="left" width={leftPanelWidth.width} onPointerDown={leftPanelWidth.onPointerDown} onKeyDown={leftPanelWidth.onKeyDown} onReset={leftPanelWidth.reset} />}
+          </>
+        )}
         <section className="ws-center">
           <div className="flex items-center gap-2 border-b px-4" style={{ height: 44, borderColor: 'var(--border)', background: 'var(--bg)' }}>
             <p className="min-w-0 flex-1 truncate text-[12px] font-medium">{runFilter ? `One run · ${formatDate(runFilter.startedAt, true)}` : 'Image Generator'}</p>
@@ -637,7 +646,12 @@ export function CreateWorkspace(): React.JSX.Element {
             )}
           </div>
         </section>
-        {!rightHidden && !rightCollapsed && <aside className="ws-right">{rightPanel}</aside>}
+        {!rightHidden && !rightCollapsed && (
+          <>
+            <WorkspaceResizeHandle label="Resize runs panel" side="right" width={rightPanelWidth.width} min={260} max={360} onPointerDown={rightPanelWidth.onPointerDown} onKeyDown={rightPanelWidth.onKeyDown} onReset={rightPanelWidth.reset} />
+            <aside className="ws-right" style={{ width: rightPanelWidth.width, minWidth: rightPanelWidth.width }}>{rightPanel}</aside>
+          </>
+        )}
       </div>
       <Sheet open={leftSheet} onOpenChange={setLeftSheet} side="left" title="Image Generator">{leftPanel}</Sheet>
       <Sheet open={rightSheet} onOpenChange={setRightSheet} side="right" title="Runs">{rightPanel}</Sheet>

@@ -33,6 +33,7 @@ import { warnIfSmallPhoto } from '../../lib/photoWarnings'
 import { elapsedLabel } from '../../lib/format'
 import { currentMonth } from '../../store/library'
 import { ToggleButton, ToggleButtonGroup } from '@astryxdesign/core'
+import { usePanelWidth, WorkspaceResizeHandle } from '../../components/ui/WorkspaceResizeHandle'
 
 type Phase = 'plan' | 'review'
 interface PendingRun {
@@ -90,7 +91,9 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
   const confirm = useConfirm()
   const tier = useViewportTier()
   const leftHidden = tier === 'tiny'
+  const canResizeLeft = tier === 'wide' || tier === 'medium'
   const [leftSheet, setLeftSheet] = useState(false)
+  const leftPanelWidth = usePanelWidth('moss.workspace.set.left', 300)
   useEffect(() => {
     if (!leftHidden) setLeftSheet(false)
   }, [leftHidden])
@@ -515,7 +518,12 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
   return (
     <>
       <div className="workspace">
-        {!leftHidden && <aside className="ws-left">{leftContent}</aside>}
+        {!leftHidden && (
+          <>
+            <aside className="ws-left" style={canResizeLeft ? { width: leftPanelWidth.width, minWidth: leftPanelWidth.width } : undefined}>{leftContent}</aside>
+            {canResizeLeft && <WorkspaceResizeHandle label="Resize plan panel" side="left" width={leftPanelWidth.width} onPointerDown={leftPanelWidth.onPointerDown} onKeyDown={leftPanelWidth.onKeyDown} onReset={leftPanelWidth.reset} />}
+          </>
+        )}
         <section className="ws-center">
           <div className="flex items-center gap-2 border-b px-4" style={{ height: 44, borderColor: 'var(--border)', background: 'var(--bg)' }}>
             {!isRunning && (
