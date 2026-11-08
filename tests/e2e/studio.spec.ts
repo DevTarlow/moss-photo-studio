@@ -227,7 +227,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.getByRole('button', { name: 'Save and Continue' }).click()
     await expect(page.getByRole('heading', { name: 'What are you making first?' })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Continue' }).click()
-    await expect(page.getByRole('heading', { name: 'Make your first set' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Add your first product' })).toBeVisible()
     await page.locator('input[type=file]').first().setInputFiles(productPhoto)
     const make = page.getByRole('button', { name: /Make 6 Images · \$0\.06/ }).first()
     await expect(make).toBeVisible({ timeout: 20_000 })

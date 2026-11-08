@@ -455,7 +455,7 @@ export function Onboarding(): React.JSX.Element {
         {step === 4 && (
           <div className="py-8">
             <p className="section-label">Step 5 of 6</p>
-            <h1 className="page-title mt-2 text-[24px]">Make your first set</h1>
+            <h1 className="page-title mt-2 text-[24px]">Add your first product</h1>
             <p className="mt-2 text-[13px]" style={{ color: 'var(--text-muted)' }}>
               Drop one photo of a product. Then pick the images you want. The price is on the button before it starts.
             </p>
