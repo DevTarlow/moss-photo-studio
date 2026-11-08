@@ -105,3 +105,5 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Onboarding first set
 
 67. **Onboarding's first-set step is a compact recipe picker, not the full plan editor.** It offers 1, 3, or all image counts and one toggle per recipe shot, with all six selected by default. Directions, format, people, and off-recipe shots stay in the set editor. The draft saves as the seller changes it and is saved again as a barrier before the run or Just Add, so a skipped or closed onboarding does not lose the choice.
+
+68. **Onboarding's Make it yours step omits the sample badge preview.** The preview stays in Settings, where the seller can compare the logo, corner, size, and opacity side by side. Onboarding keeps only the controls because the seller has not chosen a product photo yet, and a stock ceramic mug competes with the real product they add on the next step.

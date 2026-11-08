@@ -428,7 +428,7 @@ export function Onboarding(): React.JSX.Element {
               </div>
             </div>
             <div className="mt-5">
-              <BrandFields value={localBrand} onChange={setLocalBrand} maxColors={3} />
+              <BrandFields value={localBrand} onChange={setLocalBrand} maxColors={3} showPreview={false} />
             </div>
             <div className="mt-7 flex items-center gap-3">
               <Button variant="primary" onClick={() => void saveBrand()}>Save and Continue</Button>

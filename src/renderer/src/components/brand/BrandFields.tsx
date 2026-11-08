@@ -44,11 +44,13 @@ export function BrandPreview({ brand }: { brand: Brand }): React.JSX.Element {
 export function BrandFields({
   value,
   onChange,
-  maxColors = MAX_COLORS
+  maxColors = MAX_COLORS,
+  showPreview = true
 }: {
   value: Brand
   onChange: (brand: Brand) => void
   maxColors?: number
+  showPreview?: boolean
 }): React.JSX.Element {
   const [newColor, setNewColor] = useState(cssColor('--accent'))
   const [hex, setHex] = useState('')
@@ -101,7 +103,7 @@ export function BrandFields({
   }
 
   return (
-    <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_300px]">
+    <div className={showPreview ? 'grid gap-7 lg:grid-cols-[minmax(0,1fr)_300px]' : 'grid gap-7'}>
       <div className="space-y-5">
         <div>
           <div className="flex items-start justify-between gap-3">
@@ -229,11 +231,13 @@ export function BrandFields({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <p className="section-label">Preview</p>
-        <BrandPreview brand={value} />
-        <p className="hint">A sample image with the badge exactly where a made image would show it.</p>
-      </div>
+      {showPreview && (
+        <div className="space-y-2">
+          <p className="section-label">Preview</p>
+          <BrandPreview brand={value} />
+          <p className="hint">A sample image with the badge exactly where a made image would show it.</p>
+        </div>
+      )}
 
     </div>
   )
