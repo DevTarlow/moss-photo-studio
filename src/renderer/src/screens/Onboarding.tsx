@@ -156,6 +156,13 @@ export function Onboarding(): React.JSX.Element {
     navigate('/library', { replace: true })
   }
 
+  // Leaving setup for the brand settings must not count as dismissing it: the
+  // Library keeps offering Resume Setup, and the next launch returns to setup.
+  const openSettings = (): void => {
+    setOnboardingBypass(true)
+    navigate('/settings/brand')
+  }
+
   const buildPlan = (categoryId: string): PlanJson | null => {
     if (!product) return null
     return createDefaultPlan({
@@ -203,22 +210,6 @@ export function Onboarding(): React.JSX.Element {
       )
       addProduct(created)
       setPhotoFile(file)
-    } catch (caught) {
-      setPhotoError(messageOf(caught))
-    } finally {
-      setPhotoBusy(false)
-    }
-  }
-
-  const choosePhoto = async (): Promise<void> => {
-    setPhotoBusy(true)
-    setPhotoError(null)
-    try {
-      const created = await unwrap(window.moss.dialogs.pickProduct())
-      if (created) {
-        addProduct(created)
-        setPhotoFile(null)
-      }
     } catch (caught) {
       setPhotoError(messageOf(caught))
     } finally {
@@ -484,7 +475,7 @@ export function Onboarding(): React.JSX.Element {
                       label="Open Settings"
                       variant="ghost"
                       size="sm"
-                      onClick={() => navigate('/settings/brand')}
+                      onClick={openSettings}
                     />
                   </Stack>
                 </Stack>
@@ -648,9 +639,6 @@ export function Onboarding(): React.JSX.Element {
                             status={photoError ? { type: 'error', message: photoError } : undefined}
                             width="100%"
                           />
-                          <Stack direction="horizontal" gap={2}>
-                            <Button label="Choose a file instead" variant="secondary" size="sm" onClick={() => void choosePhoto()} />
-                          </Stack>
                           {products.length > 0 && (
                             <Selector
                               label="Or use a saved product"
@@ -799,7 +787,7 @@ export function Onboarding(): React.JSX.Element {
                         label="Personalize in Settings"
                         variant="ghost"
                         size="sm"
-                        onClick={() => navigate('/settings/brand')}
+                        onClick={openSettings}
                       />
                     </>
                   )}
