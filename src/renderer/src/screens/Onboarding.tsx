@@ -512,7 +512,7 @@ export function Onboarding(): React.JSX.Element {
                         <Text type="label" color="secondary">
                           Welcome
                         </Text>
-                        <Heading ref={headingRef} tabIndex={-1} level={1}>
+                        <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
                           Your shop's photo studio.
                         </Heading>
                         <Text type="body" color="secondary">
@@ -536,7 +536,7 @@ export function Onboarding(): React.JSX.Element {
                         <Text type="label" color="secondary">
                           Step 2 of 4
                         </Text>
-                        <Heading ref={headingRef} tabIndex={-1} level={1}>
+                        <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
                           Connect Meta Muse
                         </Heading>
                         <Text type="body" color="secondary">
@@ -588,7 +588,7 @@ export function Onboarding(): React.JSX.Element {
                         <Text type="label" color="secondary">
                           Step 3 of 4
                         </Text>
-                        <Heading ref={headingRef} tabIndex={-1} level={1}>
+                        <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
                           Add your first product
                         </Heading>
                         <Text type="body" color="secondary">
@@ -672,7 +672,7 @@ export function Onboarding(): React.JSX.Element {
                         <Text type="label" color="secondary">
                           Step 4 of 4 · optional
                         </Text>
-                        <Heading ref={headingRef} tabIndex={-1} level={1}>
+                        <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
                           Make your first set
                         </Heading>
                         <Text type="body" color="secondary">
@@ -763,7 +763,7 @@ export function Onboarding(): React.JSX.Element {
                         <Stack direction="horizontal" gap={2}>
                           <Badge label="Setup complete" variant="success" />
                         </Stack>
-                        <Heading ref={headingRef} tabIndex={-1} level={1}>
+                        <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
                           You're set up.
                         </Heading>
                         <Text type="body" color="secondary">

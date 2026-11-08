@@ -25,6 +25,12 @@ test('onboarding saves the first photo as a Product without creating a set', asy
     page.on('pageerror', (error) => pageErrors.push(error.message))
 
     await page.waitForTimeout(800)
+    // The Welcome heading takes focus so screen readers announce the step, but
+    // a non-interactive title must not paint the keyboard focus ring.
+    const welcome = page.getByRole('heading', { name: "Your shop's photo studio." })
+    await expect(welcome).toBeVisible({ timeout: 20_000 })
+    await expect(welcome).toBeFocused()
+    await expect(welcome).toHaveCSS('outline-style', 'none')
     await page.evaluate(async () => {
       await window.moss.secrets.setMuseKey({ key: 'LLM|e2e-onboarding-product' })
       await window.moss.settings.set({ key: 'onboardingDone', value: false })
