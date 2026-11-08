@@ -45,22 +45,28 @@ export function Lightbox({
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
-        <RadixDialog.Overlay className="dialog-overlay" />
-        <RadixDialog.Content className="fixed inset-0 z-[81] flex flex-col items-center justify-center p-8 text-[var(--canvas-text)]" aria-describedby={undefined}>
+        <RadixDialog.Overlay
+          className="dialog-overlay lightbox-overlay"
+          onClick={() => onOpenChange(false)}
+        />
+        <RadixDialog.Content
+          className="fixed inset-0 z-[81] flex flex-col items-center justify-center p-8 text-[var(--canvas-text)]"
+          style={{ pointerEvents: 'none' }}
+          aria-describedby={undefined}
+        >
           <RadixDialog.Title className="sr-only">Image preview</RadixDialog.Title>
-          <div className="absolute inset-0" style={{ background: 'var(--canvas)' }} aria-hidden />
           <div className="relative z-10 flex h-full w-full max-w-[1200px] flex-col">
             <div className="flex items-center justify-between">
-              <p className="canvas-meta text-[12px]">{image?.label ?? 'Image'}</p>
+              <p className="lightbox-control text-[12px]">{image?.label ?? 'Image'}</p>
               <RadixDialog.Close asChild>
-                <IconButton label="Close preview" className="text-[var(--canvas-text)]">
+                <IconButton label="Close preview" showTooltip={false} className="lightbox-control pointer-events-auto">
                   <X size={18} />
                 </IconButton>
               </RadixDialog.Close>
             </div>
             <div className="relative flex min-h-0 flex-1 items-center justify-center">
               {index > 0 && (
-                <IconButton label="Previous image" className="absolute left-0 z-20 text-[var(--canvas-text)]" onClick={() => onIndex(index - 1)}>
+                <IconButton label="Previous image" className="lightbox-control pointer-events-auto absolute left-0 z-20" onClick={() => onIndex(index - 1)}>
                   <ChevronLeft size={24} />
                 </IconButton>
               )}
@@ -68,40 +74,40 @@ export function Lightbox({
                 <img
                   src={image.url}
                   alt={image.label}
-                  className="lightbox-image"
+                  className="lightbox-image pointer-events-auto"
                   onLoad={() => setLoaded(true)}
                   style={{ opacity: loaded ? 1 : 0, transition: 'opacity 180ms' }}
                 />
               )}
               {index < images.length - 1 && (
-                <IconButton label="Next image" className="absolute right-0 z-20 text-[var(--canvas-text)]" onClick={() => onIndex(index + 1)}>
+                <IconButton label="Next image" className="lightbox-control pointer-events-auto absolute right-0 z-20" onClick={() => onIndex(index + 1)}>
                   <ChevronRight size={24} />
                 </IconButton>
               )}
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2 pt-3">
               {onDownload && image && (
-                <Button variant="secondary" size="sm" onClick={() => onDownload(image)}>
+                <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onDownload(image)}>
                   <Download size={15} /> Download
                 </Button>
               )}
               {onSetCover && image && (
-                <Button variant="secondary" size="sm" onClick={() => onSetCover(image)}>
+                <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onSetCover(image)}>
                   <Star size={15} /> Set as Cover
                 </Button>
               )}
               {onEdit && image && (
-                <Button variant="secondary" size="sm" onClick={() => onEdit(image)}>
+                <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onEdit(image)}>
                   <ImageIcon size={15} /> Open in Editor
                 </Button>
               )}
               {onSaveProduct && image && (
-                <Button variant="secondary" size="sm" onClick={() => onSaveProduct(image)}>
+                <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onSaveProduct(image)}>
                   <Package size={15} /> Save as Product
                 </Button>
               )}
               {onDelete && image && (
-                <Button variant="ghost" size="sm" className="text-[var(--canvas-text)]" onClick={() => onDelete(image)}>
+                <Button variant="ghost" size="sm" className="lightbox-control pointer-events-auto" onClick={() => onDelete(image)}>
                   <Trash2 size={15} /> Delete
                 </Button>
               )}

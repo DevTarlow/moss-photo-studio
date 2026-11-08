@@ -47,6 +47,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - A five-shot set costs `$0.05`. The primary button says the price before the click. Five requests produced five images.
 - A two-shot failure set showed the partial review, the failed cards, and `Try Again · $0.02`. The retry made exactly two requests. Total set requests were eight. Older ready images were preserved.
 - Image Editor: Kitchen table tile, compare slider with pointer and keyboard, hold Space for the earlier version, local 1:1 crop, rotate, brightness, sharpen, apply locally free, version labels, and new version. Copy Image writes a PNG and Paste Image reads it back through the main-process clipboard.
+- Set preview: the lightbox opens on a blurred glass scrim, closes when clicking outside the image, and still closes with the X.
 - Create: four images, run cost, first result gets Newest, Edit opens the editor, Back to Create returns to the result.
 - Set export: six named WebP files and a UTF-8 `set.txt`, no overwrite, format and quality controls. The toast names the folder and count and offers Open Folder.
 - Usage: month total equals returned images times one cent, by-project rows, ledger, CSV totals sum to the displayed month spend, budget warning at `$10.00`, reset budget.
@@ -107,6 +108,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 ### 6. One shot off
 
 - [x] **A** Switch off one shot. The price drops from `$0.06` to `$0.05`. Five requests are made.
+- [x] **A** The set image lightbox opens on a blurred glass scrim; clicking outside the image closes it, and the X still closes it.
 
 ### 7. Failure and retry
 
