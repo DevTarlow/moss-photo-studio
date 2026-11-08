@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, Image as ImageIcon, Layers, Plus, Sparkles } from 'lucide-react'
+import { Image as ImageIcon, Layers, Plus, Sparkles } from 'lucide-react'
 import { DropdownMenu } from '@astryxdesign/core'
 
 export function NewProjectButton({ size = 'sm' }: { size?: 'sm' | 'md' | 'lg' }): React.JSX.Element {
@@ -11,11 +11,7 @@ export function NewProjectButton({ size = 'sm' }: { size?: 'sm' | 'md' | 'lg' })
         variant: 'primary',
         size,
         icon: <Plus size={15} />,
-        children: (
-          <span className="inline-flex items-center gap-1.5">
-            New <ChevronDown size={13} />
-          </span>
-        )
+        children: 'New'
       }}
       menuWidth={290}
       items={[
