@@ -1,41 +1,51 @@
 import { useState } from 'react'
-import { Link, NavLink, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import {
   BarChart3,
-  Image as ImageIcon,
+  FolderOpen,
   Images,
+  Info,
+  KeyRound,
+  Monitor,
   Package,
-  Layers,
   Palette,
-  PanelLeftClose,
-  PanelLeftOpen,
   RotateCcw,
   Settings,
-  Sparkles,
+  ShieldCheck,
   Users
 } from 'lucide-react'
+import { SideNav, SideNavItem, SideNavSection } from '@astryxdesign/core'
 import { useAppStore } from '../../store/app'
+import { settingsSections } from '../../lib/settingsSections'
 import { toast } from '../../lib/toast'
 import { useConfirm } from './ConfirmProvider'
-import { IconButton } from './IconButton'
-import { cn } from '../../lib/cn'
+
+const settingsIcons = {
+  studio: <KeyRound size={18} strokeWidth={1.75} />,
+  brand: <Palette size={18} strokeWidth={1.75} />,
+  library: <FolderOpen size={18} strokeWidth={1.75} />,
+  appearance: <Monitor size={18} strokeWidth={1.75} />,
+  license: <ShieldCheck size={18} strokeWidth={1.75} />,
+  privacy: <Settings size={18} strokeWidth={1.75} />,
+  about: <Info size={18} strokeWidth={1.75} />
+}
 
 const items = [
-  { to: '/library', label: 'Library', icon: Images },
-  { to: '/people', label: 'People', icon: Users },
-  { to: '/products', label: 'Products', icon: Package },
-  { to: '/usage', label: 'Usage', icon: BarChart3 }
+  { to: '/library', label: 'Library', icon: <Images size={18} strokeWidth={1.75} /> },
+  { to: '/products', label: 'Products', icon: <Package size={18} strokeWidth={1.75} /> },
+  { to: '/people', label: 'People', icon: <Users size={18} strokeWidth={1.75} /> },
+  { to: '/usage', label: 'Usage', icon: <BarChart3 size={18} strokeWidth={1.75} /> }
 ]
 
-const tools = [
-  { to: '/library?new=set', label: 'Set Creator', icon: Layers },
-  { to: '/library?new=photo', label: 'Image Editor', icon: ImageIcon },
-  { to: '/library?new=image', label: 'Image Generator', icon: Sparkles }
-]
-
-export function Rail({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }): React.JSX.Element {
+export function Rail({
+  collapsed,
+  onToggle
+}: {
+  collapsed: boolean
+  onToggle: () => void
+}): React.JSX.Element {
   const location = useLocation()
-  const workspace = location.pathname.startsWith('/project/')
+  const inSettings = location.pathname.startsWith('/settings')
   const appInfo = useAppStore((state) => state.appInfo)
   const confirm = useConfirm()
   const [resetting, setResetting] = useState(false)
@@ -57,88 +67,63 @@ export function Rail({ collapsed, onToggle }: { collapsed: boolean; onToggle: ()
   }
 
   return (
-    <nav className={cn('app-rail', collapsed && 'rail-collapsed')} data-collapsed={collapsed} aria-label="Studio">
-      <div className={cn('flex flex-col gap-1 pt-3', collapsed ? 'items-center px-2' : 'px-2')}>
-        {workspace && (
-          <Link to="/library" className="rail-item" aria-label="Back to Library">
-            <span className="grid h-[18px] w-[18px] place-items-center" aria-hidden>
-              ←
-            </span>
-            {!collapsed && <span className="rail-label">Back to Library</span>}
-          </Link>
-        )}
-        {items.map((item) => {
-          const Icon = item.icon
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className="rail-item"
-              data-active={location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)}
-              aria-label={collapsed ? item.label : undefined}
-            >
-              <Icon size={18} strokeWidth={1.75} />
-              {!collapsed && <span className="rail-label">{item.label}</span>}
-            </NavLink>
-          )
-        })}
-      </div>
-      <div className={cn('mt-5 flex flex-col gap-1', collapsed ? 'items-center px-2' : 'px-2')}>
-        {!collapsed ? (
-          <p className="section-label px-2 pb-1">Tools</p>
-        ) : (
-          <div className="my-1 h-px w-6" style={{ background: 'var(--border)' }} aria-hidden />
-        )}
-        {tools.map((item) => {
-          const Icon = item.icon
-          return (
-            <Link key={item.to} to={item.to} className="rail-item" aria-label={collapsed ? item.label : undefined}>
-              <Icon size={18} strokeWidth={1.75} />
-              {!collapsed && <span className="rail-label">{item.label}</span>}
-            </Link>
-          )
-        })}
-      </div>
-      <div className={cn('mt-auto flex flex-col gap-1 pb-3', collapsed ? 'items-center px-2' : 'px-2')}>
-        {appInfo && !appInfo.isPackaged && !appInfo.e2e && (
-          <button
-            type="button"
-            className="rail-item"
-            aria-label={collapsed ? 'Reset app' : undefined}
-            aria-busy={resetting}
-            disabled={resetting}
-            onClick={() => void resetApp()}
-          >
-            <RotateCcw size={18} strokeWidth={1.75} />
-            {!collapsed && <span className="rail-label">Reset App</span>}
-          </button>
-        )}
-        {import.meta.env.DEV && (
-          <NavLink
-            to="/mockups"
-            className="rail-item"
-            data-active={location.pathname === '/mockups'}
-            aria-label={collapsed ? 'Design mockups' : undefined}
-          >
-            <Palette size={18} strokeWidth={1.75} />
-            {!collapsed && <span className="rail-label">Design mockups</span>}
-          </NavLink>
-        )}
-        <NavLink
-          to="/settings/studio"
-          className="rail-item"
-          data-active={location.pathname.startsWith('/settings')}
-          aria-label={collapsed ? 'Settings' : undefined}
-        >
-          <Settings size={18} strokeWidth={1.75} />
-          {!collapsed && <span className="rail-label">Settings</span>}
-        </NavLink>
-        <div className={cn('flex items-center', collapsed ? 'justify-center' : 'justify-end')}>
-          <IconButton label={collapsed ? 'Show navigation labels' : 'Hide navigation labels'} onClick={onToggle}>
-            {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
-          </IconButton>
+    <SideNav
+      className="app-side-nav"
+      collapsible={{ isCollapsed: collapsed, onCollapsedChange: onToggle }}
+      resizable={{ defaultWidth: 232, minWidth: 200, maxWidth: 320, autoSaveId: 'moss-side-nav' }}
+      footer={
+        <div className="flex flex-col gap-1">
+          {import.meta.env.DEV && (
+            <SideNavItem
+              label="Design mockups"
+              icon={<Palette size={18} strokeWidth={1.75} />}
+              href="/mockups"
+              isSelected={location.pathname === '/mockups'}
+            />
+          )}
+          {appInfo && !appInfo.isPackaged && !appInfo.e2e && (
+            <SideNavItem
+              label="Reset App"
+              icon={<RotateCcw size={18} strokeWidth={1.75} />}
+              onClick={() => void resetApp()}
+              isDisabled={resetting}
+            />
+          )}
+          {!inSettings && (
+            <SideNavItem
+              label="Settings"
+              icon={<Settings size={18} strokeWidth={1.75} />}
+              href="/settings/studio"
+              isSelected={false}
+            />
+          )}
         </div>
-      </div>
-    </nav>
+      }
+    >
+      <SideNavSection title="Studio">
+        {items.map((item) => (
+          <SideNavItem
+            key={item.to}
+            label={item.label}
+            icon={item.icon}
+            href={item.to}
+            isSelected={location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)}
+          />
+        ))}
+      </SideNavSection>
+      {inSettings && (
+        <SideNavSection title="Settings">
+          {settingsSections.map((item) => (
+            <SideNavItem
+              key={item.id}
+              label={item.label}
+              icon={settingsIcons[item.id]}
+              href={`/settings/${item.id}`}
+              isSelected={location.pathname === `/settings/${item.id}`}
+            />
+          ))}
+        </SideNavSection>
+      )}
+    </SideNav>
   )
 }

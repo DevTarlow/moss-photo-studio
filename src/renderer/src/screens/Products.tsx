@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DropdownMenu } from 'radix-ui'
-import { Image as ImageIcon, Layers, Loader2, Package, Plus, Sparkles } from 'lucide-react'
+import { Image as ImageIcon, Layers, Loader2, Package, Plus, Search, Sparkles } from 'lucide-react'
 import type { Product, ProjectType } from '@shared/types'
 import { AppFrame } from '../components/ui/AppFrame'
 import { Button } from '../components/ui/Button'
@@ -17,6 +17,7 @@ import { unwrap, messageOf } from '../lib/ipc'
 import { formatDate } from '../lib/format'
 import { toast } from '../lib/toast'
 import { COLLECTION_PAGE_SIZE } from '@shared/constants'
+import { Heading, Selector, Text, TextInput } from '@astryxdesign/core'
 
 function ProductCard({
   product,
@@ -66,6 +67,8 @@ export function Products(): React.JSX.Element {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState<'recent' | 'oldest' | 'name'>('recent')
   const [preview, setPreview] = useState<Product | null>(null)
   const [renaming, setRenaming] = useState<Product | null>(null)
   const [renameValue, setRenameValue] = useState('')
@@ -86,12 +89,24 @@ export function Products(): React.JSX.Element {
     void load()
   }, [])
 
-  useEffect(() => {
-    const pages = Math.max(1, Math.ceil(products.length / COLLECTION_PAGE_SIZE))
-    if (page > pages) setPage(pages)
-  }, [products.length, page])
+  const filteredProducts = products
+    .filter((product) => product.name.toLowerCase().includes(search.trim().toLowerCase()))
+    .sort((a, b) => {
+      if (sort === 'name') return a.name.localeCompare(b.name)
+      if (sort === 'oldest') return a.createdAt - b.createdAt
+      return b.createdAt - a.createdAt
+    })
 
-  const visibleProducts = products.slice(
+  useEffect(() => {
+    const pages = Math.max(1, Math.ceil(filteredProducts.length / COLLECTION_PAGE_SIZE))
+    if (page > pages) setPage(pages)
+  }, [filteredProducts.length, page])
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, sort])
+
+  const visibleProducts = filteredProducts.slice(
     (page - 1) * COLLECTION_PAGE_SIZE,
     page * COLLECTION_PAGE_SIZE
   )
@@ -166,14 +181,48 @@ export function Products(): React.JSX.Element {
     <AppFrame>
       <div className="page-scroll">
         <div className="page-pad page-max">
-          <div className="flex items-center gap-3">
+          <div className="flex items-start gap-3">
             <div>
-              <h1 className="page-title">Products</h1>
-              <p className="meta">The product photos you reuse in sets, the editor, and the generator.</p>
+              <Heading level={1}>Products</Heading>
+              <Text type="supporting" color="secondary" className="block">
+                {search.trim()
+                  ? `Showing ${filteredProducts.length} of ${products.length}`
+                  : `${products.length} ${products.length === 1 ? 'product' : 'products'}`}
+              </Text>
+              <Text type="supporting" color="secondary" className="block">The product photos you reuse in sets, the editor, and the generator.</Text>
             </div>
             <Button className="ml-auto" variant="primary" onClick={() => void addProduct()} disabled={busy}>
               {busy ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} Add Product
             </Button>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="min-w-[220px] flex-1 md:max-w-[340px]">
+              <TextInput
+                label="Search products"
+                isLabelHidden
+                value={search}
+                onChange={setSearch}
+                placeholder="Search products"
+                startIcon={<Search size={15} />}
+                hasClear
+                width="100%"
+              />
+            </div>
+            <div className="ml-auto">
+              <Selector
+                label="Sort products"
+                isLabelHidden
+                value={sort}
+                onChange={(value) => { if (value) setSort(value as 'recent' | 'oldest' | 'name') }}
+                options={[
+                  { value: 'recent', label: 'Recent' },
+                  { value: 'oldest', label: 'Oldest' },
+                  { value: 'name', label: 'Name' }
+                ]}
+                width={140}
+              />
+            </div>
           </div>
 
           {loadError && products.length === 0 ? (
@@ -187,7 +236,13 @@ export function Products(): React.JSX.Element {
               icon={<Package size={22} />}
               title="No saved products yet"
               line="Save a product photo from an image, or add one from a file."
-              action={<Button variant="primary" onClick={() => void addProduct()}>Add Product</Button>}
+            />
+          ) : filteredProducts.length === 0 ? (
+            <EmptyState
+              icon={<Search size={22} />}
+              title={`No products match "${search.trim()}".`}
+              line="Try a different word."
+              action={<Button variant="secondary" onClick={() => setSearch('')}>Clear Search</Button>}
             />
           ) : (
             <div className="mt-8 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
@@ -204,7 +259,7 @@ export function Products(): React.JSX.Element {
           )}
           <Pagination
             page={page}
-            total={products.length}
+            total={filteredProducts.length}
             onPage={setPage}
             label="Product pages"
           />

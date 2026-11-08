@@ -85,4 +85,5 @@ CSP is unchanged: all Astryx CSS, fonts, and icons are bundled; there are no rem
 
 - Foundation, theme, providers, CSS layer order, and the development-only mockup gallery are in place.
 - Onboarding is redesigned with four setup steps, product-first behavior, key-later, a persisted category, sticky actions, and Ready.
-- The app shell and the collection/workspace screens still use the legacy custom primitives; they are the next phases of the redesign.
+- The Astryx AppShell, TopNav, and SideNav now wrap the app; Library, Products, People, Usage, and Settings use Astryx controls and shared collection patterns.
+- The Set, Photo, and Create workspaces still use the legacy internal panels and canvas; they are the next phase. The shell and the custom canvas/crop/filmstrip remain separate.

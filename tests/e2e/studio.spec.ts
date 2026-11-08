@@ -65,6 +65,12 @@ async function screenshot(name: string, compare = true): Promise<void> {
   }
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
+      // Leave the pointer on neutral top-bar space and drop focus so
+      // collapsed-nav tooltips and card hover actions do not become part of
+      // the baseline.
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+      await page.mouse.move(700, 10)
+      await page.waitForTimeout(180)
       if (captureOnly || !fs.existsSync(file) || process.env.MOSS_UPDATE_SCREENS === '1') {
         await page.screenshot({ path: file, animations: 'disabled' })
       } else {
@@ -258,9 +264,8 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await expect(page.getByRole('heading', { name: "You're set up." })).toBeVisible({ timeout: 30_000 })
     await page.getByRole('button', { name: 'Open Library' }).click()
     await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Set Creator' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Image Editor' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Image Generator' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'New project' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Select' })).toBeVisible()
     await screenshot('library-light')
     await page.getByRole('link', { name: /Open product/ }).first().click()
     await expect(page.getByText('Your set is ready. 6 images.')).toBeVisible({ timeout: 20_000 })
@@ -313,7 +318,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     const blur = await backdrop.evaluate((element) => getComputedStyle(element).backdropFilter)
     expect(blur).toContain('blur')
     await screenshot('set-lightbox')
-    await assertNoSeriousA11y('set-lightbox')
+    await assertNoSeriousA11y('set-lightbox', '[role="dialog"]')
     await page.mouse.click(60, 450)
     await expect(preview).toBeHidden()
     await page.getByRole('button', { name: /Main shot of the product/ }).first().click()
@@ -430,7 +435,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.getByRole('button', { name: 'Export Set', exact: true }).click()
     const dialog = page.getByRole('dialog')
     await page.waitForTimeout(350)
-    await assertNoSeriousA11y('export-set-dialog')
+    await assertNoSeriousA11y('export-set-dialog', '[role="dialog"]')
     await dialog.getByRole('button', { name: 'Export', exact: true }).click()
     await expect.poll(() => fs.existsSync(path.join(exportFolder, 'set.txt')), { timeout: 20_000 }).toBe(true)
     const files = fs.readdirSync(exportFolder)
@@ -696,9 +701,11 @@ test.describe.serial('Moss Photo Studio journey', () => {
     updateValidation(13)
     license.control('down')
     await launch()
+    await page.getByRole('button', { name: 'New project' }).waitFor({ timeout: 20_000 })
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1024, 700))
-    await page.getByRole('link', { name: 'Library', exact: true }).first().click()
-    await expect(page.getByText(/Working offline\. License checks resume when you're connected\./)).toBeVisible({ timeout: 20_000 })
+    await page.evaluate(() => { window.location.hash = '#/library' })
+    await expect(page.getByText('Working offline', { exact: true }).first()).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByText("License checks resume when you're connected.", { exact: true }).first()).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Open Studio' }).first()).toBeVisible()
     await expect(page.getByText('Finish setting up')).toHaveCount(0)

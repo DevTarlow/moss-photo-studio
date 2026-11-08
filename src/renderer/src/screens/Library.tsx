@@ -1,28 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import type { DragEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { DropdownMenu } from 'radix-ui'
 import {
-  ChevronDown,
-  ChevronsUpDown,
+  CheckSquare,
   Grid2X2,
   Image as ImageIcon,
   Layers,
   List,
-  Loader2,
-  Plus,
   Search,
   Sparkles,
-  Trash2,
-  TriangleAlert
+  Trash2
 } from 'lucide-react'
 import type { Project, ProjectFilter, ProjectSort } from '@shared/types'
 import { useLibraryStore } from '../store/library'
 import { useAppStore } from '../store/app'
 import { useJobsStore } from '../store/jobs'
 import { AppFrame } from '../components/ui/AppFrame'
-import { Button } from '../components/ui/Button'
-import { Chip } from '../components/ui/Chip'
 import { Dialog } from '../components/ui/Dialog'
 import { Field } from '../components/ui/Field'
 import { EmptyState } from '../components/ui/EmptyState'
@@ -30,7 +23,6 @@ import { ErrorState } from '../components/ui/ErrorState'
 import { LibrarySkeleton } from '../components/ui/Skeleton'
 import { ProjectCard } from '../components/library/ProjectCard'
 import { NewProjectDialog } from '../components/library/NewProjectDialog'
-import { SetupCard } from '../components/library/SetupCard'
 import { useConfirm } from '../components/ui/ConfirmProvider'
 import { unwrap, messageOf } from '../lib/ipc'
 import { usd } from '../lib/format'
@@ -40,6 +32,18 @@ import { onCommand } from '../lib/commands'
 import { fileToBytes } from '../lib/files'
 import { warnIfSmallPhoto } from '../lib/photoWarnings'
 import { Pagination } from '../components/ui/Pagination'
+import {
+  Banner,
+  Button,
+  ClickableCard,
+  Grid,
+  Heading,
+  Selector,
+  Text,
+  TextInput,
+  ToggleButton,
+  ToggleButtonGroup
+} from '@astryxdesign/core'
 
 const filters: Array<{ id: ProjectFilter; label: string }> = [
   { id: 'all', label: 'All' },
@@ -60,6 +64,7 @@ export function Library(): React.JSX.Element {
   const store = useLibraryStore()
   const jobs = useJobsStore((state) => state.jobs)
   const secrets = useAppStore((state) => state.secrets)
+  const settings = useAppStore((state) => state.settings)
   const license = useAppStore((state) => state.license)
   const canGenerate = useAppStore((state) => state.canGenerate)
   const applyLicense = useAppStore((state) => state.applyLicense)
@@ -73,12 +78,25 @@ export function Library(): React.JSX.Element {
   const [dragOver, setDragOver] = useState(false)
   const dragDepth = useRef(0)
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
+  const [selectMode, setSelectMode] = useState(false)
+  const [allTotal, setAllTotal] = useState(0)
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     void store.load()
     void store.refreshMonth()
+    void refreshTotal()
     // Initial load only. Filter changes load themselves.
+  }, [])
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key !== 'Escape') return
+      setSelected(new Set())
+      setSelectMode(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [])
 
   useEffect(() => {
@@ -132,6 +150,15 @@ export function Library(): React.JSX.Element {
     })
   }, [store.items])
 
+  async function refreshTotal(): Promise<void> {
+    try {
+      const result = await unwrap(window.moss.projects.list({ limit: 1 }))
+      setAllTotal(result.total)
+    } catch {
+      // The header falls back to the filtered total.
+    }
+  }
+
   const createImageProject = async (): Promise<void> => {
     try {
       const detail = await unwrap(window.moss.projects.create({ type: 'image' }))
@@ -156,6 +183,7 @@ export function Library(): React.JSX.Element {
   const duplicate = async (project: Project): Promise<void> => {
     try {
       await store.duplicate(project.id)
+      void refreshTotal()
       toast.status('Project duplicated.')
     } catch {
       toast.error('The project could not be duplicated.')
@@ -173,10 +201,16 @@ export function Library(): React.JSX.Element {
     if (!ok) return
     try {
       await store.remove(project.id)
+      void refreshTotal()
       toast.status('Project deleted.')
     } catch (caught) {
       toast.error(messageOf(caught))
     }
+  }
+
+  const selectAll = (): void => {
+    setSelectMode(true)
+    setSelected(new Set(store.items.map((project) => project.id)))
   }
 
   const toggleSelect = (id: string, next: boolean): void => {
@@ -203,6 +237,7 @@ export function Library(): React.JSX.Element {
     setDeleting(true)
     try {
       const failed = await store.removeMany(projects.map((project) => project.id))
+      void refreshTotal()
       const deleted = count - failed.length
       if (deleted > 0) {
         toast.status(`${deleted} ${deleted === 1 ? 'project' : 'projects'} deleted.`)
@@ -299,6 +334,9 @@ export function Library(): React.JSX.Element {
 
   const empty = !store.loading && store.items.length === 0
   const filtering = Boolean(store.search.trim()) || store.filter !== 'all'
+  const showSetup = Boolean(settings && !settings.onboardingDone)
+  const showNoKey = Boolean(settings?.onboardingDone && secrets?.hasKey === false && license?.status !== 'expired')
+  const showBanners = license?.status === 'grace' || license?.status === 'expired' || showSetup || showNoKey
 
   const renderProject = (project: Project, view: 'grid' | 'list'): React.ReactNode => (
     <ProjectCard
@@ -306,7 +344,7 @@ export function Library(): React.JSX.Element {
       view={view}
       job={jobFor(project.id)}
       selected={selected.has(project.id)}
-      selecting={selected.size > 0}
+      selecting={selectMode || selected.size > 0}
       onSelect={(next) => toggleSelect(project.id, next)}
       onRename={() => { setRenameProject(project); setRenameValue(project.name) }}
       onDuplicate={() => void duplicate(project)}
@@ -339,144 +377,162 @@ export function Library(): React.JSX.Element {
         onDrop={(event) => void handleDrop(event)}
       >
         <div className="page-pad page-max">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-start gap-3">
             <div>
-              <h1 className="page-title">Library</h1>
-              <p className="meta">{store.total} {store.total === 1 ? 'project' : 'projects'}</p>
+              <Heading level={1}>Library</Heading>
+              <Text type="supporting" color="secondary">
+                {filtering
+                  ? `Showing ${store.total} of ${allTotal || store.total}`
+                  : `${allTotal || store.total} ${(allTotal || store.total) === 1 ? 'project' : 'projects'}`}
+              </Text>
             </div>
             <div className="ml-auto flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                className="pill"
+              <Button
+                label={`${usd(store.monthCents)} this month`}
+                variant="ghost"
+                size="sm"
                 onClick={() => navigate('/usage')}
-                title="Open Usage"
-              >
-                {usd(store.monthCents)} this month
-              </button>
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <Button variant="primary" aria-label="New project">
-                    <Plus size={16} /> New <ChevronDown size={14} />
-                  </Button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content className="menu-content" align="end" sideOffset={6}>
-                    <DropdownMenu.Item className="menu-item menu-item-stack" onSelect={() => openNew('set')}>
-                      <span className="flex items-center gap-2 font-semibold"><Layers size={15} /> Set Creator</span>
-                      <span className="pl-6 text-[11px]" style={{ color: 'var(--text-faint)' }}>One photo in, a full set out.</span>
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item className="menu-item menu-item-stack" onSelect={() => openNew('photo')}>
-                      <span className="flex items-center gap-2 font-semibold"><ImageIcon size={15} /> Image Editor</span>
-                      <span className="pl-6 text-[11px]" style={{ color: 'var(--text-faint)' }}>Change a photo you already have.</span>
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item className="menu-item menu-item-stack" onSelect={() => openNew('image')}>
-                      <span className="flex items-center gap-2 font-semibold"><Sparkles size={15} /> Image Generator</span>
-                      <span className="pl-6 text-[11px]" style={{ color: 'var(--text-faint)' }}>Describe a picture and make it.</span>
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
-            </div>
-          </div>
-
-          {license?.status === 'grace' && (
-            <div className="readonly-banner mt-4" role="status">
-              <span>Working offline. License checks resume when you're connected.</span>
-              <Button size="sm" variant="secondary" onClick={() => {
-                void unwrap(window.moss.license.validate()).then((state) => {
-                  applyLicense(state)
-                  if (state.status === 'licensed') toast.status('License checked.')
-                }).catch(() => toast.error('Could not reach the license server. Try again.'))
-              }}>Check Now</Button>
-            </div>
-          )}
-          {!canGenerate && license && (
-            <div className="readonly-banner mt-4" role="status">
-              <span>
-                {license.status === 'expired'
-                  ? 'Reactivate to make images. Your library, edits and exports still work.'
-                  : 'Add your Muse key in Settings to make images.'}
-              </span>
-              <Button size="sm" variant="secondary" onClick={() => navigate(license.status === 'expired' ? '/settings/license' : '/settings/studio')}>
-                {license.status === 'expired' ? 'Open License' : 'Open Studio'}
-              </Button>
-            </div>
-          )}
-          {secrets?.hasKey === false && (
-            <div className="readonly-banner mt-4" role="status">
-              <span>Add your Muse key in Settings to make images.</span>
-              <Button size="sm" variant="secondary" onClick={() => navigate('/settings/studio')}>Open Studio</Button>
-            </div>
-          )}
-
-          <div className="mt-4">
-            <SetupCard />
-          </div>
-
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <div className="relative min-w-[220px] flex-1 md:max-w-[340px]">
-              <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-faint)' }} aria-hidden />
-              <input
-                ref={searchRef}
-                className="field search-field"
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search projects"
-                aria-label="Search projects"
+              />
+              <Button
+                label={selectMode ? 'Done selecting' : 'Select'}
+                variant={selectMode ? 'secondary' : 'ghost'}
+                size="sm"
+                icon={<CheckSquare size={14} />}
+                onClick={() => {
+                  if (selectMode) setSelected(new Set())
+                  setSelectMode((current) => !current)
+                }}
               />
             </div>
-            <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Filter projects">
-              {filters.map((filter) => (
-                <Chip key={filter.id} selected={store.filter === filter.id} onClick={() => store.setFilter(filter.id)}>
-                  {filter.label}
-                </Chip>
-              ))}
+          </div>
+
+          {showBanners && (
+            <div className="mt-4 flex flex-col gap-2">
+              {license?.status === 'grace' && (
+                <Banner
+                  status="warning"
+                  title="Working offline"
+                  description="License checks resume when you're connected."
+                  endContent={
+                    <Button
+                      label="Check Now"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        void unwrap(window.moss.license.validate())
+                          .then((state) => {
+                            applyLicense(state)
+                            if (state.status === 'licensed') toast.status('License checked.')
+                          })
+                          .catch(() => toast.error('Could not reach the license server. Try again.'))
+                      }}
+                    />
+                  }
+                  collapsible={false}
+                />
+              )}
+              {license?.status === 'expired' && (
+                <Banner
+                  status="error"
+                  title="Reactivate to make images"
+                  description="Your library, edits, and exports still work."
+                  endContent={<Button label="Open License" variant="secondary" size="sm" onClick={() => navigate('/settings/license')} />}
+                  collapsible={false}
+                />
+              )}
+              {showSetup && (
+                <Banner
+                  status="info"
+                  title="Finish setting up"
+                  description="Add your first product and make a set when you're ready."
+                  endContent={<Button label="Resume Setup" variant="secondary" size="sm" onClick={() => navigate('/onboarding')} />}
+                  collapsible={false}
+                />
+              )}
+              {showNoKey && (
+                <Banner
+                  status="warning"
+                  title="Add your Muse key"
+                  description="Making images needs a Meta Muse key. Your library and local edits still work."
+                  endContent={<Button label="Open Studio" variant="secondary" size="sm" onClick={() => navigate('/settings/studio')} />}
+                  collapsible={false}
+                />
+              )}
             </div>
-            <div className="ml-auto flex items-center gap-1">
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <button type="button" className="btn btn-ghost btn-sm">
-                    <ChevronsUpDown size={14} /> {sorts.find((sort) => sort.id === store.sort)?.label}
-                  </button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content className="menu-content" align="end" sideOffset={4}>
-                    {sorts.map((sort) => (
-                      <DropdownMenu.Item key={sort.id} className="menu-item" onSelect={() => store.setSort(sort.id)}>
-                        {sort.label}
-                      </DropdownMenu.Item>
-                    ))}
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
-              <div className="segmented" role="group" aria-label="View as">
-                <button type="button" data-selected={store.view === 'grid'} aria-pressed={store.view === 'grid'} aria-label="Grid view" onClick={() => store.setView('grid')}>
-                  <Grid2X2 size={14} />
-                </button>
-                <button type="button" data-selected={store.view === 'list'} aria-pressed={store.view === 'list'} aria-label="List view" onClick={() => store.setView('list')}>
-                  <List size={14} />
-                </button>
-              </div>
+          )}
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="min-w-[220px] flex-1 md:max-w-[340px]">
+              <TextInput
+                ref={searchRef}
+                label="Search projects"
+                isLabelHidden
+                value={search}
+                onChange={setSearch}
+                placeholder="Search projects"
+                startIcon={<Search size={15} />}
+                hasClear
+                width="100%"
+              />
+            </div>
+            <ToggleButtonGroup
+              type="single"
+              label="Filter projects"
+              value={store.filter}
+              onChange={(value) => {
+                store.setFilter((value as ProjectFilter | null) ?? 'all')
+              }}
+            >
+              {filters.map((filter) => (
+                <ToggleButton key={filter.id} value={filter.id} label={filter.label} size="sm" />
+              ))}
+            </ToggleButtonGroup>
+            <div className="ml-auto flex items-center gap-2">
+              <Selector
+                label="Sort projects"
+                isLabelHidden
+                value={store.sort}
+                onChange={(value) => {
+                  if (value) store.setSort(value as ProjectSort)
+                }}
+                options={sorts.map((sort) => ({ value: sort.id, label: sort.label }))}
+                width={140}
+              />
+              <ToggleButtonGroup
+                type="single"
+                label="View as"
+                value={store.view}
+                onChange={(value) => {
+                  if (value === 'grid' || value === 'list') store.setView(value)
+                }}
+              >
+                <ToggleButton value="grid" label="Grid view" isIconOnly icon={<Grid2X2 size={14} />} size="sm" />
+                <ToggleButton value="list" label="List view" isIconOnly icon={<List size={14} />} size="sm" />
+              </ToggleButtonGroup>
             </div>
           </div>
 
           {selectedProjects.length > 0 && (
             <div
               className="mt-4 flex flex-wrap items-center gap-3 rounded-[10px] border px-3 py-2"
-              style={{ borderColor: 'var(--border-strong)', background: 'var(--surface)' }}
+              style={{ borderColor: 'var(--color-border-emphasized)', background: 'var(--color-background-surface)' }}
               role="status"
               aria-live="polite"
             >
-              <p className="text-[12px] font-semibold">{selectedProjects.length} selected</p>
-              <p className="meta">Click a project to add or remove it.</p>
+              <Text weight="bold">{selectedProjects.length} selected</Text>
+              <Text type="supporting" color="secondary">Click a project to add or remove it.</Text>
               <div className="ml-auto flex items-center gap-2">
-                <Button variant="ghost" size="sm" disabled={deleting} onClick={() => setSelected(new Set())}>
-                  Clear
-                </Button>
-                <Button variant="danger" size="sm" disabled={deleting} onClick={() => void removeSelected()}>
-                  {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />} Delete
-                </Button>
+                <Button label="Select all" variant="ghost" size="sm" onClick={selectAll} />
+                <Button label="Clear" variant="ghost" size="sm" isDisabled={deleting} onClick={() => setSelected(new Set())} />
+                <Button
+                  label="Delete"
+                  variant="destructive"
+                  size="sm"
+                  icon={<Trash2 size={14} />}
+                  isLoading={deleting}
+                  isDisabled={deleting}
+                  onClick={() => void removeSelected()}
+                />
               </div>
             </div>
           )}
@@ -492,12 +548,12 @@ export function Library(): React.JSX.Element {
                   icon={<Search size={22} />}
                   title={`No projects match "${store.search.trim() || filters.find((f) => f.id === store.filter)?.label}".`}
                   line="Try a different word."
-                  action={<Button variant="secondary" onClick={() => { setSearch(''); store.setFilter('all'); store.setSearch(''); void store.load() }}>Clear Search</Button>}
+                  action={<Button label="Clear Search" variant="secondary" onClick={() => { setSearch(''); store.setFilter('all'); store.setSearch(''); void store.load() }} />}
                 />
               ) : (
                 <div>
-                  <p className="text-center text-[12px]" style={{ color: 'var(--text-muted)' }}>Start with a photo of something you sell.</p>
-                  <div className="mx-auto mt-4 grid max-w-[900px] gap-4 md:grid-cols-3">
+                  <Text type="supporting" color="secondary" className="text-center">Start with a photo of something you sell.</Text>
+                  <Grid columns={{ minWidth: 220, max: 3 }} gap={4} className="mx-auto mt-4 max-w-[900px]">
                     {[
                       { type: 'set' as const, icon: Layers, title: 'Set Creator', line: 'One photo in, a full set out.' },
                       { type: 'photo' as const, icon: ImageIcon, title: 'Image Editor', line: 'New scene, new light, same product.' },
@@ -505,16 +561,25 @@ export function Library(): React.JSX.Element {
                     ].map((card) => {
                       const Icon = card.icon
                       return (
-                        <button key={card.type} type="button" className="card card-hover p-6 text-left" onClick={() => openNew(card.type)}>
-                          <span className="grid h-10 w-10 place-items-center rounded-full" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
+                        <ClickableCard
+                          key={card.type}
+                          label={card.title}
+                          onClick={() => openNew(card.type)}
+                          padding={5}
+                          elevation="low"
+                        >
+                          <span
+                            className="grid h-10 w-10 place-items-center rounded-full"
+                            style={{ background: 'var(--color-accent-muted)', color: 'var(--color-text-accent)' }}
+                          >
                             <Icon size={20} />
                           </span>
-                          <h2 className="empty-title mt-4">{card.title}</h2>
-                          <p className="meta mt-1">{card.line}</p>
-                        </button>
+                          <Text weight="bold" className="mt-4">{card.title}</Text>
+                          <Text type="supporting" color="secondary" className="mt-1">{card.line}</Text>
+                        </ClickableCard>
                       )
                     })}
-                  </div>
+                  </Grid>
                 </div>
               )
             ) : store.view === 'grid' ? (
@@ -540,13 +605,6 @@ export function Library(): React.JSX.Element {
               busy={store.loading}
               label="Library pages"
             />
-          )}
-
-          {!secrets?.hasKey && !store.loading && !empty && (
-            <p className="hint mt-6 flex items-center gap-2">
-              <TriangleAlert size={14} style={{ color: 'var(--warning)' }} />
-              Add your Muse key in Settings to make images.
-            </p>
           )}
         </div>
         {dragOver && (
@@ -575,8 +633,8 @@ export function Library(): React.JSX.Element {
         description="The new name shows in the Library and on exports."
         footer={
           <>
-            <Button variant="secondary" onClick={() => setRenameProject(null)}>Cancel</Button>
-            <Button variant="primary" onClick={() => void rename()}>Save Name</Button>
+            <Button label="Cancel" variant="secondary" onClick={() => setRenameProject(null)} />
+            <Button label="Save Name" variant="primary" onClick={() => void rename()} />
           </>
         }
       >

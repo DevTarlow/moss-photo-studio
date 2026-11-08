@@ -58,7 +58,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - Offline: with both fake hosts down, generation shows the approved offline copy, no images, no cost. The library, local adjust, and export remain usable.
 - Stray network: no renderer request left for an unexpected host. Only `moss-media://` and the local fake hosts appeared.
 - License grace: with the stored validation moved back 13 days and the store down, the app opened the library with the grace banner. At 15 days it opened Activation, Browse My Library worked, and a project showed the read-only message.
-- Setup card: while onboarding is incomplete, the library shows Finish setting up with Resume Setup; it no longer marks onboarding done when a key exists.
+- Setup prompt: while onboarding is incomplete, the Library shows a Finish setting up banner with Resume Setup; it no longer marks onboarding done when a key exists.
 - Axe: activation, the new onboarding steps (welcome, key, product, set, ready), set plan, set review, image editor, adjusted photo, Create empty, Create results, Usage, People, Settings light, Library light, Library dark, Library at 1024, Library at 150% zoom, the first-run confirmation dialog (scoped to the dialog), and the set export dialog were checked. No serious or critical violations remained.
 - Screenshot comparison passed on a second run with the live app.
 - Large library: 510 created projects loaded 20 at a time. Previous and Next moved between pages, and search found the oldest project.
@@ -77,6 +77,13 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - Astryx 0.7.11 is pinned and themed as Moss. The custom canvas, crop overlay, filmstrip, brand badge preview, and file-drop logic stay custom.
 - The dev-only `/mockups` route renders the three onboarding directions at 1440 and 1024 in light and dark. It is not linked from the packaged UI and is not part of the production route flow.
 - The full UI migration is phased; only the onboarding and the shared Astryx foundation are part of this change.
+
+### 3b. App shell and collections
+
+- [x] **A** The rail has Library, Products, People, Usage, and Settings. The Tools block is gone; the top-bar New menu launches Set Creator, Image Editor, and Image Generator from every main screen.
+- [x] **A** Library has one New entry point, one key/setup banner area, a Select mode, Select all, Clear, Delete, and a sticky bulk bar. The hover checkbox still works.
+- [x] **A** Products and People have search, sort, and result counts. The Settings storage section is named Storage.
+- [x] **A** Settings uses the same SideNav as the rest of the app; the second settings aside is gone and the content is centered at 1440 and 1024.
 
 ## Acceptance checklist
 

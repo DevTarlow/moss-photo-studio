@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
+import { AppShell } from '@astryxdesign/core'
 import { useViewportTier } from '../../lib/viewport'
 import { useUiStore } from '../../store/ui'
 import { Rail } from './Rail'
@@ -24,19 +25,18 @@ export function AppFrame({
   const location = useLocation()
   const collapsed = tier === 'wide' ? (override ?? false) : true
   return (
-    <div className="flex h-full min-h-0 w-full flex-col">
-      <TopBar
-        title={title}
-        titleContent={titleContent}
-        backTo={backTo}
-        right={topbarRight}
-      />
-      <div className="app-shell-row">
-        <Rail collapsed={collapsed} onToggle={toggleRail} />
-        <main className="app-main" key={location.pathname}>
-          {children}
-        </main>
+    <AppShell
+      className="app-shell"
+      height="fill"
+      variant="section"
+      contentPadding={0}
+      mobileNav={{ breakpoint: 'sm' }}
+      topNav={<TopBar title={title} titleContent={titleContent} backTo={backTo} right={topbarRight} />}
+      sideNav={<Rail collapsed={collapsed} onToggle={toggleRail} />}
+    >
+      <div key={location.pathname} className="flex h-full min-h-0 flex-col">
+        {children}
       </div>
-    </div>
+    </AppShell>
   )
 }

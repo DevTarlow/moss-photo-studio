@@ -109,7 +109,7 @@ export function ProjectCard({
             Making {job.done + job.failed} of {job.total}
           </span>
         )}
-        <div className="relative z-10 opacity-0 group-hover:opacity-100 focus-within:opacity-100">{menu}</div>
+        <div className="relative z-10 pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100">{menu}</div>
         {job && (
           <div className="absolute bottom-0 left-0 right-0">
             <Progress value={progress} max={100} label="Making" />
@@ -131,21 +131,20 @@ export function ProjectCard({
       }}
     >
       {check}
-      <Link to={`/project/${project.id}`} aria-label={`Open ${project.name}`} className="block">
-        {project.coverUrl ? (
-          <img src={project.coverUrl} alt="" className="lib-cover" />
-        ) : (
-          <div className="lib-cover-empty">
-            <Icon size={24} />
-          </div>
-        )}
-      </Link>
-      <div className="p-3">
+      <Link to={`/project/${project.id}`} aria-label={`Open ${project.name}`} className="absolute inset-0 z-0" />
+      {project.coverUrl ? (
+        <img src={project.coverUrl} alt="" className="lib-cover pointer-events-none relative z-0" />
+      ) : (
+        <div className="lib-cover-empty pointer-events-none relative z-0">
+          <Icon size={24} />
+        </div>
+      )}
+      <div className="pointer-events-none relative z-10 p-3">
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
-            <Link to={`/project/${project.id}`} className="block truncate text-[13px] font-semibold" style={{ color: 'var(--text)' }}>
+            <p className="truncate text-[13px] font-semibold" style={{ color: 'var(--text)' }}>
               {project.name}
-            </Link>
+            </p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <span className="badge">{typeLabel[project.type]}</span>
               {job ? (
@@ -155,7 +154,7 @@ export function ProjectCard({
               )}
             </div>
           </div>
-          <div className="relative z-10">{menu}</div>
+          <div className="pointer-events-auto relative z-10">{menu}</div>
         </div>
         {job && (
           <div className="mt-2">

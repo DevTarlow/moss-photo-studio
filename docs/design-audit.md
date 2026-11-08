@@ -22,7 +22,7 @@ The redesign keeps the Moss identity and the custom canvas, and adopts Astryx fo
 - The key, a full Logo & Colors step, and a full category screen come before the first product. The brand step has no preview and asks for a save even when nothing changed.
 - The first photo is imported as a set, so “Just Add the Photo” opens the Set Creator. Products already exist; the first photo should be saved as a Product and a set should be created only on Make.
 - Resume is skin-deep: the step persists, but category, the selected photo, and the plan draft do not. An active job is not reattached.
-- `SetupCard` marks onboarding done as a side effect of a saved key, and “Finish later” is session-only. The setup card should be a resume prompt, not a completion toggle.
+- `SetupCard` marked onboarding done as a side effect of a saved key, and “Finish later” was session-only. The replacement is a single resume Banner and a persisted `onboardingDismissed` setting.
 - Focus falls to the document on step changes. Back/Skip stay enabled during a paid run. The first-run confirmation’s initial focus is the dismissive action, not the priced primary.
 - Copy uses “Muse key,” “Meta key,” “API key,” and “License key” for two different secrets, and billing alternates between “makes,” “comes back,” and “about.”
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   AlertTriangle,
   Check,
@@ -26,28 +26,20 @@ import { usd, formatDateTime, relativeTime } from '../lib/format'
 import { toast } from '../lib/toast'
 import { markUrl } from '../lib/assets'
 import { Skeleton } from '../components/ui/Skeleton'
-
-const sections = [
-  { id: 'studio', label: 'API key' },
-  { id: 'brand', label: 'Logo & Colors' },
-  { id: 'library', label: 'Library' },
-  { id: 'appearance', label: 'Appearance' },
-  { id: 'license', label: 'License' },
-  { id: 'privacy', label: 'Privacy' },
-  { id: 'about', label: 'About' }
-] as const
+import { Card, Heading, Text } from '@astryxdesign/core'
+import { settingsSections } from '../lib/settingsSections'
 
 function SettingsTitle({ title, line }: { title: string; line: string }): React.JSX.Element {
   return (
     <div className="mb-6">
-      <h1 className="page-title">{title}</h1>
-      <p className="meta mt-1">{line}</p>
+      <Heading level={1}>{title}</Heading>
+      <Text type="supporting" color="secondary" className="mt-1">{line}</Text>
     </div>
   )
 }
 
 function SectionCard({ children, className }: { children: React.ReactNode; className?: string }): React.JSX.Element {
-  return <div className={`card p-5 ${className ?? ''}`}>{children}</div>
+  return <Card padding={5} className={className}>{children}</Card>
 }
 
 export function Settings(): React.JSX.Element {
@@ -56,32 +48,15 @@ export function Settings(): React.JSX.Element {
   return (
     <AppFrame>
       <div className="page-scroll">
-        <div className="flex min-h-full" style={{ maxWidth: 1120 }}>
-          <aside className="w-[210px] min-w-[210px] border-r px-4 py-7" style={{ borderColor: 'var(--border)' }}>
-            <p className="section-label px-2">Settings</p>
-            <nav className="mt-3 flex flex-col gap-1" aria-label="Settings sections">
-              {sections.map((item) => (
-                <NavLink
-                  key={item.id}
-                  to={`/settings/${item.id}`}
-                  className="rail-item"
-                  data-active={section === item.id}
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </nav>
-          </aside>
-          <div className="settings-max min-w-0 flex-1 px-8 py-7">
-            {section === 'studio' && <StudioSection />}
-            {section === 'brand' && <BrandSection />}
-            {section === 'library' && <LibrarySection />}
-            {section === 'appearance' && <AppearanceSection />}
-            {section === 'license' && <LicenseSection />}
-            {section === 'privacy' && <PrivacySection />}
-            {section === 'about' && <AboutSection />}
-            {!sections.some((item) => item.id === section) && <StudioSection />}
-          </div>
+        <div className="mx-auto w-full max-w-[880px] px-8 py-7">
+          {section === 'studio' && <StudioSection />}
+          {section === 'brand' && <BrandSection />}
+          {section === 'library' && <LibrarySection />}
+          {section === 'appearance' && <AppearanceSection />}
+          {section === 'license' && <LicenseSection />}
+          {section === 'privacy' && <PrivacySection />}
+          {section === 'about' && <AboutSection />}
+          {!settingsSections.some((item) => item.id === section) && <StudioSection />}
         </div>
       </div>
     </AppFrame>
@@ -352,7 +327,7 @@ function LibrarySection(): React.JSX.Element {
 
   return (
     <div>
-      <SettingsTitle title="Library" line="Everything the studio saves lives in one folder on this computer." />
+      <SettingsTitle title="Storage" line="Everything the studio saves lives in one folder on this computer." />
       <SectionCard>
         <p className="field-label">Folder</p>
         <p className="break-all font-mono text-[12px]">{stats?.path ?? settings?.libraryPath ?? appInfo?.paths.library ?? 'Not set'}</p>

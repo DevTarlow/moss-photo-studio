@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { UserPlus, Users } from 'lucide-react'
+import { Search, UserPlus, Users } from 'lucide-react'
 import type { Person } from '@shared/types'
 import { AppFrame } from '../components/ui/AppFrame'
 import { Button } from '../components/ui/Button'
@@ -18,6 +18,7 @@ import { fileToBytes } from '../lib/files'
 import { toast } from '../lib/toast'
 import { COLLECTION_PAGE_SIZE } from '@shared/constants'
 import { DropdownMenu } from 'radix-ui'
+import { Heading, Selector, Text, TextInput } from '@astryxdesign/core'
 
 function PersonCard({
   person,
@@ -76,6 +77,8 @@ export function People(): React.JSX.Element {
   const [loading, setLoading] = useState(people.length === 0)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [yoursPage, setYoursPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState<'default' | 'name' | 'used'>('default')
 
   const loadPeople = async (): Promise<void> => {
     setLoading(true)
@@ -93,14 +96,24 @@ export function People(): React.JSX.Element {
     void loadPeople()
   }, [])
 
-  const included = people.filter((person) => person.source === 'bundled')
-  const yours = people.filter((person) => person.source === 'user')
+  const matching = people.filter((person) => person.name.toLowerCase().includes(search.trim().toLowerCase()))
+  const sortPeople = (list: Person[]): Person[] => {
+    if (sort === 'name') return [...list].sort((a, b) => a.name.localeCompare(b.name))
+    if (sort === 'used') return [...list].sort((a, b) => b.usedIn - a.usedIn || a.name.localeCompare(b.name))
+    return list
+  }
+  const included = sortPeople(matching.filter((person) => person.source === 'bundled'))
+  const yours = sortPeople(matching.filter((person) => person.source === 'user'))
   const visibleYours = yours.slice((yoursPage - 1) * COLLECTION_PAGE_SIZE, yoursPage * COLLECTION_PAGE_SIZE)
 
   useEffect(() => {
     const pages = Math.max(1, Math.ceil(yours.length / COLLECTION_PAGE_SIZE))
     if (yoursPage > pages) setYoursPage(pages)
   }, [yours.length, yoursPage])
+
+  useEffect(() => {
+    setYoursPage(1)
+  }, [search, sort])
 
   const addWithPicker = async (): Promise<void> => {
     if (!name.trim()) {
@@ -200,14 +213,48 @@ export function People(): React.JSX.Element {
     <AppFrame>
       <div className="page-scroll">
         <div className="page-pad page-max">
-          <div className="flex items-center gap-3">
+          <div className="flex items-start gap-3">
             <div>
-              <h1 className="page-title">People</h1>
-              <p className="meta">The people you can put your products on.</p>
+              <Heading level={1}>People</Heading>
+              <Text type="supporting" color="secondary" className="block">
+                {search.trim()
+                  ? `Showing ${matching.length} of ${people.length}`
+                  : `${included.length} included · ${yours.length} yours`}
+              </Text>
+              <Text type="supporting" color="secondary" className="block">The people you can put your products on.</Text>
             </div>
             <Button className="ml-auto" variant="primary" onClick={() => setAddOpen(true)}>
               <UserPlus size={16} /> Add a Person
             </Button>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="min-w-[220px] flex-1 md:max-w-[340px]">
+              <TextInput
+                label="Search people"
+                isLabelHidden
+                value={search}
+                onChange={setSearch}
+                placeholder="Search people"
+                startIcon={<Search size={15} />}
+                hasClear
+                width="100%"
+              />
+            </div>
+            <div className="ml-auto">
+              <Selector
+                label="Sort people"
+                isLabelHidden
+                value={sort}
+                onChange={(value) => { if (value) setSort(value as 'default' | 'name' | 'used') }}
+                options={[
+                  { value: 'default', label: 'Included first' },
+                  { value: 'name', label: 'Name' },
+                  { value: 'used', label: 'Most used' }
+                ]}
+                width={160}
+              />
+            </div>
           </div>
 
           {loadError && people.length === 0 ? (
@@ -221,7 +268,13 @@ export function People(): React.JSX.Element {
               icon={<Users size={22} />}
               title="No people yet"
               line="Add a person to put your products on someone."
-              action={<Button variant="primary" onClick={() => setAddOpen(true)}>Add a Person</Button>}
+            />
+          ) : matching.length === 0 ? (
+            <EmptyState
+              icon={<Search size={22} />}
+              title={`No people match "${search.trim()}".`}
+              line="Try a different name."
+              action={<Button variant="secondary" onClick={() => setSearch('')}>Clear Search</Button>}
             />
           ) : (
           <>

@@ -3,10 +3,8 @@ import { Link } from 'react-router-dom'
 import { BarChart3, Download } from 'lucide-react'
 import type { UsageEvent, UsageSummary } from '@shared/types'
 import { AppFrame } from '../components/ui/AppFrame'
-import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
-import { Progress } from '../components/ui/Progress'
 import { Pagination } from '../components/ui/Pagination'
 import { Skeleton } from '../components/ui/Skeleton'
 import { useAppStore } from '../store/app'
@@ -16,6 +14,7 @@ import { toast } from '../lib/toast'
 import { currentMonth } from '../store/library'
 import { errorMessage } from '@shared/errors'
 import { COLLECTION_PAGE_SIZE } from '@shared/constants'
+import { Button, Card, Heading, ProgressBar, Selector, Text, TextInput } from '@astryxdesign/core'
 
 function lastMonths(count: number): string[] {
   const result: string[] = []
@@ -138,24 +137,19 @@ export function Usage(): React.JSX.Element {
         <div className="page-pad page-max">
           <div className="flex flex-wrap items-center gap-3">
             <div>
-              <h1 className="page-title">Usage</h1>
-              <p className="meta">Images that came back, and what they cost.</p>
+              <Heading level={1}>Usage</Heading>
+              <Text type="supporting" color="secondary">Images that came back, and what they cost.</Text>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <label className="sr-only" htmlFor="usage-month">Month</label>
-              <select
-                id="usage-month"
-                className="field w-auto"
+              <Selector
+                label="Month"
+                isLabelHidden
                 value={month}
-                onChange={(event) => setMonth(event.target.value)}
-              >
-                {months.map((value) => (
-                  <option key={value} value={value}>{shortMonthLabel(value)}</option>
-                ))}
-              </select>
-              <Button variant="secondary" onClick={() => void exportCsv()}>
-                <Download size={15} /> Export CSV
-              </Button>
+                onChange={setMonth}
+                options={months.map((value) => ({ value, label: shortMonthLabel(value) }))}
+                width={130}
+              />
+              <Button label="Export CSV" variant="secondary" icon={<Download size={15} />} onClick={() => void exportCsv()} />
             </div>
           </div>
 
@@ -173,34 +167,56 @@ export function Usage(): React.JSX.Element {
           ) : (
             <>
               <div className="mt-6 grid gap-3 md:grid-cols-3">
-                <div className="card p-4">
-                  <p className="section-label">Images made</p>
-                  <p className="mt-2 text-[24px] font-semibold tabular">{summary?.images ?? 0}</p>
-                  <p className="meta">{monthLabel(month)}</p>
-                </div>
-                <div className="card p-4">
-                  <p className="section-label">Spent</p>
-                  <p className="mt-2 text-[24px] font-semibold tabular">{usd(summary?.spendCents ?? 0)}</p>
-                  <p className="meta">Images that came back</p>
-                </div>
-                <div className="card p-4">
-                  <p className="section-label">Budget</p>
+                <Card padding={4}>
+                  <Text type="label" color="secondary" className="block">Images made</Text>
+                  <Text weight="bold" className="mt-2 block tabular" style={{ fontSize: 24 }}>{summary?.images ?? 0}</Text>
+                  <Text type="supporting" color="secondary" className="block">{monthLabel(month)} · one cent per returned image</Text>
+                </Card>
+                <Card padding={4}>
+                  <Text type="label" color="secondary" className="block">Spent</Text>
+                  <Text weight="bold" className="mt-2 block tabular" style={{ fontSize: 24 }}>{usd(summary?.spendCents ?? 0)}</Text>
+                  <Text type="supporting" color="secondary" className="block">Images that came back</Text>
+                </Card>
+                <Card padding={4}>
+                  <Text type="label" color="secondary" className="block">Budget</Text>
                   {budgetCents === null ? (
-                    <p className="mt-2 text-[15px] font-semibold">No monthly limit</p>
+                    <Text weight="bold" className="mt-2 block">No monthly limit</Text>
                   ) : (
                     <>
-                      <p className="mt-2 text-[15px] font-semibold tabular">{usd(summary?.spendCents ?? 0)} of {usd(budgetCents)}</p>
+                      <Text weight="bold" className="mt-2 block tabular">{usd(summary?.spendCents ?? 0)} of {usd(budgetCents)}</Text>
                       <div className="mt-2">
-                        <Progress
+                        <ProgressBar
                           value={Math.min(summary?.spendCents ?? 0, budgetCents)}
                           max={budgetCents}
                           label={`${usd(summary?.spendCents ?? 0)} of ${usd(budgetCents)} used this month`}
+                          hasValueLabel
                         />
                       </div>
                     </>
                   )}
-                  <p className="meta mt-2">A limit inside the app</p>
-                </div>
+                  <div className="mt-3 flex items-end gap-2">
+                    <div className="w-[130px]">
+                      <TextInput
+                        id="budget"
+                        label="Budget in dollars"
+                        isLabelHidden
+                        value={budget}
+                        onChange={setBudget}
+                        placeholder="No limit"
+                        width="100%"
+                      />
+                    </div>
+                    <Button
+                      label={savingBudget ? 'Saving...' : 'Save Limit'}
+                      variant="primary"
+                      size="sm"
+                      isLoading={savingBudget}
+                      isDisabled={savingBudget}
+                      onClick={() => void saveBudget()}
+                    />
+                  </div>
+                  <Text type="supporting" color="secondary" className="mt-2 block">A limit inside the app. Empty means no limit.</Text>
+                </Card>
               </div>
 
               <section className="mt-8">
@@ -299,30 +315,6 @@ export function Usage(): React.JSX.Element {
                 />
               </section>
 
-              <section className="mt-8 max-w-[640px]">
-                <h2 className="section-label">Monthly limit</h2>
-                <div className="mt-2 flex flex-wrap items-end gap-2">
-                  <div className="w-[160px]">
-                    <label className="field-label" htmlFor="budget">Budget in dollars</label>
-                    <input
-                      id="budget"
-                      type="text"
-                      inputMode="decimal"
-                      className="field tabular"
-                      value={budget}
-                      onChange={(event) => setBudget(event.target.value)}
-                      placeholder="No limit"
-                    />
-                  </div>
-                  <Button variant="primary" disabled={savingBudget} onClick={() => void saveBudget()}>
-                    {savingBudget ? 'Saving...' : 'Save Limit'}
-                  </Button>
-                </div>
-                <p className="hint mt-2">
-                  This is a limit inside the app. Meta bills your key separately, so it cannot stop a charge made outside the app.
-                </p>
-                <p className="hint mt-1">Empty means no monthly limit.</p>
-              </section>
             </>
           )}
         </div>
