@@ -33,7 +33,7 @@ function SettingsTitle({ title, line }: { title: string; line: string }): React.
   return (
     <div className="mb-6">
       <Heading level={1}>{title}</Heading>
-      <Text type="supporting" color="secondary" className="mt-1">{line}</Text>
+      <Text type="supporting" color="secondary" display="block" className="mt-1">{line}</Text>
     </div>
   )
 }
