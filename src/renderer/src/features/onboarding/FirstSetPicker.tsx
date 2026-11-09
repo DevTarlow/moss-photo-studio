@@ -74,6 +74,7 @@ export function FirstSetPicker({
                 key={shot.id}
                 label={definition.label}
                 size="sm"
+                className="first-set-shot"
                 isPressed={shot.enabled}
                 isDisabled={disabled}
                 onPressedChange={() => toggleShot(shot.id)}

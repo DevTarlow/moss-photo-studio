@@ -422,3 +422,16 @@ html[data-density='compact'] .settings-row { padding-top: 6px; padding-bottom: 6
   .app-topbar { gap: 8px; padding-right: 8px; }
 }
 html[data-density='compact'] .lib-list-row { height: 44px; }
+
+/* Onboarding shot chips ---------------------------------------------------- */
+@layer components {
+  /* A selected shot reads as on at a glance, not just a lighter grey. */
+  .first-set-shot[data-is-pressed='true'] {
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+  }
+  .first-set-shot[data-is-pressed='true']:hover {
+    background-color: color-mix(in srgb, var(--color-accent) 88%, #000);
+    color: var(--color-on-accent);
+  }
+}
