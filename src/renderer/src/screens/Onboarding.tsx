@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Check, Image as ImageIcon, Layers, Sparkles } from 'lucide-react'
-import type { Brand, JobState, PlanJson, Product } from '@shared/types'
+import type { Brand, Image, JobState, PlanJson, Product } from '@shared/types'
 import { CATEGORY_CHIPS, recipeById } from '@shared/prompts/recipes'
 import { createDefaultPlan } from '@shared/plans'
 import { shapeForImage } from '@shared/shapes'
@@ -11,6 +11,7 @@ import {
   Banner,
   Button,
   Card,
+  ClickableCard,
   FileInput,
   Grid,
   Heading,
@@ -33,6 +34,7 @@ import { BrandFields } from '../components/brand/BrandFields'
 import { Skeleton } from '../components/ui/Skeleton'
 import { FirstRunConfirm } from '../components/ui/FirstRunConfirm'
 import { MuseKeyGuideDialog } from '../components/ui/MuseKeyGuideDialog'
+import { Lightbox } from '../components/ui/Lightbox'
 
 const STEPS = [
   { label: 'Welcome', optional: false },
@@ -113,6 +115,8 @@ export function Onboarding(): React.JSX.Element {
   const [keyBusy, setKeyBusy] = useState(false)
   const [keyGuideOpen, setKeyGuideOpen] = useState(false)
   const [job, setJob] = useState<JobState | null>(null)
+  const [setImages, setSetImages] = useState<Image[]>([])
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [runError, setRunError] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
@@ -276,6 +280,23 @@ export function Onboarding(): React.JSX.Element {
     }
   }
 
+  useEffect(() => {
+    if (step !== 5 || !setProjectId) {
+      setSetImages([])
+      return
+    }
+    let alive = true
+    void unwrap(window.moss.images.list({ projectId: setProjectId }))
+      .then((images) => {
+        if (!alive) return
+        setSetImages(images.filter((image) => image.status === 'ready' && Boolean(image.thumbUrl || image.url)))
+      })
+      .catch(() => undefined)
+    return () => {
+      alive = false
+    }
+  }, [step, setProjectId])
+
   const imageCount = planDraft?.shots.filter((shot) => shot.enabled).length ?? 0
   const running = job?.status === 'running'
   const hasKey = Boolean(secrets?.hasKey)
@@ -406,7 +427,7 @@ export function Onboarding(): React.JSX.Element {
               ? hasKey
                 ? runLabel
                 : 'Add your Meta key'
-              : 'Open Library'
+              : 'Finish Setup'
 
   const primaryDisabled =
     finishing ||
@@ -441,6 +462,8 @@ export function Onboarding(): React.JSX.Element {
       <Button label="Skip for now" variant="ghost" isDisabled={brandBusy} onClick={() => void goTo(4)} />
     ) : step === 4 ? (
       <Button label="Save product only" variant="secondary" isDisabled={starting || finishing || running} onClick={() => void saveProductOnly()} />
+    ) : setProjectId ? (
+      <Button label="Open Library" variant="secondary" onClick={() => navigate('/library', { replace: true })} />
     ) : (
       <Button label="Open Products" variant="secondary" onClick={() => navigate('/products', { replace: true })} />
     )
@@ -804,6 +827,34 @@ export function Onboarding(): React.JSX.Element {
                           <Badge label="Ready" variant="success" />
                         </Stack>
                       </Card>
+                      {setImages.length > 0 && (
+                        <Stack gap={2}>
+                          <Stack gap={0.5}>
+                            <Text weight="bold">Your set</Text>
+                            <Text type="supporting" color="secondary">
+                              Select a photo to see it bigger.
+                            </Text>
+                          </Stack>
+                          <Grid columns={{ minWidth: 140 }} gap={2}>
+                            {setImages.map((image, index) => (
+                              <ClickableCard
+                                key={image.id}
+                                label={`Preview ${image.label}`}
+                                padding={1}
+                                elevation="low"
+                                onClick={() => setPreviewIndex(index)}
+                              >
+                                <img
+                                  src={image.thumbUrl ?? image.url ?? ''}
+                                  alt=""
+                                  className="aspect-[4/3] w-full rounded-[6px] object-cover"
+                                  style={{ background: 'var(--color-background-muted)' }}
+                                />
+                              </ClickableCard>
+                            ))}
+                          </Grid>
+                        </Stack>
+                      )}
                       <Grid columns={{ minWidth: 180 }} gap={3}>
                         <ToolCard icon={<Layers size={20} />} title="Set Creator" body="Open your set or start another." />
                         <ToolCard icon={<ImageIcon size={20} />} title="Image Editor" body="Change a photo you already have." />
@@ -843,6 +894,16 @@ export function Onboarding(): React.JSX.Element {
           </div>
         </main>
       </div>
+
+      <Lightbox
+        open={previewIndex !== null}
+        onOpenChange={(open) => {
+          if (!open) setPreviewIndex(null)
+        }}
+        images={setImages}
+        index={previewIndex ?? 0}
+        onIndex={setPreviewIndex}
+      />
 
       <MuseKeyGuideDialog open={keyGuideOpen} onOpenChange={setKeyGuideOpen} />
 

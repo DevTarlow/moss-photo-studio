@@ -22,7 +22,7 @@ export function Lightbox({
   images: Image[]
   index: number
   onIndex: (index: number) => void
-  onDownload: (image: Image) => void
+  onDownload?: (image: Image) => void
   onSetCover?: (image: Image) => void
   onEdit?: (image: Image) => void
   onSaveProduct?: (image: Image) => void

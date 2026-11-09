@@ -266,7 +266,18 @@ test.describe.serial('Moss Photo Studio journey', () => {
     }
     await page.keyboard.press('Enter')
     await expect(page.getByRole('heading', { name: "You're set up." })).toBeVisible({ timeout: 30_000 })
-    await page.getByRole('button', { name: 'Open Library' }).click()
+    await expect(page.getByRole('button', { name: 'Finish Setup' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Open Library' })).toBeVisible()
+    const preview = page.getByRole('button', { name: 'Preview Main shot' })
+    await expect(preview).toBeVisible()
+    // ClickableCard keeps the accessible button under a pressable surface, so
+    // the journey opens the preview the way a keyboard user does.
+    await preview.focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('dialog').getByAltText('Main shot')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog')).toBeHidden()
+    await page.getByRole('button', { name: 'Finish Setup' }).click()
     await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'New project' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Select' })).toBeVisible()

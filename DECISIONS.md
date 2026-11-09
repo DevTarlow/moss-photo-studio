@@ -147,3 +147,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Brand color swaps
 
 83. **Saving six colors does not mean using six.** Only the first three saved colors reach a prompt; the other three stay saved so a shop can keep a full palette. Once more than three are saved, every swatch gets a Use/Used toggle, and pressing it moves that color into or out of the used three instead of adding a fourth to the prompt. The saved list order is the contract: the queue, the photo change, and the prompt clause all read the first three through one helper. With three or fewer colors the pill stays a static label, because every saved color is already used.
+
+## Onboarding ready step
+
+84. **The ready step previews the first set and names its exits by destination.** When the first set actually runs, the ready step loads the project's ready images and shows them as a thumbnail grid; choosing a thumbnail opens the shared Lightbox with arrow-key paging, so the seller can check the result before leaving setup. The primary action reads Finish Setup and lands in the Library. The secondary action reads Open Library when a set exists, and Open Products when the seller chose Save product only and there is no set to open.
