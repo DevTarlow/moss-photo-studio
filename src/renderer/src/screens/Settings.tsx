@@ -637,11 +637,7 @@ function AboutSection(): React.JSX.Element {
           <div><dt className="section-label">Node</dt><dd className="mt-1 text-[12px] tabular">{appInfo?.releases.node}</dd></div>
         </dl>
         <p className="hint mt-5">Updates are manual in this version.</p>
-        <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
-          <p className="section-label">Third-party software</p>
-          <p className="hint mt-2">Electron, React, sharp, better-sqlite3, Radix UI, lucide-react, Inter, and Plus Jakarta Sans. The font licenses ship with the app. The bundled people are synthetic reference images made for Moss, not photographs of real people.</p>
-          <p className="hint mt-2">Support: <span className="font-mono">{SUPPORT_EMAIL}</span></p>
-        </div>
+        <p className="hint mt-2">Support: <span className="font-mono">{SUPPORT_EMAIL}</span></p>
         <p className="meta mt-5">Copyright 2026 Moss Toolbox. All rights reserved.</p>
       </SectionCard>
     </div>
