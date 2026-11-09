@@ -802,7 +802,7 @@ export function Onboarding(): React.JSX.Element {
                           You're set up.
                         </Heading>
                         <Text type="body" color="secondary">
-                          Your product is saved and your studio is ready. Pick a tool to start.
+                          Your setup is saved. Finish setup whenever you're ready.
                         </Text>
                       </Stack>
                       <Card padding={4}>
@@ -853,11 +853,19 @@ export function Onboarding(): React.JSX.Element {
                           </Grid>
                         </Stack>
                       )}
-                      <Grid columns={{ minWidth: 180 }} gap={3}>
-                        <ToolCard icon={<Layers size={20} />} title="Set Creator" body="Open your set or start another." />
-                        <ToolCard icon={<ImageIcon size={20} />} title="Image Editor" body="Change a photo you already have." />
-                        <ToolCard icon={<Sparkles size={20} />} title="Image Generator" body="Describe a picture and make it." />
-                      </Grid>
+                      <Stack gap={2}>
+                        <Stack gap={0.5}>
+                          <Text weight="bold">What's next</Text>
+                          <Text type="supporting" color="secondary">
+                            Find these in the studio rail whenever you need them.
+                          </Text>
+                        </Stack>
+                        <Grid columns={{ minWidth: 180 }} gap={3}>
+                          <ToolCard icon={<Layers size={20} />} title="Set Creator" body="Open your set or start another." />
+                          <ToolCard icon={<ImageIcon size={20} />} title="Image Editor" body="Change a photo you already have." />
+                          <ToolCard icon={<Sparkles size={20} />} title="Image Generator" body="Describe a picture and make it." />
+                        </Grid>
+                      </Stack>
                     </>
                   )}
                 </Stack>

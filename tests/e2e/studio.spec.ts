@@ -279,6 +279,8 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await expect(page.getByRole('dialog').getByAltText('Main shot')).toBeVisible()
     await page.keyboard.press('Escape')
     await expect(page.getByRole('dialog')).toBeHidden()
+    await expect(page.getByText("What's next")).toBeVisible()
+    await expect(page.getByText('Find these in the studio rail whenever you need them.')).toBeVisible()
     await page.getByRole('button', { name: 'Finish Setup' }).click()
     await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'New project' })).toBeVisible()
