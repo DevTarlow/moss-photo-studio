@@ -56,9 +56,13 @@ test('onboarding saves the first photo as a Product without creating a set', asy
     expect(afterProduct.projects).toBe(0)
 
     await page.getByRole('button', { name: 'Continue', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Make it your own' })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Continue', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Make your first set' })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Save product only' }).click()
 
+    await expect(page.getByRole('heading', { name: "You're set up." })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Open Products' }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByRole('button', { name: 'Open product larger' })).toBeVisible()
 
@@ -74,37 +78,6 @@ test('onboarding saves the first photo as a Product without creating a set', asy
     })
     expect(afterSave).toEqual({ products: 1, projects: 0, done: true })
     expect(pageErrors).toEqual([])
-  } finally {
-    await app.close().catch(() => undefined)
-    fs.rmSync(userData, { recursive: true, force: true })
-  }
-})
-
-test('onboarding opens the brand settings without dismissing setup', async () => {
-  const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-onboarding-settings-'))
-  const app = await electron.launch({
-    args: ['.', '--no-sandbox'],
-    env: {
-      ...process.env,
-      MOSS_DEV_UNLOCK: '1',
-      MOSS_MUSE_FAKE: '1',
-      MOSS_E2E: '1',
-      MOSS_USER_DATA_DIR: userData
-    },
-    timeout: 60_000
-  })
-
-  try {
-    const page = await app.firstWindow()
-    const welcome = page.getByRole('heading', { name: "Your shop's photo studio." })
-    await expect(welcome).toBeVisible({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Open Settings', exact: true }).click()
-    await expect(page.getByRole('heading', { name: 'Logo & Colors', exact: true })).toBeVisible({ timeout: 20_000 })
-
-    await page.getByRole('link', { name: 'Library', exact: true }).first().click()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Resume Setup' }).click()
-    await expect(welcome).toBeVisible({ timeout: 20_000 })
   } finally {
     await app.close().catch(() => undefined)
     fs.rmSync(userData, { recursive: true, force: true })

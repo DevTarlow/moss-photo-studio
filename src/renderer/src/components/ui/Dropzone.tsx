@@ -34,34 +34,38 @@ export function Dropzone({
     if (images.length) onFiles(images)
   }
   return (
-    <div
-      className="dropzone"
-      data-over={over}
-      onDragOver={(event) => {
-        event.preventDefault()
-        event.stopPropagation()
-        setOver(true)
-      }}
-      onDragLeave={(event) => { event.stopPropagation(); setOver(false) }}
-      onDrop={handleDrop}
-      onDragEnter={(event) => event.stopPropagation()}
-      onClick={onClick ?? (() => input.current?.click())}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={(event) => {
-        if (onClick && (event.key === 'Enter' || event.key === ' ')) {
+    <>
+      <div
+        className="dropzone"
+        data-over={over}
+        onDragOver={(event) => {
           event.preventDefault()
-          onClick()
-        }
-      }}
-      style={compact ? { minHeight: 130, padding: 20 } : undefined}
-    >
-      <div className="grid h-10 w-10 place-items-center rounded-full" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
-        <ImagePlus size={20} />
+          event.stopPropagation()
+          setOver(true)
+        }}
+        onDragLeave={(event) => { event.stopPropagation(); setOver(false) }}
+        onDrop={handleDrop}
+        onDragEnter={(event) => event.stopPropagation()}
+        onClick={onClick ?? (() => input.current?.click())}
+        role={onClick ? 'button' : undefined}
+        tabIndex={onClick ? 0 : undefined}
+        onKeyDown={(event) => {
+          if (onClick && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault()
+            onClick()
+          }
+        }}
+        style={compact ? { minHeight: 130, padding: 20 } : undefined}
+      >
+        <div className="grid h-10 w-10 place-items-center rounded-full" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
+          <ImagePlus size={20} />
+        </div>
+        <p className="font-semibold">{line}</p>
+        {hint && <p className="hint max-w-[380px]">{hint}</p>}
+        {onClick && <span className="badge mt-1">{label}</span>}
       </div>
-      <p className="font-semibold">{line}</p>
-      {hint && <p className="hint max-w-[380px]">{hint}</p>}
-      {onClick && <span className="badge mt-1">{label}</span>}
+      {/* Keep the input out of the role="button" dropzone: interactive content
+          nested inside an interactive control trips axe's nested-interactive. */}
       <input
         ref={input}
         type="file"
@@ -75,6 +79,6 @@ export function Dropzone({
           event.currentTarget.value = ''
         }}
       />
-    </div>
+    </>
   )
 }

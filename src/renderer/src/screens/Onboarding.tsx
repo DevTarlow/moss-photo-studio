@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Check, Image as ImageIcon, Layers, Sparkles } from 'lucide-react'
-import type { JobState, PlanJson, Product } from '@shared/types'
+import type { Brand, JobState, PlanJson, Product } from '@shared/types'
 import { CATEGORY_CHIPS, recipeById } from '@shared/prompts/recipes'
 import { createDefaultPlan } from '@shared/plans'
 import { shapeForImage } from '@shared/shapes'
@@ -29,6 +29,8 @@ import { markUrl } from '../lib/assets'
 import { toast } from '../lib/toast'
 import { warnIfSmallPhoto } from '../lib/photoWarnings'
 import { FirstSetPicker } from '../features/onboarding/FirstSetPicker'
+import { BrandFields } from '../components/brand/BrandFields'
+import { Skeleton } from '../components/ui/Skeleton'
 import { FirstRunConfirm } from '../components/ui/FirstRunConfirm'
 import { MuseKeyGuideDialog } from '../components/ui/MuseKeyGuideDialog'
 
@@ -36,15 +38,16 @@ const STEPS = [
   { label: 'Welcome', optional: false },
   { label: 'Connect Meta', optional: false },
   { label: 'Add product', optional: false },
+  { label: 'Customize', optional: true },
   { label: 'Make a set', optional: true },
   { label: 'Ready', optional: false }
 ] as const
 
 function normaliseStep(value: number): number {
   const saved = Math.max(0, Math.min(5, Math.floor(value)))
-  if (saved <= 1) return saved
-  if (saved >= 5) return 4
-  return 2
+  // Later steps depend on the product and plan chosen in this session, so only
+  // the welcome and key steps resume directly.
+  return saved <= 1 ? saved : 2
 }
 
 function productNameFromFile(name: string): string {
@@ -84,13 +87,15 @@ export function Onboarding(): React.JSX.Element {
   const settings = useAppStore((state) => state.settings)
   const secrets = useAppStore((state) => state.secrets)
   const products = useAppStore((state) => state.products)
+  const brand = useAppStore((state) => state.brand)
   const refreshSettings = useAppStore((state) => state.refreshSettings)
   const refreshSecrets = useAppStore((state) => state.refreshSecrets)
   const refreshProducts = useAppStore((state) => state.refreshProducts)
+  const refreshBrand = useAppStore((state) => state.refreshBrand)
   const setOnboardingBypass = useAppStore((state) => state.setOnboardingBypass)
 
   const savedStep = normaliseStep(settings?.onboardingStep ?? 0)
-  const [step, setStep] = useState(() => Math.min(2, savedStep))
+  const [step, setStep] = useState(() => savedStep)
   const [category, setCategory] = useState(() => {
     const saved = settings?.onboardingCategory ?? 'other'
     return CATEGORY_CHIPS.some((chip) => chip.id === saved) ? saved : 'other'
@@ -112,6 +117,8 @@ export function Onboarding(): React.JSX.Element {
   const [runError, setRunError] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
   const [finishing, setFinishing] = useState(false)
+  const [brandDraft, setBrandDraft] = useState<Brand | null>(brand)
+  const [brandBusy, setBrandBusy] = useState(false)
   const pollRef = useRef<number | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
@@ -120,6 +127,10 @@ export function Onboarding(): React.JSX.Element {
     if (secrets) void refreshSecrets()
     // Key status is refreshed once when onboarding opens.
   }, [])
+
+  useEffect(() => {
+    setBrandDraft(brand)
+  }, [brand])
 
   useEffect(() => {
     return () => {
@@ -137,7 +148,7 @@ export function Onboarding(): React.JSX.Element {
     setStep(next)
     setKeyError(null)
     setRunError(null)
-    if (next === 3) ensurePlan()
+    if (next === 4) ensurePlan()
     try {
       await unwrap(window.moss.settings.set({ key: 'onboardingStep', value: next }))
       await refreshSettings()
@@ -154,13 +165,6 @@ export function Onboarding(): React.JSX.Element {
       .catch(() => undefined)
     toast.status('You can finish setting up later from the Library.')
     navigate('/library', { replace: true })
-  }
-
-  // Leaving setup for the brand settings must not count as dismissing it: the
-  // Library keeps offering Resume Setup, and the next launch returns to setup.
-  const openSettings = (): void => {
-    setOnboardingBypass(true)
-    navigate('/settings/brand')
   }
 
   const buildPlan = (categoryId: string): PlanJson | null => {
@@ -306,7 +310,7 @@ export function Onboarding(): React.JSX.Element {
               if (pollRef.current) window.clearInterval(pollRef.current)
               pollRef.current = null
               if (state.status === 'done' && state.done > 0) {
-                await finishOnboarding()
+                await finishToReady()
               } else if (state.status === 'cancelled') {
                 setRunError('That run was stopped.')
               } else {
@@ -351,13 +355,12 @@ export function Onboarding(): React.JSX.Element {
     await beginRun()
   }
 
-  const finishOnboarding = async (): Promise<void> => {
+  const finishToReady = async (): Promise<void> => {
     setFinishing(true)
     try {
       await unwrap(window.moss.settings.set({ key: 'onboardingDone', value: true }))
-      await unwrap(window.moss.settings.set({ key: 'onboardingStep', value: 4 }))
       await refreshSettings()
-      setStep(4)
+      await goTo(5)
     } catch {
       toast.error('The setup could not be saved.')
     } finally {
@@ -367,17 +370,24 @@ export function Onboarding(): React.JSX.Element {
 
   const saveProductOnly = async (): Promise<void> => {
     if (!product) return
-    setFinishing(true)
+    await finishToReady()
+    toast.status('Product saved.')
+  }
+
+  const saveBrandAndContinue = async (): Promise<void> => {
+    if (!brandDraft) {
+      await goTo(4)
+      return
+    }
+    setBrandBusy(true)
     try {
-      await unwrap(window.moss.settings.set({ key: 'onboardingDone', value: true }))
-      await unwrap(window.moss.settings.set({ key: 'onboardingStep', value: 4 }))
-      await refreshSettings()
-      toast.status('Product saved. Open it to make a set.')
-      navigate('/products', { replace: true })
-    } catch {
-      toast.error('The setup could not be saved.')
+      await unwrap(window.moss.brand.update(brandDraft))
+      await refreshBrand()
+      await goTo(4)
+    } catch (caught) {
+      toast.error(messageOf(caught))
     } finally {
-      setFinishing(false)
+      setBrandBusy(false)
     }
   }
 
@@ -391,24 +401,28 @@ export function Onboarding(): React.JSX.Element {
         : step === 2
           ? 'Continue'
           : step === 3
-            ? hasKey
-              ? runLabel
-              : 'Add your Meta key'
-            : 'Open Library'
+            ? 'Continue'
+            : step === 4
+              ? hasKey
+                ? runLabel
+                : 'Add your Meta key'
+              : 'Open Library'
 
   const primaryDisabled =
     finishing ||
     starting ||
     running ||
+    brandBusy ||
     (step === 1 && keyBusy) ||
     (step === 2 && (!product || photoBusy)) ||
-    (step === 3 && hasKey && (!planDraft || imageCount === 0))
+    (step === 4 && hasKey && (!planDraft || imageCount === 0))
 
   const onPrimary = (): void => {
     if (step === 0) void goTo(1)
     else if (step === 1) void saveKey()
     else if (step === 2) void goTo(3)
-    else if (step === 3) {
+    else if (step === 3) void saveBrandAndContinue()
+    else if (step === 4) {
       if (!hasKey) void goTo(1)
       else void onMainRun()
     } else {
@@ -424,6 +438,8 @@ export function Onboarding(): React.JSX.Element {
     ) : step === 2 ? (
       product ? <Button label="Choose a different photo" variant="ghost" onClick={() => { setProduct(null); setPhotoFile(null); setPlanDraft(null); setSetProjectId(null) }} /> : null
     ) : step === 3 ? (
+      <Button label="Skip for now" variant="ghost" isDisabled={brandBusy} onClick={() => void goTo(4)} />
+    ) : step === 4 ? (
       <Button label="Save product only" variant="secondary" isDisabled={starting || finishing || running} onClick={() => void saveProductOnly()} />
     ) : (
       <Button label="Open Products" variant="secondary" onClick={() => navigate('/products', { replace: true })} />
@@ -464,20 +480,6 @@ export function Onboarding(): React.JSX.Element {
                       />
                     ))}
                   </Stepper>
-                  <Stack gap={1}>
-                    <Text type="supporting" color="secondary">
-                      Optional
-                    </Text>
-                    <Text type="body" color="secondary">
-                      Logo and colors live in Settings whenever you want them.
-                    </Text>
-                    <Button
-                      label="Open Settings"
-                      variant="ghost"
-                      size="sm"
-                      onClick={openSettings}
-                    />
-                  </Stack>
                 </Stack>
               </Card>
             </aside>
@@ -487,7 +489,7 @@ export function Onboarding(): React.JSX.Element {
                 <Stepper
                   activeStep={step}
                   label="Setup steps"
-                  horizontalOptions={{ minimumStepWidth: 96, collapsedVariant: 'withLabel' }}
+                  horizontalOptions={{ minimumStepWidth: 170, collapsedVariant: 'withLabel' }}
                 >
                   {STEPS.map((entry, index) => (
                     <Step key={entry.label} step={index} label={entry.label} isOptional={entry.optional} isDisabled={index > step} />
@@ -525,7 +527,7 @@ export function Onboarding(): React.JSX.Element {
                     <>
                       <Stack gap={2}>
                         <Text type="label" color="secondary">
-                          Step 2 of 4
+                          Step 2 of 6
                         </Text>
                         <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
                           Connect Meta Muse
@@ -577,7 +579,7 @@ export function Onboarding(): React.JSX.Element {
                     <>
                       <Stack gap={2}>
                         <Text type="label" color="secondary">
-                          Step 3 of 4
+                          Step 3 of 6
                         </Text>
                         <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
                           Add your first product
@@ -654,11 +656,11 @@ export function Onboarding(): React.JSX.Element {
                     </>
                   )}
 
-                  {step === 3 && (
+                  {step === 4 && (
                     <>
                       <Stack gap={2}>
                         <Text type="label" color="secondary">
-                          Step 4 of 4 · optional
+                          Step 5 of 6 · optional
                         </Text>
                         <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
                           Make your first set
@@ -745,10 +747,34 @@ export function Onboarding(): React.JSX.Element {
                     </>
                   )}
 
-                  {step === 4 && (
+                  {step === 3 && (
                     <>
                       <Stack gap={2}>
-                        <Stack direction="horizontal" gap={2}>
+                        <Text type="label" color="secondary">
+                          Step 4 of 6 · optional
+                        </Text>
+                        <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
+                          Make it your own
+                        </Heading>
+                        <Text type="body" color="secondary">
+                          Optional. Add a logo and colors, and choose where the badge sits.
+                        </Text>
+                      </Stack>
+                      {brandDraft ? (
+                        <BrandFields value={brandDraft} onChange={setBrandDraft} />
+                      ) : (
+                        <Skeleton className="h-96" />
+                      )}
+                    </>
+                  )}
+
+                  {step === 5 && (
+                    <>
+                      <Stack gap={2}>
+                        <Stack direction="horizontal" gap={2} align="center">
+                          <Text type="label" color="secondary">
+                            Step 6 of 6
+                          </Text>
                           <Badge label="Setup complete" variant="success" />
                         </Stack>
                         <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
@@ -783,12 +809,6 @@ export function Onboarding(): React.JSX.Element {
                         <ToolCard icon={<ImageIcon size={20} />} title="Image Editor" body="Change a photo you already have." />
                         <ToolCard icon={<Sparkles size={20} />} title="Image Generator" body="Describe a picture and make it." />
                       </Grid>
-                      <Button
-                        label="Personalize in Settings"
-                        variant="ghost"
-                        size="sm"
-                        onClick={openSettings}
-                      />
                     </>
                   )}
                 </Stack>
@@ -798,12 +818,13 @@ export function Onboarding(): React.JSX.Element {
                 className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 border-t px-1 py-3"
                 style={{ borderColor: 'var(--color-border)', background: 'var(--color-background-body)' }}
               >
-                {step > 0 && step < 4 && (
+                {step > 0 && step < 5 && (
                   <Button
                     label="Back"
                     variant="ghost"
                     size="sm"
                     icon={<ArrowLeft size={14} />}
+                    isDisabled={brandBusy}
                     onClick={() => void goTo(step - 1)}
                   />
                 )}
@@ -812,7 +833,7 @@ export function Onboarding(): React.JSX.Element {
                   <Button
                     label={primaryLabel}
                     variant="primary"
-                    isLoading={starting || keyBusy || finishing}
+                    isLoading={starting || keyBusy || finishing || brandBusy}
                     isDisabled={primaryDisabled}
                     onClick={onPrimary}
                   />
