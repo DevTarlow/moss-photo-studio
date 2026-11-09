@@ -447,7 +447,9 @@ export function Onboarding(): React.JSX.Element {
       if (!hasKey) void goTo(1)
       else void onMainRun()
     } else {
-      navigate('/library', { replace: true })
+      // A made set lives in the Library; a product-only setup has no set, so
+      // finish where the saved product actually is.
+      navigate(setProjectId ? '/library' : '/products', { replace: true })
     }
   }
 
@@ -462,9 +464,7 @@ export function Onboarding(): React.JSX.Element {
       <Button label="Skip for now" variant="ghost" isDisabled={brandBusy} onClick={() => void goTo(4)} />
     ) : step === 4 ? (
       <Button label="Save product only" variant="secondary" isDisabled={starting || finishing || running} onClick={() => void saveProductOnly()} />
-    ) : setProjectId ? null : (
-      <Button label="Open Products" variant="secondary" onClick={() => navigate('/products', { replace: true })} />
-    )
+    ) : null
 
   return (
     <div className="flex h-full flex-col overflow-hidden" style={{ background: 'var(--color-background-body)' }}>

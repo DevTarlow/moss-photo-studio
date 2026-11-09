@@ -62,7 +62,10 @@ test('onboarding saves the first photo as a Product without creating a set', asy
     await page.getByRole('button', { name: 'Save product only' }).click()
 
     await expect(page.getByRole('heading', { name: "You're set up." })).toBeVisible({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Open Products' }).click()
+    // Product-only leaves Finish Setup as the only exit, and it opens Products.
+    await expect(page.getByRole('button', { name: 'Open Products' })).toBeHidden()
+    await expect(page.getByRole('button', { name: 'Open Library' })).toBeHidden()
+    await page.getByRole('button', { name: 'Finish Setup' }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByRole('button', { name: 'Open product larger' })).toBeVisible()
 
