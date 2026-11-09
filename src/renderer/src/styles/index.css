@@ -433,7 +433,7 @@ html[data-density='compact'] .lib-list-row { height: 44px; }
     color: var(--color-on-accent);
   }
   .first-set-shot[data-is-pressed='true']:hover {
-    background-color: color-mix(in srgb, var(--color-accent) 88%, #000);
+    background-color: color-mix(in srgb, var(--color-accent) 88%, var(--canvas));
     color: var(--color-on-accent);
   }
 }
