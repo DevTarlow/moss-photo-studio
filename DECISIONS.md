@@ -143,3 +143,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Image Generator examples
 
 82. **The four example cards load scene descriptions, and their product switch is scoped to example runs.** Each card has two texts: the scene as photographed (its mug or candle) and the same scene written for a referenced product. With a product reference selected, "Use my product photo" starts on and the run sends the reference; turning it off loads the photographed text and leaves the reference out of that run while keeping it selected for normal prompts. Editing the description returns to the normal reference rules. The switch is repeated in the product card while the example grid is hidden so it stays reachable. The 30 "Start from an idea" starters keep their specific-product copy.
+
+## Brand color swaps
+
+83. **Saving six colors does not mean using six.** Only the first three saved colors reach a prompt; the other three stay saved so a shop can keep a full palette. Once more than three are saved, every swatch gets a Use/Used toggle, and pressing it moves that color into or out of the used three instead of adding a fourth to the prompt. The saved list order is the contract: the queue, the photo change, and the prompt clause all read the first three through one helper. With three or fewer colors the pill stays a static label, because every saved color is already used.

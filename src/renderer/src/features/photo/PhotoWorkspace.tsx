@@ -6,6 +6,7 @@ import { estimateCents, usd } from '@shared/cost'
 import { errorMessage, billingUncertain } from '@shared/errors'
 import type { ChangeKind } from '@shared/prompts/guards'
 import { shapeLabel } from '@shared/shapes'
+import { usedBrandColors } from '@shared/brandColors'
 import { useWorkspaceStore } from '../../store/workspace'
 import { useAppStore } from '../../store/app'
 import { useJobsStore } from '../../store/jobs'
@@ -407,7 +408,7 @@ export function PhotoWorkspace(): React.JSX.Element {
         kind,
         templateId: templateId ?? undefined,
         personId: kind === 'model' ? personId : undefined,
-        palette: brand?.colors.slice(0, 3),
+        palette: brand ? usedBrandColors(brand.colors) : undefined,
         isGiftShot: templateId === 'gift-ready'
       }))
       const state = await unwrap(window.moss.jobs.state({ jobId: result.jobId }))

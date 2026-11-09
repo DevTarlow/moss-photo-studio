@@ -17,6 +17,7 @@ import type {
 import { estimateCents, monthBounds, monthKey } from '@shared/cost'
 import { MAX_CREATE_VARIANTS, MAX_PROMPT } from '@shared/constants'
 import { DEFAULT_PERSON_ID } from '@shared/people'
+import { usedBrandColors } from '@shared/brandColors'
 import { composeChange, composeCreatePrompt, composeSetPrompt, PROMPT_MAX } from '@shared/prompts/guards'
 import { directionForPrompt, shotDefinition } from '@shared/prompts/shots'
 import { nextCountedLabel, setImageLabel } from '@shared/labels'
@@ -178,7 +179,7 @@ export class JobQueue {
       )
     }
     const brand = this.deps.brand.get()
-    const palette = brand.colorsEnabled ? brand.colors.slice(0, 3) : []
+    const palette = brand.colorsEnabled ? usedBrandColors(brand.colors) : []
     const source = this.deps.images.get(sourceId)
     if (!source || source.status !== 'ready') {
       throw new JobStartError('invalid_payload', 'Add a photo of the product first.')
@@ -329,7 +330,7 @@ export class JobQueue {
     const template = input.templateId ? templateById(input.templateId) : undefined
     const brand = this.deps.brand.get()
     const palette = brand.colorsEnabled
-      ? (input.palette?.length ? input.palette : brand.colors).slice(0, 3)
+      ? usedBrandColors(input.palette?.length ? input.palette : brand.colors)
       : []
     const prompt = composeChange({
       text,

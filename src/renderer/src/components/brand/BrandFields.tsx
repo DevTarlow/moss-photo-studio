@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import type { Brand } from '@shared/types'
+import { MAX_BRAND_COLORS, USED_BRAND_COLORS, toggleBrandColorUse } from '@shared/brandColors'
 import { exampleUrl } from '../../lib/assets'
 import { Button } from '../ui/Button'
 import { Dropzone } from '../ui/Dropzone'
@@ -11,7 +12,6 @@ import { unwrap, messageOf } from '../../lib/ipc'
 import { fileToBytes } from '../../lib/files'
 import { toast } from '../../lib/toast'
 
-const MAX_COLORS = 6
 const CORNERS = [
   { value: 'br', label: 'Bottom right' },
   { value: 'bl', label: 'Bottom left' },
@@ -44,7 +44,7 @@ export function BrandPreview({ brand }: { brand: Brand }): React.JSX.Element {
 export function BrandFields({
   value,
   onChange,
-  maxColors = MAX_COLORS,
+  maxColors = MAX_BRAND_COLORS,
   showPreview = true
 }: {
   value: Brand
@@ -55,6 +55,8 @@ export function BrandFields({
   const [newColor, setNewColor] = useState(cssColor('--accent'))
   const [hex, setHex] = useState('')
   const [logoBusy, setLogoBusy] = useState(false)
+  const usedCount = Math.min(USED_BRAND_COLORS, maxColors)
+  const canChooseUsed = value.colorsEnabled && value.colors.length > usedCount
 
   const patch = (next: Partial<Brand>): void => onChange({ ...value, ...next })
 
@@ -112,7 +114,7 @@ export function BrandFields({
               <p className="hint mb-2">
                 Up to {maxColors} saved.{' '}
                 {value.colorsEnabled
-                  ? `The first ${Math.min(3, maxColors)} steer backgrounds and props when the studio makes a set or changes a photo.`
+                  ? `The first ${usedCount} steer backgrounds and props when the studio makes a set or changes a photo.${canChooseUsed ? ' Select Use or Used to change which three are used.' : ''}`
                   : 'Colors are off; they stay saved but are not added to a prompt.'}{' '}
                 They never tint the product.
               </p>
@@ -123,16 +125,32 @@ export function BrandFields({
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {value.colors.map((color, index) => (
-              <span key={color} className="inline-flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2" style={{ borderColor: 'var(--border)' }}>
-                <span className="color-dot" style={{ background: color }} aria-hidden />
-                <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>{color}</span>
-                {index < 3 && value.colorsEnabled && <span className="badge pill-sm">Used</span>}
-                <button type="button" className="icon-btn h-5 w-5" aria-label={`Remove ${color}`} onClick={() => patch({ colors: value.colors.filter((entry) => entry !== color) })}>
-                  <Trash2 size={12} />
-                </button>
-              </span>
-            ))}
+            {value.colors.map((color, index) => {
+              const used = value.colorsEnabled && index < usedCount
+              return (
+                <span key={color} className="inline-flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2" style={{ borderColor: 'var(--border)' }}>
+                  <span className="color-dot" style={{ background: color }} aria-hidden />
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>{color}</span>
+                  {canChooseUsed ? (
+                    <button
+                      type="button"
+                      className="badge pill-sm"
+                      data-tone={used ? 'success' : undefined}
+                      aria-pressed={used}
+                      aria-label={used ? `Stop using ${color}` : `Use ${color}`}
+                      onClick={() => patch({ colors: toggleBrandColorUse(value.colors, index) })}
+                    >
+                      {used ? 'Used' : 'Use'}
+                    </button>
+                  ) : used ? (
+                    <span className="badge pill-sm">Used</span>
+                  ) : null}
+                  <button type="button" className="icon-btn h-5 w-5" aria-label={`Remove ${color}`} onClick={() => patch({ colors: value.colors.filter((entry) => entry !== color) })}>
+                    <Trash2 size={12} />
+                  </button>
+                </span>
+              )
+            })}
             {value.colors.length === 0 && <p className="meta">No colors yet.</p>}
           </div>
           <div className="mt-2 flex flex-wrap items-end gap-2">
