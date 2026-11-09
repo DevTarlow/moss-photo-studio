@@ -119,6 +119,8 @@ Mark each line only after it is run on the target machine. `A` items should be r
 ### 5. Real product set
 
 - [ ] **O** One photo of a real product to a six shot set. Every shot clearly contains the same product, colors and label are intact, logos are not morphed.
+- [ ] **O** Create a set from a saved Product, pick a category, then change it in the Set plan before making anything. The confirmation appears, the six shot cards change to the new recipe, and the category select is disabled after the first image with the "fixed after the first image" hint.
+- [x] **A** The prompt lab's final sweep covers all 11 categories with the shipping recipes; see `docs/category-recipes.md`. Clothing used a real shirt photo; the other category sources were generated stand-ins.
 
 ### 6. One shot off
 

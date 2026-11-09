@@ -8,7 +8,7 @@ This is the sibling application to `../moss-toolbox`. It is an Electron desktop 
 
 - **App shell** with one rail: Studio (Library, Products, People, Usage), Tools (New Set, Image Editor, Image Generator), and Settings. The top-bar New menu launches the same three tools from any main screen. While Settings is open, its sections use the same rail.
 - **Library** with sets, photos, and images, search, filters, sorting, grid and list views, project duplication, rename, hover-select multi-delete, an explicit Select mode, delete, and export. Projects show 20 per page with Previous/Next controls.
-- **Set** from 1 to 8 listing shots. Start from an upload, a saved Product, or any ready library image. Each shot can be switched off, renamed, described, assigned a person, or given a feature line. The plan saves automatically.
+- **Set** from 1 to 8 listing shots. Start from an upload, a saved Product, or any ready library image. Every new set asks what you sell and builds that category's recipe. The plan panel can switch the recipe until the first image is made; each shot can be switched off, renamed, described, assigned a person, or given a feature line. The plan saves automatically.
 - **Connection icons** for Main shot, In use, Close-up, Size reference, Flat lay, Gift-ready, Feature callout, and On a person.
 - **Image Editor** with 32 tiles in six groups, 12 bundled people plus your own, a free local adjust panel with arrow-key crop, resizable panels, version labels, branching, a filmstrip, compare, export, and copy. Start from a file, a Product, or a library image, and add another source later as a new version.
 - **Image Generator** with 30 starters, including person ideas for holding, wearing, and using the item, one to four images, three shapes, and three formats. A product reference and a person reference can be sent together, so a person can hold a product. The four example cards load an editable scene description; with a product photo selected, a Use my product photo switch frames the scene around that product instead of the sample object. A new generator project appears in the Library only after its first image.
@@ -16,7 +16,7 @@ This is the sibling application to `../moss-toolbox`. It is an Electron desktop 
 - **Products** for saving a generated image, editor version, or set shot as a named, reusable product photo. Products and any library image can be chosen wherever a source photo is needed; the page has search, sort, counts, and 20 per page.
 - **People** with 12 included synthetic reference people plus your own portraits, search, sort, counts, and rename or remove for your own. A person is reused as a reference in sets, the editor, and the generator.
 - **Logo & Colors** with up to six colors, a logo, and corner badge position, size, and opacity. The first three saved colors steer backgrounds and props in sets and photo changes while their toggle is on; select Use on any other saved color to swap it into those three. Turning the toggle off keeps the saved colors but adds none to a prompt. The badge is composited locally.
-- **First run** opens in light mode with a Welcome screen and five setup steps: connect Meta, add the first product, make the studio your own with a logo and colors, make an optional first set, and a ready screen that previews the images made in the optional first set. The first photo is saved as a reusable Product; a set project is created only when the seller chooses to make images. All six recipe shots start selected, with 1, 3, or all presets. The customization step can be skipped, and the same logo and colors remain in Settings. The theme, density, and reduce-motion live in Settings.
+- **First run** opens in light mode with a Welcome screen and five setup steps: connect Meta, add the first product, make the studio your own with a logo and colors, make an optional first set, and a ready screen that previews the images made in the optional first set. The first photo is saved as a reusable Product; a set project is created only when the seller chooses to make images. All six recipe shots start selected, with 1, 3, or all presets, and the first three are the strongest shots for the chosen category. The customization step can be skipped, and the same logo and colors remain in Settings. The theme, density, and reduce-motion live in Settings.
 - **Usage ledger** with the real returned-image cost, $0.01 per returned image, a monthly budget, and CSV export. Project rows follow the current project title, so a rename shows immediately; deleted projects read as Deleted project. Project spending and ledger rows show 20 per page.
 - **License activation** with a 14 day offline grace window and a read-only library when the license ends.
 - **Desktop packaging** for Linux AppImage and deb. Windows NSIS and macOS DMG configuration is present and unverified.
@@ -61,6 +61,19 @@ npm run lint
 `npm test` runs the unit and integration suites against the fake Muse and Lemon Squeezy hosts. `npm run test:e2e` builds the app and runs the serial studio journey — activation with a fake key, onboarding, the library, set, editor, generator, usage, products, people, settings, dark theme, and the 1024 and 150% layouts — plus focused specs for onboarding, products, people, and library selection. The journey runs axe checks and compares the screenshots under `tests/screenshots`. Set `MOSS_UPDATE_SCREENS=1` on the first run after an intentional visual change to write new baselines. The 1440 by 900 light and dark images are compared with a maximum diff ratio of 0.01. The 1024 by 700 images are captured fresh each run because Playwright's screenshot helper can restore the Electron viewport, and the 150% zoom images are capture-only.
 
 The E2E suite uses `MOSS_E2E=1`, `MOSS_MUSE_BASE_URL`, and `MOSS_LICENSE_API_BASE` only in an unpackaged development build. `MOSS-E2E-VALID-KEY` is a fake key. No test sends a real key or reaches Meta or Lemon Squeezy.
+
+## Calibrate the recipes
+
+The prompt lab in `scripts/lab/` calls the real Meta Muse API with the app's own prompt builders and client. It is a developer tool, never part of `npm test` or CI, and every returned image costs $0.01.
+
+```bash
+# Put a key in .env first. The file is gitignored and never read by the app.
+npm run lab -- plan --all                          # free prompt review
+npm run lab -- set --category clothing --source shirt.jpg --yes
+npm run lab -- sweep --yes                         # 11 categories, 66 images, $0.66
+```
+
+Outputs (images, manifests, contact sheets, review notes) land in the gitignored `lab/` folder. See [docs/lab.md](docs/lab.md) for setup, the spend guard, and the review rubric, and [docs/category-recipes.md](docs/category-recipes.md) for the calibrated rosters and evidence.
 
 ## Build packages
 
@@ -127,7 +140,7 @@ The renderer reaches the outside world only through named IPC methods. Every req
 
 The Muse client sends one request per set shot. Edits omit `n` and never send a moderation field. Generations include `n`. The client retries only a 429, at most three times, honours `Retry-After`, and shows **Waiting for Meta** while it waits. A 401, 402, 403, or 5xx is never retried. A timeout is recorded with unknown billing and the request is not aborted, because aborting does not undo a bill.
 
-See [MILESTONES.md](MILESTONES.md) for the M0 through M7 delivery map, [docs/api-notes.md](docs/api-notes.md) for the provider assumptions, [DECISIONS.md](DECISIONS.md) for judgement calls, and [docs/manual-test.md](docs/manual-test.md) for the acceptance checklist.
+See [MILESTONES.md](MILESTONES.md) for the M0 through M7 delivery map, [docs/api-notes.md](docs/api-notes.md) for the provider assumptions, [docs/category-recipes.md](docs/category-recipes.md) for the category rosters and calibration evidence, [docs/lab.md](docs/lab.md) for the real-Muse prompt lab, [DECISIONS.md](DECISIONS.md) for judgement calls, and [docs/manual-test.md](docs/manual-test.md) for the acceptance checklist.
 
 ## Not included
 

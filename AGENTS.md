@@ -124,6 +124,8 @@ npx playwright test tests/e2e/studio.spec.ts -g "five-shot set"
 npm run test:e2e                              # builds, then the serial journey + focused specs
 MOSS_UPDATE_SCREENS=1 npx playwright test -g "..."  # rewrite baselines after an intentional visual change
 npm run audit:tokens                          # color-token contrast audit
+npm run lab -- plan --all                     # free real-prompt review; needs .env key
+npm run lab -- sweep --yes                    # real Meta, 66 images, $0.66; see docs/lab.md
 npm run build                                 # typecheck + production build
 npm run build:linux                           # AppImage + deb (release gate included)
 ```
@@ -136,6 +138,7 @@ Notes that save time:
 - The 1024×700 and 150% zoom screenshots are capture-only and are rewritten on every E2E run. After an E2E run, check `git status tests/screenshots`; commit only intentional visual changes and revert incidental churn.
 - The E2E journey is stateful and serial (`workers: 1`). Do not parallelize it or run two specs against the same user-data directory.
 - `MOSS_RELEASE=1` is required before the release gate does anything; normal builds skip it.
+- The prompt lab is a manual developer tool, not a test. It reads `MOSS_LAB_MUSE_KEY` from the gitignored `.env`, spends real money, and writes to the gitignored `lab/` folder. Never add it to `npm test` or CI; see [docs/lab.md](docs/lab.md).
 
 ## 🛠️ Testing & Execution Policy [CRITICAL]
 
