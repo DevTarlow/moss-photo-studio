@@ -27,7 +27,7 @@ test('onboarding saves the first photo as a Product without creating a set', asy
     await page.waitForTimeout(800)
     // The Welcome heading takes focus so screen readers announce the step, but
     // a non-interactive title must not paint the keyboard focus ring.
-    const welcome = page.getByRole('heading', { name: "Your shop's photo studio." })
+    const welcome = page.getByRole('heading', { name: "Your personal photo studio." })
     await expect(welcome).toBeVisible({ timeout: 20_000 })
     await expect(welcome).toBeFocused()
     await expect(welcome).toHaveCSS('outline-style', 'none')

@@ -524,13 +524,13 @@ export function Onboarding(): React.JSX.Element {
                     <>
                       <Stack gap={2}>
                         <Text type="label" color="secondary">
-                          Welcome
+                          Welcome to
                         </Text>
                         <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
-                          Your shop's photo studio.
+                          Your personal photo studio.
                         </Heading>
                         <Text type="body" color="secondary">
-                          One photo in, a full set out. Change any photo. Make one from words.
+                          One photo in, a full set out. Change any photo. Or make a new photo using text.
                         </Text>
                       </Stack>
                       <Grid columns={{ minWidth: 180 }} gap={3}>
@@ -538,9 +538,6 @@ export function Onboarding(): React.JSX.Element {
                         <ToolCard icon={<ImageIcon size={20} />} title="Image Editor" body="Change a photo you already have." />
                         <ToolCard icon={<Sparkles size={20} />} title="Image Generator" body="Describe a picture and make it." />
                       </Grid>
-                      <Text type="supporting" color="secondary">
-                        Everything stays on this computer. Your Meta key is the only connection.
-                      </Text>
                     </>
                   )}
 
