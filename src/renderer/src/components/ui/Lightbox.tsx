@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Dialog as RadixDialog } from 'radix-ui'
-import { ChevronLeft, ChevronRight, Download, Image as ImageIcon, Package, Star, Trash2, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, Image as ImageIcon, Package, Star, Trash2, UserPlus, X } from 'lucide-react'
 import type { Image } from '@shared/types'
 import { Button } from './Button'
 import { IconButton } from './IconButton'
@@ -15,6 +15,7 @@ export function Lightbox({
   onSetCover,
   onEdit,
   onSaveProduct,
+  onSavePerson,
   onDelete
 }: {
   open: boolean
@@ -26,6 +27,7 @@ export function Lightbox({
   onSetCover?: (image: Image) => void
   onEdit?: (image: Image) => void
   onSaveProduct?: (image: Image) => void
+  onSavePerson?: (image: Image) => void
   onDelete?: (image: Image) => void
 }): React.JSX.Element {
   const image = images[index]
@@ -104,6 +106,11 @@ export function Lightbox({
               {onSaveProduct && image && (
                 <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onSaveProduct(image)}>
                   <Package size={15} /> Save as Product
+                </Button>
+              )}
+              {onSavePerson && image && (
+                <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onSavePerson(image)}>
+                  <UserPlus size={15} /> Save as Person
                 </Button>
               )}
               {onDelete && image && (

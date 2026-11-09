@@ -970,6 +970,21 @@ export function registerIpcHandlers(context: AppContext): void {
       return person
     }
   )
+  registerIpc(
+    context,
+    'people:createFromImage',
+    z.object({ imageId: idSchema, name: z.string().trim().min(1).max(80) }),
+    async ({ imageId, name }) => {
+      const image = context.images.get(imageId)
+      if (!image || image.status !== 'ready' || !image.url) throw new IpcFault('not_found')
+      const relative = decodeURI(image.url.replace('moss-media://library/', ''))
+      const bytes = await fs.readFile(path.join(context.libraryPath(), relative))
+      const created = await context.media.importPerson({ name, bytes })
+      const person = context.people.getUser(created.personId)
+      if (!person) throw new IpcFault('unknown')
+      return person
+    }
+  )
   registerIpc(context, 'people:rename', z.object({ id: idSchema, name: z.string().trim().min(1).max(80) }), ({ id, name }) => {
     const person = context.people.rename(id, name.trim())
     if (!person) throw new IpcFault('not_found')

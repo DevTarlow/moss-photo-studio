@@ -168,6 +168,10 @@ export interface IpcChannels {
     request: { name: string; bytes: Uint8Array; mime: string }
     response: Person
   }
+  'people:createFromImage': {
+    request: { imageId: string; name: string }
+    response: Person
+  }
   'people:rename': { request: { id: string; name: string }; response: Person }
   'people:delete': { request: { id: string }; response: { ok: true } }
   'people:createImageProject': {
@@ -298,6 +302,7 @@ export interface MossApi {
   people: {
     list: CallVoid<'people:list'>
     create: Call<'people:create'>
+    createFromImage: Call<'people:createFromImage'>
     rename: Call<'people:rename'>
     delete: Call<'people:delete'>
     createImageProject: Call<'people:createImageProject'>

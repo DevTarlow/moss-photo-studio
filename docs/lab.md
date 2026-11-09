@@ -74,6 +74,17 @@ Put a real product photo at `lab/sources/<category>.jpg` (or `.jpeg`, `.png`, `.
 
 `npm run lab -- people` generates the bundled reference people from `scripts/lab/people-pack.mjs` (24 images, $0.24) into `lab/people/`. Each person gets a full-body `640x960` WebP and a `512x512` portrait cropped from the top of the same image. `--ids` regenerates only some people; `--force` replaces images that already exist. Review the run's `sheet.webp` and the individual portraits, then copy the approved files into `resources/people/` and keep `src/shared/people.ts` and the pack in sync. The prompts ask for candid, happy, full-body, head-to-toe shots with one person, simple settings and no text or logos.
 
+## Example images
+
+The Image Generator examples in `resources/tiles/examples/` mix the original product scenes with outputs from this lab:
+
+- `person.webp` — generated for `CREATE_PERSON_PROMPT` with `npm run lab -- create --text "<prompt>" --shape landscape --yes` (1¢).
+- `worn.webp` — the clothing on-person image from the final category sweep.
+- `home.webp` — the homeware in-use image from the final sweep.
+- `jewelry.webp` — the jewelry in-use image from the final sweep.
+
+All four are cropped to 800×600 and committed so the optional `scripts/copy-assets.mjs` reference list does not need the lab runs. Re-generate and re-crop them if the example copy changes.
+
 ## Output
 
 ```

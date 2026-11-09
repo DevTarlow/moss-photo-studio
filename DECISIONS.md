@@ -126,7 +126,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 
 75. **The Photo canvas uses one fitted stage.** The preview sizes the image to the measured stage instead of clipping at `maxWidth: none`. Rotation and flips follow the exporter's order (rotate, then flop/flip), so the crop overlay lives in the rotated display box and matches the applied result. The compare divider is draggable and the range slider remains for keyboard use.
 
-76. **Create results keep their actions.** A result opens the lightbox and always shows Edit, Download, and a More menu for Use as a Set's Photo, Save as Product, and Delete. Failed runs get their own retry card. Budget "Make Fewer Images" reduces the set run to one shot or the Create count by one, and disappears when only one image is possible.
+76. **Create results keep their actions.** A result opens the lightbox and always shows Edit, Download, Save as Product, Save as Person, and a More menu for Use as a Set's Photo and Delete. The lightbox repeats Download, Open in Editor, Save as Product, Save as Person and Delete. Failed runs get their own retry card. Budget "Make Fewer Images" reduces the set run to one shot or the Create count by one, and disappears when only one image is possible.
 
 77. **Workspace inspectors are optional below 1440.** Photo and Create hide the right inspector at 1024-1439 and expose it as a sheet; Set has no right inspector. Panel widths clamp with the window, and sheets close when the viewport grows back.
 
@@ -142,7 +142,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 
 ## Image Generator examples
 
-82. **The four example cards load scene descriptions, and their product switch is scoped to example runs.** Each card has two texts: the scene as photographed (its mug or candle) and the same scene written for a referenced product. With a product reference selected, "Use my product photo" starts on and the run sends the reference; turning it off loads the photographed text and leaves the reference out of that run while keeping it selected for normal prompts. Editing the description returns to the normal reference rules. The switch is repeated in the product card while the example grid is hidden so it stays reachable. The 30 "Start from an idea" starters keep their specific-product copy.
+82. **The eight example cards load scene descriptions, and their product switch is scoped to example runs.** Each card has two texts: the scene as photographed (its mug, candle, person or room) and the same scene written for a referenced product. The person card and the Create a Person button share one starting prompt. With a product reference selected, "Use my product photo" starts on and the run sends the reference; turning it off loads the photographed text and leaves the reference out of that run while keeping it selected for normal prompts. Editing the description returns to the normal reference rules. The switch is repeated in the product card while the example grid is hidden so it stays reachable. The 30 "Start from an idea" starters keep their specific-product copy.
 
 ## Brand color swaps
 
@@ -167,3 +167,8 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Bundled people
 
 89. **The bundled people are candid, cheerful, and cover the age range twice.** The original twelve were neutral full-body studio poses, which made the People page and the on-person references feel flat. The pack now has 24 synthetic reference people, each with one cheerful full-body 640x960 photo and a 512x512 portrait cropped from the top of it. Every decade from the 20s through the 70s has four people, with varied genders, ethnicities, outfits and everyday settings (studio, street, garden, kitchen, market, workshop, bookstore, park, porch). Ids and names for the original twelve are stable so existing references keep working, and Maya remains the default person. The generation prompts live in `scripts/lab/people-pack.mjs` and the images were produced through the lab against the real API.
+
+
+## Creating people in the generator
+
+90. **People are created in the Image Generator, not a separate editor.** The People page offers Add a Person for an upload and Create a Person for a new synthetic reference. Create a Person makes a hidden image draft and opens it with `?createPerson=1`; the generator seeds the person prompt, shows a short "Make a new person" banner and removes the query so a reload cannot overwrite edits. Every generated result can be saved as a Person from its card or the lightbox. That action copies the image through `people:createFromImage` into the normal person pipeline (1536 reference plus 480 thumbnail), so no DB schema or second person model was needed. The reference is independent of the generated image: deleting the image later leaves the person intact.

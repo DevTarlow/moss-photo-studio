@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { DropdownMenu, Popover } from 'radix-ui'
-import { MoreMenu } from '@astryxdesign/core'
-import { ChevronDown, Download, Image as ImageIcon, Loader2, Package, Pencil, Plus, Sparkles, X } from 'lucide-react'
+import { Banner, MoreMenu } from '@astryxdesign/core'
+import { ChevronDown, Download, Image as ImageIcon, Loader2, Package, Pencil, Plus, Sparkles, UserPlus, X } from 'lucide-react'
 import type { Format, Image, JobState, Project, Shape } from '@shared/types'
 import { MAX_PROMPT } from '@shared/constants'
 import { composeCreatePrompt } from '@shared/prompts/guards'
-import { EXAMPLE_SCENES, exampleTextFor, startersByCategory } from '@shared/starters'
+import { CREATE_PERSON_PROMPT, EXAMPLE_SCENES, exampleTextFor, startersByCategory } from '@shared/starters'
 import type { ExampleScene, Starter } from '@shared/starters'
 import { estimateCents, usd } from '@shared/cost'
 import { errorMessage, billingUncertain } from '@shared/errors'
@@ -15,6 +15,7 @@ import { useAppStore } from '../../store/app'
 import { SourcePickerDialog } from '../../components/sources/SourcePickerDialog'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { SaveProductDialog } from '../../components/products/SaveProductDialog'
+import { SavePersonDialog } from '../../components/people/SavePersonDialog'
 import { useJobsStore } from '../../store/jobs'
 import { useIsWideWorkspace, useViewportTier } from '../../lib/viewport'
 import { usePanelWidth, WorkspaceResizeHandle } from '../../components/ui/WorkspaceResizeHandle'
@@ -59,6 +60,8 @@ export function CreateWorkspace(): React.JSX.Element {
   const jobs = useJobsStore((state) => state.jobs)
   const upsert = useJobsStore((state) => state.upsert)
   const navigate = useNavigate()
+  const [params, setParams] = useSearchParams()
+  const seededCreatePerson = useRef(false)
   const confirm = useConfirm()
   const tier = useViewportTier()
   const leftHidden = tier === 'tiny'
@@ -75,6 +78,8 @@ export function CreateWorkspace(): React.JSX.Element {
   const [productRef, setProductRef] = useState<SourceChoice | null>(null)
   const [personId, setPersonId] = useState<string | null>(null)
   const [saveProductImage, setSaveProductImage] = useState<Image | null>(null)
+  const [savePersonImage, setSavePersonImage] = useState<Image | null>(null)
+  const [createPersonMode, setCreatePersonMode] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [firstOpen, setFirstOpen] = useState(false)
   const [currentJobId, setCurrentJobId] = useState<string | null>(null)
@@ -125,6 +130,17 @@ export function CreateWorkspace(): React.JSX.Element {
   const overBudget = (settings?.budgetCents ?? null) !== null && monthCents + estimateCents(requestedCount) > (settings?.budgetCents ?? 0)
   const promptTooLongForReference = hasReference && composedPrompt.length > MAX_PROMPT
   const canSubmit = Boolean(prompt.trim()) && composedPrompt.length <= MAX_PROMPT && Boolean(secrets?.hasKey) && canGenerate
+
+  useEffect(() => {
+    if (seededCreatePerson.current || params.get('createPerson') !== '1') return
+    seededCreatePerson.current = true
+    setCreatePersonMode(true)
+    setPrompt((current) => (current.trim() ? current : CREATE_PERSON_PROMPT))
+    setPromptSource((current) => (current === 'user' ? 'starter' : current))
+    const next = new URLSearchParams(params)
+    next.delete('createPerson')
+    setParams(next, { replace: true })
+  }, [params, setParams])
 
   useEffect(() => {
     void loadMonth()
@@ -621,6 +637,16 @@ export function CreateWorkspace(): React.JSX.Element {
             {isRunning && job && <span className="badge" data-tone="success">Making</span>}
           </div>
           <div className="scroll-area flex-1 p-5">
+            {createPersonMode && (
+              <div className="mb-5">
+                <Banner
+                  status="info"
+                  title="Make a new person"
+                  description="Describe the person, generate an image, then choose Save as Person on the result."
+                  collapsible={false}
+                />
+              </div>
+            )}
             {isRunning && job && (
               <div className="card mb-5 p-4">
                 <div className="flex items-center gap-2">
@@ -658,6 +684,9 @@ export function CreateWorkspace(): React.JSX.Element {
                   ) : (
                     <p className="mx-auto mt-4 max-w-[760px] text-center text-[13px] font-semibold">Examples</p>
                   )}
+                  <p className="mx-auto mt-1 max-w-[760px] text-center text-[11px]" style={{ color: 'var(--text-faint)' }}>
+                    Click a photo to load a starting description.
+                  </p>
                   <div className="mx-auto mt-2 grid max-w-[760px] grid-cols-2 gap-4">
                     {EXAMPLE_SCENES.map((scene) => (
                       <button
@@ -700,6 +729,9 @@ export function CreateWorkspace(): React.JSX.Element {
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => setSaveProductImage(image)}>
                         <Package size={13} /> Save as Product
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setSavePersonImage(image)}>
+                        <UserPlus size={13} /> Save as Person
                       </Button>
                       <div className="ml-auto">
                         <MoreMenu
@@ -765,6 +797,11 @@ export function CreateWorkspace(): React.JSX.Element {
         imageId={saveProductImage?.id ?? null}
         defaultName={project.name}
       />
+      <SavePersonDialog
+        open={Boolean(savePersonImage)}
+        onOpenChange={(open) => { if (!open) setSavePersonImage(null) }}
+        imageId={savePersonImage?.id ?? null}
+      />
       <Lightbox
         open={lightboxIndex !== null}
         onOpenChange={(open) => { if (!open) setLightboxIndex(null) }}
@@ -773,7 +810,8 @@ export function CreateWorkspace(): React.JSX.Element {
         onIndex={setLightboxIndex}
         onDownload={(image) => void download(image)}
         onEdit={(image) => navigate(`/project/${project.id}?view=photo&image=${image.id}`)}
-        onSaveProduct={setSaveProductImage}
+        onSaveProduct={(image) => { setLightboxIndex(null); setSaveProductImage(image) }}
+        onSavePerson={(image) => { setLightboxIndex(null); setSavePersonImage(image) }}
         onDelete={(image) => void remove(image)}
       />
       <FirstRunConfirm

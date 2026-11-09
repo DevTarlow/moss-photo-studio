@@ -50,10 +50,10 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - A two-shot failure set showed the partial review, the failed cards, and `Try Again · $0.02`. The retry made exactly two requests. Total set requests were eight. Older ready images were preserved.
 - Image Editor: Kitchen table tile, a fitted canvas, a compare divider that can be dragged or moved with the slider and arrow keys, hold Space for the earlier version, local 1:1 crop, rotate, brightness, sharpen, apply locally free, version labels, and new version. The crop/rotate preview follows the exporter order; the crop box moves with arrow keys and resizes with Alt+arrow. The adjust-preview state is captured and axe-checked. Copy Image writes a PNG and Paste Image reads it back through the main-process clipboard.
 - Set preview: the lightbox opens on a blurred glass scrim, closes when clicking outside the image, and still closes with the X.
-- Create: four images, run cost, first result gets Newest, persistent Edit/Download/More actions, a result lightbox, Edit opens the editor, Back to Create returns to the result. The empty state labels the four starting cards Examples, and the idea menu groups use darker bold titles. A failed run gets its own retry card.
+- Create: four images, run cost, first result gets Newest, persistent Edit/Download/Save as Product/Save as Person/More actions, a result lightbox, Edit opens the editor, Back to Create returns to the result. The empty state shows eight starting cards under Examples with the line "Click a photo to load a starting description.", and the idea menu groups use darker bold titles. A failed run gets its own retry card.
 - Set export: six named WebP files and a UTF-8 `set.txt`, no overwrite, format and quality controls. The toast names the folder and count and offers Open Folder.
 - Usage: month total equals returned images times one cent, by-project rows, ledger, CSV totals sum to the displayed month spend, budget warning at `$10.00`, reset budget. A low budget exposes Make Fewer Images; in Set it reduces the run to one shot and removes the warning when one fits.
-- People: 24 bundled people, user section, Maya's included card, candid descriptions, and the synthetic-people note.
+- People: 24 bundled people, user section, Maya's included card, candid descriptions, and the synthetic-people note. Create a Person opens the Image Generator with a portrait prompt and a Make a new person banner; Save as Person on a generated result adds the image under Yours.
 - Settings: light and dark theme, persisted after restart, window bounds remembered, 1024 by 700 and 150% zoom coverage for every main screen, keyring warning visible when safeStorage is unavailable. The system reduced-motion preference drives `data-motion`; overriding to full restores motion.
 - Settings key: Test Connection, Replace, Test and Save, Remove with confirmation. The full key never appears in the page after saving.
 - Offline: with both fake hosts down, generation shows the approved offline copy, no images, no cost. The library, local adjust, and export remain usable.
@@ -147,8 +147,8 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 ### 11. Create
 
-- [x] **A** Fill the describe box, choose four images, create. Four results appear with persistent Edit, Download, Save as Product, and More actions; the image opens a lightbox; Edit opens one; Back to Create returns.
-- [x] **A** The empty state shows an Examples title, and the Start from an idea menu has darker bold category titles.
+- [x] **A** Fill the describe box, choose four images, create. Four results appear with persistent Edit, Download, Save as Product, Save as Person, and More actions; the image opens a lightbox; Edit opens one; Back to Create returns.
+- [x] **A** The empty state shows an Examples title with the line "Click a photo to load a starting description.", a person card, and eight starting cards; the Start from an idea menu has darker bold category titles.
 - [x] **A** Open Image Generator and leave without making an image. No Images project appears and the Library count is unchanged. Make one image, and the project appears.
 - [x] **A** With a product photo selected, click an example. The description is written for the product and the run sends it. Turn Use my product photo off: the example's own description loads, the run leaves the photo out, and the reference card says so. Editing the description returns to the normal reference rules.
 
@@ -186,6 +186,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 - [ ] **A** From a Product, use Use in a Set, Edit This Photo, and New Image from Reference; then repeat from a ready library image. The chosen photo becomes the source or reference.
 - [ ] **A** Replace a set's product photo from a Product and from a library image. Images already made stay.
 - [ ] **A** Add a photo to an existing Image Editor from a Product and from a library image. It becomes a new version.
+- [x] **A** Create a Person opens the Image Generator with the person prompt and banner; generate an image, choose Save as Person, name it, and the new person appears under Yours with a working preview.
 - [ ] **A** In the Image Generator, choose a Product and a Person from People. The run makes one image and the person is holding the product.
 - [ ] **A** The count control is fixed at one image while a reference is selected.
 - [ ] **A** Delete a Product. The Products page empties, and projects and images made from it remain.

@@ -180,7 +180,15 @@ export const STARTERS: readonly Starter[] = [
   }
 ]
 
-export type ExampleSceneKey = 'product' | 'lifestyle' | 'flatlay' | 'gift'
+export type ExampleSceneKey =
+  | 'product'
+  | 'person'
+  | 'lifestyle'
+  | 'worn'
+  | 'flatlay'
+  | 'gift'
+  | 'home'
+  | 'jewelry'
 
 export interface ExampleScene {
   key: ExampleSceneKey
@@ -190,6 +198,10 @@ export interface ExampleScene {
   /** The same scene written for a product that arrives as a reference. */
   productText: string
 }
+
+/** The starting text for Create a Person and the person example card. */
+export const CREATE_PERSON_PROMPT =
+  'A candid full-body photo of a smiling person in their thirties with short curly hair, wearing a mustard sweater and jeans, in a bright room with a plain warm background, natural daylight, head to toe, realistic photo.'
 
 export const EXAMPLE_SCENES: readonly ExampleScene[] = [
   {
@@ -201,12 +213,27 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
       'A single product alone on a pure white background, centred and filling most of the frame, no props or text, soft even lighting, catalogue product photo.'
   },
   {
+    key: 'person',
+    label: 'A new person',
+    exampleText: CREATE_PERSON_PROMPT,
+    productText:
+      'A candid full-body photo of a smiling person holding the product, wearing a mustard sweater and jeans, in a bright room with a plain warm background, natural daylight, head to toe, realistic photo.'
+  },
+  {
     key: 'lifestyle',
     label: 'A lifestyle scene',
     exampleText:
       'A lit scented candle on a wooden bedside table beside a book and a mug, warm evening light, cosy handmade style.',
     productText:
       'The product on a wooden bedside table beside a book and dried flowers, warm evening light, cosy handmade style, product photo.'
+  },
+  {
+    key: 'worn',
+    label: 'Someone wearing it',
+    exampleText:
+      'A smiling woman wearing a light blue patterned blouse and blue jeans, standing in a bright room, full body, natural daylight, realistic photo.',
+    productText:
+      'A smiling person wearing the product, full body, standing in a bright room, natural daylight, realistic photo.'
   },
   {
     key: 'flatlay',
@@ -223,6 +250,22 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
       'A lit scented candle sitting inside an open black gift box lined with white tissue paper, warm festive light, shallow depth of field, product photo.',
     productText:
       'The product sitting inside an open gift box lined with white tissue paper, warm festive light, shallow depth of field, product photo.'
+  },
+  {
+    key: 'home',
+    label: 'A room scene',
+    exampleText:
+      'A small oak side table in a bright living room beside a sofa, a plant and a woven rug, soft daylight, home lifestyle photo.',
+    productText:
+      'The product in a bright living room beside a sofa, a plant and a woven rug, soft daylight, home lifestyle photo.'
+  },
+  {
+    key: 'jewelry',
+    label: 'A jewelry close-up',
+    exampleText:
+      'A close-up of a person wearing a delicate gold pendant necklace, the pendant in focus, soft neutral background, natural light, jewelry photo.',
+    productText:
+      'A close-up of the product from the photo worn by a person, the piece in focus, soft neutral background, natural light, jewelry photo.'
   }
 ]
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, UserPlus, Users } from 'lucide-react'
+import { Search, Sparkles, UserPlus, Users } from 'lucide-react'
 import type { Person } from '@shared/types'
 import { AppFrame } from '../components/ui/AppFrame'
 import { Button } from '../components/ui/Button'
@@ -73,6 +73,7 @@ export function People(): React.JSX.Element {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [renaming, setRenaming] = useState<Person | null>(null)
+  const [creatingPerson, setCreatingPerson] = useState(false)
   const [renameValue, setRenameValue] = useState('')
   const [loading, setLoading] = useState(people.length === 0)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -197,6 +198,22 @@ export function People(): React.JSX.Element {
     }
   }
 
+  const createPerson = async (): Promise<void> => {
+    setCreatingPerson(true)
+    try {
+      const detail = await unwrap(window.moss.projects.create({
+        type: 'image',
+        name: 'New person',
+        draft: true
+      }))
+      navigate(`/project/${detail.project.id}?createPerson=1`)
+    } catch {
+      toast.error('A new person could not be started.')
+    } finally {
+      setCreatingPerson(false)
+    }
+  }
+
   const rename = async (): Promise<void> => {
     if (!renaming || !renameValue.trim()) return
     try {
@@ -213,7 +230,7 @@ export function People(): React.JSX.Element {
     <AppFrame>
       <div className="page-scroll">
         <div className="page-pad page-max">
-          <div className="flex items-start gap-3">
+          <div className="flex flex-wrap items-start gap-3">
             <div>
               <Heading level={1}>People</Heading>
               <Text type="supporting" color="secondary" className="block">
@@ -223,9 +240,14 @@ export function People(): React.JSX.Element {
               </Text>
               <Text type="supporting" color="secondary" className="block">The people you can put your products on.</Text>
             </div>
-            <Button className="ml-auto" variant="primary" onClick={() => setAddOpen(true)}>
-              <UserPlus size={16} /> Add a Person
-            </Button>
+            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+              <Button variant="secondary" disabled={creatingPerson} onClick={() => void createPerson()}>
+                <Sparkles size={16} /> Create a Person
+              </Button>
+              <Button variant="primary" onClick={() => setAddOpen(true)}>
+                <UserPlus size={16} /> Add a Person
+              </Button>
+            </div>
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">

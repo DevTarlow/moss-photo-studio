@@ -5,7 +5,7 @@ import { SCENES, SCENE_CATEGORIES } from '@shared/prompts/scenes'
 import { ALL_TEMPLATES, TEMPLATE_GROUPS, QUICK_FIX, templateAsset, templateById } from '@shared/prompts/templates'
 import { RECIPES, recipeById, CATEGORY_CHIPS, recipeShotTypes, recipeShotLabels, defaultDirectionFor } from '@shared/prompts/recipes'
 import { SHOT_TYPES, shotDefinition, directionForPrompt } from '@shared/prompts/shots'
-import { EXAMPLE_SCENES, STARTERS, exampleTextFor } from '@shared/starters'
+import { CREATE_PERSON_PROMPT, EXAMPLE_SCENES, STARTERS, exampleTextFor } from '@shared/starters'
 import { BUNDLED_PEOPLE } from '@shared/people'
 import { wrapScenePrompt, wrapModelPrompt, PROMPT_MAX } from '@shared/prompts/guards'
 import { createDefaultPlan, makeShots, normalisePlan, enableFirstShots, firstShotsEnabled } from '@shared/plans'
@@ -243,15 +243,19 @@ describe('starters and people', () => {
 })
 
 describe('image generator examples', () => {
-  it('ships four example scenes with unique keys and short copy', () => {
-    expect(EXAMPLE_SCENES).toHaveLength(4)
-    expect(new Set(EXAMPLE_SCENES.map((scene) => scene.key)).size).toBe(4)
+  it('ships eight example scenes with unique keys, assets and short copy', () => {
+    expect(EXAMPLE_SCENES).toHaveLength(8)
+    expect(new Set(EXAMPLE_SCENES.map((scene) => scene.key)).size).toBe(8)
     for (const scene of EXAMPLE_SCENES) {
       expect(scene.exampleText.length).toBeGreaterThan(0)
       expect(scene.exampleText.length).toBeLessThanOrEqual(240)
       expect(scene.productText.length).toBeGreaterThan(0)
       expect(scene.productText.length).toBeLessThanOrEqual(240)
+      expect(fs.existsSync(path.join(root, 'resources', 'tiles', 'examples', `${scene.key}.webp`))).toBe(true)
     }
+    expect(EXAMPLE_SCENES.find((scene) => scene.key === 'person')?.exampleText).toBe(CREATE_PERSON_PROMPT)
+    expect(CREATE_PERSON_PROMPT.length).toBeGreaterThan(0)
+    expect(CREATE_PERSON_PROMPT.length).toBeLessThanOrEqual(240)
   })
 
   it('writes the product variant for any product, not the example object', () => {
