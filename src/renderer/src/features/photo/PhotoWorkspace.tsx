@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Download, Loader2, PanelLeft, PanelRight, Plus } from 'lucide-react'
+import { ArrowLeft, Download, Loader2, Maximize2, PanelLeft, PanelRight, Plus } from 'lucide-react'
 import type { AdjustTransform, Image, Project } from '@shared/types'
 import { estimateCents, usd } from '@shared/cost'
 import { errorMessage, billingUncertain } from '@shared/errors'
@@ -23,6 +23,7 @@ import { AdjustPanel } from './AdjustPanel'
 import { VersionDetails } from './VersionDetails'
 import { ExportDialog } from './ExportDialog'
 import { CropOverlay } from './CropOverlay'
+import { Lightbox } from '../../components/ui/Lightbox'
 import { SourcePickerDialog } from '../../components/sources/SourcePickerDialog'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { SaveProductDialog } from '../../components/products/SaveProductDialog'
@@ -87,6 +88,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [monthCents, setMonthCents] = useState(0)
   const [exportOpen, setExportOpen] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
   const [leftSheet, setLeftSheet] = useState(false)
   const [rightSheet, setRightSheet] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
@@ -539,6 +541,10 @@ export function PhotoWorkspace(): React.JSX.Element {
   const showParent = showOriginal && parent
   const displayImage = showParent ? parent : selected
   const jobItem = runningJob?.items[0]
+  // Compare mode owns the canvas drag, crop mode owns the pointer, and a run
+  // dims the canvas, so the click-to-preview affordance is off in those states.
+  const canPreview = Boolean(displayImage?.url) && !compare && !crop && !isRunning
+  const lightboxIndex = Math.max(0, ready.findIndex((image) => image.id === selected?.id))
 
   const backLabel = project.type === 'set' ? 'Back to Set' : project.type === 'image' ? 'Back to Image Generator' : null
   const goBackToProject = (): void => {
@@ -626,7 +632,9 @@ export function PhotoWorkspace(): React.JSX.Element {
               {displayImage?.url && fit > 0 ? (
                 <div
                   ref={compareRef}
-                  className="relative"
+                  className={canPreview ? 'relative cursor-zoom-in' : 'relative'}
+                  title={canPreview ? 'Click the photo to preview it larger' : undefined}
+                  onClick={canPreview ? () => setLightboxOpen(true) : undefined}
                   style={{ width: displayWidth, height: displayHeight, transform: `scale(${zoom})`, transformOrigin: 'center' }}
                 >
                   {compare && parent?.url && selected?.url ? (
@@ -672,12 +680,23 @@ export function PhotoWorkspace(): React.JSX.Element {
                   <div className="text-center">
                     <div className="mx-auto shimmer-block h-24 w-64 rounded-[10px]" aria-hidden />
                     <Loader2 size={18} className="mx-auto mt-4 animate-spin" aria-hidden />
-                    <p className="mt-2 text-[13px] font-semibold">{jobItem?.waiting ? 'Waiting for Meta' : 'Making your change'} · {elapsedLabel(jobItem?.startedAt ?? runningJob.startedAt, now)}</p>
+                    <p className="mt-2 text-[13px] font-semibold" style={{ color: 'var(--canvas-text)' }}>{jobItem?.waiting ? 'Waiting for Meta' : 'Making your change'} · {elapsedLabel(jobItem?.startedAt ?? runningJob.startedAt, now)}</p>
                     <p className="canvas-meta mt-1 text-[11px]">{usd(runningJob.costCents)} so far</p>
                   </div>
                 </div>
               )}
             </div>
+            {canPreview && (
+              <button
+                type="button"
+                className="canvas-preview-btn"
+                aria-label="Preview larger"
+                title="Preview larger"
+                onClick={() => setLightboxOpen(true)}
+              >
+                <Maximize2 size={15} />
+              </button>
+            )}
             {compare && parent && (
               <div className="px-8 pb-3">
                 <label className="sr-only" htmlFor="compare-slider">Compare before and after</label>
@@ -803,6 +822,16 @@ export function PhotoWorkspace(): React.JSX.Element {
         onOpenChange={(open) => { if (!open) setSaveProductImageId(null) }}
         imageId={saveProductImageId}
         defaultName={project.name}
+      />
+      <Lightbox
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
+        images={ready}
+        index={lightboxIndex}
+        onIndex={(index) => {
+          const next = ready[index]
+          if (next) selectImage(next.id)
+        }}
       />
       <ExportDialog open={exportOpen} onOpenChange={setExportOpen} project={project} image={selected} />
     </>
