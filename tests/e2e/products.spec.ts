@@ -51,6 +51,7 @@ test('a generated image becomes a reusable product across the editor and generat
     await page.getByRole('link', { name: 'Library', exact: true }).click()
     await page.getByRole('button', { name: 'New project' }).click()
     await page.getByRole('menuitem', { name: /Image Editor/ }).click()
+    await expect(page.getByRole('dialog').getByRole('heading', { name: 'Image Editor', exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Choose a Saved Photo' }).click()
     const picker = page.getByRole('dialog')
     await expect(picker.getByRole('heading', { name: 'Choose a Photo to Edit' })).toBeVisible()
