@@ -538,10 +538,10 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
                 }}
               >
                 <ToggleButton value="plan" label="Plan" size="sm" />
-                <ToggleButton value="review" label="Set" size="sm" isDisabled={!hasAttempts && madeCount === 0} />
+                <ToggleButton value="review" label="Review" size="sm" isDisabled={!hasAttempts && madeCount === 0} />
               </ToggleButtonGroup>
             )}
-            <p className="min-w-0 flex-1 truncate text-[12px] font-medium">{isRunning ? 'Making the set' : phase === 'review' ? 'Set review' : 'Plan the set'}</p>
+            <p className="min-w-0 flex-1 truncate text-[12px] font-medium">{isRunning ? 'Making the set' : phase === 'review' ? 'Review the set' : 'Plan the set'}</p>
             {leftHidden && <IconButton label="Open plan" onClick={() => setLeftSheet(true)}><PanelLeft size={16} /></IconButton>}
             {isRunning && <span className="badge" data-tone="success">Making</span>}
             {!isRunning && phase === 'review' && <span className="badge">{madeCount} of {enabledShots.length}</span>}

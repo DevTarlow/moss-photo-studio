@@ -6,7 +6,7 @@ This is the sibling application to `../moss-toolbox`. It is an Electron desktop 
 
 ## What is in the app
 
-- **App shell** with one rail: Studio (Library, Products, People, Usage), Tools (Set, Image Editor, Image Generator), and Settings. The top-bar New menu launches the same three tools from any main screen. While Settings is open, its sections use the same rail.
+- **App shell** with one rail: Studio (Library, Products, People, Usage), Tools (New Set, Image Editor, Image Generator), and Settings. The top-bar New menu launches the same three tools from any main screen. While Settings is open, its sections use the same rail.
 - **Library** with sets, photos, and images, search, filters, sorting, grid and list views, project duplication, rename, hover-select multi-delete, an explicit Select mode, delete, and export. Projects show 20 per page with Previous/Next controls.
 - **Set** from 1 to 8 listing shots. Start from an upload, a saved Product, or any ready library image. Each shot can be switched off, renamed, described, assigned a person, or given a feature line. The plan saves automatically.
 - **Connection icons** for Main shot, In use, Close-up, Size reference, Flat lay, Gift-ready, Feature callout, and On a person.
