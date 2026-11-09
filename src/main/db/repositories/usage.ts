@@ -72,16 +72,29 @@ export class UsageRepository {
   }
 
   byProject(monthStart: number, monthEnd: number): Array<{ projectId: string | null; name: string; images: number; spendCents: number }> {
+    // One row per project, named from the live project so a rename shows up
+    // immediately. A deleted project keeps the name recorded on its last run.
     const rows = this.db
       .prepare(
-        `SELECT project_id, project_name, COALESCE(SUM(returned_n), 0) AS images, COALESCE(SUM(cost_cents), 0) AS cents
-         FROM usage_events WHERE at >= ? AND at < ?
-         GROUP BY project_id, project_name ORDER BY cents DESC, project_name ASC`
+        `SELECT ue.project_id AS project_id,
+                COALESCE(
+                  p.name,
+                  (SELECT x.project_name FROM usage_events x
+                    WHERE x.project_id IS ue.project_id
+                    ORDER BY x.at DESC LIMIT 1)
+                ) AS name,
+                COALESCE(SUM(ue.returned_n), 0) AS images,
+                COALESCE(SUM(ue.cost_cents), 0) AS cents
+         FROM usage_events ue
+         LEFT JOIN projects p ON p.id = ue.project_id
+         WHERE ue.at >= ? AND ue.at < ?
+         GROUP BY ue.project_id
+         ORDER BY cents DESC, name ASC`
       )
-      .all(monthStart, monthEnd) as Array<{ project_id: string | null; project_name: string; images: number; cents: number }>
+      .all(monthStart, monthEnd) as Array<{ project_id: string | null; name: string | null; images: number; cents: number }>
     return rows.map((row) => ({
       projectId: row.project_id,
-      name: row.project_name,
+      name: row.name ? String(row.name) : 'Project',
       images: Number(row.images),
       spendCents: Number(row.cents)
     }))
@@ -104,7 +117,11 @@ export class UsageRepository {
     const limit = Math.max(1, Math.min(500, options.limit ?? 50))
     const offset = Math.max(0, options.offset ?? 0)
     const rows = this.db
-      .prepare(`SELECT * FROM usage_events ${where} ORDER BY at DESC LIMIT ? OFFSET ?`)
+      .prepare(
+        `SELECT ue.*, COALESCE(p.name, ue.project_name) AS resolved_project_name
+         FROM usage_events ue LEFT JOIN projects p ON p.id = ue.project_id
+         ${where} ORDER BY ue.at DESC LIMIT ? OFFSET ?`
+      )
       .all(...params, limit, offset) as Array<Record<string, unknown>>
     const totalRow = this.db
       .prepare(`SELECT COUNT(*) AS total FROM usage_events ${where}`)
@@ -114,7 +131,7 @@ export class UsageRepository {
         id: String(row.id),
         at: Number(row.at),
         projectId: row.project_id ? String(row.project_id) : null,
-        projectName: String(row.project_name),
+        projectName: row.resolved_project_name ? String(row.resolved_project_name) : 'Deleted project',
         action: row.action as UsageAction,
         requested: Number(row.requested_n),
         returned: Number(row.returned_n),
@@ -130,13 +147,17 @@ export class UsageRepository {
 
   allForCsv(monthStart: number, monthEnd: number): UsageEvent[] {
     const rows = this.db
-      .prepare('SELECT * FROM usage_events WHERE at >= ? AND at < ? ORDER BY at ASC')
+      .prepare(
+        `SELECT ue.*, COALESCE(p.name, ue.project_name) AS resolved_project_name
+         FROM usage_events ue LEFT JOIN projects p ON p.id = ue.project_id
+         WHERE ue.at >= ? AND ue.at < ? ORDER BY ue.at ASC`
+      )
       .all(monthStart, monthEnd) as Array<Record<string, unknown>>
     return rows.map((row) => ({
       id: String(row.id),
       at: Number(row.at),
       projectId: row.project_id ? String(row.project_id) : null,
-      projectName: String(row.project_name),
+      projectName: row.resolved_project_name ? String(row.resolved_project_name) : 'Deleted project',
       action: row.action as UsageAction,
       requested: Number(row.requested_n),
       returned: Number(row.returned_n),

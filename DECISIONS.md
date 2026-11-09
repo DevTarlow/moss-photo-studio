@@ -151,3 +151,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Onboarding ready step
 
 84. **The ready step previews the first set and finishes where the work lives.** When the first set actually runs, the ready step loads the project's ready images and shows them as a thumbnail grid; choosing a thumbnail opens the shared Lightbox with arrow-key paging, so the seller can check the result before leaving setup. Finish Setup is the step's only exit. It lands in the Library when a set exists, because that is where the set lives, and in Products when the seller chose Save product only, because there is no set and the saved product is the thing to open.
+
+## Usage names
+
+85. **Usage names a project from its live title, not the snapshot on each run.** Usage rows keep the name recorded at run time for history, but the ledger, CSV, and By project resolve the current project name through a join, so renaming a set updates every row that points at it. By project groups by project id alone, so a rename cannot split one project into two rows. A deleted project falls back to the name recorded on its latest run.
