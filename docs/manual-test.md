@@ -53,7 +53,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - Create: four images, run cost, first result gets Newest, persistent Edit/Download/More actions, a result lightbox, Edit opens the editor, Back to Create returns to the result. The empty state labels the four starting cards Examples, and the idea menu groups use darker bold titles. A failed run gets its own retry card.
 - Set export: six named WebP files and a UTF-8 `set.txt`, no overwrite, format and quality controls. The toast names the folder and count and offers Open Folder.
 - Usage: month total equals returned images times one cent, by-project rows, ledger, CSV totals sum to the displayed month spend, budget warning at `$10.00`, reset budget. A low budget exposes Make Fewer Images; in Set it reduces the run to one shot and removes the warning when one fits.
-- People: 12 bundled people, user section, Maya's included card, descriptions, and the synthetic-people note.
+- People: 24 bundled people, user section, Maya's included card, candid descriptions, and the synthetic-people note.
 - Settings: light and dark theme, persisted after restart, window bounds remembered, 1024 by 700 and 150% zoom coverage for every main screen, keyring warning visible when safeStorage is unavailable. The system reduced-motion preference drives `data-motion`; overriding to full restores motion.
 - Settings key: Test Connection, Replace, Test and Save, Remove with confirmation. The full key never appears in the page after saving.
 - Offline: with both fake hosts down, generation shows the approved offline copy, no images, no cost. The library, local adjust, and export remain usable.

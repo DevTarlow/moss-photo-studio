@@ -229,10 +229,13 @@ describe('starters and people', () => {
     )
   })
 
-  it('ships twelve adults with stable ids and descriptions', () => {
-    expect(BUNDLED_PEOPLE).toHaveLength(12)
+  it('ships twenty-four adults with stable ids, descriptions and assets', () => {
+    expect(BUNDLED_PEOPLE).toHaveLength(24)
     expect(BUNDLED_PEOPLE[0]).toEqual({ id: 'maya', name: 'Maya', ageBand: '20s', blurb: 'A woman in her twenties with dark shoulder-length hair.' })
+    expect(new Set(BUNDLED_PEOPLE.map((person) => person.id)).size).toBe(24)
     for (const person of BUNDLED_PEOPLE) {
+      expect(person.name.length).toBeGreaterThan(0)
+      expect(person.blurb.length).toBeGreaterThan(0)
       expect(fs.existsSync(path.join(root, 'resources', 'people', `${person.id}.webp`))).toBe(true)
       expect(fs.existsSync(path.join(root, 'resources', 'people', `${person.id}-portrait.webp`))).toBe(true)
     }

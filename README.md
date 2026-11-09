@@ -14,7 +14,7 @@ This is the sibling application to `../moss-toolbox`. It is an Electron desktop 
 - **Image Generator** with 30 starters, including person ideas for holding, wearing, and using the item, one to four images, three shapes, and three formats. A product reference and a person reference can be sent together, so a person can hold a product. The four example cards load an editable scene description; with a product photo selected, a Use my product photo switch frames the scene around that product instead of the sample object. A new generator project appears in the Library only after its first image.
 - **Local adjust** for crop, rotate, flip, brightness, contrast, saturation, warmth, sharpen, and vignette. It makes a new version and never resends the product to an image service.
 - **Products** for saving a generated image, editor version, or set shot as a named, reusable product photo. Products and any library image can be chosen wherever a source photo is needed; the page has search, sort, counts, and 20 per page.
-- **People** with 12 included synthetic reference people plus your own portraits, search, sort, counts, and rename or remove for your own. A person is reused as a reference in sets, the editor, and the generator.
+- **People** with 24 included synthetic reference people — candid, friendly lifestyle shots across the 20s–70s age range — plus your own portraits, search, sort, counts, and rename or remove for your own. A person is reused as a reference in sets, the editor, and the generator.
 - **Logo & Colors** with up to six colors, a logo, and corner badge position, size, and opacity. The first three saved colors steer backgrounds and props in sets and photo changes while their toggle is on; select Use on any other saved color to swap it into those three. Turning the toggle off keeps the saved colors but adds none to a prompt. The badge is composited locally.
 - **First run** opens in light mode with a Welcome screen and five setup steps: connect Meta, add the first product, make the studio your own with a logo and colors, make an optional first set, and a ready screen that previews the images made in the optional first set. The first photo is saved as a reusable Product; a set project is created only when the seller chooses to make images. All six recipe shots start selected, with 1, 3, or all presets, and the first three are the strongest shots for the chosen category. The customization step can be skipped, and the same logo and colors remain in Settings. The theme, density, and reduce-motion live in Settings.
 - **Usage ledger** with the real returned-image cost, $0.01 per returned image, a monthly budget, and CSV export. Project rows follow the current project title, so a rename shows immediately; deleted projects read as Deleted project. Project spending and ledger rows show 20 per page.
@@ -70,6 +70,7 @@ The prompt lab in `scripts/lab/` calls the real Meta Muse API with the app's own
 # Put a key in .env first. The file is gitignored and never read by the app.
 npm run lab -- plan --all                          # free prompt review
 npm run lab -- set --category clothing --source shirt.jpg --yes
+npm run lab -- people --yes                        # 24 bundled reference people, $0.24
 npm run lab -- sweep --yes                         # 11 categories, 66 images, $0.66
 ```
 
