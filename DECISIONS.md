@@ -154,4 +154,4 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 
 ## Usage names
 
-85. **Usage names a project from its live title, not the snapshot on each run.** Usage rows keep the name recorded at run time for history, but the ledger, CSV, and By project resolve the current project name through a join, so renaming a set updates every row that points at it. By project groups by project id alone, so a rename cannot split one project into two rows. A deleted project falls back to the name recorded on its latest run.
+85. **Usage names a project from its live title, not the snapshot on each run.** Usage rows keep the name recorded at run time for history, but the ledger, CSV, and By project resolve the current project name through a join, so renaming a set updates every row that points at it. By project groups by project id alone, so a rename cannot split one project into two rows. A deleted project reads Deleted project instead of its last stored name, which could be stale or id-like; a run with no project reads Project.

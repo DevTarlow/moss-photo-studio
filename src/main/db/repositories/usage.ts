@@ -73,16 +73,16 @@ export class UsageRepository {
 
   byProject(monthStart: number, monthEnd: number): Array<{ projectId: string | null; name: string; images: number; spendCents: number }> {
     // One row per project, named from the live project so a rename shows up
-    // immediately. A deleted project keeps the name recorded on its last run.
+    // immediately. A deleted project reads as Deleted project rather than a
+    // stale, possibly id-like snapshot.
     const rows = this.db
       .prepare(
         `SELECT ue.project_id AS project_id,
-                COALESCE(
-                  p.name,
-                  (SELECT x.project_name FROM usage_events x
-                    WHERE x.project_id IS ue.project_id
-                    ORDER BY x.at DESC LIMIT 1)
-                ) AS name,
+                CASE
+                  WHEN p.id IS NOT NULL THEN p.name
+                  WHEN ue.project_id IS NULL THEN 'Project'
+                  ELSE 'Deleted project'
+                END AS name,
                 COALESCE(SUM(ue.returned_n), 0) AS images,
                 COALESCE(SUM(ue.cost_cents), 0) AS cents
          FROM usage_events ue
@@ -118,7 +118,12 @@ export class UsageRepository {
     const offset = Math.max(0, options.offset ?? 0)
     const rows = this.db
       .prepare(
-        `SELECT ue.*, COALESCE(p.name, ue.project_name) AS resolved_project_name
+        `SELECT ue.*,
+                CASE
+                  WHEN p.id IS NOT NULL THEN p.name
+                  WHEN ue.project_id IS NULL THEN 'Project'
+                  ELSE 'Deleted project'
+                END AS resolved_project_name
          FROM usage_events ue LEFT JOIN projects p ON p.id = ue.project_id
          ${where} ORDER BY ue.at DESC LIMIT ? OFFSET ?`
       )
@@ -148,7 +153,12 @@ export class UsageRepository {
   allForCsv(monthStart: number, monthEnd: number): UsageEvent[] {
     const rows = this.db
       .prepare(
-        `SELECT ue.*, COALESCE(p.name, ue.project_name) AS resolved_project_name
+        `SELECT ue.*,
+                CASE
+                  WHEN p.id IS NOT NULL THEN p.name
+                  WHEN ue.project_id IS NULL THEN 'Project'
+                  ELSE 'Deleted project'
+                END AS resolved_project_name
          FROM usage_events ue LEFT JOIN projects p ON p.id = ue.project_id
          WHERE ue.at >= ? AND ue.at < ? ORDER BY ue.at ASC`
       )

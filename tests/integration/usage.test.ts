@@ -72,14 +72,30 @@ describe('usage project names', () => {
     expect(rows[0]).toMatchObject({ projectId: project.id, name: 'First title', spendCents: 4 })
   })
 
-  it('falls back to the last recorded name when the project was deleted', () => {
-    const project = projects.create({ type: 'set', name: 'Deleted set' })
-    record(project.id, 'Deleted set')
+  it('calls a deleted project Deleted project instead of its old snapshot', () => {
+    const project = projects.create({ type: 'set', name: 'cb1d6ed031a7ef5fe42e75e523b6d294' })
+    record(project.id, 'cb1d6ed031a7ef5fe42e75e523b6d294')
     projects.delete(project.id)
 
     const { start, end } = month()
-    expect(usage.list({ monthStart: start, monthEnd: end }).items[0]?.projectName).toBe('Deleted set')
-    expect(usage.byProject(start, end)[0]?.name).toBe('Deleted set')
-    expect(usage.allForCsv(start, end)[0]?.projectName).toBe('Deleted set')
+    expect(usage.list({ monthStart: start, monthEnd: end }).items[0]?.projectName).toBe('Deleted project')
+    expect(usage.byProject(start, end)[0]?.name).toBe('Deleted project')
+    expect(usage.allForCsv(start, end)[0]?.projectName).toBe('Deleted project')
+  })
+
+  it('labels a run with no project as Project', () => {
+    usage.record({
+      projectId: null,
+      projectName: 'cb1d6ed031a7ef5fe42e75e523b6d294',
+      action: 'adjust',
+      requestedN: 1,
+      returnedN: 1,
+      costCents: 0,
+      result: 'ok'
+    })
+
+    const { start, end } = month()
+    expect(usage.list({ monthStart: start, monthEnd: end }).items[0]?.projectName).toBe('Project')
+    expect(usage.byProject(start, end)[0]?.name).toBe('Project')
   })
 })
