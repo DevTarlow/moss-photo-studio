@@ -14,6 +14,7 @@ import { PeopleRepository } from '@main/db/repositories/people'
 import { ProductRepository } from '@main/db/repositories/products'
 import { MediaService } from '@main/media/service'
 import { ProductService } from '@main/products/service'
+import { createDefaultPlan } from '@shared/plans'
 
 let dir = ''
 let db: Db
@@ -97,8 +98,20 @@ describe('products', () => {
     const product = await productService.addFromBytes({ bytes: await jpeg(), name: 'Mug' })
     const set = await productService.createProject({ productId: product.id, type: 'set', shape: 'square', format: 'webp' })
     expect(projects.get(set.projectId)?.type).toBe('set')
-    expect(plans.getActive(set.projectId)).toBeTruthy()
+    // The set asks what the seller sells before it gets a plan.
+    expect(plans.getActive(set.projectId)).toBeNull()
+    expect(projects.get(set.projectId)?.category).toBeNull()
     expect(images.get(set.imageId)?.status).toBe('ready')
+
+    const plan = createDefaultPlan({
+      category: 'clothing',
+      productName: 'Mug',
+      shape: 'square',
+      format: 'webp'
+    })
+    plans.save(set.projectId, plan)
+    expect(plans.getActive(set.projectId)?.json.category).toBe('clothing')
+    expect(projects.get(set.projectId)?.category).toBe('clothing')
 
     const photo = await productService.createProject({ productId: product.id, type: 'photo', shape: 'square', format: 'webp' })
     expect(projects.get(photo.projectId)?.sourceImageId).toBe(photo.imageId)

@@ -7,7 +7,6 @@ import type { PlanRepository } from '../db/repositories/plans'
 import type { MediaService } from '../media/service'
 import { ImageImportError, normaliseProduct } from '../media/import'
 import { absoluteInLibrary, workingFor } from '../media/paths'
-import { createDefaultPlan } from '@shared/plans'
 import { shapeForImage } from '@shared/shapes'
 
 function cleanName(name: string, fallback: string): string {
@@ -114,7 +113,9 @@ export class ProductService {
     const project = this.deps.projects.create({
       type: input.type,
       name,
-      category: input.type === 'set' ? 'other' : null,
+      // A set has no plan until the seller picks what they sell. The set
+      // workspace shows the category chooser first.
+      category: null,
       shape: input.type === 'set' ? shapeForImage(product.width, product.height) : input.shape,
       format: input.format
     })
@@ -125,17 +126,6 @@ export class ProductService {
         label: product.name
       })
       if (!imported.imageId) throw new ImageImportError('unreadable', 'That product could not be used.')
-      if (input.type === 'set') {
-        this.deps.plans.save(
-          project.id,
-          createDefaultPlan({
-            category: 'other',
-            productName: name,
-            shape: project.shape,
-            format: project.format
-          })
-        )
-      }
       return { projectId: project.id, imageId: imported.imageId }
     } catch (error) {
       await this.deps.media.deleteProjectFiles(project.id).catch(() => undefined)

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DropdownMenu } from 'radix-ui'
 import {
   Check,
@@ -19,7 +19,7 @@ import type { Format, Image, Person, PlanJson, PlanShot } from '@shared/types'
 import { MAX_SET_SHOTS } from '@shared/constants'
 
 import { SHOT_TYPES, shotDefinition } from '@shared/prompts/shots'
-import { recipeById } from '@shared/prompts/recipes'
+import { CATEGORY_CHIPS, recipeById } from '@shared/prompts/recipes'
 import { bundledUrl } from '../../lib/assets'
 import { Button } from '../../components/ui/Button'
 import { Dialog } from '../../components/ui/Dialog'
@@ -271,7 +271,9 @@ export function PlanPanel({
   onSaveNow,
   onReset,
   onAddShot,
-  onReplaceSource
+  onReplaceSource,
+  onChangeCategory,
+  categoryLocked
 }: {
   plan: PlanJson
   images: Image[]
@@ -284,12 +286,31 @@ export function PlanPanel({
   onReset: () => void
   onAddShot: (type: PlanShot['type']) => void
   onReplaceSource: () => void
+  onChangeCategory: (category: string) => void
+  categoryLocked: boolean
 }): React.JSX.Element {
   const confirm = useConfirm()
   const ready = images.filter((image) => image.status === 'ready' && image.shotId)
   const usedTypes = new Set(plan.shots.map((shot) => shot.type))
   const remaining = SHOT_TYPES.filter((entry) => !usedTypes.has(entry.type))
   const canAdd = plan.shots.length < MAX_SET_SHOTS && remaining.length > 0
+  const categoryValue = recipeById(plan.category).id
+  const [categoryDraft, setCategoryDraft] = useState(categoryValue)
+  useEffect(() => setCategoryDraft(categoryValue), [categoryValue])
+  const enabledCount = plan.shots.filter((shot) => shot.enabled).length
+  const changeCategory = async (next: string): Promise<void> => {
+    if (next === categoryValue) {
+      setCategoryDraft(categoryValue)
+      return
+    }
+    const ok = await confirm({
+      title: `Switch to the ${recipeById(next).label} recipe?`,
+      body: 'The six shots and their studio directions are replaced.',
+      confirmLabel: 'Switch Recipe'
+    })
+    if (ok) onChangeCategory(next)
+    else setCategoryDraft(categoryValue)
+  }
   return (
     <div className="flex h-full flex-col">
       <div className="border-b p-4" style={{ borderColor: 'var(--border)' }}>
@@ -306,10 +327,30 @@ export function PlanPanel({
             <Sparkles size={20} />
           </div>
         )}
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className="truncate text-[12px] font-medium">{recipeById(plan.category).label}</p>
-            <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>{plan.shots.filter((shot) => shot.enabled).length} shots · {plan.shots.filter((shot) => shot.enabled).length} images</p>
+        <div className="mt-2 flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <label className="text-[11px]" htmlFor="plan-category" style={{ color: 'var(--text-faint)' }}>What do you sell?</label>
+            <select
+              id="plan-category"
+              className="field mt-1 h-7 w-full text-[11px]"
+              value={categoryDraft}
+              disabled={readOnly || categoryLocked}
+              onChange={(event) => {
+                const next = event.target.value
+                setCategoryDraft(next)
+                void changeCategory(next)
+              }}
+            >
+              {CATEGORY_CHIPS.map((chip) => (
+                <option key={chip.id} value={chip.id}>{chip.label}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-[11px]" style={{ color: 'var(--text-faint)' }}>{enabledCount} shots · {enabledCount} images</p>
+            {categoryLocked && (
+              <p className="mt-1 text-[11px]" style={{ color: 'var(--text-faint)' }}>
+                The recipe is fixed after the first image. Start a new set to use a different one.
+              </p>
+            )}
           </div>
           <Button variant="ghost" size="sm" disabled={readOnly} onClick={() => void onReplaceSource()}>Replace</Button>
         </div>

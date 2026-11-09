@@ -21,7 +21,7 @@ import type {
 import { monthBounds } from '@shared/cost'
 import { MAX_LOGO_BYTES, MAX_PERSON_BYTES, MAX_PROMPT } from '@shared/constants'
 import { shapeForImage } from '@shared/shapes'
-import { createDefaultPlan, normalisePlan } from '@shared/plans'
+import { normalisePlan } from '@shared/plans'
 import { nextCountedLabel } from '@shared/labels'
 import { safeBaseName } from '@shared/files'
 import { absoluteInLibrary, workingFor } from '../media/paths'
@@ -539,7 +539,8 @@ export function registerIpcHandlers(context: AppContext): void {
     const project = context.projects.create({
       type: createdType,
       name: name?.trim() || sourceProject.name,
-      category: createdType === 'set' ? 'other' : null,
+      // A new set asks what the seller sells before it has a plan.
+      category: null,
       shape: createdType === 'set' && image.width && image.height
         ? shapeForImage(image.width, image.height)
         : defaults.defaultShape,
@@ -551,15 +552,6 @@ export function registerIpcHandlers(context: AppContext): void {
         bytes,
         name: `${project.name}.${image.format === 'jpeg' ? 'jpg' : image.format}`
       })
-      if (createdType === 'set') {
-        const plan = createDefaultPlan({
-          category: 'other',
-          productName: project.name,
-          shape: project.shape,
-          format: project.format
-        })
-        context.plans.save(project.id, plan)
-      }
       context.refreshMenu()
     } catch (error) {
       await context.media.deleteProjectFiles(project.id)

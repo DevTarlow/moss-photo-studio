@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Check, Image as ImageIcon, Layers, Sparkles } from 'lucide-react'
 import type { Brand, Image, JobState, PlanJson, Product } from '@shared/types'
-import { CATEGORY_CHIPS, recipeById } from '@shared/prompts/recipes'
+import { CATEGORY_CHIPS, recipeById, recipeShotLabels } from '@shared/prompts/recipes'
 import { createDefaultPlan } from '@shared/plans'
 import { shapeForImage } from '@shared/shapes'
 import { estimateCents, usd } from '@shared/cost'
@@ -714,7 +714,7 @@ export function Onboarding(): React.JSX.Element {
                         value={category}
                         onChange={changeCategory}
                         options={CATEGORY_CHIPS.map((chip) => ({ value: chip.id, label: chip.label }))}
-                        description={`Your recipe: ${recipeById(category).label}. You can change every shot later in the set.`}
+                        description={`Recipe: ${recipeShotLabels(category).join(', ')}. You can change every shot later in the set.`}
                         width="100%"
                       />
                       {!hasKey && (

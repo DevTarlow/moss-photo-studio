@@ -250,6 +250,12 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
     setPlanDraft(next)
   }
 
+  const changeCategory = async (next: string): Promise<void> => {
+    if (!plan || next === plan.category) return
+    await createPlan(next)
+    toast.status(`Recipe changed to ${recipeById(next).label}.`)
+  }
+
   const saveNow = useCallback(async (): Promise<void> => {
     if (saveTimer.current) window.clearTimeout(saveTimer.current)
     saveTimer.current = null
@@ -502,6 +508,8 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
           onReset={resetPlan}
           onAddShot={chooseAddShot}
           onReplaceSource={replaceSource}
+          onChangeCategory={(next) => void changeCategory(next)}
+          categoryLocked={hasAttempts}
         />
       ) : (
         <div className="p-4">
