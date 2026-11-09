@@ -17,7 +17,7 @@ src/
 tests/
   unit/           Vitest unit tests
   integration/    Vitest integration tests (real loopback fake hosts)
-  e2e/            One serial Playwright journey, studio.spec.ts
+  e2e/            Serial Playwright journey plus focused renderer specs
   screenshots/    Visual baselines (tracked)
 scripts/          Build, packaging, asset, token-audit, and release-gate scripts
 docs/             API notes, privacy, manual acceptance checklist
@@ -30,6 +30,20 @@ Before changing behavior, read [README.md](README.md) and [DECISIONS.md](DECISIO
 - Tests never touch real Meta or Lemon Squeezy hosts. Use the fake servers in `tests/fake-muse` and `tests/fake-license`.
 - Never commit secrets, keys, `.env` files, or local user data. Never log a key.
 - Do not add a dependency for something small that the existing stack already does.
+
+### UI system: Astryx
+
+The generic renderer UI is built on **[Astryx](https://github.com/meta/astryx)** — `@astryxdesign/core@0.7.11` + `@astryxdesign/theme-neutral@0.7.11` (`@stylexjs/stylex@0.19.0` peer; `@astryxdesign/cli` is dev-only). It is already installed; use it instead of adding another component library. Versions are pinned in `package.json`. Astryx is beta: do **not** upgrade it casually; treat an upgrade as a deliberate change that needs the full visual and a11y suite.
+
+Read **[docs/design-system.md](docs/design-system.md)** before building or replacing UI; it holds the theme contract, CSS-layer rules, component map, and migration rules. Decision 70 in [DECISIONS.md](DECISIONS.md) is the short rationale.
+
+- Import primitives from `@astryxdesign/core` (Button, IconButton, Text, Heading, Card, ClickableCard, Stack, Grid, Banner, Badge, TextInput, TextArea, Field, FileInput, Selector, SegmentedControl, ToggleButtonGroup, Dialog, AlertDialog, Drawer, BottomSheet, DropdownMenu, MoreMenu, Tooltip, ProgressBar, Spinner, Skeleton, EmptyState, Pagination, Stepper/Step, AppShell/TopNav/SideNav). Use the component map in the design-system doc when a Moss primitive has an Astryx replacement.
+- Prefer Astryx props over custom CSS: `variant`, `size`, `padding`, `gap`, `display`, `status`, `label`, `isLoading`. Theme colors, type, radii, and motion come from `src/renderer/src/theme/mossTheme.ts` and `MossThemeProvider.tsx`; do not hardcode new colors or fonts.
+- Some local UI components remain (`components/ui/Button`, `Dialog`, `Field`, `Sheet`, `Segmented`, `Switch`, custom Dropzone). Prefer the Astryx primitive for new UI and migrate one surface at a time when you touch it, keeping the existing behavior contracts (pricing, confirmations, pagination, saved copy).
+- Keep the CSS layer order in `src/renderer/src/styles/index.css`. Never add unlayered global styles that set `color` or `font` on `button`, `input`, `textarea`, or `select`; they beat every Astryx layer.
+- Astryx `Text` defaults to inline. Use `display="block"` when it needs its own line or a top margin.
+- Accessibility is composition-level: the E2E journey runs axe. Do not nest interactive controls (for example, the custom dropzone keeps its file input outside the `role="button"` container), and check roles/labels after a migration.
+- The custom canvas, crop overlay, filmstrip, brand badge preview, and file-drop logic stay custom. Do not rewrite them just for consistency.
 
 ## 2. Development loop
 
@@ -107,7 +121,7 @@ npx vitest run tests/unit/prompts.test.ts -t "name of test"
 npm test                                      # all unit + integration tests
 npm run build:test                            # typecheck + test build for E2E
 npx playwright test tests/e2e/studio.spec.ts -g "five-shot set"
-npm run test:e2e                              # builds, then the full serial E2E journey
+npm run test:e2e                              # builds, then the serial journey + focused specs
 MOSS_UPDATE_SCREENS=1 npx playwright test -g "..."  # rewrite baselines after an intentional visual change
 npm run audit:tokens                          # color-token contrast audit
 npm run build                                 # typecheck + production build
@@ -118,7 +132,7 @@ Notes that save time:
 
 - Vitest tests import source directly through aliases. They do **not** need a build. This is the fastest feedback loop.
 - `npm run build` already runs `typecheck`; do not run both back to back.
-- `npm run test:e2e` rebuilds the app every time and runs one serial journey with screenshots. It is a cross-state/release check, not a default. Avoid it for a single behavior; build once with `npm run build:test`, then use `npx playwright test -g "<test title>"`. If the target state is only reachable after earlier serial steps, run the journey once after batching known fixes, not after every one-line change.
+- `npm run test:e2e` rebuilds the app every time and runs the serial journey plus the focused specs; only the journey captures screenshots. It is a cross-state/release check, not a default. Avoid it for a single behavior; build once with `npm run build:test`, then use `npx playwright test -g "<test title>"`. If the target state is only reachable after earlier serial steps, run the journey once after batching known fixes, not after every one-line change.
 - The 1024×700 and 150% zoom screenshots are capture-only and are rewritten on every E2E run. After an E2E run, check `git status tests/screenshots`; commit only intentional visual changes and revert incidental churn.
 - The E2E journey is stateful and serial (`workers: 1`). Do not parallelize it or run two specs against the same user-data directory.
 - `MOSS_RELEASE=1` is required before the release gate does anything; normal builds skip it.
