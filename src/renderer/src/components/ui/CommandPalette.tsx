@@ -66,7 +66,7 @@ export function CommandPalette(): React.JSX.Element {
         id: `project-${project.id}`,
         group: 'Projects',
         label: project.name,
-        hint: project.type === 'set' ? 'Set Creator' : project.type === 'photo' ? 'Image Editor' : 'Image Generator',
+        hint: project.type === 'set' ? 'Set' : project.type === 'photo' ? 'Image Editor' : 'Image Generator',
         run: () => go(`/project/${project.id}`)
       })
     }

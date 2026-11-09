@@ -540,7 +540,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const displayImage = showParent ? parent : selected
   const jobItem = runningJob?.items[0]
 
-  const backLabel = project.type === 'set' ? 'Back to Set Creator' : project.type === 'image' ? 'Back to Image Generator' : null
+  const backLabel = project.type === 'set' ? 'Back to Set' : project.type === 'image' ? 'Back to Image Generator' : null
   const goBackToProject = (): void => {
     void navigate(`/project/${project.id}`)
   }

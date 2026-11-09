@@ -20,7 +20,7 @@ The redesign keeps the Moss identity and the custom canvas, and adopts Astryx fo
 
 - Six dots and “Step N of 6” count the welcome and done screens as work. Only four screens ask for a decision.
 - The key, a full Logo & Colors step, and a full category screen come before the first product. The brand step has no preview and asks for a save even when nothing changed.
-- The first photo is imported as a set, so “Just Add the Photo” opens the Set Creator. Products already exist; the first photo should be saved as a Product and a set should be created only on Make.
+- The first photo is imported as a set, so “Just Add the Photo” opens the Set tool. Products already exist; the first photo should be saved as a Product and a set should be created only on Make.
 - Resume is skin-deep: the step persists, but category, the selected photo, and the plan draft do not. An active job is not reattached.
 - `SetupCard` marked onboarding done as a side effect of a saved key, and “Finish later” was session-only. The replacement is a single resume Banner and a persisted `onboardingDismissed` setting.
 - Focus falls to the document on step changes. Back/Skip stay enabled during a paid run. The first-run confirmation’s initial focus is the dismissive action, not the priced primary.
@@ -37,7 +37,7 @@ The redesign keeps the Moss identity and the custom canvas, and adopts Astryx fo
 
 ## Editor workspaces
 
-- Set Creator puts the plan in a 320px sidebar and shows a static copy of the same photo on the largest surface. A second right panel duplicates the plan status. In review, the left panel stays fully editable.
+- The Set tool puts the plan in a 320px sidebar and shows a static copy of the same photo on the largest surface. A second right panel duplicates the plan status. In review, the left panel stays fully editable.
 - Photo’s canvas clips the subject (`maxWidth: none` inside an overflow-hidden stage). Crop and rotate previews disagree with the exported transform. The compare divider looks draggable but is not, and labels collide.
 - Create result cards have no click target or persistent actions; the five action buttons only appear on hover and wrap over the image at 1024.
 - Budget warnings contain dead actions in Set and Photo. Month spend is fetched but never displayed. “Make Fewer Images” is a no-op.
@@ -58,7 +58,7 @@ The redesign keeps the Moss identity and the custom canvas, and adopts Astryx fo
 1. Fix the CSS cascade and token pipeline; add real control, type, icon, and overlay scales.
 2. Rebuild onboarding around four actionable steps, a real Stepper, product-first behavior, and a sticky action bar.
 3. Make selection explicit and persistent; unify the collection card/toolbar patterns; add “Showing X of Y.”
-4. Make Set Creator phase a real mode; remove the duplicate right panel; give the canvas priority at 1024–1439.
+4. Make the Set tool a real mode; remove the duplicate right panel; give the canvas priority at 1024–1439.
 5. Fix the Photo canvas fit, crop/rotate alignment, and compare interactions.
 6. Make Create result actions persistent; give failed runs their own state.
 7. Consolidate license/key warnings into one Banner and one vocabulary.
@@ -86,5 +86,5 @@ The redesign keeps the Moss identity and the custom canvas, and adopts Astryx fo
 | First run | Activation, Onboarding (welcome, key, product, optional set, ready), key guide, first-run confirmation |
 | Collections | Library (grid/list, search, filters, sort, selection), Products, People, Usage |
 | Settings | API key, Logo & Colors, Storage, Appearance, License, Privacy, About |
-| Workspaces | Set Creator (plan, running, review), Image Editor (change, local adjust, versions, compare), Image Generator (prompt, examples, results, runs) |
+| Workspaces | Set (plan, running, review), Image Editor (change, local adjust, versions, compare), Image Generator (prompt, examples, results, runs) |
 | Shared | App shell, dialogs, sheets, toasts, command palette, shortcuts, lightbox, empty/loading/error states |

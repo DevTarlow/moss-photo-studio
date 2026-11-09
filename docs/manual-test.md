@@ -44,9 +44,9 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 
 - Invalid activation key shows the approved "That key wasn't accepted" copy. A valid fake key activates. The key is not returned to the renderer.
 - Onboarding: five setup steps (connect Meta, add the first product, make it your own with a logo and colors, make an optional first set, ready), a first-set picker with 1/3/6 count presets and per-shot toggles, first-run confirmation, first paid set. The first photo is saved as a Product and no set project exists until Make. The first paid set was started with Space on the focused primary button and finished through the first-run dialog with Tab and Enter.
-- Onboarding product-only path: Save product only creates one Product, no set, marks onboarding done, and reaches Ready; Open Products opens Products. This is covered by a focused E2E test.
+- Onboarding product-only path: Save product only creates one Product, no set, marks onboarding done, and reaches Ready; Finish Setup opens Products. This is covered by a focused E2E test.
 - A five-shot set costs `$0.05`. The primary button says the price before the click. Five requests produced five images.
-- Set Creator has a Plan/Set phase control, a plan preview board, a read-only review with an Edit Plan action, and no duplicate right inspector. Running hides the phase switch and keeps the plan read-only. The plan panel separator resizes with the mouse or arrow keys and persists its width.
+- The Set tool has a Plan/Set phase control, a plan preview board, a read-only review with an Edit Plan action, and no duplicate right inspector. Running hides the phase switch and keeps the plan read-only. The plan panel separator resizes with the mouse or arrow keys and persists its width.
 - A two-shot failure set showed the partial review, the failed cards, and `Try Again · $0.02`. The retry made exactly two requests. Total set requests were eight. Older ready images were preserved.
 - Image Editor: Kitchen table tile, a fitted canvas, a compare divider that can be dragged or moved with the slider and arrow keys, hold Space for the earlier version, local 1:1 crop, rotate, brightness, sharpen, apply locally free, version labels, and new version. The crop/rotate preview follows the exporter order; the crop box moves with arrow keys and resizes with Alt+arrow. The adjust-preview state is captured and axe-checked. Copy Image writes a PNG and Paste Image reads it back through the main-process clipboard.
 - Set preview: the lightbox opens on a blurred glass scrim, closes when clicking outside the image, and still closes with the X.
@@ -80,7 +80,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 
 ### 3b. App shell and collections
 
-- [x] **A** The rail has Library, Products, People, Usage, a Tools section with Set Creator, Image Editor, and Image Generator, and Settings. The top-bar New menu launches the same three tools from every main screen.
+- [x] **A** The rail has Library, Products, People, Usage, a Tools section with Set, Image Editor, and Image Generator, and Settings. The top-bar New menu launches the same three tools from every main screen.
 - [x] **A** Library has one New entry point, one key/setup banner area, a Select mode, Select all, Clear, Delete, and a sticky bulk bar. The hover checkbox still works.
 - [x] **A** Products and People have search, sort, and result counts. The Settings storage section is named Storage.
 - [x] **A** Settings uses the same SideNav as the rest of the app; the second settings aside is gone and the content is centered at 1440 and 1024.

@@ -8,7 +8,7 @@ export function GuideDialog(): React.JSX.Element {
   const setOpen = useUiStore((state) => state.setGuide)
   const navigate = useNavigate()
   const rows = [
-    ['Set Creator', 'Drop one clear product photo. Choose what you sell. The studio plans six shots. Press Make.'],
+    ['Set', 'Drop one clear product photo. Choose what you sell. The studio plans six shots. Press Make.'],
     ['Image Editor', 'Open any photo, choose a tile or write your own direction. The original stays first.'],
     ['Image Generator', 'Describe a picture. Add a reference image to keep its subject exactly as it is.'],
     ['Find anything', 'Press Ctrl K. Drag a photo anywhere in the app to start.'],

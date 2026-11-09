@@ -555,7 +555,7 @@ export function Library(): React.JSX.Element {
                   <Text type="supporting" color="secondary" className="text-center">Start with a photo of something you sell.</Text>
                   <Grid columns={{ minWidth: 220, max: 3 }} gap={4} className="mx-auto mt-4 max-w-[900px]">
                     {[
-                      { type: 'set' as const, icon: Layers, title: 'Set Creator', line: 'One photo in, a full set out.' },
+                      { type: 'set' as const, icon: Layers, title: 'Set', line: 'One photo in, a full set out.' },
                       { type: 'photo' as const, icon: ImageIcon, title: 'Image Editor', line: 'New scene, new light, same product.' },
                       { type: 'image' as const, icon: Sparkles, title: 'Image Generator', line: 'Describe it, and Meta makes it.' }
                     ].map((card) => {

@@ -41,7 +41,7 @@ const items = [
 ]
 
 const tools = [
-  { to: '/library?new=set', label: 'Set Creator', icon: <Layers size={18} strokeWidth={1.75} /> },
+  { to: '/library?new=set', label: 'Set', icon: <Layers size={18} strokeWidth={1.75} /> },
   { to: '/library?new=photo', label: 'Image Editor', icon: <ImageIcon size={18} strokeWidth={1.75} /> },
   { to: '/library?new=image', label: 'Image Generator', icon: <Sparkles size={18} strokeWidth={1.75} /> }
 ]

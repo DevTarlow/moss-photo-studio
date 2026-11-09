@@ -80,7 +80,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 56. **The color eyedropper was removed entirely.** The custom logo sampler is gone, and Chromium's EyeDropper feature is disabled at startup so the native color chooser has no eyedropper button. The color well and hex field are the only color inputs; the picker no longer reads logo pixels or the screen.
 57. **Studio directions are prefilled into the plan, not shown as placeholders.** Each shot starts with the studio's direction in an always-visible textarea so the seller can edit it in line. Plans saved with an empty direction are filled with the current default when loaded. The prompt fallback for an empty direction stays in place, and changing a shot's type resets its direction to the new default.
 58. **New installs start in light mode.** The seed writes `theme = light` instead of following the system. Existing installs keep whatever they chose. Theme, density, and reduce motion live in Settings.
-59. **The three tools are named Set Creator, Image Editor, and Image Generator.** The person preview's Create an Image action creates an image project with that person's portrait as its source and opens the Image Generator. The source image carries the person id, so the prompt uses a person-preservation guard instead of the product guard.
+59. **The three tools are named Set, Image Editor, and Image Generator.** The person preview's Create an Image action creates an image project with that person's portrait as its source and opens the Image Generator. The source image carries the person id, so the prompt uses a person-preservation guard instead of the product guard.
 
 ## Brand colors
 
@@ -116,13 +116,13 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 
 70. **Astryx is the component foundation, pinned and themed as Moss.** The app uses Astryx 0.7.11 for generic UI, with a custom Moss theme that keeps the warm paper, forest-green selection, burnt-rust primary action, Inter, and Plus Jakarta Sans. The custom dark canvas, crop overlay, filmstrip, brand badge preview, and file-drop logic stay custom. Astryx is beta, so versions are pinned and upgrades are deliberate.
 
-71. **The app has one create vocabulary and one navigation.** Set Creator, Image Editor, and Image Generator are available from the TopNav New menu and from the Tools section under Studio in the rail; both launch the same flows. The Library keeps contextual start cards only when empty. Settings sections live in the same SideNav while the Settings route is open; the second settings aside is gone.
+71. **The app has one create vocabulary and one navigation.** Set, Image Editor, and Image Generator are available from the TopNav New menu and from the Tools section under Studio in the rail; both launch the same flows. The Library keeps contextual start cards only when empty. Settings sections live in the same SideNav while the Settings route is open; the second settings aside is gone.
 
 72. **Library selection has an explicit Select mode as well as the hover shortcut.** Select pins the checkboxes visible and makes the bulk bar persistent; Select all, Clear, Delete, and Escape are supported. Hover checkboxes remain a shortcut for experienced users. The documented 20-per-page pagination and delete copy are unchanged.
 
 73. **Products and People have search, sort, and count parity with Library.** The Settings storage section is called Storage so it cannot be confused with the Library page. Usage keeps its budget control inside the summary card instead of a second form at the bottom.
 
-74. **Set Creator is a two-mode workspace.** Plan shows the plan preview board and the editable plan. Set review is read-only until Edit Plan or Make More. The duplicate right summary panel is gone; the center owns the canvas. Running hides the phase switch and keeps the plan read-only.
+74. **The Set tool is a two-mode workspace.** Plan shows the plan preview board and the editable plan. Set review is read-only until Edit Plan or Make More. The duplicate right summary panel is gone; the center owns the canvas. Running hides the phase switch and keeps the plan read-only.
 
 75. **The Photo canvas uses one fitted stage.** The preview sizes the image to the measured stage instead of clipping at `maxWidth: none`. Rotation and flips follow the exporter's order (rotate, then flop/flip), so the crop overlay lives in the rotated display box and matches the applied result. The compare divider is draggable and the range slider remains for keyboard use.
 

@@ -6,9 +6,9 @@ This is the sibling application to `../moss-toolbox`. It is an Electron desktop 
 
 ## What is in the app
 
-- **App shell** with one rail: Studio (Library, Products, People, Usage), Tools (Set Creator, Image Editor, Image Generator), and Settings. The top-bar New menu launches the same three tools from any main screen. While Settings is open, its sections use the same rail.
+- **App shell** with one rail: Studio (Library, Products, People, Usage), Tools (Set, Image Editor, Image Generator), and Settings. The top-bar New menu launches the same three tools from any main screen. While Settings is open, its sections use the same rail.
 - **Library** with sets, photos, and images, search, filters, sorting, grid and list views, project duplication, rename, hover-select multi-delete, an explicit Select mode, delete, and export. Projects show 20 per page with Previous/Next controls.
-- **Set Creator** from 1 to 8 listing shots. Start from an upload, a saved Product, or any ready library image. Each shot can be switched off, renamed, described, assigned a person, or given a feature line. The plan saves automatically.
+- **Set** from 1 to 8 listing shots. Start from an upload, a saved Product, or any ready library image. Each shot can be switched off, renamed, described, assigned a person, or given a feature line. The plan saves automatically.
 - **Connection icons** for Main shot, In use, Close-up, Size reference, Flat lay, Gift-ready, Feature callout, and On a person.
 - **Image Editor** with 32 tiles in six groups, 12 bundled people plus your own, a free local adjust panel with arrow-key crop, resizable panels, version labels, branching, a filmstrip, compare, export, and copy. Start from a file, a Product, or a library image, and add another source later as a new version.
 - **Image Generator** with 30 starters, including person ideas for holding, wearing, and using the item, one to four images, three shapes, and three formats. A product reference and a person reference can be sent together, so a person can hold a product. The four example cards load an editable scene description; with a product photo selected, a Use my product photo switch frames the scene around that product instead of the sample object. A new generator project appears in the Library only after its first image.

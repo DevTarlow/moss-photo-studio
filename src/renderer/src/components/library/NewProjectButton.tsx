@@ -17,7 +17,7 @@ export function NewProjectButton({ size = 'sm' }: { size?: 'sm' | 'md' | 'lg' })
       items={[
         {
           id: 'set',
-          label: 'Set Creator',
+          label: 'Set',
           description: 'One photo in, a full set out.',
           icon: <Layers size={16} />,
           onClick: () => navigate('/library?new=set')
