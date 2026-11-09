@@ -3,7 +3,9 @@ import fs from 'node:fs'
 import fsp from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
+import sharp from 'sharp'
 import { createLabLoader } from './loader.mjs'
+import { PEOPLE_PACK } from './people-pack.mjs'
 import { SOURCE_PACK, sourcePromptFor } from './source-pack.mjs'
 import {
   addSpend,
@@ -20,7 +22,8 @@ import {
 const ROOT = process.cwd()
 const LAB = path.join(ROOT, 'lab')
 const SOURCES = path.join(LAB, 'sources')
-const COMMANDS = new Set(['plan', 'set', 'edit', 'create', 'sources', 'sweep', 'resume', 'help'])
+const PEOPLE_DIR = path.join(LAB, 'people')
+const COMMANDS = new Set(['plan', 'set', 'edit', 'create', 'sources', 'people', 'sweep', 'resume', 'help'])
 
 class LabError extends Error {}
 
@@ -78,6 +81,7 @@ Usage:
   npm run lab -- edit   --template kitchen-table --source shirt.jpg [--person maya] --yes
   npm run lab -- create --text "..." [--source shirt.jpg] [--person maya] [--count 1] --yes
   npm run lab -- sources [--force] --yes
+  npm run lab -- people  [--ids maya,omar] [--force] --yes
   npm run lab -- sweep  [--categories clothing,ceramics] --yes
   npm run lab -- resume <run-dir> --yes
 
@@ -98,6 +102,7 @@ Key:
 
 Output:
   lab/sources/          owner photos, or generated stand-ins
+  lab/people/           reviewed full-body and portrait people assets
   lab/runs/<stamp>-...  images, thumbs, manifest.json, index.html, sheet.webp, review.md
   lab/spend.json        cumulative actual returned-image cost
   lab/plans/<stamp>-... free prompt plans
@@ -748,6 +753,108 @@ async function createCommand({ S, client, baseUrl, opts, budget }) {
   }
 }
 
+async function peopleCommand({ S, client, baseUrl, opts, budget }) {
+  const wanted = opts.ids
+    ? new Set(
+        String(opts.ids)
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean)
+      )
+    : null
+  if (wanted) {
+    for (const id of wanted) {
+      if (!PEOPLE_PACK.some((person) => person.id === id)) {
+        fail(`Unknown bundled person "${id}". Use one of: ${PEOPLE_PACK.map((person) => person.id).join(', ')}.`)
+      }
+    }
+  }
+  const pack = PEOPLE_PACK.filter((person) => !wanted || wanted.has(person.id))
+  const pending = pack.filter(
+    (person) => opts.force || !fs.existsSync(path.join(PEOPLE_DIR, `${person.id}.webp`))
+  )
+  if (!pending.length) {
+    console.log('All requested people already have images. Add --force to regenerate them.')
+    return { skipped: true }
+  }
+  const runDir = path.join(LAB, 'runs', `${stamp()}-people`)
+  const requests = pending.map((person, order) => ({
+    order,
+    group: 'people',
+    key: person.id,
+    label: `${person.name} · ${person.ageBand}`,
+    prompt: person.prompt,
+    endpoint: 'generate',
+    images: [],
+    count: 1,
+    shape: 'portrait',
+    format: 'webp',
+    personId: null,
+    hasSource: false
+  }))
+  const meta = {
+    command: 'people',
+    label: `People pack · ${pending.length}`,
+    category: 'people',
+    palette: [],
+    shape: 'portrait',
+    format: 'webp',
+    source: null,
+    sources: {}
+  }
+  const result = await executeRun({ S, client, baseUrl, requests, runDir, meta, budget, opts })
+  if (result.skipped) return result
+  await ensureDir(PEOPLE_DIR)
+  const generated = []
+  for (const item of result.manifest.items) {
+    if (item.status !== 'ok' || !item.files?.[0]) continue
+    const person = pending.find((entry) => entry.id === item.key)
+    if (!person) continue
+    const raw = path.join(runDir, item.files[0].file)
+    const rawMeta = await sharp(raw).metadata()
+    const width = rawMeta.width ?? 1024
+    const fullPath = path.join(PEOPLE_DIR, `${person.id}.webp`)
+    const portraitPath = path.join(PEOPLE_DIR, `${person.id}-portrait.webp`)
+    await sharp(raw)
+      .resize({ width: 640, height: 960, fit: 'cover', position: 'centre' })
+      .webp({ quality: 88 })
+      .toFile(fullPath)
+    // A square crop from the top keeps the head and chest. It is deliberately
+    // deterministic: prompts put the head near the top of a centered full body.
+    const cropSize = Math.round(width * 0.62)
+    await sharp(raw)
+      .extract({ left: Math.round((width - cropSize) / 2), top: 0, width: cropSize, height: cropSize })
+      .resize({ width: 512, height: 512 })
+      .webp({ quality: 88 })
+      .toFile(portraitPath)
+    generated.push({
+      id: person.id,
+      name: person.name,
+      ageBand: person.ageBand,
+      blurb: person.blurb,
+      prompt: person.prompt,
+      run: path.relative(ROOT, runDir).split(path.sep).join('/'),
+      files: [fullPath, portraitPath].map((file) => path.relative(ROOT, file).split(path.sep).join('/')),
+      costCents: item.costCents
+    })
+    console.log(`  ${path.relative(ROOT, fullPath)}`)
+    console.log(`  ${path.relative(ROOT, portraitPath)}`)
+  }
+  let manifest = { people: [] }
+  try {
+    manifest = JSON.parse(await fsp.readFile(path.join(PEOPLE_DIR, 'manifest.json'), 'utf8'))
+  } catch {
+    // First people run.
+  }
+  const byId = new Map((manifest.people ?? []).map((person) => [person.id, person]))
+  for (const person of generated) byId.set(person.id, person)
+  await fsp.writeFile(
+    path.join(PEOPLE_DIR, 'manifest.json'),
+    `${JSON.stringify({ createdAt: new Date().toISOString(), people: [...byId.values()] }, null, 2)}\n`
+  )
+  return result
+}
+
 async function sourcesCommand({ S, client, baseUrl, opts, budget }) {
   const missing = SOURCE_PACK.filter((entry) => opts.force || !findSource(entry.category))
   if (!missing.length) {
@@ -958,6 +1065,7 @@ async function main() {
     else if (command === 'edit') await editCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'create') await createCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'sources') await sourcesCommand({ S, client, baseUrl, opts, budget })
+    else if (command === 'people') await peopleCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'sweep') await sweepCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'resume') await resumeCommand({ S, client, baseUrl, opts, budget })
   } finally {
