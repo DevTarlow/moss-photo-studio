@@ -29,7 +29,8 @@
     "audit:tokens": "node scripts/audit-tokens.mjs",
     "lint": "eslint src tests",
     "build:test": "MOSS_TEST_BUILD=1 npm run typecheck && MOSS_TEST_BUILD=1 electron-vite build",
-    "release:gate": "node scripts/release-gate.mjs"
+    "release:gate": "node scripts/release-gate.mjs",
+    "lab": "node scripts/lab/run.mjs"
   },
   "dependencies": {
     "@astryxdesign/core": "0.7.11",

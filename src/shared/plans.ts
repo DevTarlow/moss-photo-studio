@@ -1,6 +1,6 @@
 import type { PlanJson, PlanShot, ShotType } from './types'
 import type { Format, Shape } from './shapes'
-import { recipeShotTypes, recipeById } from './prompts/recipes'
+import { recipeShotTypes, recipeById, defaultDirectionFor } from './prompts/recipes'
 import { shotDefinition } from './prompts/shots'
 import { MAX_FEATURE_TEXT, MAX_SET_SHOTS } from './constants'
 
@@ -16,7 +16,7 @@ export function makeShots(category: string): PlanShot[] {
     id: makeShotId(),
     type,
     enabled: true,
-    direction: shotDefinition(type).defaultDirection,
+    direction: defaultDirectionFor(category, type),
     personId: type === 'onmodel' ? 'maya' : null,
     label: shotDefinition(type).label
   }))
@@ -64,7 +64,7 @@ export function normalisePlan(plan: PlanJson): PlanJson {
     .map((shot) => ({
       ...shot,
       direction:
-        String(shot.direction ?? '').slice(0, 400).trim() || shotDefinition(shot.type).defaultDirection,
+        String(shot.direction ?? '').slice(0, 400).trim() || defaultDirectionFor(plan.category, shot.type),
       featureText: String(shot.featureText ?? '').slice(0, MAX_FEATURE_TEXT),
       personId: shot.type === 'onmodel' ? shot.personId : null,
       enabled: Boolean(shot.enabled)
@@ -100,7 +100,7 @@ export function addShotToPlan(plan: PlanJson, type: ShotType): PlanJson {
         id: makeShotId(),
         type,
         enabled: true,
-        direction: shotDefinition(type).defaultDirection,
+        direction: defaultDirectionFor(plan.category, type),
         personId: type === 'onmodel' ? 'maya' : null,
         label: shotDefinition(type).label,
         ...(type === 'feature' ? { featureText: '' } : {})
@@ -142,7 +142,7 @@ export function setShotType(plan: PlanJson, shotId: string, type: ShotType): Pla
             ...shot,
             type,
             label: shotDefinition(type).label,
-            direction: shotDefinition(type).defaultDirection,
+            direction: defaultDirectionFor(plan.category, type),
             personId: type === 'onmodel' ? shot.personId ?? 'maya' : null,
             ...(type === 'feature' ? { featureText: shot.featureText ?? '' } : {})
           }

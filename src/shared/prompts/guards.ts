@@ -106,16 +106,18 @@ export interface ComposeSetPromptOptions {
   type: ShotType
   direction: string
   palette?: string[]
+  /** A category's gift wording; falls back to the shared gift clause. */
+  giftClause?: string
 }
 
-export function composeSetPrompt({ type, direction, palette = [] }: ComposeSetPromptOptions): string {
+export function composeSetPrompt({ type, direction, palette = [], giftClause }: ComposeSetPromptOptions): string {
   const text = direction.trim()
   if (!text) return ''
   if (type === 'onmodel') {
     return appendWithinCap(wrapModelPrompt(text), paletteClause(palette))
   }
   let prompt = text
-  if (type === 'gift') prompt = appendWithinCap(prompt, GIFT_CLAUSE)
+  if (type === 'gift') prompt = appendWithinCap(prompt, giftClause ?? GIFT_CLAUSE)
   prompt = appendWithinCap(prompt, REF_GUARD)
   if (PALETTE_SHOTS.has(type)) prompt = appendWithinCap(prompt, paletteClause(palette))
   return prompt

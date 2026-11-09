@@ -24,6 +24,9 @@ import type { SecretStore } from '@main/secrets'
 import type { LicenseController } from '@main/license/controller'
 import type { JobState } from '@shared/types'
 import { createDefaultPlan } from '@shared/plans'
+import { GIFT_CLAUSE } from '@shared/prompts/guards'
+import { RECIPES } from '@shared/prompts/recipes'
+import { planSetPrompts } from '@shared/prompts/setPlan'
 import { monthBounds, monthKey } from '@shared/cost'
 import { MAX_PROMPT } from '@shared/constants'
 
@@ -367,6 +370,42 @@ describe('job queue set', () => {
     expect(state.done).toBe(3)
     expect(server.requests()).toHaveLength(3)
     expect(images.list(project.id, true).filter((image) => image.shotId)).toHaveLength(3)
+  })
+
+  it('sends the category recipe prompts, including the category gift clause', async () => {
+    const bytes = await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 180, g: 170, b: 150 } } }).jpeg().toBuffer()
+    for (const recipe of RECIPES) {
+      server.reset()
+      const project = projects.create({ type: 'set', name: recipe.label, category: recipe.id })
+      await media.importSource({ projectId: project.id, bytes, name: 'product.jpg' })
+      plans.save(
+        project.id,
+        createDefaultPlan({
+          category: recipe.id,
+          productName: 'Product',
+          shape: 'square',
+          format: 'webp'
+        })
+      )
+      const saved = plans.getActive(project.id)!.json
+      const expected = planSetPrompts({ plan: saved, shots: saved.shots })
+      const { jobId } = await queue.startSet({ projectId: project.id, mode: 'make' })
+      const state = await waitForJob(jobId)
+      expect(state.status, recipe.id).toBe('done')
+      const prompts = server.requests().map((request) => String(request.body?.prompt))
+      expect(prompts, recipe.id).toHaveLength(expected.length)
+      expect(new Set(prompts), recipe.id).toEqual(new Set(expected.map((spec) => spec.prompt)))
+      if (recipe.shots.includes('onmodel')) {
+        const onmodel = expected.find((spec) => spec.type === 'onmodel')!
+        const request = server.requests().find((entry) => String(entry.body?.prompt) === onmodel.prompt)!
+        expect(request.body?.images, recipe.id).toHaveLength(2)
+      }
+      if (recipe.shots.includes('gift')) {
+        const gift = expected.find((spec) => spec.type === 'gift')!
+        const clause = (recipe.giftClause ?? GIFT_CLAUSE).trim()
+        expect(gift.prompt, recipe.id).toContain(clause)
+      }
+    }
   })
 
   it('adds saved colors to a set prompt only while brand colors are on', async () => {

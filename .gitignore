@@ -12,6 +12,11 @@ tests/screenshots/diff/
 .DS_Store
 # Local runtime data from manual dev runs
 .dev-user-data*/
+# Local lab key and generated calibration output. Never commit either.
+.env
+.env.local
+.env.*.local
+/lab/
 .home/
 .artifact-config/
 .deb-extract/

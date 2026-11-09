@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { SCENES, SCENE_CATEGORIES } from '@shared/prompts/scenes'
 import { ALL_TEMPLATES, TEMPLATE_GROUPS, QUICK_FIX, templateAsset, templateById } from '@shared/prompts/templates'
-import { RECIPES, recipeById, CATEGORY_CHIPS, recipeShotTypes } from '@shared/prompts/recipes'
+import { RECIPES, recipeById, CATEGORY_CHIPS, recipeShotTypes, recipeShotLabels, defaultDirectionFor } from '@shared/prompts/recipes'
 import { SHOT_TYPES, shotDefinition, directionForPrompt } from '@shared/prompts/shots'
 import { EXAMPLE_SCENES, STARTERS, exampleTextFor } from '@shared/starters'
 import { BUNDLED_PEOPLE } from '@shared/people'
@@ -88,6 +88,66 @@ describe('recipes', () => {
     const shots = makeShots('clothing')
     const personShot = shots.find((shot) => shot.type === 'onmodel')
     expect(personShot?.personId).toBe('maya')
+  })
+
+  it('keeps six distinct shots with the hero first', () => {
+    for (const recipe of RECIPES) {
+      expect(recipe.shots).toHaveLength(6)
+      expect(new Set(recipe.shots).size).toBe(6)
+      expect(recipe.shots[0]).toBe('hero')
+      expect(recipeShotLabels(recipe.id)).toHaveLength(6)
+    }
+  })
+
+  it('puts the strongest three shots first for the first run', () => {
+    const firstThree: Record<string, string[]> = {
+      candles: ['hero', 'lifestyle', 'detail'],
+      ceramics: ['hero', 'lifestyle', 'detail'],
+      jewelry: ['hero', 'detail', 'lifestyle'],
+      clothing: ['hero', 'onmodel', 'detail'],
+      bags: ['hero', 'onmodel', 'detail'],
+      prints: ['hero', 'lifestyle', 'detail'],
+      skincare: ['hero', 'lifestyle', 'detail'],
+      food: ['hero', 'lifestyle', 'detail'],
+      homeware: ['hero', 'lifestyle', 'detail'],
+      vintage: ['hero', 'detail', 'lifestyle'],
+      other: ['hero', 'lifestyle', 'detail']
+    }
+    for (const recipe of RECIPES) {
+      expect(recipeShotTypes(recipe.id).slice(0, 3)).toEqual(firstThree[recipe.id])
+    }
+  })
+
+  it('uses the category direction for new plans and empty saved directions', () => {
+    const shots = makeShots('clothing')
+    const hero = shots.find((shot) => shot.type === 'hero')!
+    expect(hero.direction).toBe(defaultDirectionFor('clothing', 'hero'))
+    expect(hero.direction).not.toBe(shotDefinition('hero').defaultDirection)
+    expect(defaultDirectionFor('other', 'hero')).toBe(shotDefinition('hero').defaultDirection)
+
+    const plan = createDefaultPlan({
+      category: 'clothing',
+      productName: 'Shirt',
+      shape: 'portrait',
+      format: 'webp'
+    })
+    plan.shots[0]!.direction = '  '
+    expect(normalisePlan(plan).shots[0]!.direction).toBe(defaultDirectionFor('clothing', 'hero'))
+  })
+
+  it('keeps direction overrides on real recipe shots and inside the caps', () => {
+    for (const recipe of RECIPES) {
+      for (const [type, direction] of Object.entries(recipe.directions ?? {})) {
+        expect(recipe.shots).toContain(type)
+        expect(direction.length).toBeGreaterThan(0)
+        expect(direction.length).toBeLessThanOrEqual(400)
+      }
+      if (recipe.giftClause) {
+        expect(recipe.shots).toContain('gift')
+        expect(recipe.giftClause.startsWith(' ')).toBe(true)
+        expect(recipe.giftClause.length).toBeLessThan(300)
+      }
+    }
   })
 })
 

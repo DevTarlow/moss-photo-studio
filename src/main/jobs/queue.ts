@@ -16,10 +16,9 @@ import type {
 } from '@shared/types'
 import { estimateCents, monthBounds, monthKey } from '@shared/cost'
 import { MAX_CREATE_VARIANTS, MAX_PROMPT } from '@shared/constants'
-import { DEFAULT_PERSON_ID } from '@shared/people'
 import { usedBrandColors } from '@shared/brandColors'
-import { composeChange, composeCreatePrompt, composeSetPrompt, PROMPT_MAX } from '@shared/prompts/guards'
-import { directionForPrompt, shotDefinition } from '@shared/prompts/shots'
+import { composeChange, composeCreatePrompt, PROMPT_MAX } from '@shared/prompts/guards'
+import { planSetPrompts } from '@shared/prompts/setPlan'
 import { nextCountedLabel, setImageLabel } from '@shared/labels'
 import { templateById, templateWord } from '@shared/prompts/templates'
 import { safeBaseName } from '@shared/files'
@@ -185,22 +184,21 @@ export class JobQueue {
       throw new JobStartError('invalid_payload', 'Add a photo of the product first.')
     }
     const specs: WorkItemSpec[] = []
-    for (const shot of eligible) {
-      const personId = shot.type === 'onmodel' ? shot.personId ?? DEFAULT_PERSON_ID : null
-      if (shot.type === 'onmodel') {
+    for (const item of planSetPrompts({ plan, shots: eligible, palette })) {
+      const personId = item.personId
+      if (item.type === 'onmodel') {
         if (!personId || !this.deps.people.exists(personId)) {
           throw new JobStartError('invalid_payload', 'Add a person to use this shot.')
         }
       }
-      const direction = directionForPrompt(shot.type, shot.direction, shot.featureText)
-      const prompt = composeSetPrompt({ type: shot.type, direction, palette })
+      const prompt = item.prompt
       if (!prompt) throw new JobStartError('invalid_payload', 'Add a direction for every shot.')
       if (prompt.length > MAX_PROMPT) {
         throw new JobStartError('invalid_payload', 'That direction is too long. Shorten it and try again.')
       }
       specs.push({
-        key: shot.id,
-        label: shotDefinition(shot.type).label,
+        key: item.shotId,
+        label: item.label,
         prompt,
         requested: 1,
         sourceImageId: sourceId,
@@ -208,9 +206,9 @@ export class JobQueue {
         personId,
         shape: plan.shape,
         format: plan.format,
-        userText: shot.direction.trim() || direction,
-        templateId: shot.type === 'gift' ? 'set-gift' : null,
-        shotId: shot.id,
+        userText: item.userText,
+        templateId: item.type === 'gift' ? 'set-gift' : null,
+        shotId: item.shotId,
         action: 'set',
         labelWord: null,
         parentId: sourceId,
