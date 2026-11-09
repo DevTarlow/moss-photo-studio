@@ -698,9 +698,6 @@ export function CreateWorkspace(): React.JSX.Element {
                         <img src={exampleUrl(scene.key)} alt="" className="aspect-[4/3] w-full object-cover" />
                         <div className="p-3">
                           <p className="text-[12px] font-semibold">{scene.label}</p>
-                          <p className="meta mt-0.5">
-                            {exampleUsesReference ? 'Loads a description for your product.' : 'Loads a starting description.'}
-                          </p>
                         </div>
                       </button>
                     ))}
