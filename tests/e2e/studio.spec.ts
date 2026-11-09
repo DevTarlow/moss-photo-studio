@@ -267,7 +267,9 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.keyboard.press('Enter')
     await expect(page.getByRole('heading', { name: "You're set up." })).toBeVisible({ timeout: 30_000 })
     await expect(page.getByRole('button', { name: 'Finish Setup' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Open Library' })).toBeVisible()
+    // A made set leaves Finish Setup as the only exit; nothing else to open.
+    await expect(page.getByRole('button', { name: 'Open Library' })).toBeHidden()
+    await expect(page.getByRole('button', { name: 'Open Products' })).toBeHidden()
     const preview = page.getByRole('button', { name: 'Preview Main shot' })
     await expect(preview).toBeVisible()
     // ClickableCard keeps the accessible button under a pressable surface, so

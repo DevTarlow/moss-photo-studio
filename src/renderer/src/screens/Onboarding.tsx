@@ -462,9 +462,7 @@ export function Onboarding(): React.JSX.Element {
       <Button label="Skip for now" variant="ghost" isDisabled={brandBusy} onClick={() => void goTo(4)} />
     ) : step === 4 ? (
       <Button label="Save product only" variant="secondary" isDisabled={starting || finishing || running} onClick={() => void saveProductOnly()} />
-    ) : setProjectId ? (
-      <Button label="Open Library" variant="secondary" onClick={() => navigate('/library', { replace: true })} />
-    ) : (
+    ) : setProjectId ? null : (
       <Button label="Open Products" variant="secondary" onClick={() => navigate('/products', { replace: true })} />
     )
 
