@@ -279,21 +279,6 @@ export function Products(): React.JSX.Element {
             />
           ) : (
             <>
-              {filteredIncluded.length > 0 && (
-                <section className="mt-8" aria-labelledby="included-products-heading">
-                  <div className="flex items-baseline gap-2">
-                    <h2 id="included-products-heading" className="section-label">Included</h2>
-                    <span className="meta-faint">{filteredIncluded.length}</span>
-                  </div>
-                  <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
-                    {filteredIncluded.map((product) => (
-                      <ProductCard key={product.id} product={product} onOpen={() => setPreview(product)} />
-                    ))}
-                  </div>
-                  <p className="hint mt-3">Clean, unbranded starter products. Use one as a starting point for your own listing photos.</p>
-                </section>
-              )}
-
               {(filteredProducts.length > 0 || !search.trim()) && (
                 <section className="mt-8" aria-labelledby="your-products-heading">
                   <div className="flex items-baseline gap-2">
@@ -311,6 +296,7 @@ export function Products(): React.JSX.Element {
                         title="No saved products yet"
                         line="Save a product photo from an image, or add one from a file."
                         action={<Button variant="secondary" onClick={() => void addProduct()}>Add Product</Button>}
+                        compact
                       />
                     </div>
                   ) : (
@@ -334,6 +320,21 @@ export function Products(): React.JSX.Element {
                       label="Your product pages"
                     />
                   )}
+                </section>
+              )}
+
+              {filteredIncluded.length > 0 && (
+                <section className="mt-8" aria-labelledby="included-products-heading">
+                  <div className="flex items-baseline gap-2">
+                    <h2 id="included-products-heading" className="section-label">Included</h2>
+                    <span className="meta-faint">{filteredIncluded.length}</span>
+                  </div>
+                  <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+                    {filteredIncluded.map((product) => (
+                      <ProductCard key={product.id} product={product} onOpen={() => setPreview(product)} />
+                    ))}
+                  </div>
+                  <p className="hint mt-3">Clean, unbranded starter products. Use one as a starting point for your own listing photos.</p>
                 </section>
               )}
             </>

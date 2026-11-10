@@ -283,7 +283,7 @@ export function People(): React.JSX.Element {
                 value={sort}
                 onChange={(value) => { if (value) setSort(value as 'default' | 'name' | 'used') }}
                 options={[
-                  { value: 'default', label: 'Included first' },
+                  { value: 'default', label: 'Default' },
                   { value: 'name', label: 'Name' },
                   { value: 'used', label: 'Most used' }
                 ]}
@@ -313,19 +313,6 @@ export function People(): React.JSX.Element {
             />
           ) : (
           <>
-          <section className="mt-8" aria-labelledby="included-heading">
-            <div className="flex items-baseline gap-2">
-              <h2 id="included-heading" className="section-label">Included</h2>
-              <span className="meta-faint">{included.length}</span>
-            </div>
-            <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
-              {included.map((person) => (
-                <PersonCard key={person.id} person={person} onOpen={() => setPreviewPerson(person)} />
-              ))}
-            </div>
-            <p className="hint mt-3">Synthetic reference people made for Moss. They are not photographs of real people.</p>
-          </section>
-
           <section className="mt-8" aria-labelledby="yours-heading">
             <div className="flex items-baseline gap-2">
               <h2 id="yours-heading" className="section-label">Yours</h2>
@@ -338,6 +325,7 @@ export function People(): React.JSX.Element {
                   title="Add your own person"
                   line="Add the person you want in your photos. One clear portrait, reused in every set."
                   action={<Button variant="secondary" onClick={() => setAddOpen(true)}>Add a Person</Button>}
+                  compact
                 />
               </div>
             ) : (
@@ -359,6 +347,19 @@ export function People(): React.JSX.Element {
               onPage={setYoursPage}
               label="Your people pages"
             />
+          </section>
+
+          <section className="mt-8" aria-labelledby="included-heading">
+            <div className="flex items-baseline gap-2">
+              <h2 id="included-heading" className="section-label">Included</h2>
+              <span className="meta-faint">{included.length}</span>
+            </div>
+            <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
+              {included.map((person) => (
+                <PersonCard key={person.id} person={person} onOpen={() => setPreviewPerson(person)} />
+              ))}
+            </div>
+            <p className="hint mt-3">Synthetic reference people made for Moss. They are not photographs of real people.</p>
           </section>
           </>
           )}
