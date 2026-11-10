@@ -43,7 +43,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 ## What the automated journey proved
 
 - Invalid activation key shows the approved "That key wasn't accepted" copy. A valid fake key activates. The key is not returned to the renderer.
-- Onboarding: five setup steps (connect Meta, add the first product, make it your own with a logo and colors, make an optional first set, ready), a first-set picker with 1/3/6 count presets and per-shot toggles, first-run confirmation, first paid set. The first photo is saved as a Product and no set project exists until Make. The first paid set was started with Space on the focused primary button and finished through the first-run dialog with Tab and Enter.
+- Onboarding: six setup steps (welcome, connect Meta, add an optional product, make it your own with a logo and colors, make an optional first set, ready), a first-set picker with 1/3/6 count presets and per-shot toggles, first-run confirmation, first paid set. The first photo is saved as a Product and no set project exists until Make. The first paid set was started with Space on the focused primary button and finished through the first-run dialog with Tab and Enter.
 - Onboarding product-only path: Save product only creates one Product, no set, marks onboarding done, and reaches Ready; Finish Setup opens Products. This is covered by a focused E2E test.
 - A five-shot set costs `$0.05`. The primary button says the price before the click. Five requests produced five images.
 - The Set tool has a Plan/Review phase control, a plan preview board, a read-only review with an Edit Plan action, and no duplicate right inspector. Running hides the phase switch and keeps the plan read-only. The plan panel separator resizes with the mouse or arrow keys and persists its width.
@@ -108,6 +108,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 - [x] **A** Under three minutes: paste a key, add a product, continue through Make it your own, choose a category, choose the images (all six start selected), make six images, see Setup complete. The first photo is saved as a Product; no set exists until Make.
   - The automated journey completes this in seconds with the fake image host. Human timing with a real key is still an O check.
+- [x] **A** Onboarding has an optional Add product step. Continue without a photo moves to Make it your own, and the set step shows Add a product first with Skip for now; Ready says No product yet and Finish Setup opens the Library. This is covered by a focused E2E test.
 - [x] **A** Onboarding has an optional Make it your own step between the product and the set. Continue saves the logo and colors and goes to the set step; Skip for now does the same without saving. Settings → Logo & Colors keeps the same fields and preview.
 - [ ] **O** On the first-set step, changing the count or switching a shot updates the price, and Save product only saves the Product, reaches Ready, and creates no set.
 

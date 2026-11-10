@@ -83,7 +83,7 @@ The redesign keeps the Moss identity and the custom canvas, and adopts Astryx fo
 
 | Area | Main surfaces |
 |---|---|
-| First run | Activation, Onboarding (welcome, key, product, optional set, ready), key guide, first-run confirmation |
+| First run | Activation, Onboarding (welcome, key, optional product, optional brand, optional set, ready), key guide, first-run confirmation |
 | Collections | Library (grid/list, search, filters, sort, selection), Products, People, Usage |
 | Settings | API key, Logo & Colors, Storage, Appearance, License, Privacy, About |
 | Workspaces | Set (plan, review, running), Image Editor (change, local adjust, versions, compare), Image Generator (prompt, examples, results, runs) |

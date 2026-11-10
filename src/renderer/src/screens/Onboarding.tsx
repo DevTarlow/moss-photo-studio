@@ -39,7 +39,7 @@ import { Lightbox } from '../components/ui/Lightbox'
 const STEPS = [
   { label: 'Welcome', optional: false },
   { label: 'Connect Meta', optional: false },
-  { label: 'Add product', optional: false },
+  { label: 'Add product', optional: true },
   { label: 'Customize', optional: true },
   { label: 'Make a set', optional: true },
   { label: 'Ready', optional: false }
@@ -47,8 +47,8 @@ const STEPS = [
 
 function normaliseStep(value: number): number {
   const saved = Math.max(0, Math.min(5, Math.floor(value)))
-  // Later steps depend on the product and plan chosen in this session, so only
-  // the welcome and key steps resume directly.
+  // Later steps depend on this session's product and plan state, so only the
+  // welcome, key, and optional product steps resume directly.
   return saved <= 1 ? saved : 2
 }
 
@@ -424,9 +424,11 @@ export function Onboarding(): React.JSX.Element {
           : step === 3
             ? 'Continue'
             : step === 4
-              ? hasKey
-                ? runLabel
-                : 'Add your Meta key'
+              ? !product
+                ? 'Skip for now'
+                : hasKey
+                  ? runLabel
+                  : 'Add your Meta key'
               : 'Finish Setup'
 
   const primaryDisabled =
@@ -435,8 +437,8 @@ export function Onboarding(): React.JSX.Element {
     running ||
     brandBusy ||
     (step === 1 && keyBusy) ||
-    (step === 2 && (!product || photoBusy)) ||
-    (step === 4 && hasKey && (!planDraft || imageCount === 0))
+    (step === 2 && photoBusy) ||
+    (step === 4 && Boolean(product) && hasKey && (!planDraft || imageCount === 0))
 
   const onPrimary = (): void => {
     if (step === 0) void goTo(1)
@@ -444,12 +446,14 @@ export function Onboarding(): React.JSX.Element {
     else if (step === 2) void goTo(3)
     else if (step === 3) void saveBrandAndContinue()
     else if (step === 4) {
-      if (!hasKey) void goTo(1)
+      if (!product) void finishToReady()
+      else if (!hasKey) void goTo(1)
       else void onMainRun()
     } else {
       // A made set lives in the Library; a product-only setup has no set, so
-      // finish where the saved product actually is.
-      navigate(setProjectId ? '/library' : '/products', { replace: true })
+      // finish where the saved product actually is. With nothing saved, the
+      // Library's empty state is the useful landing.
+      navigate(setProjectId || !product ? '/library' : '/products', { replace: true })
     }
   }
 
@@ -462,7 +466,7 @@ export function Onboarding(): React.JSX.Element {
       product ? <Button label="Choose a different photo" variant="ghost" onClick={() => { setProduct(null); setPhotoFile(null); setPlanDraft(null); setSetProjectId(null) }} /> : null
     ) : step === 3 ? (
       <Button label="Skip for now" variant="ghost" isDisabled={brandBusy} onClick={() => void goTo(4)} />
-    ) : step === 4 ? (
+    ) : step === 4 && product ? (
       <Button label="Save product only" variant="secondary" isDisabled={starting || finishing || running} onClick={() => void saveProductOnly()} />
     ) : null
 
@@ -597,13 +601,13 @@ export function Onboarding(): React.JSX.Element {
                     <>
                       <Stack gap={2}>
                         <Text type="label" color="secondary">
-                          Step 3 of 6
+                          Step 3 of 6 · optional
                         </Text>
                         <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
                           Add your first product
                         </Heading>
                         <Text type="body" color="secondary">
-                          One photo. It becomes a Product you can reuse in a set, the editor, or the generator.
+                          Add one photo now, or add a product later. It becomes a Product you can reuse in a set, the editor, or the generator.
                         </Text>
                       </Stack>
                       {product ? (
@@ -684,7 +688,9 @@ export function Onboarding(): React.JSX.Element {
                           Make your first set
                         </Heading>
                         <Text type="body" color="secondary">
-                          Your product is saved. Choose the images to make now, or keep the photo as a Product and make the set later.
+                          {product
+                            ? 'Your product is saved. Choose the images to make now, or keep the photo as a Product and make the set later.'
+                            : 'Optional. Add a product when you are ready, then make the set from Products.'}
                         </Text>
                       </Stack>
                       {product ? (
@@ -709,19 +715,21 @@ export function Onboarding(): React.JSX.Element {
                           collapsible={false}
                         />
                       )}
-                      <Selector
-                        label="What do you sell?"
-                        value={category}
-                        onChange={changeCategory}
-                        options={CATEGORY_CHIPS.map((chip) => ({ value: chip.id, label: chip.label }))}
-                        description={`Recipe: ${recipeShotLabels(category).join(', ')}. You can change every shot later in the set.`}
-                        width="100%"
-                      />
+                      {product && (
+                        <Selector
+                          label="What do you sell?"
+                          value={category}
+                          onChange={changeCategory}
+                          options={CATEGORY_CHIPS.map((chip) => ({ value: chip.id, label: chip.label }))}
+                          description={`Recipe: ${recipeShotLabels(category).join(', ')}. You can change every shot later in the set.`}
+                          width="100%"
+                        />
+                      )}
                       {!hasKey && (
                         <Banner
                           status="warning"
                           title="Add your Meta key to make images"
-                          description="You can save the product now and add the key when you are ready to make a set."
+                          description="You can add the key later, when you are ready to make a set."
                           endContent={<Button label="Add key" variant="ghost" size="sm" onClick={() => void goTo(1)} />}
                           collapsible={false}
                         />
@@ -812,11 +820,13 @@ export function Onboarding(): React.JSX.Element {
                           </span>
                           <Stack gap={0.5} className="flex-1">
                             <Text weight="bold">
-                              {hasKey ? 'Meta connected' : 'Meta key later'} · Product saved
+                              {hasKey ? 'Meta connected' : 'Meta key later'} · {product ? 'Product saved' : 'No product yet'}
                               {job?.done ? ` · ${job.done} images made` : ''}
                             </Text>
                             <Text type="supporting" color="secondary">
-                              {product?.name ?? 'Your first product'} is ready to reuse.
+                              {product
+                                ? `${product.name} is ready to reuse.`
+                                : 'Add a product from Products whenever you are ready.'}
                             </Text>
                           </Stack>
                           <Badge label="Ready" variant="success" />
