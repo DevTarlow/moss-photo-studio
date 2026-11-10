@@ -57,14 +57,26 @@ export class SafeTextCipher implements TextCipher {
     return this.encryptionAvailable
   }
 
-  async backend(): Promise<string> {
-    if (await this.available()) {
-      try {
-        return safeStorage.getSelectedStorageBackend()
-      } catch {
-        return 'unknown'
-      }
+  private async selectedBackend(): Promise<string> {
+    try {
+      return safeStorage.getSelectedStorageBackend()
+    } catch {
+      return 'unknown'
     }
+  }
+
+  /**
+   * The async API can report encryption available on Linux through Chromium's
+   * basic_text fallback, which uses a hardcoded password. Keep the local AES
+   * fallback there instead of trusting that key.
+   */
+  private async usesKeyring(): Promise<boolean> {
+    if (!(await this.available())) return false
+    return (await this.selectedBackend()) !== 'basic_text'
+  }
+
+  async backend(): Promise<string> {
+    if (await this.available()) return this.selectedBackend()
     return 'basic_text'
   }
 
@@ -92,7 +104,7 @@ export class SafeTextCipher implements TextCipher {
   }
 
   async encryptString(value: string): Promise<string> {
-    if (await this.available()) {
+    if (await this.usesKeyring()) {
       const encrypted = await safeStorage.encryptStringAsync(value)
       return `${SAFE_PREFIX}${encrypted.toString('base64')}`
     }
