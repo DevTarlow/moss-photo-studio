@@ -108,7 +108,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 - [x] **A** Under three minutes: paste a key, add a product, continue through Make it your own, choose a category, choose the images (all six start selected), make six images, see Setup complete. The first photo is saved as a Product; no set exists until Make.
   - The automated journey completes this in seconds with the fake image host. Human timing with a real key is still an O check.
-- [x] **A** Onboarding has an optional Add product step. Continue without a photo moves to Make it your own, and the set step shows Add a product first with Skip for now; Ready says No product yet and Finish Setup opens the Library. This is covered by a focused E2E test.
+- [x] **A** Onboarding has an optional Add product step with the same Skip for now action as the other optional steps, and Continue also works without a photo. The set step shows Add a product first with Skip for now; Ready says No product yet, has a Back button, and Finish Setup opens the Library. This is covered by a focused E2E test.
 - [x] **A** Onboarding has an optional Make it your own step between the product and the set. Continue saves the logo and colors and goes to the set step; Skip for now does the same without saving. Settings → Logo & Colors keeps the same fields and preview.
 - [ ] **O** On the first-set step, changing the count or switching a shot updates the price, and Save product only saves the Product, reaches Ready, and creates no set.
 

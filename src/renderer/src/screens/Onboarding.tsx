@@ -463,7 +463,21 @@ export function Onboarding(): React.JSX.Element {
     ) : step === 1 ? (
       <Button label="Add key later" variant="ghost" onClick={() => void goTo(2)} />
     ) : step === 2 ? (
-      product ? <Button label="Choose a different photo" variant="ghost" onClick={() => { setProduct(null); setPhotoFile(null); setPlanDraft(null); setSetProjectId(null) }} /> : null
+      <>
+        {product && (
+          <Button
+            label="Choose a different photo"
+            variant="ghost"
+            onClick={() => {
+              setProduct(null)
+              setPhotoFile(null)
+              setPlanDraft(null)
+              setSetProjectId(null)
+            }}
+          />
+        )}
+        <Button label="Skip for now" variant="ghost" isDisabled={photoBusy} onClick={() => void goTo(3)} />
+      </>
     ) : step === 3 ? (
       <Button label="Skip for now" variant="ghost" isDisabled={brandBusy} onClick={() => void goTo(4)} />
     ) : step === 4 && product ? (
@@ -882,7 +896,7 @@ export function Onboarding(): React.JSX.Element {
                 className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 border-t px-1 py-3"
                 style={{ borderColor: 'var(--color-border)', background: 'var(--color-background-body)' }}
               >
-                {step > 0 && step < 5 && (
+                {step > 0 && (
                   <Button
                     label="Back"
                     variant="ghost"

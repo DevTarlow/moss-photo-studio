@@ -117,8 +117,9 @@ test('onboarding lets the seller skip the product step and finish in the Library
     await page.reload()
     await page.getByRole('heading', { name: 'Add your first product' }).waitFor({ timeout: 20_000 })
 
-    // The product step is optional: Continue without a photo moves on.
-    await page.getByRole('button', { name: 'Continue', exact: true }).click()
+    // The product step is optional, with the same skip action as the other
+    // optional steps.
+    await page.getByRole('button', { name: 'Skip for now', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Make it your own' })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Continue', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Make your first set' })).toBeVisible({ timeout: 20_000 })
@@ -127,6 +128,13 @@ test('onboarding lets the seller skip the product step and finish in the Library
 
     await expect(page.getByRole('heading', { name: "You're set up." })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('No product yet')).toBeVisible()
+
+    // Ready keeps a Back exit to revisit the optional steps.
+    await page.getByRole('button', { name: 'Back', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Make your first set' })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Skip for now', exact: true }).click()
+
+    await expect(page.getByRole('heading', { name: "You're set up." })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Finish Setup' }).click()
     await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible({ timeout: 20_000 })
 
