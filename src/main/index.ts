@@ -204,7 +204,8 @@ async function boot(): Promise<void> {
     projects,
     plans,
     media,
-    libraryPath
+    libraryPath,
+    resourceRoot: () => resourceRoot
   })
 
   const queue = new JobQueue({

@@ -6,6 +6,7 @@ const PREFIXES = [
   'moss-e2e-',
   'moss-people-e2e-',
   'moss-products-e2e-',
+  'moss-included-products-e2e-',
   'moss-library-select-e2e-'
 ]
 

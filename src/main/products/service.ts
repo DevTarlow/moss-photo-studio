@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises'
+import path from 'node:path'
 import type { Format, ImportResult, Product, ProjectType, Shape } from '@shared/types'
 import type { ProductRepository } from '../db/repositories/products'
 import type { ImageRepository } from '../db/repositories/images'
@@ -8,6 +9,7 @@ import type { MediaService } from '../media/service'
 import { ImageImportError, normaliseProduct } from '../media/import'
 import { absoluteInLibrary, workingFor } from '../media/paths'
 import { shapeForImage } from '@shared/shapes'
+import { bundledProductById, bundledProductCard, isBundledProduct } from '@shared/products'
 
 function cleanName(name: string, fallback: string): string {
   return name.trim().slice(0, 80) || fallback.slice(0, 80) || 'Product'
@@ -22,6 +24,7 @@ export class ProductService {
       plans: PlanRepository
       media: MediaService
       libraryPath: () => string
+      resourceRoot: () => string
     }
   ) {}
 
@@ -85,12 +88,24 @@ export class ProductService {
   }
 
   async delete(id: string): Promise<void> {
+    if (isBundledProduct(id)) {
+      throw new ImageImportError('unreadable', 'Included products cannot be deleted.')
+    }
     const deleted = this.deps.products.delete(id)
     if (!deleted) throw new ImageImportError('unreadable', 'That product is not here anymore.')
     await this.removeFiles(deleted.files)
   }
 
   private async productBytes(productId: string): Promise<{ bytes: Buffer; product: Product }> {
+    const bundled = bundledProductById(productId)
+    if (bundled) {
+      try {
+        const bytes = await fs.readFile(path.join(this.deps.resourceRoot(), 'products', `${bundled.id}.webp`))
+        return { bytes, product: bundledProductCard(bundled) }
+      } catch {
+        throw new ImageImportError('unreadable', 'That product is not here anymore.')
+      }
+    }
     const row = this.deps.products.getRow(productId)
     if (!row) throw new ImageImportError('unreadable', 'That product is not here anymore.')
     try {

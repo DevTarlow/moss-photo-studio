@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { DropdownMenu } from 'radix-ui'
 import { Image as ImageIcon, Layers, Loader2, Package, Plus, Search, Sparkles } from 'lucide-react'
 import type { Product, ProjectType } from '@shared/types'
+import { bundledProductCards } from '@shared/products'
 import { AppFrame } from '../components/ui/AppFrame'
 import { Button } from '../components/ui/Button'
 import { Dialog } from '../components/ui/Dialog'
@@ -27,33 +28,43 @@ function ProductCard({
 }: {
   product: Product
   onOpen: () => void
-  onRename: () => void
-  onDelete: () => void
+  onRename?: () => void
+  onDelete?: () => void
 }): React.JSX.Element {
   return (
     <div className="card card-hover group relative overflow-hidden">
       <button type="button" className="block w-full cursor-zoom-in" onClick={onOpen} aria-label={`Open ${product.name} larger`}>
-        <img src={product.thumbUrl} alt="" className="aspect-[4/3] w-full object-cover" style={{ background: 'var(--surface-2)' }} />
+        <img
+          src={product.thumbUrl}
+          alt=""
+          className={`${product.source === 'bundled' ? 'aspect-square' : 'aspect-[4/3]'} w-full object-cover`}
+          style={{ background: 'var(--surface-2)' }}
+        />
       </button>
       <div className="p-3">
         <p className="truncate text-[13px] font-semibold">{product.name}</p>
-        <p className="meta mt-0.5">Saved {formatDate(product.createdAt)}</p>
+        <p className="meta mt-0.5">
+          {product.source === 'bundled' ? product.category : `Saved ${formatDate(product.createdAt)}`}
+        </p>
+        {product.blurb && <p className="mt-1 line-clamp-2 text-[11px]" style={{ color: 'var(--text-faint)' }}>{product.blurb}</p>}
       </div>
-      <div className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger asChild>
-            <button type="button" className="icon-btn" style={{ background: 'var(--surface)' }} aria-label={`Actions for ${product.name}`}>
-              ⋯
-            </button>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Portal>
-            <DropdownMenu.Content className="menu-content" align="end" sideOffset={4}>
-              <DropdownMenu.Item className="menu-item" onSelect={onRename}>Rename</DropdownMenu.Item>
-              <DropdownMenu.Item className="menu-item" data-danger="true" onSelect={onDelete}>Delete</DropdownMenu.Item>
-            </DropdownMenu.Content>
-          </DropdownMenu.Portal>
-        </DropdownMenu.Root>
-      </div>
+      {product.source === 'user' && onRename && onDelete && (
+        <div className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button type="button" className="icon-btn" style={{ background: 'var(--surface)' }} aria-label={`Actions for ${product.name}`}>
+                ⋯
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content className="menu-content" align="end" sideOffset={4}>
+                <DropdownMenu.Item className="menu-item" onSelect={onRename}>Rename</DropdownMenu.Item>
+                <DropdownMenu.Item className="menu-item" data-danger="true" onSelect={onDelete}>Delete</DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        </div>
+      )}
     </div>
   )
 }
@@ -63,9 +74,11 @@ export function Products(): React.JSX.Element {
   const products = useAppStore((state) => state.products)
   const refreshProducts = useAppStore((state) => state.refreshProducts)
   const confirm = useConfirm()
+  const included = bundledProductCards()
   const [loading, setLoading] = useState(products.length === 0)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [creatingProduct, setCreatingProduct] = useState(false)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'recent' | 'oldest' | 'name'>('recent')
@@ -89,13 +102,22 @@ export function Products(): React.JSX.Element {
     void load()
   }, [])
 
+  const needle = search.trim().toLowerCase()
+  const matches = (product: Product): boolean =>
+    !needle ||
+    [product.name, product.category ?? '', product.blurb ?? ''].some((value) =>
+      value.toLowerCase().includes(needle)
+    )
+
+  const filteredIncluded = included.filter(matches)
   const filteredProducts = products
-    .filter((product) => product.name.toLowerCase().includes(search.trim().toLowerCase()))
+    .filter(matches)
     .sort((a, b) => {
       if (sort === 'name') return a.name.localeCompare(b.name)
       if (sort === 'oldest') return a.createdAt - b.createdAt
       return b.createdAt - a.createdAt
     })
+  const matchingCount = filteredIncluded.length + filteredProducts.length
 
   useEffect(() => {
     const pages = Math.max(1, Math.ceil(filteredProducts.length / COLLECTION_PAGE_SIZE))
@@ -123,6 +145,22 @@ export function Products(): React.JSX.Element {
       toast.error(messageOf(caught))
     } finally {
       setBusy(false)
+    }
+  }
+
+  const createProduct = async (): Promise<void> => {
+    setCreatingProduct(true)
+    try {
+      const detail = await unwrap(window.moss.projects.create({
+        type: 'image',
+        name: 'New product',
+        draft: true
+      }))
+      navigate(`/project/${detail.project.id}?createProduct=1`)
+    } catch {
+      toast.error('A new product could not be started.')
+    } finally {
+      setCreatingProduct(false)
     }
   }
 
@@ -181,19 +219,24 @@ export function Products(): React.JSX.Element {
     <AppFrame>
       <div className="page-scroll">
         <div className="page-pad page-max">
-          <div className="flex items-start gap-3">
+          <div className="flex flex-wrap items-start gap-3">
             <div>
               <Heading level={1}>Products</Heading>
               <Text type="supporting" color="secondary" className="block">
                 {search.trim()
-                  ? `Showing ${filteredProducts.length} of ${products.length}`
-                  : `${products.length} ${products.length === 1 ? 'product' : 'products'}`}
+                  ? `Showing ${matchingCount} of ${included.length + products.length}`
+                  : `${included.length} included · ${products.length} yours`}
               </Text>
               <Text type="supporting" color="secondary" className="block">The product photos you reuse in sets, the editor, and the generator.</Text>
             </div>
-            <Button className="ml-auto" variant="primary" onClick={() => void addProduct()} disabled={busy}>
-              {busy ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} Add Product
-            </Button>
+            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+              <Button variant="secondary" disabled={creatingProduct} onClick={() => void createProduct()}>
+                <Sparkles size={16} /> Create a Product
+              </Button>
+              <Button variant="primary" onClick={() => void addProduct()} disabled={busy}>
+                {busy ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} Add Product
+              </Button>
+            </div>
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -227,17 +270,7 @@ export function Products(): React.JSX.Element {
 
           {loadError && products.length === 0 ? (
             <ErrorState message={loadError} onRetry={() => void load()} />
-          ) : loading && products.length === 0 ? (
-            <div className="mt-8 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
-              {Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="aspect-[4/3]" />)}
-            </div>
-          ) : products.length === 0 ? (
-            <EmptyState
-              icon={<Package size={22} />}
-              title="No saved products yet"
-              line="Save a product photo from an image, or add one from a file."
-            />
-          ) : filteredProducts.length === 0 ? (
+          ) : search.trim() && matchingCount === 0 ? (
             <EmptyState
               icon={<Search size={22} />}
               title={`No products match "${search.trim()}".`}
@@ -245,24 +278,66 @@ export function Products(): React.JSX.Element {
               action={<Button variant="secondary" onClick={() => setSearch('')}>Clear Search</Button>}
             />
           ) : (
-            <div className="mt-8 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
-              {visibleProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onOpen={() => setPreview(product)}
-                  onRename={() => openRename(product)}
-                  onDelete={() => void remove(product)}
-                />
-              ))}
-            </div>
+            <>
+              {filteredIncluded.length > 0 && (
+                <section className="mt-8" aria-labelledby="included-products-heading">
+                  <div className="flex items-baseline gap-2">
+                    <h2 id="included-products-heading" className="section-label">Included</h2>
+                    <span className="meta-faint">{filteredIncluded.length}</span>
+                  </div>
+                  <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+                    {filteredIncluded.map((product) => (
+                      <ProductCard key={product.id} product={product} onOpen={() => setPreview(product)} />
+                    ))}
+                  </div>
+                  <p className="hint mt-3">Clean, unbranded starter products. Use one as a starting point for your own listing photos.</p>
+                </section>
+              )}
+
+              {(filteredProducts.length > 0 || !search.trim()) && (
+                <section className="mt-8" aria-labelledby="your-products-heading">
+                  <div className="flex items-baseline gap-2">
+                    <h2 id="your-products-heading" className="section-label">Yours</h2>
+                    <span className="meta-faint">{filteredProducts.length}</span>
+                  </div>
+                  {loading && products.length === 0 ? (
+                    <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+                      {Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="aspect-[4/3]" />)}
+                    </div>
+                  ) : filteredProducts.length === 0 ? (
+                    <div className="mt-3">
+                      <EmptyState
+                        icon={<Package size={22} />}
+                        title="No saved products yet"
+                        line="Save a product photo from an image, or add one from a file."
+                        action={<Button variant="secondary" onClick={() => void addProduct()}>Add Product</Button>}
+                      />
+                    </div>
+                  ) : (
+                    <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+                      {visibleProducts.map((product) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          onOpen={() => setPreview(product)}
+                          onRename={() => openRename(product)}
+                          onDelete={() => void remove(product)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {filteredProducts.length > 0 && (
+                    <Pagination
+                      page={page}
+                      total={filteredProducts.length}
+                      onPage={setPage}
+                      label="Your product pages"
+                    />
+                  )}
+                </section>
+              )}
+            </>
           )}
-          <Pagination
-            page={page}
-            total={filteredProducts.length}
-            onPage={setPage}
-            label="Product pages"
-          />
         </div>
       </div>
 
@@ -270,13 +345,23 @@ export function Products(): React.JSX.Element {
         open={Boolean(preview)}
         onOpenChange={(open) => { if (!open) setPreview(null) }}
         title={preview?.name ?? 'Product'}
-        description={preview ? `Saved ${formatDate(preview.createdAt)} · ${preview.width} × ${preview.height}` : undefined}
+        description={
+          preview
+            ? preview.source === 'bundled'
+              ? `${preview.category} · ${preview.blurb}`
+              : `Saved ${formatDate(preview.createdAt)} · ${preview.width} × ${preview.height}`
+            : undefined
+        }
         width={620}
         footer={
-          <>
-            <Button variant="ghost" onClick={() => preview && openRename(preview)}>Rename</Button>
-            <Button variant="ghost" className="text-[var(--danger)]" onClick={() => preview && void remove(preview)}>Delete</Button>
-          </>
+          preview?.source === 'bundled' ? (
+            <Button variant="ghost" onClick={() => setPreview(null)}>Close</Button>
+          ) : (
+            <>
+              <Button variant="ghost" onClick={() => preview && openRename(preview)}>Rename</Button>
+              <Button variant="ghost" className="text-[var(--danger)]" onClick={() => preview && void remove(preview)}>Delete</Button>
+            </>
+          )
         }
       >
         {preview && (

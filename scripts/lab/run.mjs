@@ -7,6 +7,7 @@ import sharp from 'sharp'
 import { createLabLoader } from './loader.mjs'
 import { PEOPLE_PACK } from './people-pack.mjs'
 import { PERSON_LOOKS_PACK } from './person-looks.mjs'
+import { PRODUCT_PACK } from './product-pack.mjs'
 import { SOURCE_PACK, sourcePromptFor } from './source-pack.mjs'
 import {
   addSpend,
@@ -25,7 +26,8 @@ const LAB = path.join(ROOT, 'lab')
 const SOURCES = path.join(LAB, 'sources')
 const PEOPLE_DIR = path.join(LAB, 'people')
 const LOOKS_DIR = path.join(LAB, 'looks')
-const COMMANDS = new Set(['plan', 'set', 'edit', 'create', 'sources', 'people', 'looks', 'sweep', 'resume', 'help'])
+const PRODUCTS_DIR = path.join(LAB, 'products')
+const COMMANDS = new Set(['plan', 'set', 'edit', 'create', 'sources', 'people', 'looks', 'products', 'sweep', 'resume', 'help'])
 
 class LabError extends Error {}
 
@@ -85,6 +87,7 @@ Usage:
   npm run lab -- sources [--force] --yes
   npm run lab -- people  [--ids maya,omar] [--force] --yes
   npm run lab -- looks   [--ids maya,omar] [--looks front,seated] [--force] --yes
+  npm run lab -- products [--ids dropper-bottle,speckled-mug] [--force] --yes
   npm run lab -- sweep  [--categories clothing,ceramics] --yes
   npm run lab -- resume <run-dir> --yes
 
@@ -109,6 +112,7 @@ Output:
   lab/sources/          owner photos, or generated stand-ins
   lab/people/           reviewed full-body and portrait people assets
   lab/looks/            reviewed alternate studio looks, <id>-<look>.webp
+  lab/products/         reviewed unbranded starter products and thumbs
   lab/runs/<stamp>-...  images, thumbs, manifest.json, index.html, sheet.webp, review.md
   lab/spend.json        cumulative actual returned-image cost
   lab/plans/<stamp>-... free prompt plans
@@ -991,6 +995,105 @@ async function looksCommand({ S, client, baseUrl, opts, budget }) {
   return result
 }
 
+async function productsCommand({ S, client, baseUrl, opts, budget }) {
+  const wanted = opts.ids
+    ? new Set(
+        String(opts.ids)
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean)
+      )
+    : null
+  if (wanted) {
+    for (const id of wanted) {
+      if (!PRODUCT_PACK.some((product) => product.id === id)) {
+        fail(`Unknown bundled product "${id}". Use one of: ${PRODUCT_PACK.map((product) => product.id).join(', ')}.`)
+      }
+    }
+  }
+  const pending = PRODUCT_PACK.filter((product) => {
+    if (wanted && !wanted.has(product.id)) return false
+    if (opts.force) return true
+    return (
+      !fs.existsSync(path.join(PRODUCTS_DIR, `${product.id}.webp`)) ||
+      !fs.existsSync(path.join(PRODUCTS_DIR, `${product.id}-thumb.webp`))
+    )
+  })
+  if (!pending.length) {
+    console.log('All requested bundled products already have images. Add --force to regenerate them.')
+    return { skipped: true }
+  }
+  const runDir = path.join(LAB, 'runs', `${stamp()}-products`)
+  const requests = pending.map((product, order) => ({
+    order,
+    group: 'products',
+    key: product.id,
+    label: `${product.name} · ${product.category}`,
+    prompt: product.prompt,
+    endpoint: 'generate',
+    images: [],
+    count: 1,
+    shape: 'square',
+    format: 'webp',
+    personId: null,
+    hasSource: false
+  }))
+  const meta = {
+    command: 'products',
+    label: `Product pack · ${pending.length}`,
+    category: 'products',
+    palette: [],
+    shape: 'square',
+    format: 'webp',
+    source: null,
+    sources: {}
+  }
+  const result = await executeRun({ S, client, baseUrl, requests, runDir, meta, budget, opts })
+  if (result.skipped) return result
+  await ensureDir(PRODUCTS_DIR)
+  const generated = []
+  for (const item of result.manifest.items) {
+    if (item.status !== 'ok' || !item.files?.[0]) continue
+    const product = pending.find((entry) => entry.id === item.key)
+    if (!product) continue
+    const raw = path.join(runDir, item.files[0].file)
+    const fullPath = path.join(PRODUCTS_DIR, `${product.id}.webp`)
+    const thumbPath = path.join(PRODUCTS_DIR, `${product.id}-thumb.webp`)
+    await sharp(raw)
+      .resize({ width: 1024, height: 1024, fit: 'cover', position: 'centre' })
+      .webp({ quality: 90, effort: 4 })
+      .toFile(fullPath)
+    await sharp(raw)
+      .resize({ width: 480, height: 480, fit: 'cover' })
+      .webp({ quality: 82 })
+      .toFile(thumbPath)
+    generated.push({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      prompt: item.prompt,
+      run: path.relative(ROOT, runDir).split(path.sep).join('/'),
+      files: [fullPath, thumbPath].map((file) => path.relative(ROOT, file).split(path.sep).join('/')),
+      costCents: item.costCents
+    })
+    console.log(`  ${path.relative(ROOT, fullPath)}`)
+    console.log(`  ${path.relative(ROOT, thumbPath)}`)
+  }
+  let manifest = { products: [] }
+  try {
+    manifest = JSON.parse(await fsp.readFile(path.join(PRODUCTS_DIR, 'manifest.json'), 'utf8'))
+  } catch {
+    // First product run.
+  }
+  const byId = new Map((manifest.products ?? []).map((product) => [product.id, product]))
+  for (const product of generated) byId.set(product.id, product)
+  await fsp.writeFile(
+    path.join(PRODUCTS_DIR, 'manifest.json'),
+    `${JSON.stringify({ createdAt: new Date().toISOString(), products: [...byId.values()] }, null, 2)}\n`
+  )
+  return result
+}
+
 async function sourcesCommand({ S, client, baseUrl, opts, budget }) {
   const missing = SOURCE_PACK.filter((entry) => opts.force || !findSource(entry.category))
   if (!missing.length) {
@@ -1203,6 +1306,7 @@ async function main() {
     else if (command === 'sources') await sourcesCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'people') await peopleCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'looks') await looksCommand({ S, client, baseUrl, opts, budget })
+    else if (command === 'products') await productsCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'sweep') await sweepCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'resume') await resumeCommand({ S, client, baseUrl, opts, budget })
   } finally {

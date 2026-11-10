@@ -33,6 +33,7 @@ npm run lab -- create --text "A ceramic mug on a white background" --yes
 npm run lab -- sources --yes
 npm run lab -- people  [--ids maya,omar] [--force] --yes
 npm run lab -- looks   [--ids maya,omar] [--looks front,seated] [--force] --yes
+npm run lab -- products [--ids dropper-bottle,speckled-mug] [--force] --yes
 npm run lab -- sweep   --yes
 npm run lab -- resume  lab/runs/2026-11-09-140000-set-clothing --yes
 ```
@@ -80,6 +81,10 @@ Put a real product photo at `lab/sources/<category>.jpg` (or `.jpeg`, `.png`, `.
 
 `npm run lab -- looks` generates the four alternate studio looks for every bundled person from `scripts/lab/person-looks.mjs` (96 images, $0.96) into `lab/looks/`. Each request edits the person's bundled `resources/people/<id>.webp` with a prompt for `front`, `angle`, `full` or `seated`; the result is resized to `640x960` WebP and written as `lab/looks/<id>-<look>.webp`. `--ids` and `--looks` narrow the batch; `--force` regenerates images that already exist. The cap needs headroom: the full batch moves the ledger by 96 cents, so raise the local cap or pass `--max-cents 400`. Start with a three-person pilot (`--ids maya,omar,june`), review identity, framing and the studio background on the run's `sheet.webp`, then run the rest. Copy only approved files into `resources/people/`; `src/shared/people.ts` names the keys and labels and the asset test checks that every bundled person has all four. Use `--person <id> --look <key>` on `create` or `edit` to try a look prompt by itself.
 
+## Product pack
+
+`npm run lab -- products` generates the 20 included starter products from `scripts/lab/product-pack.mjs` (20 images, $0.20) into `lab/products/`. Each request is a square generation on a pure white seamless background; the lab writes a 1024×1024 WebP and a 480×480 `<id>-thumb.webp`. `--ids` and `--force` narrow or replace the batch. The ledger is close to the default cap, so pass `--max-cents 400` for the batch and its retries. Start with a four-product pilot (`--ids dropper-bottle,candle-jar,canvas-tote,speckled-mug`), review the run's `sheet.webp` for readable labels or text, framing, white background and a complete product, then run the rest. Copy only approved files into `resources/products/`; `src/shared/products.ts` holds the catalog and the asset test checks every full and thumb file.
+
 ## Example images
 
 The Image Generator examples in `resources/tiles/examples/` mix the original product scenes with outputs from this lab:
@@ -102,6 +107,9 @@ lab/
   people/manifest.json           # prompts and provenance for people
   looks/<id>-<look>.webp         # reviewed alternate studio look, 640x960
   looks/manifest.json            # prompts and provenance for looks
+  products/<id>.webp             # reviewed unbranded starter product, 1024 square
+  products/<id>-thumb.webp       # 480 square card thumb
+  products/manifest.json         # prompts and provenance for products
   spend.json                     # cumulative actual returned-image cost
   plans/<stamp>-<label>.json     # free prompt plans
   runs/<stamp>-<command>-<slug>/

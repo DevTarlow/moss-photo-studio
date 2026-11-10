@@ -74,7 +74,15 @@ beforeEach(async () => {
   people = new PeopleRepository(db)
   products = new ProductRepository(db)
   media = new MediaService({ projects, images, plans, people, brand, libraryPath, logger })
-  productService = new ProductService({ products, images, projects, plans, media, libraryPath })
+  productService = new ProductService({
+    products,
+    images,
+    projects,
+    plans,
+    media,
+    libraryPath,
+    resourceRoot: () => path.resolve(__dirname, '../../resources')
+  })
   keyPresent = true
   licensed = true
   updates = []

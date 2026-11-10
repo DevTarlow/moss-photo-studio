@@ -200,6 +200,9 @@ export interface Product {
   height: number
   createdAt: number
   updatedAt: number
+  source: 'bundled' | 'user'
+  blurb: string | null
+  category: string | null
 }
 
 export interface LibraryImage {

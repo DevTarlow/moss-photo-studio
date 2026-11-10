@@ -53,6 +53,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - Create: four images, run cost, first result gets Newest, persistent Edit/Download/Save as Product/Save as Person/More actions, a result lightbox, Edit opens the editor, Back to Create returns to the result. The empty state shows eight starting cards under Examples with the line "Click a photo to load a starting description.", and the idea menu groups use darker bold titles. A failed run gets its own retry card.
 - Set export: six named WebP files and a UTF-8 `set.txt`, no overwrite, format and quality controls. The toast names the folder and count and offers Open Folder.
 - Usage: month total equals returned images times one cent, by-project rows, ledger, CSV totals sum to the displayed month spend, budget warning at `$10.00`, reset budget. A low budget exposes Make Fewer Images; in Set it reduces the run to one shot and removes the warning when one fits.
+- Products: 20 included unbranded starter products under Included and saved products under Yours; the header reads "20 included · N yours". Included cards have no rename/delete and open Use in a Set, Edit This Photo, and New Image from Reference. Create a Product opens the Image Generator with a blank dropper prompt and a Make a new product banner. A saved product keeps the existing rename, delete, search, sort, and pagination behavior.
 - People: 24 bundled people, user section, Maya's included card, candid descriptions, and the synthetic-people note. Every included person opens with the candid main photo and four square studio-look thumbnails (Studio front, Studio angle, Full length, Seated); clicking the main photo opens a larger preview, choosing a look updates the main photo, and "Use the original" restores it. Create a set from "Studio angle" and check the on-person control shows the look; create an image from "Full length" and check the person chip and the project keep it. User-added people have no look strip. Create a Person opens the Image Generator with a portrait prompt and a Make a new person banner; Save as Person on a generated result adds the image under Yours.
 - Settings: light and dark theme, persisted after restart, window bounds remembered, 1024 by 700 and 150% zoom coverage for every main screen, keyring warning visible when safeStorage is unavailable. The system reduced-motion preference drives `data-motion`; overriding to full restores motion.
 - Settings key: Test Connection, Replace, Test and Save, Remove with confirmation. The full key never appears in the page after saving.
@@ -182,15 +183,18 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 ### 18. Products and cross-tool sources
 
-- [ ] **A** Save a generated image, an editor version, and a set shot as Products. Each appears on the Products page after a restart.
-- [ ] **A** From a Product, use Use in a Set, Edit This Photo, and New Image from Reference; then repeat from a ready library image. The chosen photo becomes the source or reference.
+- [ ] **A** The Products page shows 20 included unbranded starter products and a Create a Product button. Opening an included product offers Use in a Set, Edit This Photo, and New Image from Reference; there is no Rename or Delete.
+- [ ] **A** Start each included action from the Amber dropper bottle: the set shows the category chooser and the source label, the editor opens the photo, and the generator shows the product reference. No product is added under Yours.
+- [ ] **A** Create a Product opens the Image Generator with the Make a new product banner and the blank dropper prompt; generate, choose Save as Product, and the new product appears under Yours.
+- [ ] **A** Save a generated image, an editor version, and a set shot as Products. Each appears on the Products page under Yours after a restart; the Included section is unchanged.
+- [ ] **A** From a saved Product, use Use in a Set, Edit This Photo, and New Image from Reference; then repeat from a ready library image. The chosen photo becomes the source or reference.
 - [ ] **A** Replace a set's product photo from a Product and from a library image. Images already made stay.
 - [ ] **A** Add a photo to an existing Image Editor from a Product and from a library image. It becomes a new version.
 - [x] **A** Create a Person opens the Image Generator with the person prompt and banner; generate an image, choose Save as Person, name it, and the new person appears under Yours with a working preview.
 - [ ] **A** Open an included person, choose each of the four studio looks, use the original again, and create a set and an image from a look. Both actions keep the look; a user-added person has no look strip.
 - [ ] **A** In the Image Generator, choose a Product and a Person from People. The run makes one image and the person is holding the product.
 - [ ] **A** The count control is fixed at one image while a reference is selected.
-- [ ] **A** Delete a Product. The Products page empties, and projects and images made from it remain.
+- [ ] **A** Delete a saved Product. The Yours section empties but the Included section remains, and projects and images made from it stay.
 - [ ] **O** Real-key check: a saved Product plus a person reference produces a recognizable product and person.
 
 ### 19. Packaging

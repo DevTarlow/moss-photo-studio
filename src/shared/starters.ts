@@ -203,6 +203,10 @@ export interface ExampleScene {
 export const CREATE_PERSON_PROMPT =
   'A candid full-body photo of a smiling person in their thirties with short curly hair, wearing a mustard sweater and jeans, in a bright room with a plain warm background, natural daylight, head to toe, realistic photo.'
 
+/** The starting text for Create a Product. */
+export const CREATE_PRODUCT_PROMPT =
+  'A plain amber glass dropper bottle with a black dropper cap, no label and no printing, standing centred on a pure white seamless background, the whole bottle visible, no props, no text or logos, soft even studio light, realistic product photo, square.'
+
 export const EXAMPLE_SCENES: readonly ExampleScene[] = [
   {
     key: 'product',

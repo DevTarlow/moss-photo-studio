@@ -6,7 +6,7 @@ import { ChevronDown, Download, Image as ImageIcon, Loader2, Package, Pencil, Pl
 import type { Format, Image, JobState, Project, Shape } from '@shared/types'
 import { MAX_PROMPT } from '@shared/constants'
 import { composeCreatePrompt } from '@shared/prompts/guards'
-import { CREATE_PERSON_PROMPT, EXAMPLE_SCENES, exampleTextFor, startersByCategory } from '@shared/starters'
+import { CREATE_PERSON_PROMPT, CREATE_PRODUCT_PROMPT, EXAMPLE_SCENES, exampleTextFor, startersByCategory } from '@shared/starters'
 import type { ExampleScene, Starter } from '@shared/starters'
 import { estimateCents, usd } from '@shared/cost'
 import { errorMessage, billingUncertain } from '@shared/errors'
@@ -62,6 +62,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const seededCreatePerson = useRef(false)
+  const seededCreateProduct = useRef(false)
   const confirm = useConfirm()
   const tier = useViewportTier()
   const leftHidden = tier === 'tiny'
@@ -87,6 +88,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const [saveProductImage, setSaveProductImage] = useState<Image | null>(null)
   const [savePersonImage, setSavePersonImage] = useState<Image | null>(null)
   const [createPersonMode, setCreatePersonMode] = useState(false)
+  const [createProductMode, setCreateProductMode] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [firstOpen, setFirstOpen] = useState(false)
   const [currentJobId, setCurrentJobId] = useState<string | null>(null)
@@ -147,6 +149,17 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
     setPromptSource((current) => (current === 'user' ? 'starter' : current))
     const next = new URLSearchParams(params)
     next.delete('createPerson')
+    setParams(next, { replace: true })
+  }, [params, setParams])
+
+  useEffect(() => {
+    if (seededCreateProduct.current || params.get('createProduct') !== '1') return
+    seededCreateProduct.current = true
+    setCreateProductMode(true)
+    setPrompt((current) => (current.trim() ? current : CREATE_PRODUCT_PROMPT))
+    setPromptSource((current) => (current === 'user' ? 'starter' : current))
+    const next = new URLSearchParams(params)
+    next.delete('createProduct')
     setParams(next, { replace: true })
   }, [params, setParams])
 
@@ -656,6 +669,16 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                   status="info"
                   title="Make a new person"
                   description="Describe the person, generate an image, then choose Save as Person on the result."
+                  collapsible={false}
+                />
+              </div>
+            )}
+            {createProductMode && (
+              <div className="mb-5">
+                <Banner
+                  status="info"
+                  title="Make a new product"
+                  description="Describe the product, generate an image, then choose Save as Product on the result."
                   collapsible={false}
                 />
               </div>

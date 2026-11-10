@@ -38,7 +38,15 @@ beforeEach(() => {
   const people = new PeopleRepository(db)
   products = new ProductRepository(db)
   media = new MediaService({ projects, images, plans, people, brand, libraryPath, logger })
-  productService = new ProductService({ products, images, projects, plans, media, libraryPath })
+  productService = new ProductService({
+    products,
+    images,
+    projects,
+    plans,
+    media,
+    libraryPath,
+    resourceRoot: () => path.resolve(__dirname, '../../resources')
+  })
 })
 
 afterEach(() => {
@@ -133,5 +141,33 @@ describe('products', () => {
 
     const fromFirst = images.listLibrary({ search: 'Mug' })
     expect(fromFirst.items.some((image) => image.projectId === first.projectId)).toBe(true)
+  })
+})
+
+describe('bundled products', () => {
+  it('uses the resource asset as a starting point without a saved row', async () => {
+    const set = await productService.createProject({
+      productId: 'dropper-bottle',
+      type: 'set',
+      shape: 'square',
+      format: 'webp'
+    })
+    const source = images.get(set.imageId)
+    expect(source?.label).toBe('Amber dropper bottle')
+    expect(source?.width).toBe(1024)
+    expect(products.list()).toHaveLength(0)
+    expect(projects.get(set.projectId)?.sourceImageId).toBe(set.imageId)
+
+    const target = projects.create({ type: 'photo', name: 'Bundled target' })
+    const imported = await productService.importIntoProject({
+      productId: 'dropper-bottle',
+      projectId: target.id
+    })
+    expect(imported.imageId).toBeTruthy()
+    expect(products.list()).toHaveLength(0)
+  })
+
+  it('refuses to delete an included product', async () => {
+    await expect(productService.delete('dropper-bottle')).rejects.toMatchObject({ code: 'unreadable' })
   })
 })

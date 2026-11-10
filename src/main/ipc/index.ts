@@ -24,6 +24,7 @@ import { shapeForImage } from '@shared/shapes'
 import { normalisePlan } from '@shared/plans'
 import { nextCountedLabel } from '@shared/labels'
 import { safeBaseName } from '@shared/files'
+import { isBundledProduct } from '@shared/products'
 import { absoluteInLibrary, workingFor } from '../media/paths'
 import { applyLocalAdjust } from '../media/transform'
 import { exportImageToPath, exportOneImage, exportSetProject } from '../media/export'
@@ -601,6 +602,7 @@ export function registerIpcHandlers(context: AppContext): void {
     'products:rename',
     z.object({ id: idSchema, name: z.string().trim().min(1).max(80) }),
     ({ id, name }): Product => {
+      if (isBundledProduct(id)) throw new IpcFault('invalid_payload')
       const product = context.products.rename(id, name.trim())
       if (!product) throw new IpcFault('not_found')
       return product

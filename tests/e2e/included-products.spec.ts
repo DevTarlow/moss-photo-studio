@@ -1,0 +1,66 @@
+import { test, expect, _electron as electron } from '@playwright/test'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import { CREATE_PRODUCT_PROMPT } from '../../src/shared/starters'
+
+test('included products start a set and a generator project, and Create a Product seeds the generator', async () => {
+  const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-included-products-e2e-'))
+  const app = await electron.launch({
+    args: ['.', '--no-sandbox'],
+    env: { ...process.env, MOSS_DEV_UNLOCK: '1', MOSS_MUSE_FAKE: '1', MOSS_USER_DATA_DIR: userData },
+    timeout: 60_000
+  })
+
+  try {
+    const page = await app.firstWindow()
+    await page.getByRole('button', { name: 'Look Around First' }).waitFor({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Look Around First' }).click()
+    await page.getByRole('link', { name: 'Products', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()
+    await expect(page.getByText('20 included · 0 yours')).toBeVisible()
+    await expect(page.getByText('Included', { exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Open Amber dropper bottle larger' })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Open Amber dropper bottle larger' }).click()
+    const preview = page.getByRole('dialog')
+    await expect(preview.getByRole('heading', { name: 'Amber dropper bottle' })).toBeVisible()
+    await expect(preview.getByRole('button', { name: 'Rename' })).toHaveCount(0)
+    await preview.getByRole('button', { name: 'Use in a Set' }).click()
+    await page.getByRole('heading', { name: 'What do you sell?' }).waitFor({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Skincare and beauty' }).click()
+    await expect(page.getByRole('button', { name: /Make \d+ Images/ })).toBeVisible({ timeout: 10_000 })
+    const setSource = await page.evaluate(async () => {
+      const id = window.location.hash.split('/project/')[1]?.split(/[?#]/)[0]
+      if (!id) return null
+      const result = await window.moss.projects.get({ id })
+      if (!result.ok) return null
+      const source = result.data.images.find((image) => image.id === result.data.project.sourceImageId)
+      return { type: result.data.project.type, label: source?.label }
+    })
+    expect(setSource).toEqual({ type: 'set', label: 'Amber dropper bottle' })
+
+    await page.getByRole('link', { name: 'Products', exact: true }).click()
+    await page.getByRole('button', { name: 'Open Amber dropper bottle larger' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'New Image from Reference' }).click()
+    await page.getByText('Describe the image').waitFor({ timeout: 20_000 })
+    await expect(page.getByText('Amber dropper bottle', { exact: true }).first()).toBeVisible()
+    const imageSource = await page.evaluate(async () => {
+      const id = window.location.hash.split('/project/')[1]?.split(/[?#]/)[0]
+      if (!id) return null
+      const result = await window.moss.projects.get({ id })
+      if (!result.ok) return null
+      const source = result.data.images.find((image) => image.id === result.data.project.sourceImageId)
+      return { type: result.data.project.type, label: source?.label }
+    })
+    expect(imageSource).toEqual({ type: 'image', label: 'Amber dropper bottle' })
+
+    await page.getByRole('link', { name: 'Products', exact: true }).click()
+    await page.getByRole('button', { name: 'Create a Product' }).click()
+    await expect(page.getByText('Make a new product')).toBeVisible({ timeout: 20_000 })
+    await expect(page.locator('textarea').first()).toHaveValue(CREATE_PRODUCT_PROMPT)
+  } finally {
+    await app.close().catch(() => undefined)
+    fs.rmSync(userData, { recursive: true, force: true })
+  }
+})

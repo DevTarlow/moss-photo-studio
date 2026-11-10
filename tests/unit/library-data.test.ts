@@ -5,8 +5,9 @@ import { SCENES, SCENE_CATEGORIES } from '@shared/prompts/scenes'
 import { ALL_TEMPLATES, TEMPLATE_GROUPS, QUICK_FIX, templateAsset, templateById } from '@shared/prompts/templates'
 import { RECIPES, recipeById, CATEGORY_CHIPS, recipeShotTypes, recipeShotLabels, defaultDirectionFor } from '@shared/prompts/recipes'
 import { SHOT_TYPES, shotDefinition, directionForPrompt } from '@shared/prompts/shots'
-import { CREATE_PERSON_PROMPT, EXAMPLE_SCENES, STARTERS, exampleTextFor } from '@shared/starters'
+import { CREATE_PERSON_PROMPT, CREATE_PRODUCT_PROMPT, EXAMPLE_SCENES, STARTERS, exampleTextFor } from '@shared/starters'
 import { BUNDLED_PEOPLE, BUNDLED_PERSON_LOOKS } from '@shared/people'
+import { BUNDLED_PRODUCT_SIZE, BUNDLED_PRODUCTS, bundledProductCards, isBundledProduct } from '@shared/products'
 import { wrapScenePrompt, wrapModelPrompt, PROMPT_MAX } from '@shared/prompts/guards'
 import { createDefaultPlan, makeShots, normalisePlan, enableFirstShots, firstShotsEnabled } from '@shared/plans'
 import { nextCountedLabel, setImageLabel } from '@shared/labels'
@@ -373,5 +374,44 @@ describe('cost and file naming', () => {
     expect(uniqueFileName('mug', 'webp', taken)).toBe('mug.webp')
     expect(uniqueFileName('mug', 'webp', taken)).toBe('mug-2.webp')
     expect(uniqueFileName('mug', 'webp', taken)).toBe('mug-3.webp')
+  })
+})
+
+describe('bundled products', () => {
+  it('ships twenty unique unbranded starter products', () => {
+    expect(BUNDLED_PRODUCTS).toHaveLength(20)
+    expect(new Set(BUNDLED_PRODUCTS.map((product) => product.id)).size).toBe(20)
+    expect(BUNDLED_PRODUCT_SIZE).toBe(1024)
+    expect(BUNDLED_PRODUCTS.some((product) => product.name === 'Speckled mug')).toBe(true)
+    for (const product of BUNDLED_PRODUCTS) {
+      expect(product.name.length).toBeGreaterThan(0)
+      expect(product.category.length).toBeGreaterThan(0)
+      expect(product.blurb.length).toBeGreaterThan(0)
+      expect(isBundledProduct(product.id)).toBe(true)
+    }
+    expect(isBundledProduct('not-a-bundled-product')).toBe(false)
+    expect(CREATE_PRODUCT_PROMPT.length).toBeGreaterThan(0)
+    expect(CREATE_PRODUCT_PROMPT.length).toBeLessThanOrEqual(PROMPT_MAX)
+  })
+
+  it('has full and thumb assets for every included product', () => {
+    for (const product of BUNDLED_PRODUCTS) {
+      expect(fs.existsSync(path.join(root, 'resources', 'products', `${product.id}.webp`))).toBe(true)
+      expect(fs.existsSync(path.join(root, 'resources', 'products', `${product.id}-thumb.webp`))).toBe(true)
+    }
+  })
+
+  it('maps bundled products to resources without a saved row', () => {
+    const cards = bundledProductCards()
+    expect(cards).toHaveLength(20)
+    for (const card of cards) {
+      expect(card.source).toBe('bundled')
+      expect(card.width).toBe(1024)
+      expect(card.height).toBe(1024)
+      expect(card.blurb).toBeTruthy()
+      expect(card.category).toBeTruthy()
+      expect(card.imageUrl).toMatch(/^moss-media:\/\/bundled\/products\//)
+      expect(card.thumbUrl).toMatch(/^moss-media:\/\/bundled\/products\//)
+    }
   })
 })

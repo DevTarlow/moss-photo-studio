@@ -22,7 +22,10 @@ function mapProduct(row: ProductRow): Product {
     width: Number(row.width ?? 0),
     height: Number(row.height ?? 0),
     createdAt: Number(row.created_at),
-    updatedAt: Number(row.updated_at)
+    updatedAt: Number(row.updated_at),
+    source: 'user',
+    blurb: null,
+    category: null
   }
 }
 
