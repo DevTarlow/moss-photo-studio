@@ -6,6 +6,7 @@ import process from 'node:process'
 import sharp from 'sharp'
 import { createLabLoader } from './loader.mjs'
 import { PEOPLE_PACK } from './people-pack.mjs'
+import { PERSON_LOOKS_PACK } from './person-looks.mjs'
 import { SOURCE_PACK, sourcePromptFor } from './source-pack.mjs'
 import {
   addSpend,
@@ -23,7 +24,8 @@ const ROOT = process.cwd()
 const LAB = path.join(ROOT, 'lab')
 const SOURCES = path.join(LAB, 'sources')
 const PEOPLE_DIR = path.join(LAB, 'people')
-const COMMANDS = new Set(['plan', 'set', 'edit', 'create', 'sources', 'people', 'sweep', 'resume', 'help'])
+const LOOKS_DIR = path.join(LAB, 'looks')
+const COMMANDS = new Set(['plan', 'set', 'edit', 'create', 'sources', 'people', 'looks', 'sweep', 'resume', 'help'])
 
 class LabError extends Error {}
 
@@ -82,6 +84,7 @@ Usage:
   npm run lab -- create --text "..." [--source shirt.jpg] [--person maya] [--count 1] --yes
   npm run lab -- sources [--force] --yes
   npm run lab -- people  [--ids maya,omar] [--force] --yes
+  npm run lab -- looks   [--ids maya,omar] [--looks front,seated] [--force] --yes
   npm run lab -- sweep  [--categories clothing,ceramics] --yes
   npm run lab -- resume <run-dir> --yes
 
@@ -89,6 +92,8 @@ Common options:
   --shape square|portrait|landscape   default: from the source photo
   --format webp|jpeg|png               default: webp
   --palette "#112233,#445566"          optional brand colors
+  --person maya                        bundled person for an on-person run
+  --look front|angle|full|seated       alternate studio look for that person
   --directions-file <file.json>        lab-only direction overrides, keyed by shot type
   --gift-clause-file <file.txt>        lab-only gift clause override
   --max-cents 300                      hard stop for this and earlier lab runs
@@ -103,6 +108,7 @@ Key:
 Output:
   lab/sources/          owner photos, or generated stand-ins
   lab/people/           reviewed full-body and portrait people assets
+  lab/looks/            reviewed alternate studio looks, <id>-<look>.webp
   lab/runs/<stamp>-...  images, thumbs, manifest.json, index.html, sheet.webp, review.md
   lab/spend.json        cumulative actual returned-image cost
   lab/plans/<stamp>-... free prompt plans
@@ -264,15 +270,20 @@ async function normaliseSource(S, sourcePath, runDir) {
 
 const personCache = new Map()
 
-async function personBytes(personId) {
-  if (!personCache.has(personId)) {
-    const file = path.join(ROOT, 'resources', 'people', `${personId}.webp`)
+async function personBytes(personId, look = null) {
+  const key = `${personId}:${look ?? 'original'}`
+  if (!personCache.has(key)) {
+    const suffix = look && look !== 'original' ? `-${look}` : ''
+    const file = path.join(ROOT, 'resources', 'people', `${personId}${suffix}.webp`)
     if (!fs.existsSync(file)) {
-      fail(`Person "${personId}" has no bundled reference. Use one of the bundled people, e.g. maya.`)
+      const hint = look && look !== 'original'
+        ? `Person "${personId}" has no look "${look}". Run npm run lab -- looks --ids ${personId} --yes.`
+        : `Person "${personId}" has no bundled reference. Use one of the bundled people, e.g. maya.`
+      fail(hint)
     }
-    personCache.set(personId, await fsp.readFile(file))
+    personCache.set(key, await fsp.readFile(file))
   }
-  return personCache.get(personId)
+  return personCache.get(key)
 }
 
 function filterShots(S, plan, csv) {
@@ -314,7 +325,7 @@ async function buildSetRun({ S, opts, category, sourcePath, runDir, command }) {
   const requests = []
   for (const [order, spec] of specs.entries()) {
     const images = [source.bytes]
-    if (spec.personId) images.push(await personBytes(spec.personId))
+    if (spec.personId) images.push(await personBytes(spec.personId, spec.personLook))
     requests.push({
       order,
       group: category,
@@ -425,6 +436,7 @@ async function executeRun({ S, client, baseUrl, requests, runDir, meta, budget, 
             shape: request.shape,
             format: request.format,
             personId: request.personId ?? null,
+            personLook: request.personLook ?? null,
             hasSource: request.hasSource === true
           }
         })
@@ -480,6 +492,7 @@ async function executeRun({ S, client, baseUrl, requests, runDir, meta, budget, 
           shape: request.shape,
           format: request.format,
           personId: request.personId ?? null,
+          personLook: request.personLook ?? null,
           hasSource: request.hasSource === true
         }
       }
@@ -638,8 +651,9 @@ async function editCommand({ S, client, baseUrl, opts, budget }) {
   const format = resolveFormat(S, opts)
   const palette = paletteFrom(opts)
   const personId = template.kind === 'model' ? String(opts.person ?? 'maya') : opts.person ? String(opts.person) : null
+  const personLook = personId && opts.look && opts.look !== 'original' ? String(opts.look) : null
   const images = [source.bytes]
-  if (personId) images.push(await personBytes(personId))
+  if (personId) images.push(await personBytes(personId, personLook))
   const prompt = S.guards.composeChange({
     text: template.prompt,
     kind: template.kind,
@@ -678,6 +692,7 @@ async function editCommand({ S, client, baseUrl, opts, budget }) {
       shape,
       format,
       personId,
+      personLook,
       hasSource: true
     }
   ]
@@ -696,6 +711,7 @@ async function createCommand({ S, client, baseUrl, opts, budget }) {
     fail(`--count must be between 1 and ${S.constants.MAX_CREATE_VARIANTS}.`)
   }
   const personId = opts.person ? String(opts.person) : null
+  const personLook = personId && opts.look && opts.look !== 'original' ? String(opts.look) : null
   if ((opts.source || personId) && count !== 1) fail('A reference makes one image at a time.')
   const runDir = path.join(LAB, 'runs', `${stamp()}-create-${slug(text)}`)
   const source = opts.source ? await normaliseSource(S, opts.source, runDir) : null
@@ -704,7 +720,7 @@ async function createCommand({ S, client, baseUrl, opts, budget }) {
   const palette = paletteFrom(opts)
   const images = []
   if (source) images.push(source.bytes)
-  if (personId) images.push(await personBytes(personId))
+  if (personId) images.push(await personBytes(personId, personLook))
   const prompt = S.guards.composeCreatePrompt({
     text,
     hasProduct: Boolean(source),
@@ -743,6 +759,7 @@ async function createCommand({ S, client, baseUrl, opts, budget }) {
       shape,
       format,
       personId,
+      personLook,
       hasSource: Boolean(source)
     }
   ]
@@ -851,6 +868,125 @@ async function peopleCommand({ S, client, baseUrl, opts, budget }) {
   await fsp.writeFile(
     path.join(PEOPLE_DIR, 'manifest.json'),
     `${JSON.stringify({ createdAt: new Date().toISOString(), people: [...byId.values()] }, null, 2)}\n`
+  )
+  return result
+}
+
+async function looksCommand({ S, client, baseUrl, opts, budget }) {
+  const wantedPeople = opts.ids
+    ? new Set(
+        String(opts.ids)
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean)
+      )
+    : null
+  if (wantedPeople) {
+    for (const id of wantedPeople) {
+      if (!PEOPLE_PACK.some((person) => person.id === id)) {
+        fail(`Unknown bundled person "${id}". Use one of: ${PEOPLE_PACK.map((person) => person.id).join(', ')}.`)
+      }
+    }
+  }
+  const wantedLooks = opts.looks
+    ? new Set(
+        String(opts.looks)
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean)
+      )
+    : null
+  if (wantedLooks) {
+    for (const key of wantedLooks) {
+      if (!PERSON_LOOKS_PACK.some((look) => look.key === key)) {
+        fail(`Unknown look "${key}". Use one of: ${PERSON_LOOKS_PACK.map((look) => look.key).join(', ')}.`)
+      }
+    }
+  }
+  const pending = []
+  for (const person of PEOPLE_PACK) {
+    if (wantedPeople && !wantedPeople.has(person.id)) continue
+    for (const look of PERSON_LOOKS_PACK) {
+      if (wantedLooks && !wantedLooks.has(look.key)) continue
+      const target = path.join(LOOKS_DIR, `${person.id}-${look.key}.webp`)
+      if (!opts.force && fs.existsSync(target)) continue
+      pending.push({ person, look, target })
+    }
+  }
+  if (!pending.length) {
+    console.log('All requested person looks already have images. Add --force to regenerate them.')
+    return { skipped: true }
+  }
+  const runDir = path.join(LAB, 'runs', `${stamp()}-looks`)
+  const requests = []
+  for (const [order, entry] of pending.entries()) {
+    const reference = await personBytes(entry.person.id)
+    requests.push({
+      order,
+      group: 'looks',
+      key: `${entry.person.id}-${entry.look.key}`,
+      label: `${entry.person.name} · ${entry.look.label}`,
+      prompt: S.guards.composeCreatePrompt({
+        text: entry.look.prompt,
+        hasProduct: false,
+        hasPerson: true
+      }),
+      endpoint: 'edit',
+      images: [reference],
+      count: 1,
+      shape: 'portrait',
+      format: 'webp',
+      personId: entry.person.id,
+      personLook: entry.look.key,
+      hasSource: false
+    })
+  }
+  const meta = {
+    command: 'looks',
+    label: `Person looks · ${pending.length}`,
+    category: 'looks',
+    palette: [],
+    shape: 'portrait',
+    format: 'webp',
+    source: null,
+    sources: {}
+  }
+  const result = await executeRun({ S, client, baseUrl, requests, runDir, meta, budget, opts })
+  if (result.skipped) return result
+  await ensureDir(LOOKS_DIR)
+  const byKey = new Map(pending.map((entry) => [`${entry.person.id}-${entry.look.key}`, entry]))
+  const generated = []
+  for (const item of result.manifest.items) {
+    if (item.status !== 'ok' || !item.files?.[0]) continue
+    const entry = byKey.get(item.key)
+    if (!entry) continue
+    const raw = path.join(runDir, item.files[0].file)
+    await sharp(raw)
+      .resize({ width: 640, height: 960, fit: 'cover', position: 'centre' })
+      .webp({ quality: 88, effort: 4 })
+      .toFile(entry.target)
+    generated.push({
+      personId: entry.person.id,
+      key: entry.look.key,
+      label: entry.look.label,
+      prompt: item.prompt,
+      run: path.relative(ROOT, runDir).split(path.sep).join('/'),
+      file: path.relative(ROOT, entry.target).split(path.sep).join('/'),
+      costCents: item.costCents
+    })
+    console.log(`  ${path.relative(ROOT, entry.target)}`)
+  }
+  let manifest = { looks: [] }
+  try {
+    manifest = JSON.parse(await fsp.readFile(path.join(LOOKS_DIR, 'manifest.json'), 'utf8'))
+  } catch {
+    // First looks run.
+  }
+  const byId = new Map((manifest.looks ?? []).map((look) => [`${look.personId}-${look.key}`, look]))
+  for (const look of generated) byId.set(`${look.personId}-${look.key}`, look)
+  await fsp.writeFile(
+    path.join(LOOKS_DIR, 'manifest.json'),
+    `${JSON.stringify({ createdAt: new Date().toISOString(), looks: [...byId.values()] }, null, 2)}\n`
   )
   return result
 }
@@ -1006,7 +1142,7 @@ async function resumeCommand({ S, client, baseUrl, opts, budget }) {
     const meta = item.request ?? {}
     const images = []
     if (meta.hasSource && sourceBytes) images.push(sourceBytes)
-    if (meta.personId) images.push(await personBytes(meta.personId))
+    if (meta.personId) images.push(await personBytes(meta.personId, meta.personLook ?? null))
     if (meta.hasSource && !sourceBytes) fail(`The original run has no source/working.webp; cannot rebuild "${item.label}".`)
     requests.push({
       order,
@@ -1066,6 +1202,7 @@ async function main() {
     else if (command === 'create') await createCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'sources') await sourcesCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'people') await peopleCommand({ S, client, baseUrl, opts, budget })
+    else if (command === 'looks') await looksCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'sweep') await sweepCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'resume') await resumeCommand({ S, client, baseUrl, opts, budget })
   } finally {

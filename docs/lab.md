@@ -32,6 +32,7 @@ npm run lab -- edit   --template kitchen-table --source shirt.jpg --yes
 npm run lab -- create --text "A ceramic mug on a white background" --yes
 npm run lab -- sources --yes
 npm run lab -- people  [--ids maya,omar] [--force] --yes
+npm run lab -- looks   [--ids maya,omar] [--looks front,seated] [--force] --yes
 npm run lab -- sweep   --yes
 npm run lab -- resume  lab/runs/2026-11-09-140000-set-clothing --yes
 ```
@@ -45,6 +46,7 @@ Common options:
 | `--shape`, `--format` | Override the source-derived shape and the WebP default. |
 | `--palette "#112233,#445566"` | Test the brand colour clause. |
 | `--person maya` | Bundled person for on-person edits/sets. |
+| `--look seated` | One of the bundled person's studio looks, for on-person edits, creates and the `looks` batch. |
 | `--directions-file <json>` | Lab-only direction overrides keyed by shot type. |
 | `--gift-clause-file <txt>` | Lab-only gift clause override. |
 | `--max-cents 300` | Override the ledger cap. |
@@ -74,6 +76,10 @@ Put a real product photo at `lab/sources/<category>.jpg` (or `.jpeg`, `.png`, `.
 
 `npm run lab -- people` generates the bundled reference people from `scripts/lab/people-pack.mjs` (24 images, $0.24) into `lab/people/`. Each person gets a full-body `640x960` WebP and a `512x512` portrait cropped from the top of the same image. `--ids` regenerates only some people; `--force` replaces images that already exist. Review the run's `sheet.webp` and the individual portraits, then copy the approved files into `resources/people/` and keep `src/shared/people.ts` and the pack in sync. The prompts ask for candid, happy, full-body, head-to-toe shots with one person, simple settings and no text or logos.
 
+## Person looks
+
+`npm run lab -- looks` generates the four alternate studio looks for every bundled person from `scripts/lab/person-looks.mjs` (96 images, $0.96) into `lab/looks/`. Each request edits the person's bundled `resources/people/<id>.webp` with a prompt for `front`, `angle`, `full` or `seated`; the result is resized to `640x960` WebP and written as `lab/looks/<id>-<look>.webp`. `--ids` and `--looks` narrow the batch; `--force` regenerates images that already exist. The cap needs headroom: the full batch moves the ledger by 96 cents, so raise the local cap or pass `--max-cents 400`. Start with a three-person pilot (`--ids maya,omar,june`), review identity, framing and the studio background on the run's `sheet.webp`, then run the rest. Copy only approved files into `resources/people/`; `src/shared/people.ts` names the keys and labels and the asset test checks that every bundled person has all four. Use `--person <id> --look <key>` on `create` or `edit` to try a look prompt by itself.
+
 ## Example images
 
 The Image Generator examples in `resources/tiles/examples/` mix the original product scenes with outputs from this lab:
@@ -94,6 +100,8 @@ lab/
   people/<id>.webp               # reviewed full-body person reference
   people/<id>-portrait.webp      # square portrait cropped from it
   people/manifest.json           # prompts and provenance for people
+  looks/<id>-<look>.webp         # reviewed alternate studio look, 640x960
+  looks/manifest.json            # prompts and provenance for looks
   spend.json                     # cumulative actual returned-image cost
   plans/<stamp>-<label>.json     # free prompt plans
   runs/<stamp>-<command>-<slug>/

@@ -83,9 +83,19 @@ describe('planSetPrompts', () => {
     const plan = planFor('clothing')
     const onmodel = planSetPrompts({ plan, shots: plan.shots }).find((entry) => entry.type === 'onmodel')!
     expect(onmodel.personId).toBe('maya')
+    expect(onmodel.personLook).toBeNull()
     expect(onmodel.prompt).toContain('@Image1 as the product')
     expect(onmodel.prompt).toContain('@Image2 as the person')
     expect(onmodel.prompt.startsWith('Use @Image1')).toBe(true)
+  })
+
+  it('carries the chosen person look only on an on-person shot', () => {
+    const plan = planFor('clothing')
+    shot(plan, 'onmodel').personLook = 'seated'
+    shot(plan, 'hero').personLook = 'front'
+    const specs = planSetPrompts({ plan, shots: plan.shots })
+    expect(specs.find((entry) => entry.type === 'onmodel')!.personLook).toBe('seated')
+    expect(specs.find((entry) => entry.type === 'hero')!.personLook).toBeNull()
   })
 
   it('keeps feature words in the prompt when a feature shot is added', () => {

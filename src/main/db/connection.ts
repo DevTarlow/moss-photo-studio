@@ -185,6 +185,12 @@ const migrations: Migration[] = [
     up(db) {
       db.exec('ALTER TABLE projects ADD COLUMN draft INTEGER NOT NULL DEFAULT 0')
     }
+  },
+  {
+    version: 5,
+    up(db) {
+      db.exec('ALTER TABLE projects ADD COLUMN person_look TEXT')
+    }
   }
 ]
 

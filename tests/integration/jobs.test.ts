@@ -320,6 +320,44 @@ describe('job queue create', () => {
     expect(String((request.body ?? {}).prompt)).toContain('@Image2 as the person')
   })
 
+  it('sends the chosen person look as the reference', async () => {
+    const project = imageProject()
+    const { jobId } = await queue.startCreate({
+      projectId: project.id,
+      prompt: 'A studio portrait',
+      count: 1,
+      shape: 'portrait',
+      format: 'webp',
+      personId: 'maya',
+      personLook: 'seated'
+    })
+    const state = await waitForJob(jobId)
+    expect(state.status).toBe('done')
+    const request = server.requests()[0]!
+    expect(request.path).toContain('/edits')
+    const images = (request.body ?? {}).images as Array<{ image_url: string }>
+    expect(images).toHaveLength(1)
+    const sent = Buffer.from(images[0]!.image_url.split(',')[1]!, 'base64')
+    const expected = fs.readFileSync(path.resolve(__dirname, '../../resources/people/maya-seated.webp'))
+    expect(sent.equals(expected)).toBe(true)
+  })
+
+  it('rejects an unknown person look before spending', async () => {
+    const project = imageProject()
+    await expect(
+      queue.startCreate({
+        projectId: project.id,
+        prompt: 'A studio portrait',
+        count: 1,
+        shape: 'portrait',
+        format: 'webp',
+        personId: 'maya',
+        personLook: 'missing'
+      })
+    ).rejects.toMatchObject({ code: 'invalid_payload' })
+    expect(server.requests()).toHaveLength(0)
+  })
+
   it('refuses more than one image when a reference is present', async () => {
     const project = imageProject()
     await expect(
@@ -355,6 +393,36 @@ describe('job queue set', () => {
     expect(new Set(shots.map((image) => image.label)).size).toBe(6)
     expect(monthEvents().items).toHaveLength(6)
     expect(updates.some((entry) => entry.status === 'running')).toBe(true)
+  })
+
+  it('sends the chosen look for an on-person shot', async () => {
+    const project = projects.create({ type: 'set', name: 'Look set', category: 'clothing' })
+    const bytes = await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 180, g: 170, b: 150 } } }).jpeg().toBuffer()
+    await media.importSource({ projectId: project.id, bytes, name: 'shirt.jpg' })
+    const plan = createDefaultPlan({
+      category: 'clothing',
+      productName: 'Shirt',
+      shape: 'square',
+      format: 'webp'
+    })
+    const onmodel = plan.shots.find((shot) => shot.type === 'onmodel')!
+    plans.save(project.id, {
+      ...plan,
+      shots: plan.shots.map((shot) =>
+        shot.id === onmodel.id
+          ? { ...shot, enabled: true, personLook: 'angle' }
+          : { ...shot, enabled: false }
+      )
+    })
+    const { jobId } = await queue.startSet({ projectId: project.id, mode: 'make' })
+    const state = await waitForJob(jobId)
+    expect(state.status).toBe('done')
+    const request = server.requests()[0]!
+    const sentImages = (request.body ?? {}).images as Array<{ image_url: string }>
+    expect(sentImages).toHaveLength(2)
+    const sent = Buffer.from(sentImages[1]!.image_url.split(',')[1]!, 'base64')
+    const expected = fs.readFileSync(path.resolve(__dirname, '../../resources/people/maya-angle.webp'))
+    expect(sent.equals(expected)).toBe(true)
   })
 
   it('makes only the shots left enabled in the saved plan', async () => {
@@ -443,5 +511,19 @@ describe('job queue set', () => {
     expect(stored.filter((image) => image.status === 'ready' && image.shotId)).toHaveLength(1)
     expect(monthEvents().total).toBe(1)
     expect(monthEvents().items[0]).toMatchObject({ action: 'set', returned: 1, costCents: 1 })
+  })
+})
+
+describe('people look references', () => {
+  it('resolves bundled looks and rejects unknown or user looks', () => {
+    expect(people.refFor('maya', null)).toEqual({ root: 'bundled', file: 'people/maya.webp' })
+    expect(people.refFor('maya', 'original')).toEqual({ root: 'bundled', file: 'people/maya.webp' })
+    expect(people.refFor('maya', 'angle')).toEqual({ root: 'bundled', file: 'people/maya-angle.webp' })
+    expect(people.refFor('maya', 'missing')).toBeNull()
+
+    people.create({ id: 'test-user', name: 'Test User', refFile: 'people/test-user.webp', thumb: 'people/test-user-thumb.webp' })
+    expect(people.refFor('test-user', null)).toEqual({ root: 'library', file: 'people/test-user.webp' })
+    expect(people.refFor('test-user', 'front')).toBeNull()
+    expect(people.refFor('missing-person', null)).toBeNull()
   })
 })

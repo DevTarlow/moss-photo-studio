@@ -70,6 +70,7 @@ export function Library(): React.JSX.Element {
   const applyLicense = useAppStore((state) => state.applyLicense)
   const [newType, setNewType] = useState<'set' | 'photo' | null>(null)
   const [newPersonId, setNewPersonId] = useState<string | null>(null)
+  const [newPersonLook, setNewPersonLook] = useState<string | null>(null)
   const [renameProject, setRenameProject] = useState<Project | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [search, setSearch] = useState(store.search)
@@ -125,6 +126,7 @@ export function Library(): React.JSX.Element {
     if (nextType === 'set' || nextType === 'photo') {
       setNewType(nextType)
       setNewPersonId(params.get('person'))
+      setNewPersonLook(params.get('look'))
       setParams({}, { replace: true })
     } else if (nextType === 'image') {
       setParams({}, { replace: true })
@@ -177,6 +179,7 @@ export function Library(): React.JSX.Element {
       return
     }
     setNewPersonId(null)
+    setNewPersonLook(null)
     setNewType(type)
   }
 
@@ -618,10 +621,12 @@ export function Library(): React.JSX.Element {
         open={Boolean(newType)}
         type={newType}
         personId={newPersonId}
+        personLook={newPersonLook}
         onOpenChange={(open) => {
           if (!open) {
             setNewType(null)
             setNewPersonId(null)
+            setNewPersonLook(null)
           }
         }}
       />

@@ -15,6 +15,7 @@ interface ProjectRow {
   category: string | null
   shape: 'square' | 'portrait' | 'landscape'
   format: 'webp' | 'jpeg' | 'png'
+  person_look: string | null
   image_count: number
   running: number
   cover_file: string | null
@@ -26,6 +27,7 @@ export interface CreateProjectInput {
   category?: string | null
   shape?: 'square' | 'portrait' | 'landscape'
   format?: 'webp' | 'jpeg' | 'png'
+  personLook?: string | null
   draft?: boolean
   now?: number
 }
@@ -61,6 +63,7 @@ export class ProjectRepository {
       category: row.category,
       shape: row.shape,
       format: row.format,
+      personLook: row.person_look,
       imageCount: Number(row.image_count),
       running: Number(row.running) > 0
     }
@@ -71,8 +74,8 @@ export class ProjectRepository {
     const id = crypto.randomUUID()
     this.db
       .prepare(
-        `INSERT INTO projects (id, type, name, created_at, updated_at, category, shape, format, draft)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO projects (id, type, name, created_at, updated_at, category, shape, format, person_look, draft)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         id,
@@ -83,6 +86,7 @@ export class ProjectRepository {
         input.category ?? null,
         input.shape ?? 'square',
         input.format ?? 'webp',
+        input.personLook ?? null,
         input.draft ? 1 : 0
       )
     return this.get(id)!

@@ -61,6 +61,7 @@ interface WorkItemSpec {
   sourceImageId: string | null
   productId: string | null
   personId: string | null
+  personLook: string | null
   shape: Shape
   format: Format
   userText: string
@@ -190,6 +191,9 @@ export class JobQueue {
         if (!personId || !this.deps.people.exists(personId)) {
           throw new JobStartError('invalid_payload', 'Add a person to use this shot.')
         }
+        if (item.personLook && !this.deps.people.refFor(personId, item.personLook)) {
+          throw new JobStartError('invalid_payload', 'Choose a person photo first.')
+        }
       }
       const prompt = item.prompt
       if (!prompt) throw new JobStartError('invalid_payload', 'Add a direction for every shot.')
@@ -204,6 +208,7 @@ export class JobQueue {
         sourceImageId: sourceId,
         productId: null,
         personId,
+        personLook: item.personLook,
         shape: plan.shape,
         format: plan.format,
         userText: item.userText,
@@ -258,6 +263,12 @@ export class JobQueue {
     if (input.personId && !this.deps.people.exists(input.personId)) {
       throw new JobStartError('invalid_payload', 'Choose a person first.')
     }
+    if (input.personLook && !input.personId) {
+      throw new JobStartError('invalid_payload', 'Choose a person first.')
+    }
+    if (input.personId && input.personLook && !this.deps.people.refFor(input.personId, input.personLook)) {
+      throw new JobStartError('invalid_payload', 'Choose a person photo first.')
+    }
     const legacyPerson = !input.personId && Boolean(source?.personId)
     const hasPerson = Boolean(input.personId) || legacyPerson
     const hasProduct = Boolean(source || input.productId) && !legacyPerson
@@ -286,6 +297,7 @@ export class JobQueue {
           sourceImageId: source?.id ?? null,
           productId: input.productId ?? null,
           personId: input.personId ?? null,
+          personLook: input.personLook ?? null,
           shape: input.shape,
           format: input.format,
           userText: text,
@@ -359,6 +371,7 @@ export class JobQueue {
           sourceImageId: source.id,
           productId: null,
           personId: input.personId ?? null,
+          personLook: null,
           shape: project.shape,
           format: project.format,
           userText: text,
@@ -614,7 +627,7 @@ export class JobQueue {
         images.push(await fs.readFile(productPath))
       }
       if (item.spec.personId) {
-        images.push(await fs.readFile(this.personPath(item.spec.personId)))
+        images.push(await fs.readFile(this.personPath(item.spec.personId, item.spec.personLook)))
       }
       const onRateLimitWait = (waitMs: number): void => {
         item.state.waiting = waitMs > 0
@@ -700,13 +713,12 @@ export class JobQueue {
     return workingFor(this.deps.libraryPath(), image.projectId, image.id)
   }
 
-  private personPath(personId: string): string {
-    if (personId === 'maya' || this.deps.people.list().some((person) => person.id === personId && person.source === 'bundled')) {
-      return path.join(this.deps.resourceRoot(), 'people', `${personId}.webp`)
-    }
-    const row = this.deps.people.getRow(personId)
-    if (!row) throw new Error('person_missing')
-    return path.join(this.deps.libraryPath(), row.ref_file)
+  private personPath(personId: string, personLook: string | null): string {
+    const reference = this.deps.people.refFor(personId, personLook)
+    if (!reference) throw new Error('person_missing')
+    return reference.root === 'bundled'
+      ? path.join(this.deps.resourceRoot(), reference.file)
+      : path.join(this.deps.libraryPath(), reference.file)
   }
 
   private async persistImages(

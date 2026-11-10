@@ -5,6 +5,25 @@ export interface BundledPerson {
   blurb: string
 }
 
+export interface BundledPersonLook {
+  key: BundledPersonLookKey
+  label: string
+}
+
+export type BundledPersonLookKey = 'front' | 'angle' | 'full' | 'seated'
+
+/**
+ * The alternate studio looks bundled with every included person. The matching
+ * prompts live in scripts/lab/person-looks.mjs; the images are
+ * resources/people/<id>-<key>.webp.
+ */
+export const BUNDLED_PERSON_LOOKS: readonly BundledPersonLook[] = [
+  { key: 'front', label: 'Studio front' },
+  { key: 'angle', label: 'Studio angle' },
+  { key: 'full', label: 'Full length' },
+  { key: 'seated', label: 'Seated' }
+]
+
 /**
  * The bundled reference people. The photos are synthetic, candid lifestyle
  * shots chosen to read friendly and relaxed in the People page and to work as
@@ -46,6 +65,10 @@ export function bundledPersonById(id: string): BundledPerson | undefined {
 
 export function isBundledPerson(id: string): boolean {
   return BUNDLED_PEOPLE.some((person) => person.id === id)
+}
+
+export function isBundledLookKey(key: string | null | undefined): key is BundledPersonLookKey {
+  return BUNDLED_PERSON_LOOKS.some((look) => look.key === key)
 }
 
 export function personPickerLabel(person: { name: string; ageBand: string | null }): string {

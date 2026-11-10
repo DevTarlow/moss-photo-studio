@@ -14,23 +14,28 @@ export function NewProjectDialog({
   open,
   type,
   personId,
+  personLook,
   onOpenChange
 }: {
   open: boolean
   type: 'set' | 'photo' | null
   personId?: string | null
+  personLook?: string | null
   onOpenChange: (open: boolean) => void
 }): React.JSX.Element {
   const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const personQuery = personId
+    ? `?person=${encodeURIComponent(personId)}${personLook ? `&look=${encodeURIComponent(personLook)}` : ''}`
+    : ''
 
   const finish = (result: ImportResult | null): void => {
     if (!result?.projectId) return
     warnIfSmallPhoto(result)
     onOpenChange(false)
-    navigate(`/project/${result.projectId}${personId ? `?person=${encodeURIComponent(personId)}` : ''}`)
+    navigate(`/project/${result.projectId}${personQuery}`)
   }
 
   const openPicker = async (): Promise<void> => {
@@ -79,7 +84,7 @@ export function NewProjectDialog({
         ? await unwrap(window.moss.products.createProject({ productId: choice.productId, type }))
         : await unwrap(window.moss.projects.createFromImage({ sourceImageId: choice.imageId, type }))
       onOpenChange(false)
-      navigate(`/project/${detail.project.id}${personId ? `?person=${encodeURIComponent(personId)}` : ''}`)
+      navigate(`/project/${detail.project.id}${personQuery}`)
     } catch (caught) {
       setError(messageOf(caught))
     } finally {

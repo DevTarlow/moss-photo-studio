@@ -60,6 +60,7 @@ const planShotSchema = z.object({
   enabled: z.boolean(),
   direction: z.string().max(400),
   personId: z.string().nullable(),
+  personLook: z.string().max(40).nullable().default(null),
   label: z.string().max(80),
   featureText: z.string().max(60).optional()
 })
@@ -998,33 +999,46 @@ export function registerIpcHandlers(context: AppContext): void {
     }
     return { ok: true as const }
   })
-  registerIpc(context, 'people:createImageProject', z.object({ id: idSchema }), async ({ id }) => {
-    const person = context.people.list().find((entry) => entry.id === id)
-    if (!person) throw new IpcFault('not_found')
-    let bytes: Buffer
-    if (person.source === 'user') {
-      const row = context.people.getRow(id)
-      if (!row?.thumb && !row?.ref_file) throw new IpcFault('not_found')
-      bytes = await fs.readFile(absoluteInLibrary(context.libraryPath(), row.thumb ?? row.ref_file))
-    } else {
-      bytes = await fs.readFile(path.join(context.resourceRoot(), 'people', `${id}-portrait.webp`))
-    }
-    const project = context.projects.create({ type: 'image', name: `${person.name} image` })
-    try {
-      const imported = await context.media.importSource({
-        projectId: project.id,
-        bytes,
-        personId: person.id,
-        label: person.name
+  registerIpc(
+    context,
+    'people:createImageProject',
+    z.object({ id: idSchema, look: z.string().max(40).optional() }),
+    async ({ id, look }) => {
+      const person = context.people.list().find((entry) => entry.id === id)
+      if (!person) throw new IpcFault('not_found')
+      const requestedLook = look && look !== 'original' ? look : null
+      const reference = requestedLook ? context.people.refFor(id, requestedLook) : null
+      if (requestedLook && !reference) throw new IpcFault('invalid_payload')
+      let bytes: Buffer
+      if (person.source === 'user') {
+        const row = context.people.getRow(id)
+        if (!row?.thumb && !row?.ref_file) throw new IpcFault('not_found')
+        bytes = await fs.readFile(absoluteInLibrary(context.libraryPath(), row.thumb ?? row.ref_file))
+      } else {
+        const file = reference?.file ?? `people/${id}.webp`
+        bytes = await fs.readFile(path.join(context.resourceRoot(), file))
+      }
+      const project = context.projects.create({
+        type: 'image',
+        name: `${person.name} image`,
+        personLook: requestedLook
       })
-      if (!imported.imageId) throw new IpcFault('unknown')
-      return { projectId: project.id, imageId: imported.imageId }
-    } catch (error) {
-      await context.media.deleteProjectFiles(project.id).catch(() => undefined)
-      context.projects.delete(project.id)
-      throw error
+      try {
+        const imported = await context.media.importSource({
+          projectId: project.id,
+          bytes,
+          personId: person.id,
+          label: person.name
+        })
+        if (!imported.imageId) throw new IpcFault('unknown')
+        return { projectId: project.id, imageId: imported.imageId }
+      } catch (error) {
+        await context.media.deleteProjectFiles(project.id).catch(() => undefined)
+        context.projects.delete(project.id)
+        throw error
+      }
     }
-  })
+  )
 
   registerIpc(context, 'usage:summary', z.object({ month: monthSchema }), ({ month }) => {
     const bounds = monthBounds(month)

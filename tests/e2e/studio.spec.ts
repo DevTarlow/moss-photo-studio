@@ -587,6 +587,22 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await expect(page.getByText('Maya · 20s')).toBeVisible()
     await screenshot('people')
     await assertNoSeriousA11y('people')
+    await page.getByRole('button', { name: 'Open Maya larger' }).click()
+    const personDialog = page.getByRole('dialog')
+    await expect(personDialog.getByRole('button', { name: /^Use .+ for Maya$/ })).toHaveCount(4)
+    await personDialog.getByRole('button', { name: 'Use Studio front for Maya' }).click()
+    await expect(personDialog.locator('img').first()).toHaveAttribute('src', /maya-front\.webp/)
+    await expect
+      .poll(() =>
+        personDialog
+          .locator('img')
+          .evaluateAll((images) => images.every((image) => image instanceof HTMLImageElement && image.naturalWidth > 0))
+      )
+      .toBe(true)
+    await screenshot('people-looks')
+    await assertNoSeriousA11y('people-looks', '[role="dialog"]')
+    await personDialog.getByRole('button', { name: 'Close' }).last().click()
+    await expect(personDialog).toBeHidden()
     await page.getByRole('link', { name: 'Settings', exact: true }).first().click()
     await expect(page.getByRole('link', { name: 'API key', exact: true })).toBeVisible()
     await screenshot('settings-light')

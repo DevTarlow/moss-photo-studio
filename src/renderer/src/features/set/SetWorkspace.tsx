@@ -69,7 +69,7 @@ function jobItemFor(job: JobState, shot: PlanShot): JobItemState | undefined {
   return job.items.find((item) => item.key === shot.id)
 }
 
-export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string | null }): React.JSX.Element {
+export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { preferredPersonId?: string | null; preferredPersonLook?: string | null }): React.JSX.Element {
   const project = useWorkspaceStore((state) => state.project) as Project
   const images = useWorkspaceStore((state) => state.images)
   const plan = useWorkspaceStore((state) => state.planDraft)
@@ -230,11 +230,19 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
       shape: project.shape,
       format: project.format
     })
-    const withPerson = preferredPersonId && people.some((person) => person.id === preferredPersonId)
+    const preferredPerson = preferredPersonId
+      ? people.find((person) => person.id === preferredPersonId)
+      : null
+    const look = preferredPerson && preferredPersonLook
+      ? preferredPerson.looks.find((entry) => entry.key === preferredPersonLook)?.key ?? null
+      : null
+    const withPerson = preferredPerson
       ? {
           ...next,
           shots: next.shots.map((shot) =>
-            shot.type === 'onmodel' ? { ...shot, personId: preferredPersonId } : shot
+            shot.type === 'onmodel'
+              ? { ...shot, personId: preferredPerson.id, personLook: look }
+              : shot
           )
         }
       : next
@@ -684,6 +692,9 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
                   {enabledShots.map((shot, index) => {
                     const definition = shotDefinition(shot.type)
                     const person = shot.personId ? people.find((entry) => entry.id === shot.personId) : null
+                    const look = shot.personLook
+                      ? person?.looks.find((entry) => entry.key === shot.personLook) ?? null
+                      : null
                     return (
                       <article key={shot.id} className="plan-shot">
                         <div className="flex items-center gap-2">
@@ -692,7 +703,7 @@ export function SetWorkspace({ preferredPersonId }: { preferredPersonId?: string
                           <span className="badge">On</span>
                         </div>
                         <p className="mt-2 line-clamp-3 text-[11px]" style={{ color: 'var(--text-muted)' }}>{shot.direction || definition.defaultDirection}</p>
-                        {person && <p className="meta mt-2 truncate">Person · {person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}</p>}
+                        {person && <p className="meta mt-2 truncate">Person · {person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}{look ? ` · ${look.label}` : ''}</p>}
                         {shot.type === 'feature' && shot.featureText && <p className="meta mt-2 truncate">Text · {shot.featureText}</p>}
                       </article>
                     )

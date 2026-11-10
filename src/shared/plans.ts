@@ -18,6 +18,7 @@ export function makeShots(category: string): PlanShot[] {
     enabled: true,
     direction: defaultDirectionFor(category, type),
     personId: type === 'onmodel' ? 'maya' : null,
+    personLook: null,
     label: shotDefinition(type).label
   }))
 }
@@ -67,6 +68,10 @@ export function normalisePlan(plan: PlanJson): PlanJson {
         String(shot.direction ?? '').slice(0, 400).trim() || defaultDirectionFor(plan.category, shot.type),
       featureText: String(shot.featureText ?? '').slice(0, MAX_FEATURE_TEXT),
       personId: shot.type === 'onmodel' ? shot.personId : null,
+      personLook:
+        shot.type === 'onmodel' && shot.personLook && shot.personLook !== 'original'
+          ? shot.personLook
+          : null,
       enabled: Boolean(shot.enabled)
     }))
   return {
@@ -102,6 +107,7 @@ export function addShotToPlan(plan: PlanJson, type: ShotType): PlanJson {
         enabled: true,
         direction: defaultDirectionFor(plan.category, type),
         personId: type === 'onmodel' ? 'maya' : null,
+        personLook: null,
         label: shotDefinition(type).label,
         ...(type === 'feature' ? { featureText: '' } : {})
       }
@@ -144,6 +150,7 @@ export function setShotType(plan: PlanJson, shotId: string, type: ShotType): Pla
             label: shotDefinition(type).label,
             direction: defaultDirectionFor(plan.category, type),
             personId: type === 'onmodel' ? shot.personId ?? 'maya' : null,
+            personLook: null,
             ...(type === 'feature' ? { featureText: shot.featureText ?? '' } : {})
           }
         : shot

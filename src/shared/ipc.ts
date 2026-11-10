@@ -175,7 +175,7 @@ export interface IpcChannels {
   'people:rename': { request: { id: string; name: string }; response: Person }
   'people:delete': { request: { id: string }; response: { ok: true } }
   'people:createImageProject': {
-    request: { id: string }
+    request: { id: string; look?: string }
     response: { projectId: string; imageId: string }
   }
   'usage:summary': { request: { month: string }; response: UsageSummary }

@@ -13,6 +13,7 @@ export interface SetPromptSpec {
   userText: string
   prompt: string
   personId: string | null
+  personLook: string | null
 }
 
 /**
@@ -41,7 +42,8 @@ export function planSetPrompts({
       label: shotDefinition(shot.type).label,
       userText: shot.direction.trim() || direction,
       prompt: composeSetPrompt({ type: shot.type, direction, palette, giftClause: resolvedGiftClause }),
-      personId: shot.type === 'onmodel' ? shot.personId ?? DEFAULT_PERSON_ID : null
+      personId: shot.type === 'onmodel' ? shot.personId ?? DEFAULT_PERSON_ID : null,
+      personLook: shot.type === 'onmodel' ? shot.personLook ?? null : null
     }
   })
 }

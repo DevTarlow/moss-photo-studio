@@ -46,7 +46,7 @@ type PendingApply = {
   scene?: ExampleScene
 }
 
-export function CreateWorkspace(): React.JSX.Element {
+export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?: string | null }): React.JSX.Element {
   const project = useWorkspaceStore((state) => state.project) as Project
   const images = useWorkspaceStore((state) => state.images)
   const sourceImageId = useWorkspaceStore((state) => state.project?.sourceImageId ?? null)
@@ -77,6 +77,13 @@ export function CreateWorkspace(): React.JSX.Element {
   const [format, setFormat] = useState<Format>(project.format ?? settings?.defaultFormat ?? 'webp')
   const [productRef, setProductRef] = useState<SourceChoice | null>(null)
   const [personId, setPersonId] = useState<string | null>(null)
+  const [personLook, setPersonLook] = useState<string | null>(
+    preferredPersonLook && preferredPersonLook !== 'original' ? preferredPersonLook : null
+  )
+  useEffect(() => {
+    // Keep the seeded look in step when the open image project changes.
+    setPersonLook(preferredPersonLook && preferredPersonLook !== 'original' ? preferredPersonLook : null)
+  }, [preferredPersonLook, project.id])
   const [saveProductImage, setSaveProductImage] = useState<Image | null>(null)
   const [savePersonImage, setSavePersonImage] = useState<Image | null>(null)
   const [createPersonMode, setCreatePersonMode] = useState(false)
@@ -116,6 +123,7 @@ export function CreateWorkspace(): React.JSX.Element {
   const hasReference = Boolean(activeProductRef || personId)
   const requestedCount = hasReference ? 1 : count
   const selectedPerson = people.find((person) => person.id === personId) ?? null
+  const selectedLook = selectedPerson?.looks.find((look) => look.key === personLook) ?? null
   const composedPrompt = composeCreatePrompt({ text: prompt, hasProduct: Boolean(activeProductRef), hasPerson: Boolean(personId) })
   const guardChars = composedPrompt.length - prompt.trim().length
   const results = images
@@ -319,7 +327,8 @@ export function CreateWorkspace(): React.JSX.Element {
         format,
         sourceImageId: activeProductRef?.kind === 'image' ? activeProductRef.imageId : undefined,
         productId: activeProductRef?.kind === 'product' ? activeProductRef.productId : undefined,
-        personId: personId ?? undefined
+        personId: personId ?? undefined,
+        personLook: selectedLook?.key
       }))
       const state = await unwrap(window.moss.jobs.state({ jobId: result.jobId }))
       upsert(state)
@@ -518,12 +527,12 @@ export function CreateWorkspace(): React.JSX.Element {
         <p className="field-label">Person reference <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
         {selectedPerson ? (
           <div className="flex items-center gap-2 rounded-[8px] border p-2" style={{ borderColor: 'var(--border)' }}>
-            <img src={selectedPerson.portraitUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
+            <img src={selectedLook?.url ?? selectedPerson.portraitUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[11px] font-medium">{selectedPerson.name}{selectedPerson.ageBand ? ` · ${selectedPerson.ageBand}` : ''}</p>
+              <p className="truncate text-[11px] font-medium">{selectedPerson.name}{selectedPerson.ageBand ? ` · ${selectedPerson.ageBand}` : ''}{selectedLook ? ` · ${selectedLook.label}` : ''}</p>
               <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>Sent with the request so the person stays the same.</p>
             </div>
-            <button type="button" className="icon-btn" aria-label="Remove person reference" onClick={() => setPersonId(null)}><X size={14} /></button>
+            <button type="button" className="icon-btn" aria-label="Remove person reference" onClick={() => { setPersonId(null); setPersonLook(null) }}><X size={14} /></button>
           </div>
         ) : people.length === 0 ? (
           <p className="hint">Add a person on the People page to use one here.</p>
@@ -537,7 +546,11 @@ export function CreateWorkspace(): React.JSX.Element {
             <DropdownMenu.Portal>
               <DropdownMenu.Content className="menu-content min-w-[240px]" sideOffset={4}>
                 {people.map((person) => (
-                  <DropdownMenu.Item key={person.id} className="menu-item" onSelect={() => setPersonId(person.id)}>
+                  <DropdownMenu.Item
+                    key={person.id}
+                    className="menu-item"
+                    onSelect={() => { setPersonId(person.id); setPersonLook(null) }}
+                  >
                     <img src={person.portraitUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
                     <span className="min-w-0 flex-1 truncate">{person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}</span>
                   </DropdownMenu.Item>

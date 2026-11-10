@@ -68,6 +68,7 @@ export function People(): React.JSX.Element {
   const people = useAppStore((state) => state.people)
   const refreshPeople = useAppStore((state) => state.refreshPeople)
   const [previewPerson, setPreviewPerson] = useState<Person | null>(null)
+  const [selectedLookKey, setSelectedLookKey] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
@@ -96,6 +97,12 @@ export function People(): React.JSX.Element {
   useEffect(() => {
     void loadPeople()
   }, [])
+
+  useEffect(() => {
+    setSelectedLookKey(null)
+  }, [previewPerson?.id])
+
+  const previewLook = previewPerson?.looks.find((look) => look.key === selectedLookKey) ?? null
 
   const matching = people.filter((person) => person.name.toLowerCase().includes(search.trim().toLowerCase()))
   const sortPeople = (list: Person[]): Person[] => {
@@ -182,16 +189,20 @@ export function People(): React.JSX.Element {
   const startSet = (): void => {
     if (!previewPerson) return
     const personId = previewPerson.id
+    const look = previewLook?.key
     setPreviewPerson(null)
-    navigate(`/library?new=set&person=${encodeURIComponent(personId)}`)
+    navigate(
+      `/library?new=set&person=${encodeURIComponent(personId)}${look ? `&look=${encodeURIComponent(look)}` : ''}`
+    )
   }
 
   const createImage = async (): Promise<void> => {
     if (!previewPerson) return
     const person = previewPerson
+    const look = previewLook?.key
     setPreviewPerson(null)
     try {
-      const result = await unwrap(window.moss.people.createImageProject({ id: person.id }))
+      const result = await unwrap(window.moss.people.createImageProject({ id: person.id, look }))
       navigate(`/project/${result.projectId}`)
     } catch {
       toast.error('That image project could not be created.')
@@ -414,15 +425,50 @@ export function People(): React.JSX.Element {
         {previewPerson && (
           <>
             <img
-              src={previewPerson.portraitUrl}
-              alt={`${previewPerson.name} portrait`}
-              className="mx-auto max-h-[60vh] w-full rounded-[12px] object-contain"
+              src={previewLook?.url ?? previewPerson.defaultImageUrl}
+              alt={`${previewPerson.name}${previewLook ? ` ${previewLook.label}` : ''}`}
+              className="mx-auto max-h-[42vh] w-full rounded-[12px] object-contain"
             />
+            {previewPerson.looks.length > 0 && (
+              <>
+                <div className="mt-3 grid grid-cols-4 gap-2" role="group" aria-label={`Photos of ${previewPerson.name}`}>
+                  {previewPerson.looks.map((look) => {
+                    const active = look.key === previewLook?.key
+                    return (
+                      <button
+                        key={look.key}
+                        type="button"
+                        aria-pressed={active}
+                        aria-label={`Use ${look.label} for ${previewPerson.name}`}
+                        onClick={() => setSelectedLookKey(active ? null : look.key)}
+                        className="cursor-pointer overflow-hidden rounded-[10px] border-2 bg-transparent p-0 transition-colors"
+                        style={{ borderColor: active ? 'var(--accent)' : 'var(--border)' }}
+                      >
+                        <img src={look.url} alt="" className="aspect-[2/3] w-full object-cover" />
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="hint mt-2" aria-live="polite">
+                  {previewLook
+                    ? `${previewLook.label} is used for the next set or image.`
+                    : 'The original photo is used for the next set or image.'}
+                  {previewLook && (
+                    <>
+                      {' '}
+                      <button type="button" className="underline" onClick={() => setSelectedLookKey(null)}>
+                        Use the original
+                      </button>
+                    </>
+                  )}
+                </p>
+              </>
+            )}
             <div className="mt-4 flex flex-wrap gap-2">
               <Button variant="primary" onClick={startSet}>Create a Set</Button>
               <Button variant="secondary" onClick={() => void createImage()}>Create an Image</Button>
             </div>
-            <p className="hint mt-2">A set preselects this person for On a person shots. An image starts the Image Generator with this portrait as its reference.</p>
+            <p className="hint mt-2">A set uses the selected photo; an image uses it as the reference.</p>
           </>
         )}
       </Dialog>

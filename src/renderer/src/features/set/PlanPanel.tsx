@@ -43,6 +43,10 @@ function personPortrait(person: Person): string {
   return person.portraitUrl || bundledUrl(`people/${person.id}-portrait.webp`)
 }
 
+function personImage(person: Person, lookKey: string | null): string {
+  return person.looks.find((look) => look.key === lookKey)?.url ?? person.defaultImageUrl
+}
+
 function DirectionEditor({
   shot,
   readOnly,
@@ -104,6 +108,7 @@ function ShotCard({
   const usedElsewhere = new Set(plan.shots.filter((entry) => entry.id !== shot.id).map((entry) => entry.type))
   const noPeople = people.length === 0
   const selectedPerson = people.find((person) => person.id === (shot.personId ?? 'maya')) ?? people[0]
+  const selectedLook = selectedPerson?.looks.find((look) => look.key === shot.personLook) ?? null
   const [previewOpen, setPreviewOpen] = useState(false)
   const changeType = (type: PlanShot['type']): void => {
     const next = shotDefinition(type)
@@ -113,6 +118,7 @@ function ShotCard({
       label: next.label,
       direction: next.defaultDirection,
       personId: type === 'onmodel' ? (shot.personId ?? 'maya') : null,
+      personLook: null,
       ...(type === 'feature' ? { featureText: shot.featureText ?? '' } : {})
     })
     onSaveBlur()
@@ -169,7 +175,7 @@ function ShotCard({
                   >
                     <span className="truncate">
                       {selectedPerson
-                        ? `${selectedPerson.name}${selectedPerson.ageBand ? ` · ${selectedPerson.ageBand}` : ''}`
+                        ? `${selectedPerson.name}${selectedPerson.ageBand ? ` · ${selectedPerson.ageBand}` : ''}${selectedLook ? ` · ${selectedLook.label}` : ''}`
                         : 'Choose a person'}
                     </span>
                     <ChevronDown size={13} className="shrink-0" />
@@ -184,7 +190,7 @@ function ShotCard({
                           key={person.id}
                           className="menu-item"
                           onSelect={() => {
-                            onChange({ ...shot, personId: person.id })
+                            onChange({ ...shot, personId: person.id, personLook: null })
                             onSaveBlur()
                           }}
                         >
@@ -207,7 +213,7 @@ function ShotCard({
                   onClick={() => setPreviewOpen(true)}
                 >
                   <img
-                    src={personPortrait(selectedPerson)}
+                    src={personImage(selectedPerson, selectedLook?.key ?? null)}
                     alt=""
                     className="h-7 w-7 rounded-full object-cover"
                     onError={(event) => { event.currentTarget.style.visibility = 'hidden' }}
@@ -250,8 +256,8 @@ function ShotCard({
           footer={<Button variant="secondary" onClick={() => setPreviewOpen(false)}>Close</Button>}
         >
           <img
-            src={personPortrait(selectedPerson)}
-            alt={`${selectedPerson.name} portrait`}
+            src={personImage(selectedPerson, selectedLook?.key ?? null)}
+            alt={`${selectedPerson.name}${selectedLook ? ` ${selectedLook.label}` : ''} portrait`}
             className="mx-auto max-h-[60vh] w-full rounded-[12px] object-contain"
           />
         </Dialog>

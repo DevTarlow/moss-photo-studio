@@ -1,7 +1,20 @@
 import type { Db } from '../connection'
-import type { Person } from '@shared/types'
-import { BUNDLED_PEOPLE } from '@shared/people'
+import type { Person, PersonLook } from '@shared/types'
+import { BUNDLED_PEOPLE, BUNDLED_PERSON_LOOKS, isBundledLookKey, isBundledPerson } from '@shared/people'
 import { bundledUrl, libraryUrl } from '@shared/files'
+
+export interface PersonReferenceFile {
+  root: 'bundled' | 'library'
+  file: string
+}
+
+function bundledLooks(id: string): PersonLook[] {
+  return BUNDLED_PERSON_LOOKS.map((look) => ({
+    key: look.key,
+    label: look.label,
+    url: bundledUrl(`people/${id}-${look.key}.webp`)
+  }))
+}
 
 interface PersonRow {
   id: string
@@ -32,6 +45,8 @@ export class PeopleRepository {
       source: 'bundled',
       refUrl: bundledUrl(`people/${person.id}.webp`),
       portraitUrl: bundledUrl(`people/${person.id}-portrait.webp`),
+      defaultImageUrl: bundledUrl(`people/${person.id}.webp`),
+      looks: bundledLooks(person.id),
       usedIn: this.usedCount(person.id)
     }))
   }
@@ -46,6 +61,8 @@ export class PeopleRepository {
       source: 'user',
       refUrl: libraryUrl(row.ref_file),
       portraitUrl: libraryUrl(row.thumb ?? row.ref_file),
+      defaultImageUrl: libraryUrl(row.thumb ?? row.ref_file),
+      looks: [],
       usedIn: this.usedCount(row.id)
     }))
   }
@@ -65,8 +82,26 @@ export class PeopleRepository {
       source: 'user',
       refUrl: libraryUrl(row.ref_file),
       portraitUrl: libraryUrl(row.thumb ?? row.ref_file),
+      defaultImageUrl: libraryUrl(row.thumb ?? row.ref_file),
+      looks: [],
       usedIn: this.usedCount(row.id)
     }
+  }
+
+  /**
+   * Resolve the person photo to send as a reference. Bundled people can use
+   * one of their alternate studio looks; user people keep their one portrait.
+   */
+  refFor(id: string, look: string | null): PersonReferenceFile | null {
+    if (isBundledPerson(id)) {
+      if (!look || look === 'original') return { root: 'bundled', file: `people/${id}.webp` }
+      if (!isBundledLookKey(look)) return null
+      return { root: 'bundled', file: `people/${id}-${look}.webp` }
+    }
+    const row = this.getRow(id)
+    if (!row) return null
+    if (look && look !== 'original') return null
+    return { root: 'library', file: row.ref_file }
   }
 
   getRow(id: string): PersonRow | null {

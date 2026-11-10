@@ -38,6 +38,8 @@ export interface Project {
   category: string | null
   shape: Shape
   format: Format
+  /** The person look an image project was started from, if any. */
+  personLook: string | null
   imageCount: number
   running: boolean
 }
@@ -91,6 +93,8 @@ export interface PlanShot {
   enabled: boolean
   direction: string
   personId: string | null
+  /** A bundled person's alternate studio look, or null for their default. */
+  personLook: string | null
   label: string
   featureText?: string
 }
@@ -164,6 +168,13 @@ export interface ProjectDetail {
   usageCents: number
 }
 
+export interface PersonLook {
+  /** 'front', 'angle', 'full' or 'seated' for bundled people. */
+  key: string
+  label: string
+  url: string
+}
+
 export interface Person {
   id: string
   name: string
@@ -171,7 +182,12 @@ export interface Person {
   blurb: string | null
   source: 'bundled' | 'user'
   refUrl: string
+  /** The square card thumbnail. */
   portraitUrl: string
+  /** The larger photo shown when the person opens, before a look is chosen. */
+  defaultImageUrl: string
+  /** Alternate studio looks. Empty for user-added people. */
+  looks: PersonLook[]
   usedIn: number
 }
 
@@ -424,6 +440,7 @@ export interface CreateJobInput {
   sourceImageId?: string
   productId?: string
   personId?: string
+  personLook?: string
 }
 
 export interface EditJobInput {

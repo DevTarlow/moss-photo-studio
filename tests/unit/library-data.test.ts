@@ -6,7 +6,7 @@ import { ALL_TEMPLATES, TEMPLATE_GROUPS, QUICK_FIX, templateAsset, templateById 
 import { RECIPES, recipeById, CATEGORY_CHIPS, recipeShotTypes, recipeShotLabels, defaultDirectionFor } from '@shared/prompts/recipes'
 import { SHOT_TYPES, shotDefinition, directionForPrompt } from '@shared/prompts/shots'
 import { CREATE_PERSON_PROMPT, EXAMPLE_SCENES, STARTERS, exampleTextFor } from '@shared/starters'
-import { BUNDLED_PEOPLE } from '@shared/people'
+import { BUNDLED_PEOPLE, BUNDLED_PERSON_LOOKS } from '@shared/people'
 import { wrapScenePrompt, wrapModelPrompt, PROMPT_MAX } from '@shared/prompts/guards'
 import { createDefaultPlan, makeShots, normalisePlan, enableFirstShots, firstShotsEnabled } from '@shared/plans'
 import { nextCountedLabel, setImageLabel } from '@shared/labels'
@@ -88,6 +88,29 @@ describe('recipes', () => {
     const shots = makeShots('clothing')
     const personShot = shots.find((shot) => shot.type === 'onmodel')
     expect(personShot?.personId).toBe('maya')
+  })
+
+  it('keeps a person look only on a valid on-person shot', () => {
+    const plan = createDefaultPlan({
+      category: 'clothing',
+      productName: 'Shirt',
+      shape: 'portrait',
+      format: 'webp'
+    })
+    plan.shots[0]!.personLook = 'seated'
+    const onmodel = plan.shots.find((shot) => shot.type === 'onmodel')!
+    onmodel.personLook = 'front'
+    const normalised = normalisePlan(plan)
+    expect(normalised.shots[0]!.personLook).toBeNull()
+    expect(normalised.shots.find((shot) => shot.type === 'onmodel')!.personLook).toBe('front')
+
+    const stored = normalisePlan({
+      ...plan,
+      shots: plan.shots.map((shot) =>
+        shot.id === onmodel.id ? { ...shot, personLook: 'original' } : shot
+      )
+    })
+    expect(stored.shots.find((shot) => shot.type === 'onmodel')!.personLook).toBeNull()
   })
 
   it('keeps six distinct shots with the hero first', () => {
@@ -238,6 +261,17 @@ describe('starters and people', () => {
       expect(person.blurb.length).toBeGreaterThan(0)
       expect(fs.existsSync(path.join(root, 'resources', 'people', `${person.id}.webp`))).toBe(true)
       expect(fs.existsSync(path.join(root, 'resources', 'people', `${person.id}-portrait.webp`))).toBe(true)
+    }
+  })
+
+  it('ships four distinct studio looks for every included person', () => {
+    expect(BUNDLED_PERSON_LOOKS.map((look) => look.key)).toEqual(['front', 'angle', 'full', 'seated'])
+    expect(new Set(BUNDLED_PERSON_LOOKS.map((look) => look.label)).size).toBe(4)
+    for (const person of BUNDLED_PEOPLE) {
+      for (const look of BUNDLED_PERSON_LOOKS) {
+        const file = path.join(root, 'resources', 'people', `${person.id}-${look.key}.webp`)
+        expect(fs.existsSync(file), `${person.id}-${look.key}.webp`).toBe(true)
+      }
     }
   })
 })
