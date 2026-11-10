@@ -37,7 +37,13 @@ export class SecretStore {
     this.db.prepare('DELETE FROM meta WHERE key = ?').run(key)
   }
 
-  backend(): string {
+  private write(payload: string): void {
+    fs.mkdirSync(path.dirname(this.file), { recursive: true, mode: 0o700 })
+    fs.writeFileSync(this.file, Buffer.from(payload, 'utf8'), { mode: 0o600 })
+    fs.chmodSync(this.file, 0o600)
+  }
+
+  backend(): Promise<string> {
     return this.cipher.backend()
   }
 
@@ -45,33 +51,38 @@ export class SecretStore {
     return fs.existsSync(this.file) && fs.statSync(this.file).size > 0
   }
 
-  status(): SecretsStatus {
+  async status(): Promise<SecretsStatus> {
     return {
       hasKey: this.hasKey(),
       last4: this.meta('muse.last4'),
       validatedAt: this.meta('muse.validatedAt') ? Number(this.meta('muse.validatedAt')) : null,
-      backend: this.backend()
+      backend: await this.backend()
     }
   }
 
-  read(): string | null {
+  async read(): Promise<string | null> {
     if (!this.hasKey()) return null
     try {
       const payload = fs.readFileSync(this.file, 'utf8')
-      return this.cipher.decryptString(payload)
+      const decrypted = await this.cipher.decryptString(payload)
+      if (decrypted.reencrypted) {
+        try {
+          this.write(decrypted.reencrypted)
+        } catch {
+          this.logger.warn('secrets', 'reencrypt_write_failed')
+        }
+      }
+      return decrypted.value
     } catch {
       this.logger.warn('secrets', 'key_unreadable', { errorCode: 'decrypt' })
       return null
     }
   }
 
-  set(key: string): { last4: string } {
+  async set(key: string): Promise<{ last4: string }> {
     const trimmed = key.trim()
     if (!trimmed) throw new Error('empty_key')
-    const encrypted = Buffer.from(this.cipher.encryptString(trimmed), 'utf8')
-    fs.mkdirSync(path.dirname(this.file), { recursive: true, mode: 0o700 })
-    fs.writeFileSync(this.file, encrypted, { mode: 0o600 })
-    fs.chmodSync(this.file, 0o600)
+    this.write(await this.cipher.encryptString(trimmed))
     const last4 = trimmed.slice(-4)
     this.setMeta('muse.last4', last4)
     this.removeMeta('muse.validatedAt')

@@ -6,33 +6,59 @@ import { safeStorage } from 'electron'
 const SAFE_PREFIX = 'MOSS1:safe:'
 const LOCAL_PREFIX = 'MOSS1:local:'
 
+export interface DecryptedText {
+  value: string
+  /**
+   * A fresh ciphertext when the OS key provider rotated or upgraded the
+   * encryption. Callers persist it so the next read starts on the new key.
+   */
+  reencrypted: string | null
+}
+
 /**
  * Text encryption for the Muse key and the license key.
  *
- * safeStorage is used whenever Chromium's keyring is available. On Linux
- * without a keyring, headless test machines and some desktops report
- * basic_text with encryption unavailable; blocking setup there would break
- * the promise that a seller can install and use the studio. The fallback keeps
- * the key encrypted at rest with a local 32-byte secret and a 0600 file, and
- * Settings shows the basic-protection warning. See DECISIONS.md.
+ * safeStorage is used whenever Chromium's keyring is available. The app uses
+ * the asynchronous API because Electron 45 deprecates the blocking methods and
+ * removes them in Electron 46; it also reports when stored data should be
+ * re-encrypted after a key rotation. On Linux without a keyring, headless test
+ * machines and some desktops can report encryption unavailable; blocking setup
+ * there would break the promise that a seller can install and use the studio.
+ * The fallback keeps the key encrypted at rest with a local 32-byte secret and
+ * a 0600 file, and Settings shows the basic-protection warning. See
+ * DECISIONS.md.
  */
 export interface TextCipher {
-  encryptString(value: string): string
-  decryptString(value: string): string
-  backend(): string
-  isBasicProtection(): boolean
+  encryptString(value: string): Promise<string>
+  decryptString(value: string): Promise<DecryptedText>
+  backend(): Promise<string>
+  isBasicProtection(): Promise<boolean>
 }
 
 export class SafeTextCipher implements TextCipher {
   private readonly fallbackKeyPath: string
   private fallbackKey: Buffer | null = null
+  private encryptionAvailable = false
 
   constructor(private readonly userDataDir: string) {
     this.fallbackKeyPath = path.join(userDataDir, '.local-secret-key')
   }
 
-  backend(): string {
-    if (safeStorage.isEncryptionAvailable()) {
+  private async available(): Promise<boolean> {
+    if (this.encryptionAvailable) return true
+    try {
+      // The async encryptor initializes lazily after app ready. Do not cache a
+      // false result: a call before ready should not disable the keyring for
+      // the rest of the session.
+      this.encryptionAvailable = await safeStorage.isAsyncEncryptionAvailable()
+    } catch {
+      this.encryptionAvailable = false
+    }
+    return this.encryptionAvailable
+  }
+
+  async backend(): Promise<string> {
+    if (await this.available()) {
       try {
         return safeStorage.getSelectedStorageBackend()
       } catch {
@@ -42,8 +68,8 @@ export class SafeTextCipher implements TextCipher {
     return 'basic_text'
   }
 
-  isBasicProtection(): boolean {
-    return !safeStorage.isEncryptionAvailable() || this.backend() === 'basic_text'
+  async isBasicProtection(): Promise<boolean> {
+    return !(await this.available()) || (await this.backend()) === 'basic_text'
   }
 
   private localKey(): Buffer {
@@ -65,9 +91,9 @@ export class SafeTextCipher implements TextCipher {
     return key
   }
 
-  encryptString(value: string): string {
-    if (safeStorage.isEncryptionAvailable()) {
-      const encrypted = safeStorage.encryptString(value)
+  async encryptString(value: string): Promise<string> {
+    if (await this.available()) {
+      const encrypted = await safeStorage.encryptStringAsync(value)
       return `${SAFE_PREFIX}${encrypted.toString('base64')}`
     }
     const iv = crypto.randomBytes(12)
@@ -77,10 +103,17 @@ export class SafeTextCipher implements TextCipher {
     return `${LOCAL_PREFIX}${Buffer.concat([iv, tag, encrypted]).toString('base64')}`
   }
 
-  decryptString(value: string): string {
+  private async decryptSafe(encrypted: Buffer): Promise<DecryptedText> {
+    const decrypted = await safeStorage.decryptStringAsync(encrypted)
+    if (!decrypted.shouldReEncrypt) return { value: decrypted.result, reencrypted: null }
+    const upgraded = await safeStorage.encryptStringAsync(decrypted.result)
+    return { value: decrypted.result, reencrypted: `${SAFE_PREFIX}${upgraded.toString('base64')}` }
+  }
+
+  async decryptString(value: string): Promise<DecryptedText> {
     if (value.startsWith(SAFE_PREFIX)) {
-      if (!safeStorage.isEncryptionAvailable()) throw new Error('keyring_unavailable')
-      return safeStorage.decryptString(Buffer.from(value.slice(SAFE_PREFIX.length), 'base64'))
+      if (!(await this.available())) throw new Error('keyring_unavailable')
+      return this.decryptSafe(Buffer.from(value.slice(SAFE_PREFIX.length), 'base64'))
     }
     if (value.startsWith(LOCAL_PREFIX)) {
       const payload = Buffer.from(value.slice(LOCAL_PREFIX.length), 'base64')
@@ -89,10 +122,13 @@ export class SafeTextCipher implements TextCipher {
       const encrypted = payload.subarray(28)
       const decipher = crypto.createDecipheriv('aes-256-gcm', this.localKey(), iv)
       decipher.setAuthTag(tag)
-      return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8')
+      return {
+        value: Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8'),
+        reencrypted: null
+      }
     }
     // Legacy raw safeStorage data from an older install.
-    if (!safeStorage.isEncryptionAvailable()) throw new Error('keyring_unavailable')
-    return safeStorage.decryptString(Buffer.from(value, 'base64'))
+    if (!(await this.available())) throw new Error('keyring_unavailable')
+    return this.decryptSafe(Buffer.from(value, 'base64'))
   }
 }

@@ -72,8 +72,8 @@ export class LicenseController {
     return () => this.listeners.delete(listener)
   }
 
-  private emit(): LicenseState {
-    const state = this.state()
+  private async emit(): Promise<LicenseState> {
+    const state = await this.state()
     for (const listener of this.listeners) listener(state)
     return state
   }
@@ -124,10 +124,27 @@ export class LicenseController {
     }
   }
 
-  private decryptKey(row: LicenseRow | null): string | null {
+  private async decryptKey(row: LicenseRow | null): Promise<string | null> {
     if (!row?.key_enc) return null
     try {
-      return this.cipher.decryptString(row.key_enc)
+      const decrypted = await this.cipher.decryptString(row.key_enc)
+      if (decrypted.reencrypted) {
+        try {
+          this.repo.save({
+            keyEnc: decrypted.reencrypted,
+            instanceId: row.instance_id,
+            machineLabel: row.machine_label,
+            status: row.status,
+            activatedAt: row.activated_at,
+            lastValidatedAt: row.last_validated_at,
+            source: row.source
+          })
+          this.writeFile(this.repo.getRow())
+        } catch {
+          this.logger.warn('license', 'reencrypt_write_failed')
+        }
+      }
+      return decrypted.value
     } catch {
       return null
     }
@@ -149,7 +166,7 @@ export class LicenseController {
     }
   }
 
-  state(): LicenseState {
+  async state(): Promise<LicenseState> {
     if (this.devUnlock) return this.devState()
     const row = this.repo.getRow()
     if (!row || !row.key_enc || !row.instance_id) {
@@ -164,7 +181,7 @@ export class LicenseController {
       }
     }
     const now = this.clock()
-    const key = this.decryptKey(row)
+    const key = await this.decryptKey(row)
     const last = row.last_validated_at
     const offlineUntil = last ? last + GRACE_MS : null
     const rolledBack = last !== null && now < last - DAY
@@ -228,8 +245,8 @@ export class LicenseController {
     }
   }
 
-  canGenerate(): boolean {
-    const status = this.state().status
+  async canGenerate(): Promise<boolean> {
+    const status = (await this.state()).status
     return status === 'licensed' || status === 'grace'
   }
 
@@ -257,7 +274,7 @@ export class LicenseController {
   async validate(): Promise<LicenseState> {
     if (this.devUnlock) return this.state()
     const row = this.repo.getRow()
-    const key = this.decryptKey(row)
+    const key = await this.decryptKey(row)
     if (!row || !row.instance_id || !key) {
       return this.state()
     }
@@ -297,7 +314,7 @@ export class LicenseController {
     const outcome = await this.provider.activate({ key: trimmed, instanceName: this.machineLabel })
     if (!outcome.ok) throw new LicenseError(providerCodeToError(outcome.code))
     if (outcome.status !== 'active') throw new LicenseError('license_invalid')
-    const encrypted = this.cipher.encryptString(trimmed)
+    const encrypted = await this.cipher.encryptString(trimmed)
     const now = this.clock()
     this.save({
       keyEnc: encrypted,
@@ -315,7 +332,7 @@ export class LicenseController {
   async deactivate(): Promise<LicenseState> {
     if (this.devUnlock) return this.state()
     const row = this.repo.getRow()
-    const key = this.decryptKey(row)
+    const key = await this.decryptKey(row)
     if (!row || !row.instance_id || !key) {
       this.repo.clear()
       this.writeFile(null)

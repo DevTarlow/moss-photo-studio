@@ -26,7 +26,7 @@ export interface MuseFailure {
 export type MuseResult = MuseSuccess | MuseFailure
 
 export interface MuseClientOptions {
-  apiKey: () => string | null
+  apiKey: () => string | null | Promise<string | null>
   userId: () => string
   baseUrl?: string
   fetcher?: typeof fetch
@@ -97,7 +97,7 @@ function wait(ms: number, signal?: AbortSignal): Promise<void> {
 }
 
 export class MuseClient {
-  private readonly apiKey: () => string | null
+  private readonly apiKey: () => string | null | Promise<string | null>
   private readonly userId: () => string
   private readonly baseUrl: string
   private readonly fetcher: typeof fetch
@@ -114,7 +114,7 @@ export class MuseClient {
   }
 
   async validateKey(key?: string): Promise<{ ok: true } | { ok: false; code: ErrorCode; status: number }> {
-    const apiKey = key ?? this.apiKey()
+    const apiKey = key ?? (await this.apiKey())
     if (!apiKey) return { ok: false, code: 'no_key', status: 0 }
     try {
       const response = await this.fetcher(`${this.baseUrl}/models`, {
@@ -195,7 +195,7 @@ export class MuseClient {
     externalSignal?: AbortSignal,
     onRateLimitWait?: (waitMs: number) => void
   ): Promise<MuseResult> {
-    const apiKey = this.apiKey()
+    const apiKey = await this.apiKey()
     const requestId = crypto.randomUUID()
     if (!apiKey) return { ok: false, code: 'no_key', status: 0, requestId }
     const maxAttempts = 3

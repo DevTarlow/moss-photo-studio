@@ -396,8 +396,8 @@ export function registerIpcHandlers(context: AppContext): void {
     }
   })
 
-  registerIpc(context, 'secrets:setMuseKey', z.object({ key: z.string().min(1).max(500) }), ({ key }) => {
-    const { last4 } = context.secrets.set(key)
+  registerIpc(context, 'secrets:setMuseKey', z.object({ key: z.string().min(1).max(500) }), async ({ key }) => {
+    const { last4 } = await context.secrets.set(key)
     if (lastTestedKeyHash && lastTestedKeyHash.hash === hashKey(key) && Date.now() - lastTestedKeyHash.at < 120_000) {
       context.secrets.markValidated()
       lastTestedKeyHash = null
@@ -420,8 +420,8 @@ export function registerIpcHandlers(context: AppContext): void {
     return { ok: false, code: result.code }
   })
 
-  registerIpc(context, 'secrets:status', voidSchema, () => {
-    const status = context.secrets.status()
+  registerIpc(context, 'secrets:status', voidSchema, async () => {
+    const status = await context.secrets.status()
     return {
       hasKey: status.hasKey,
       last4: status.last4,
@@ -430,7 +430,7 @@ export function registerIpcHandlers(context: AppContext): void {
     }
   })
 
-  registerIpc(context, 'license:state', voidSchema, (): LicenseState => context.license.state())
+  registerIpc(context, 'license:state', voidSchema, async (): Promise<LicenseState> => context.license.state())
   registerIpc(context, 'license:activate', z.object({ key: z.string().min(1).max(500) }), async ({ key }) =>
     context.license.activate(key)
   )

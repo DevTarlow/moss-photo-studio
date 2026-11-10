@@ -155,8 +155,8 @@ export class JobQueue {
 
   async startSet(input: SetJobInput): Promise<{ jobId: string }> {
     const project = this.requireProject(input.projectId, 'set')
-    this.requireLicensed()
-    this.requireKey()
+    await this.requireLicensed()
+    await this.requireKey()
     this.requireNoRunningProject(project.id)
     const planRecord = this.deps.plans.getActive(project.id)
     if (!planRecord) throw new JobStartError('invalid_payload', 'No plan yet. Add a photo and try again.')
@@ -236,8 +236,8 @@ export class JobQueue {
 
   async startCreate(input: CreateJobInput): Promise<{ jobId: string }> {
     const project = this.requireProject(input.projectId, 'image')
-    this.requireLicensed()
-    this.requireKey()
+    await this.requireLicensed()
+    await this.requireKey()
     this.requireNoRunningProject(project.id)
     const text = input.prompt.trim()
     if (!text) throw new JobStartError('invalid_payload', 'Describe the image first.')
@@ -316,8 +316,8 @@ export class JobQueue {
 
   async startEdit(input: EditJobInput): Promise<{ jobId: string }> {
     const project = this.requireProject(input.projectId, null)
-    this.requireLicensed()
-    this.requireKey()
+    await this.requireLicensed()
+    await this.requireKey()
     this.requireNoRunningProject(project.id)
     const source = this.deps.images.get(input.imageId)
     if (!source || source.status !== 'ready' || source.projectId !== project.id) {
@@ -389,8 +389,8 @@ export class JobQueue {
   }
 
   async retryFailed(jobId: string): Promise<{ jobId: string }> {
-    this.requireLicensed()
-    this.requireKey()
+    await this.requireLicensed()
+    await this.requireKey()
     const row = this.deps.jobs.getRow(jobId)
     if (!row) throw new JobStartError('not_found', 'That run is not here anymore.')
     if (this.runs.has(jobId)) throw new JobStartError('already_running')
@@ -445,14 +445,14 @@ export class JobQueue {
     return project
   }
 
-  private requireLicensed(): void {
-    if (!this.deps.license.canGenerate()) {
+  private async requireLicensed(): Promise<void> {
+    if (!(await this.deps.license.canGenerate())) {
       throw new JobStartError('unlicensed', 'Reactivate to make images.')
     }
   }
 
-  private requireKey(): void {
-    if (!this.deps.secrets.hasKey() || !this.deps.secrets.read()) {
+  private async requireKey(): Promise<void> {
+    if (!this.deps.secrets.hasKey() || !(await this.deps.secrets.read())) {
       throw new JobStartError('no_key', 'Add your Muse key in Settings to make images.')
     }
   }
@@ -610,7 +610,7 @@ export class JobQueue {
 
   private async executeItem(run: JobRun, item: RuntimeItem): Promise<void> {
     const start = this.now()
-    if (!this.deps.secrets.hasKey() || !this.deps.secrets.read()) {
+    if (!this.deps.secrets.hasKey() || !(await this.deps.secrets.read())) {
       this.failItem(run, item, 'invalid_key', 0, start)
       return
     }

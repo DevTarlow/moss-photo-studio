@@ -104,9 +104,9 @@ beforeEach(async () => {
     settings,
     secrets: {
       hasKey: () => keyPresent,
-      read: () => (keyPresent ? 'LLM|queue-integration-key' : null)
+      read: async () => (keyPresent ? 'LLM|queue-integration-key' : null)
     } as unknown as SecretStore,
-    license: { canGenerate: () => licensed } as unknown as LicenseController,
+    license: { canGenerate: async () => licensed } as unknown as LicenseController,
     provider,
     libraryPath,
     resourceRoot: () => path.resolve(__dirname, '../../resources'),

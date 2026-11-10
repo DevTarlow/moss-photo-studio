@@ -10,10 +10,13 @@ import { Logger } from '@main/logger'
 import type { TextCipher } from '@main/secretCipher'
 
 const cipher: TextCipher = {
-  encryptString: (value) => `test:${Buffer.from(value).toString('base64')}`,
-  decryptString: (value) => Buffer.from(value.replace(/^test:/, ''), 'base64').toString('utf8'),
-  backend: () => 'test',
-  isBasicProtection: () => false
+  encryptString: async (value) => `test:${Buffer.from(value).toString('base64')}`,
+  decryptString: async (value) => ({
+    value: Buffer.from(value.replace(/^test:/, ''), 'base64').toString('utf8'),
+    reencrypted: null
+  }),
+  backend: async () => 'test',
+  isBasicProtection: async () => false
 }
 
 class StubProvider implements LicenseProvider {
@@ -66,16 +69,16 @@ afterEach(() => {
 const day = 24 * 60 * 60 * 1000
 
 describe('license state machine', () => {
-  it('starts unlicensed', () => {
-    expect(controller.state().status).toBe('unlicensed')
-    expect(controller.canGenerate()).toBe(false)
+  it('starts unlicensed', async () => {
+    expect((await controller.state()).status).toBe('unlicensed')
+    expect(await controller.canGenerate()).toBe(false)
   })
 
   it('activates and validates online', async () => {
     const state = await controller.activate('MOSS-TEST-KEY')
     expect(state.status).toBe('licensed')
     expect(state.keyLast4).toBe('-KEY')
-    expect(controller.canGenerate()).toBe(true)
+    expect(await controller.canGenerate()).toBe(true)
     expect(fs.existsSync(path.join(dir, 'license.json'))).toBe(true)
   })
 
@@ -85,7 +88,7 @@ describe('license state machine', () => {
     now += 13 * day
     const state = await controller.validate()
     expect(state.status).toBe('grace')
-    expect(controller.canGenerate()).toBe(true)
+    expect(await controller.canGenerate()).toBe(true)
   })
 
   it('expires after fourteen days offline', async () => {
@@ -94,7 +97,7 @@ describe('license state machine', () => {
     now += 15 * day
     const state = await controller.validate()
     expect(state.status).toBe('expired')
-    expect(controller.canGenerate()).toBe(false)
+    expect(await controller.canGenerate()).toBe(false)
     expect(state.message).toContain('14 days')
   })
 
@@ -109,7 +112,7 @@ describe('license state machine', () => {
   it('rejects a clock that moves back more than a day', async () => {
     await controller.activate('MOSS-TEST-KEY')
     now -= 2 * day
-    const state = controller.state()
+    const state = await controller.state()
     expect(state.status).toBe('expired')
     expect(state.message).toMatch(/clock/i)
   })
@@ -146,6 +149,6 @@ describe('license state machine', () => {
       logger: new Logger(path.join(dir, 'logs')),
       cipher
     })
-    expect(recovered.state().status).toBe('licensed')
+    expect((await recovered.state()).status).toBe('licensed')
   })
 })
