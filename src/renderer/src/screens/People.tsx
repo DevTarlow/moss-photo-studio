@@ -69,6 +69,7 @@ export function People(): React.JSX.Element {
   const refreshPeople = useAppStore((state) => state.refreshPeople)
   const [previewPerson, setPreviewPerson] = useState<Person | null>(null)
   const [selectedLookKey, setSelectedLookKey] = useState<string | null>(null)
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
@@ -100,6 +101,7 @@ export function People(): React.JSX.Element {
 
   useEffect(() => {
     setSelectedLookKey(null)
+    setImagePreviewOpen(false)
   }, [previewPerson?.id])
 
   const previewLook = previewPerson?.looks.find((look) => look.key === selectedLookKey) ?? null
@@ -416,7 +418,12 @@ export function People(): React.JSX.Element {
 
       <Dialog
         open={Boolean(previewPerson)}
-        onOpenChange={(open) => { if (!open) setPreviewPerson(null) }}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPreviewPerson(null)
+            setImagePreviewOpen(false)
+          }
+        }}
         title={previewPerson ? `${previewPerson.name}${previewPerson.ageBand ? ` · ${previewPerson.ageBand}` : ''}` : 'Person'}
         description={previewPerson?.blurb ?? undefined}
         width={520}
@@ -424,11 +431,18 @@ export function People(): React.JSX.Element {
       >
         {previewPerson && (
           <>
-            <img
-              src={previewLook?.url ?? previewPerson.defaultImageUrl}
-              alt={`${previewPerson.name}${previewLook ? ` ${previewLook.label}` : ''}`}
-              className="mx-auto max-h-[42vh] w-full rounded-[12px] object-contain"
-            />
+            <button
+              type="button"
+              className="mx-auto block w-full cursor-zoom-in rounded-[12px] border-0 bg-transparent p-0 hover:opacity-95"
+              aria-label={`Open ${previewPerson.name}${previewLook ? ` ${previewLook.label}` : ''} larger`}
+              onClick={() => setImagePreviewOpen(true)}
+            >
+              <img
+                src={previewLook?.url ?? previewPerson.defaultImageUrl}
+                alt=""
+                className="mx-auto max-h-[42vh] w-full rounded-[12px] object-contain"
+              />
+            </button>
             {previewPerson.looks.length > 0 && (
               <>
                 <div className="mt-3 grid grid-cols-4 gap-2" role="group" aria-label={`Photos of ${previewPerson.name}`}>
@@ -444,7 +458,7 @@ export function People(): React.JSX.Element {
                         className="cursor-pointer overflow-hidden rounded-[10px] border-2 bg-transparent p-0 transition-colors"
                         style={{ borderColor: active ? 'var(--accent)' : 'var(--border)' }}
                       >
-                        <img src={look.url} alt="" className="aspect-[2/3] w-full object-cover" />
+                        <img src={look.url} alt="" className="aspect-square w-full object-cover object-top" />
                       </button>
                     )
                   })}
@@ -470,6 +484,22 @@ export function People(): React.JSX.Element {
             </div>
             <p className="hint mt-2">A set uses the selected photo; an image uses it as the reference.</p>
           </>
+        )}
+      </Dialog>
+
+      <Dialog
+        open={imagePreviewOpen}
+        onOpenChange={setImagePreviewOpen}
+        title={previewPerson ? `${previewPerson.name}${previewLook ? ` · ${previewLook.label}` : ''}` : 'Person photo'}
+        width={860}
+        footer={<Button variant="secondary" onClick={() => setImagePreviewOpen(false)}>Close</Button>}
+      >
+        {previewPerson && (
+          <img
+            src={previewLook?.url ?? previewPerson.defaultImageUrl}
+            alt={`${previewPerson.name}${previewLook ? ` ${previewLook.label}` : ''}`}
+            className="mx-auto max-h-[78vh] w-full rounded-[12px] object-contain"
+          />
         )}
       </Dialog>
     </AppFrame>
