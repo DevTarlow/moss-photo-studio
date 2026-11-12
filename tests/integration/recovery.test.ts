@@ -42,6 +42,36 @@ describe('migrations', () => {
   })
 })
 
+describe('database integrity', () => {
+  it('refuses a database written by a newer app instead of silently downgrading', () => {
+    const file = path.join(dir, 'library.sqlite')
+    const seed = new Database(file)
+    seed.pragma(`user_version = ${SCHEMA_VERSION + 1}`)
+    seed.close()
+    expect(() => openDatabase({ file, libraryPath: path.join(dir, 'library'), logger: logger() })).toThrow(/newer/)
+  })
+
+  it('recovers from the latest snapshot when the live database is unreadable', () => {
+    const file = path.join(dir, 'library.sqlite')
+    const seed = new Database(file)
+    seed.exec('CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
+    seed.prepare('INSERT INTO meta (key, value) VALUES (?, ?)').run('custom', 'kept')
+    seed.pragma('user_version = 0')
+    seed.close()
+    const first = openDatabase({ file, libraryPath: path.join(dir, 'library'), logger: logger() })
+    expect(first.prepare('SELECT value FROM meta WHERE key = ?').get('custom')).toEqual({ value: 'kept' })
+    first.close()
+    // The migration wrote a consistent snapshot beside the live file.
+    const backups = fs.readdirSync(dir).filter((name) => name.startsWith('library.sqlite.bak-'))
+    expect(backups.length).toBeGreaterThan(0)
+    fs.writeFileSync(file, Buffer.from('this is not a sqlite database'))
+    for (const suffix of ['-wal', '-shm']) fs.rmSync(`${file}${suffix}`, { force: true })
+    const recovered = openDatabase({ file, libraryPath: path.join(dir, 'library'), logger: logger() })
+    expect(recovered.prepare('SELECT value FROM meta WHERE key = ?').get('custom')).toEqual({ value: 'kept' })
+    recovered.close()
+  })
+})
+
 describe('crash recovery', () => {
   it('interrupts running jobs, deletes pending images, and keeps ready ones', () => {
     const db: Db = openDatabase({ file: path.join(dir, 'library.sqlite'), libraryPath: path.join(dir, 'library'), logger: logger() })

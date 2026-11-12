@@ -196,20 +196,44 @@ const migrations: Migration[] = [
 
 export const SCHEMA_VERSION = migrations[migrations.length - 1]!.version
 
-function backupDatabase(file: string, version: number): string | null {
+function backupList(file: string): Array<{ path: string; mtime: number }> {
+  const dir = path.dirname(file)
+  const prefix = `${path.basename(file)}.bak-`
+  try {
+    return fs
+      .readdirSync(dir)
+      .filter((name) => name.startsWith(prefix))
+      .map((name) => ({ path: path.join(dir, name), mtime: fs.statSync(path.join(dir, name)).mtimeMs }))
+      .sort((a, b) => b.mtime - a.mtime)
+  } catch {
+    return []
+  }
+}
+
+function backupDatabase(db: Db, file: string, version: number): string | null {
   if (!fs.existsSync(file)) return null
   const stat = fs.statSync(file)
   if (stat.size === 0) return null
   const backup = `${file}.bak-${version}`
-  fs.copyFileSync(file, backup)
-  const dir = path.dirname(file)
-  const backups = fs
-    .readdirSync(dir)
-    .filter((name) => name.startsWith(`${path.basename(file)}.bak-`))
-    .map((name) => ({ name, mtime: fs.statSync(path.join(dir, name)).mtimeMs }))
-    .sort((a, b) => b.mtime - a.mtime)
-  for (const old of backups.slice(2)) fs.rmSync(path.join(dir, old.name), { force: true })
+  fs.rmSync(backup, { force: true })
+  // VACUUM INTO takes a consistent snapshot including committed WAL frames;
+  // a plain file copy can miss them and leave an unusable backup.
+  db.exec(`VACUUM INTO '${backup.replace(/'/g, "''")}'`)
+  for (const old of backupList(file).slice(2)) fs.rmSync(old.path, { force: true })
   return backup
+}
+
+function latestBackup(file: string): string | null {
+  return backupList(file)[0]?.path ?? null
+}
+
+export function closeDatabase(db: Db): void {
+  try {
+    db.pragma('wal_checkpoint(TRUNCATE)')
+  } catch {
+    // A checkpoint failure must not stop the app from closing.
+  }
+  db.close()
 }
 
 export interface OpenDatabaseOptions {
@@ -218,21 +242,55 @@ export interface OpenDatabaseOptions {
   logger: Logger
 }
 
-export function openDatabase({ file, libraryPath, logger }: OpenDatabaseOptions): Db {
+function recoverDatabase({ file, libraryPath, logger }: OpenDatabaseOptions): Db | null {
+  const backup = latestBackup(file)
+  if (!backup) return null
+  logger.warn('db', 'integrity_failed', { count: 1 })
+  for (const suffix of ['', '-wal', '-shm']) fs.rmSync(`${file}${suffix}`, { force: true })
+  fs.copyFileSync(backup, file)
+  return openDatabaseAttempt({ file, libraryPath, logger }, false)
+}
+
+export function openDatabase(options: OpenDatabaseOptions): Db {
+  return openDatabaseAttempt(options, true)
+}
+
+function openDatabaseAttempt({ file, libraryPath, logger }: OpenDatabaseOptions, allowRecovery: boolean): Db {
   fs.mkdirSync(path.dirname(file), { recursive: true })
   const existed = fs.existsSync(file) && fs.statSync(file).size > 0
-  const db = new Database(file)
-  db.pragma('journal_mode = WAL')
-  db.pragma('foreign_keys = ON')
-  db.pragma('synchronous = NORMAL')
-  db.pragma('busy_timeout = 5000')
+  let db: Db | null = null
+  try {
+    db = new Database(file)
+    db.pragma('journal_mode = WAL')
+    db.pragma('foreign_keys = ON')
+    db.pragma('synchronous = NORMAL')
+    db.pragma('busy_timeout = 5000')
+    const check = db.pragma('quick_check', { simple: true })
+    if (check !== 'ok') throw new Error('db_corrupt')
+  } catch (error) {
+    try {
+      db?.close()
+    } catch {
+      // Nothing to do if SQLite never opened.
+    }
+    if (allowRecovery) {
+      const recovered = recoverDatabase({ file, libraryPath, logger })
+      if (recovered) return recovered
+    }
+    throw error
+  }
+  if (!db) throw new Error('db_corrupt')
 
   const current = Number(db.pragma('user_version', { simple: true }) ?? 0)
   const target = SCHEMA_VERSION
+  if (current > target) {
+    db.close()
+    throw new Error('db_newer_than_app')
+  }
   if (current < target) {
     let backup: string | null = null
     try {
-      if (existed || current > 0) backup = backupDatabase(file, target)
+      if (existed || current > 0) backup = backupDatabase(db, file, target)
       for (const migration of migrations) {
         if (migration.version <= current) continue
         const run = db.transaction(() => {
