@@ -5,6 +5,7 @@ import path from 'node:path'
 import { openDatabase } from '@main/db/connection'
 import { LicenseRepository } from '@main/db/repositories/license'
 import { LicenseController } from '@main/license/controller'
+import { machineIdentity } from '@main/license/machine'
 import type { LicenseProvider, ActivateOutcome, DeactivateOutcome, ValidateOutcome } from '@main/license/provider'
 import { Logger } from '@main/logger'
 import type { TextCipher } from '@main/secretCipher'
@@ -136,6 +137,34 @@ describe('license state machine', () => {
     expect(state.status).toBe('unlicensed')
     expect(provider.deactivated).toBe(true)
     expect(fs.existsSync(path.join(dir, 'license.json'))).toBe(false)
+  })
+
+  it('does not report a license when the stored key cannot be decrypted', async () => {
+    await controller.activate('MOSS-TEST-KEY')
+    const failingCipher: TextCipher = {
+      ...cipher,
+      decryptString: async () => {
+        throw new Error('no keyring')
+      }
+    }
+    const unreadable = new LicenseController({
+      repo: new LicenseRepository(db),
+      provider,
+      userDataDir: dir,
+      clock: () => now,
+      logger: new Logger(path.join(dir, 'logs')),
+      cipher: failingCipher
+    })
+    const state = await unreadable.state()
+    expect(state.status).toBe('unlicensed')
+    expect(state.message).toMatch(/could not be read/i)
+    expect(await unreadable.canGenerate()).toBe(false)
+  })
+
+  it('builds a machine label without the hostname', () => {
+    const identity = machineIdentity(dir)
+    expect(identity.label).toMatch(/^[a-z0-9]+-[0-9a-f]{8}$/)
+    expect('hostname' in identity).toBe(false)
   })
 
   it('recovers from license.json if the table is empty', async () => {

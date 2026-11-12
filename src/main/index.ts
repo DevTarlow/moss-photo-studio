@@ -303,6 +303,13 @@ async function boot(): Promise<void> {
     window.on('closed', () => {
       if (mainWindow === window) mainWindow = null
     })
+    // A long-lived window can outlive the 14 day grace window. Re-check when
+    // the seller comes back, at the same 24 hour cadence as launch.
+    window.on('focus', () => {
+      void license.validateOnLaunch().catch(() => {
+        logger.warn('license', 'focus_validation_failed', { errorCode: 'license_offline' })
+      })
+    })
     return window
   }
   mainWindow = openMainWindow()
@@ -339,16 +346,22 @@ async function boot(): Promise<void> {
     }
   })
 
-  void license
-    .validateOnLaunch()
-    .then((state) => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('moss:license:changed', state)
-      }
-    })
-    .catch(() => {
-      logger.warn('license', 'launch_validation_failed', { errorCode: 'license_offline' })
-    })
+  const refreshLicense = (): void => {
+    void license
+      .validateOnLaunch()
+      .then((state) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('moss:license:changed', state)
+        }
+      })
+      .catch(() => {
+        logger.warn('license', 'launch_validation_failed', { errorCode: 'license_offline' })
+      })
+  }
+  refreshLicense()
+  const licenseTimer = setInterval(refreshLicense, 6 * 60 * 60 * 1000)
+  licenseTimer.unref?.()
+  app.once('before-quit', () => clearInterval(licenseTimer))
 
   logger.info('app', 'ready', { count: recent.length })
 }

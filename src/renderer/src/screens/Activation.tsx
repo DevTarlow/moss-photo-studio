@@ -63,7 +63,6 @@ export function Activation(): React.JSX.Element {
     }
   }
 
-  const expired = license?.status === 'expired'
   return (
     <div className="relative flex h-full flex-col overflow-y-auto" style={{ background: 'var(--bg)' }}>
       <div className="pointer-events-none absolute inset-0 opacity-[0.55]" style={{ background: 'radial-gradient(circle at 50% 0%, var(--accent-soft), transparent 55%)' }} />
@@ -77,9 +76,9 @@ export function Activation(): React.JSX.Element {
           <p className="mt-2 text-[13px]" style={{ color: 'var(--text-muted)' }}>
             Paste the license key from your receipt. It activates this computer.
           </p>
-          {expired && (
+          {license?.message && (
             <div className="mt-4 rounded-[8px] border p-3 text-[12px]" style={{ borderColor: 'var(--warning)', background: 'var(--warning-soft)' }}>
-              {license.message ?? "It's been 14 days since the last check. Connect to the internet and press Activate to keep making images."}
+              {license.message}
             </div>
           )}
           <div className="mt-5">

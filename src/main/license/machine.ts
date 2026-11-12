@@ -1,13 +1,11 @@
 import { execFileSync } from 'node:child_process'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
-import os from 'node:os'
 import path from 'node:path'
 import { APP_ID } from '@shared/constants'
 
 export interface MachineIdentity {
   machineId: string
-  hostname: string
   fingerprint: string
   label: string
 }
@@ -55,19 +53,35 @@ function readMachineId(userDataDir: string): string {
   }
 }
 
+function readLabelSuffix(userDataDir: string): string {
+  const file = path.join(userDataDir, '.machine-label')
+  try {
+    if (fs.existsSync(file)) {
+      const value = fs.readFileSync(file, 'utf8').trim()
+      if (/^[0-9a-f]{8}$/.test(value)) return value
+    }
+    const value = crypto.randomBytes(4).toString('hex')
+    fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 })
+    fs.writeFileSync(file, value, { mode: 0o600 })
+    return value
+  } catch {
+    return crypto.randomBytes(4).toString('hex')
+  }
+}
+
 export function machineIdentity(userDataDir: string): MachineIdentity {
-  const hostname = os.hostname()
   const machineId = readMachineId(userDataDir)
   const fingerprint = crypto
     .createHash('sha256')
-    .update(`${hostname}${machineId}${APP_ID}`)
+    .update(`${machineId}${APP_ID}`)
     .digest('hex')
     .slice(0, 12)
-  const labelHost = hostname.replace(/[^a-zA-Z0-9._-]/g, '-').slice(0, 48) || 'computer'
   return {
     machineId,
-    hostname: labelHost,
     fingerprint,
-    label: `${process.platform}-${labelHost}-${fingerprint.slice(0, 8)}`
+    // The store only needs a label a seller can recognize when two machines
+    // are activated. A random per-install suffix is enough; the hostname and
+    // hardware identifiers are never sent.
+    label: `${process.platform}-${readLabelSuffix(userDataDir)}`
   }
 }

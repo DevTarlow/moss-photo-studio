@@ -22,6 +22,25 @@ function asRecord(value: unknown): JsonRecord {
   return value && typeof value === 'object' ? (value as JsonRecord) : {}
 }
 
+function isTransientStatus(status: number): boolean {
+  return status === 0 || status === 408 || status === 429 || status >= 500
+}
+
+/**
+ * A store response that should not cost the seller their license. A proxy
+ * error, a rate limit, or an auth failure on the store's edge is not the same
+ * thing as an expired key, so only an explicit 400/404/409/422 rejection is
+ * allowed to reach the controller as invalid.
+ */
+function httpFailure(status: number, body: JsonRecord): LicenseProviderError {
+  if (isTransientStatus(status)) return 'license_offline'
+  if (status === 400 || status === 404 || status === 409 || status === 422) {
+    const code = storeError(String(body.error ?? ''))
+    return code === 'unknown' ? 'license_invalid' : code
+  }
+  return 'license_offline'
+}
+
 function storeError(message: string): LicenseProviderError {
   const text = message.toLowerCase()
   if (text.includes('no available activations') || text.includes('activation limit') || text.includes('limit reached')) {
@@ -84,10 +103,8 @@ export class LemonSqueezyProvider implements LicenseProvider {
       this.activateTimeoutMs,
       this.fetcher
     )
-    if (result.status === 0) return { ok: false, code: 'license_offline' }
     if (!result.status.toString().startsWith('2')) {
-      const error = String(result.body.error ?? '')
-      return { ok: false, code: storeError(error) }
+      return { ok: false, code: httpFailure(result.status, result.body) }
     }
     if (result.body.activated !== true) {
       return { ok: false, code: storeError(String(result.body.error ?? 'activation failed')) }
@@ -110,14 +127,13 @@ export class LemonSqueezyProvider implements LicenseProvider {
       this.validateTimeoutMs,
       this.fetcher
     )
-    if (result.status === 0) return { ok: false, code: 'license_offline' }
     if (!result.status.toString().startsWith('2')) {
-      return { ok: false, code: storeError(String(result.body.error ?? '')) }
+      return { ok: false, code: httpFailure(result.status, result.body) }
     }
     const license = asRecord(result.body.license_key)
     const status = typeof license.status === 'string' ? license.status : ''
     if (result.body.valid !== true) {
-      return { ok: false, code: status === 'expired' || status === 'disabled' ? 'license_invalid' : 'license_invalid' }
+      return { ok: false, code: 'license_invalid' }
     }
     if (status && status !== 'active') {
       return { ok: false, code: 'license_invalid' }
@@ -132,9 +148,8 @@ export class LemonSqueezyProvider implements LicenseProvider {
       this.deactivateTimeoutMs,
       this.fetcher
     )
-    if (result.status === 0) return { ok: false, code: 'license_offline' }
     if (!result.status.toString().startsWith('2')) {
-      return { ok: false, code: storeError(String(result.body.error ?? '')) }
+      return { ok: false, code: httpFailure(result.status, result.body) }
     }
     if (result.body.deactivated === true) return { ok: true }
     return { ok: false, code: 'unknown' }

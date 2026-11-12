@@ -1,6 +1,6 @@
 import http from 'node:http'
 
-export type LicenseScenario = 'active' | 'invalid' | 'limit' | 'expired' | 'down' | 'offline'
+export type LicenseScenario = 'active' | 'invalid' | 'limit' | 'expired' | 'down' | 'offline' | 'server-error'
 interface Instance { id: string; name: string; createdAt: number }
 
 export async function startFakeLicense() {
@@ -26,6 +26,7 @@ export async function startFakeLicense() {
     requests.push({ path: url.pathname, form, at: Date.now() })
     if (scenario === 'down' || scenario === 'offline') { res.destroy(); return }
     const json = (status: number, body: Record<string, unknown>): void => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)) }
+    if (scenario === 'server-error') { json(500, { error: 'internal error' }); return }
     if (url.pathname === '/v1/licenses/activate') {
       if (!form.license_key || form.license_key === 'bad' || scenario === 'invalid') { json(400, { activated: false, error: 'license_key not found' }); return }
       if (scenario === 'expired') { json(400, { activated: false, error: 'license key expired' }); return }

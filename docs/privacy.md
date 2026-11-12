@@ -27,7 +27,7 @@ It does **not** send any other library image, project list, usage history, proje
 - The store instance id, which is created by the store the first time a computer activates.
 - A label such as `linux-4f21a8c0`. It is derived from the OS and a random per-installation suffix. It is not a hostname, MAC address, disk serial, or account name.
 
-The license validation request happens no more than once per 24 hours automatically. A manual **Check Now** is immediate. The last validation time is stored locally. A failed validation never deletes a license or hides the library. It enters the 14 day grace state, then becomes read-only.
+The license validation request happens no more than once per 24 hours automatically, with a check when the window regains focus. A manual **Check Now** is immediate. The last validation time is stored locally. A failed validation never deletes a license or hides the library: a store error or an unreadable response does not shorten the 14 day offline window, and only an explicit rejection by the store, or the end of that window, makes the license read-only. A license file that cannot be decrypted is not treated as licensed; the seller is asked to paste the key again.
 
 ## What is stored locally
 

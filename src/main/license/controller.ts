@@ -46,6 +46,8 @@ export class LicenseController {
   private readonly machineLabel: string
   private readonly cipher: TextCipher
   private readonly listeners = new Set<(state: LicenseState) => void>()
+  /** Serializes activate/validate/deactivate so a late response cannot overwrite a newer action. */
+  private mutex: Promise<unknown> = Promise.resolve()
 
   constructor(options: {
     repo: LicenseRepository
@@ -184,6 +186,20 @@ export class LicenseController {
     const key = await this.decryptKey(row)
     const last = row.last_validated_at
     const offlineUntil = last ? last + GRACE_MS : null
+    if (!key) {
+      // A row that cannot be decrypted is not a license. Reporting it as
+      // licensed would let a copied userData folder keep generation open after
+      // the OS keyring changed; the seller can re-activate with their key.
+      return {
+        status: 'unlicensed',
+        source: null,
+        machineLabel: row.machine_label ?? this.machineLabel,
+        keyLast4: null,
+        lastValidatedAt: last,
+        offlineUntil,
+        message: "The saved license could not be read on this computer. Paste your license key to activate it again."
+      }
+    }
     const rolledBack = last !== null && now < last - DAY
     const graceEnded = last !== null && now - last > GRACE_MS
     const source = row.source === 'dev' ? 'dev' : 'lemon'
@@ -272,6 +288,10 @@ export class LicenseController {
   }
 
   async validate(): Promise<LicenseState> {
+    return this.serialize(() => this.validateNow())
+  }
+
+  private async validateNow(): Promise<LicenseState> {
     if (this.devUnlock) return this.state()
     const row = this.repo.getRow()
     const key = await this.decryptKey(row)
@@ -289,7 +309,7 @@ export class LicenseController {
       this.logger.info('license', 'validated')
       return this.emit()
     }
-    if (outcome.code === 'license_offline') {
+    if (outcome.code === 'license_offline' || outcome.code === 'unknown') {
       const last = row.last_validated_at
       const withinGrace =
         last !== null && now >= last - DAY && now - last <= GRACE_MS
@@ -297,7 +317,7 @@ export class LicenseController {
         ...rowToSave(row),
         status: withinGrace ? 'grace' : 'expired'
       })
-      this.logger.info('license', 'validation_offline', { errorCode: 'license_offline' })
+      this.logger.info('license', 'validation_offline', { errorCode: outcome.code })
       return this.emit()
     }
     this.save({
@@ -309,6 +329,10 @@ export class LicenseController {
   }
 
   async activate(key: string): Promise<LicenseState> {
+    return this.serialize(() => this.activateNow(key))
+  }
+
+  private async activateNow(key: string): Promise<LicenseState> {
     const trimmed = key.trim()
     if (!trimmed) throw new LicenseError('license_invalid')
     const outcome = await this.provider.activate({ key: trimmed, instanceName: this.machineLabel })
@@ -330,6 +354,16 @@ export class LicenseController {
   }
 
   async deactivate(): Promise<LicenseState> {
+    return this.serialize(() => this.deactivateNow())
+  }
+
+  private serialize<T>(run: () => Promise<T>): Promise<T> {
+    const next = this.mutex.then(run, run)
+    this.mutex = next.then(() => undefined, () => undefined)
+    return next
+  }
+
+  private async deactivateNow(): Promise<LicenseState> {
     if (this.devUnlock) return this.state()
     const row = this.repo.getRow()
     const key = await this.decryptKey(row)

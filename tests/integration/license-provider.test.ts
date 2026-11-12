@@ -41,6 +41,13 @@ describe('Lemon Squeezy license provider', () => {
     expect(await provider.deactivate({ key: 'MOSS-KEY-3', instanceId: 'x' })).toMatchObject({ ok: false, code: 'license_offline' })
   })
 
+  it('maps a store server error to offline, never invalid', async () => {
+    server.control('server-error')
+    expect(await provider.activate({ key: 'MOSS-KEY-5', instanceName: 'one' })).toMatchObject({ ok: false, code: 'license_offline' })
+    expect(await provider.validate({ key: 'MOSS-KEY-5', instanceId: 'x' })).toMatchObject({ ok: false, code: 'license_offline' })
+    expect(await provider.deactivate({ key: 'MOSS-KEY-5', instanceId: 'x' })).toMatchObject({ ok: false, code: 'license_offline' })
+  })
+
   it('maps expired and disabled statuses to invalid', async () => {
     server.control('expired')
     const result = await provider.activate({ key: 'MOSS-KEY-4', instanceName: 'one' })

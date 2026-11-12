@@ -585,7 +585,7 @@ function PrivacySection(): React.JSX.Element {
           </div>
           <div className="rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
             <p className="text-[12px] font-semibold">api.lemonsqueezy.com</p>
-            <p className="hint mt-1">Receives your license key and machine label when you activate, validate, or deactivate. Activation is the only place a raw key leaves the app.</p>
+            <p className="hint mt-1">Receives your license key and machine label when you activate, validate, or deactivate. The key leaves the app only for those three license calls.</p>
           </div>
         </div>
         <p className="hint mt-4">There is no telemetry, analytics, crash reporting, or cloud sync.</p>
