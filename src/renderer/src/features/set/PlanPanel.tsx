@@ -19,7 +19,7 @@ import type { Format, Image, Person, PlanJson, PlanShot } from '@shared/types'
 import { MAX_SET_SHOTS } from '@shared/constants'
 
 import { SHOT_TYPES, shotDefinition } from '@shared/prompts/shots'
-import { CATEGORY_CHIPS, recipeById } from '@shared/prompts/recipes'
+import { CATEGORY_CHIPS, defaultDirectionFor, recipeById } from '@shared/prompts/recipes'
 import { bundledUrl } from '../../lib/assets'
 import { Button } from '../../components/ui/Button'
 import { Dialog } from '../../components/ui/Dialog'
@@ -49,18 +49,19 @@ function personImage(person: Person, lookKey: string | null): string {
 
 function DirectionEditor({
   shot,
+  category,
   readOnly,
   onChange,
   onBlur
 }: {
   shot: PlanShot
+  category: string | null
   readOnly: boolean
   onChange: (direction: string) => void
   onBlur: () => void
 }): React.JSX.Element {
-  const definition = shotDefinition(shot.type)
   const trimmed = shot.direction.trim()
-  const isStudio = !trimmed || trimmed === definition.defaultDirection
+  const isStudio = !trimmed || trimmed === defaultDirectionFor(category, shot.type)
   return (
     <div className="mt-2">
       <div className="flex items-center justify-between gap-2">
@@ -75,7 +76,7 @@ function DirectionEditor({
         maxLength={400}
         disabled={readOnly}
         value={shot.direction}
-        placeholder={definition.defaultDirection}
+        placeholder={defaultDirectionFor(category, shot.type)}
         onChange={(event) => onChange(event.target.value)}
         onBlur={onBlur}
       />
@@ -242,6 +243,7 @@ function ShotCard({
       )}
       <DirectionEditor
         shot={shot}
+        category={plan.category}
         readOnly={readOnly}
         onChange={(direction) => onChange({ ...shot, direction })}
         onBlur={onSaveBlur}
@@ -351,7 +353,7 @@ export function PlanPanel({
                 <option key={chip.id} value={chip.id}>{chip.label}</option>
               ))}
             </select>
-            <p className="mt-1 text-[11px]" style={{ color: 'var(--text-faint)' }}>{enabledCount} shots · {enabledCount} images</p>
+            <p className="mt-1 text-[11px]" style={{ color: 'var(--text-faint)' }}>{enabledCount} of {plan.shots.length} shots on</p>
             {categoryLocked && (
               <p className="mt-1 text-[11px]" style={{ color: 'var(--text-faint)' }}>
                 The recipe is fixed after the first image. Start a new set to use a different one.

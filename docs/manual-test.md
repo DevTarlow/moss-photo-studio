@@ -229,7 +229,7 @@ On Ubuntu 24.04, install `libfuse2t64` if the AppImage asks for FUSE 2. On a san
 ## Before a real release
 
 1. Replace `LICENSE_STORE_URL` in `src/shared/constants.ts` with the real store URL.
-2. Set `MOSS_RELEASE=1 npm run release:gate`.
+2. Run `npm run build:linux` (the release gate now passes `--release` automatically). The gate fails while the store URL or homepage is a placeholder.
 3. Add a real code-signing identity for Windows and Apple notarization for macOS.
 4. Run one real Muse generation and one real Lemon Squeezy activation.
 5. Run the real-key, invoice, and product preservation O checks above.

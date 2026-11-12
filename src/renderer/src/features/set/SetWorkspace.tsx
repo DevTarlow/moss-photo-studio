@@ -636,7 +636,7 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
                   {madeCount === 0 && lastErrorCode && (
                     <p className="mt-1 text-[11px]" style={{ color: 'var(--white-80)' }}>{errorMessage(lastErrorCode as never)}</p>
                   )}
-                  <p className="mt-1 text-[11px] tabular" style={{ color: 'var(--white-60)' }}>{madeCount} made · {missingCount} not through · {usd(madeImages.reduce((sum, image) => sum + image.costCents, 0))}</p>
+                  <p className="mt-1 text-[11px] tabular" style={{ color: 'var(--white-60)' }}>{madeCount} made · {missingCount} still to make · {usd(madeImages.reduce((sum, image) => sum + image.costCents, 0))}</p>
                 </div>
                 <div className="shot-grid">
                   {enabledShots.map((shot) => {
@@ -720,7 +720,7 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
 
       <div className="ws-bottom">
         <div className="min-w-0">
-          <p className="truncate text-[12px] font-medium tabular">{enabledShots.length} shots · {enabledShots.length} images</p>
+          <p className="truncate text-[12px] font-medium tabular">{enabledShots.length} of {plan?.shots.length ?? enabledShots.length} shots on</p>
           <p className="meta tabular">Set {usd(usageCents)} · Month {usd(monthCents)}{limit !== null ? ` of ${usd(limit)}` : ''}</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
@@ -739,7 +739,7 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
           ) : phase === 'review' ? (
             <>
               {madeCount > 0 && (
-                <Button variant="ghost" onClick={() => setLightboxIndex(0)}>Edit an Image</Button>
+                <Button variant="ghost" onClick={() => setLightboxIndex(0)}>View Images</Button>
               )}
               {(madeCount > 0 && madeCount < enabledShots.length) || (exportableImages.length > 0 && madeCount === 0) ? (
                 <Button variant="secondary" onClick={() => setExportOpen(true)}>Export What I Have</Button>

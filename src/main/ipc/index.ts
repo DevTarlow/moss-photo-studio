@@ -233,8 +233,10 @@ async function confirmRestore(context: AppContext, summary: { projects: number; 
 
 function csvField(value: string | number | null | undefined): string {
   const text = value === null || value === undefined ? '' : String(value)
-  if (/[",\n]/.test(text)) return `"${text.replaceAll('"', '""')}"`
-  return text
+  // A spreadsheet treats these prefixes as formulas. Quote the cell as text.
+  const safe = /^[=+\-@]/.test(text) ? `'${text}` : text
+  if (/[",\n]/.test(safe)) return `"${safe.replaceAll('"', '""')}"`
+  return safe
 }
 
 export function registerIpcHandlers(context: AppContext): void {

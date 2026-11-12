@@ -36,7 +36,7 @@ Edits omit `n`. Generations include `n` with the requested count. Neither endpoi
 - `1024x1536`
 - `1536x1024`
 
-The app never calculates a custom width and height for the model. An imported source with a different aspect ratio is center-cropped to the selected shape by the app before the request. The original import is untouched.
+The app never calculates a custom width and height for the model. An imported source with a different aspect ratio is sent as normalized, and the selected shape is only a request hint; the source is not cropped by the app yet. The original import is untouched. A center-crop preview and crop before the request are planned with the product-workspace work.
 
 ## Cost
 
@@ -71,7 +71,7 @@ Rules:
 - If none survive, the result is `provider_error` with zero returned images.
 - Only the first `n` images are written. `returnedCount` remains the full number decoded.
 - `output_format` wins over the requested format when it is one of `webp`, `jpeg`, or `png`.
-- `revised_prompt`, `usage`, and `request_id` are stored for debugging and future display. The current interface does not show revised prompts.
+- `revised_prompt`, `usage`, and `request_id` are parsed. The queue currently stores `revised_prompt` as null and keeps the usage totals in the job state; they are not persisted as a separate row. The interface does not show revised prompts.
 - No content type header is trusted for decoding. The bytes are decoded, then validated and normalised by sharp.
 
 ## Error handling
@@ -91,7 +91,7 @@ Rules:
 | Caller aborts | `aborted` | No | `$0.00` because the response never arrived |
 | 200 without usable images | `provider_error` | No | `$0.00` counted, ledger Unknown |
 
-The `network` code is also the timeout code. Its interface copy is the approved timeout sentence. The underlying request is not aborted when the app's 300 second timeout fires. Aborting the socket would not undo a server-side charge. The app records no cost because it did not see a response.
+The `network` code is also the timeout code. Its interface copy is the approved timeout sentence. The client aborts the request when the app's 300 second timeout fires, but the response is not seen, so the app records no cost and marks the billing unknown. Aborting the local socket does not undo a charge Meta may already have made.
 
 Rate limiting:
 

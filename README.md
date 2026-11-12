@@ -82,7 +82,7 @@ Outputs (images, manifests, contact sheets, review notes) land in the gitignored
 npm run build:linux
 ```
 
-The files appear under `release/`:
+The release scripts run the release gate automatically (`node scripts/release-gate.mjs --release`) and refuse to build while `LICENSE_STORE_URL` or the `package.json` homepage is still a placeholder. The files appear under `release/`:
 
 - `Moss Photo Studio-1.0.0-x86_64.AppImage`
 - `Moss Photo Studio-1.0.0-amd64.deb`

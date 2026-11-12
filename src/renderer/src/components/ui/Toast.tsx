@@ -1,16 +1,26 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { AlertCircle, Check, X } from 'lucide-react'
 import { useToastStore } from '../../lib/toast'
 import type { ToastItem } from '../../lib/toast'
 
 function ToastRow({ item }: { item: ToastItem }): React.JSX.Element {
   const dismiss = useToastStore((state) => state.dismiss)
+  const [paused, setPaused] = useState(false)
   useEffect(() => {
+    if (paused) return
     const timer = window.setTimeout(() => dismiss(item.id), item.tone === 'error' ? 6000 : 3000)
     return () => window.clearTimeout(timer)
-  }, [dismiss, item.id, item.tone])
+  }, [dismiss, item.id, item.tone, paused])
   return (
-    <div className="toast" data-tone={item.tone} role={item.tone === 'error' ? 'alert' : 'status'}>
+    <div
+      className="toast"
+      data-tone={item.tone}
+      role={item.tone === 'error' ? 'alert' : 'status'}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
       <span className="mt-0.5" style={{ color: item.tone === 'error' ? 'var(--danger)' : 'var(--accent)' }} aria-hidden>
         {item.tone === 'error' ? <AlertCircle size={16} /> : <Check size={16} />}
       </span>

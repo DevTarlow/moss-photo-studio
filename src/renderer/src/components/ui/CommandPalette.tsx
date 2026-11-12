@@ -102,6 +102,10 @@ export function CommandPalette(): React.JSX.Element {
         label: 'Export current project',
         run: () => {
           setOpen(false)
+          if (!window.location.hash.includes('/project/')) {
+            toast.error('Open a project to export it.')
+            return
+          }
           emitCommand('export')
         }
       },

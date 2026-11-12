@@ -22,6 +22,21 @@ import { GuideDialog } from './components/ui/GuideDialog'
 
 const TWELVE_HOURS = 12 * 60 * 60 * 1000
 
+function titleForPath(pathname: string): string {
+  if (pathname.startsWith('/project/')) return 'Project · Moss Photo Studio'
+  const section = pathname.split('/')[1] || 'studio'
+  const labels: Record<string, string> = {
+    library: 'Library',
+    products: 'Products',
+    people: 'People',
+    usage: 'Usage',
+    settings: 'Settings',
+    onboarding: 'Setup',
+    activation: 'Activate'
+  }
+  return `${labels[section] ?? 'Studio'} · Moss Photo Studio`
+}
+
 function Splash(): React.JSX.Element {
   return (
     <div className="flex h-full items-center justify-center" style={{ background: 'var(--canvas)' }}>
@@ -188,6 +203,10 @@ export function RootLayout(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
+    document.title = titleForPath(location.pathname)
+  }, [location.pathname])
+
+  useEffect(() => {
     if (!booted) return
     if (location.pathname.startsWith('/project/')) return
     void window.moss.app.setMenuContext(EMPTY_MENU_CONTEXT).catch(() => undefined)
@@ -259,7 +278,10 @@ export function RootLayout(): React.JSX.Element {
       }
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
         event.preventDefault()
-        document.querySelector<HTMLButtonElement>('.ws-bottom .btn-primary:not([disabled])')?.click()
+        if (!location.pathname.startsWith('/project/')) return
+        const primary = document.querySelector<HTMLButtonElement>('.ws-bottom .btn-primary:not([disabled])')
+        if (primary) primary.click()
+        else toast.error('There is no action to run here yet.')
         return
       }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'b') {
@@ -323,7 +345,8 @@ export function RootLayout(): React.JSX.Element {
           if (event.projectId) navigate(`/project/${event.projectId}`)
           break
         case 'export':
-          emitCommand('export')
+          if (location.pathname.startsWith('/project/')) emitCommand('export')
+          else toast.error('Open a project to export it.')
           break
         case 'find':
           if (location.pathname.startsWith('/library')) emitCommand('focus-search')

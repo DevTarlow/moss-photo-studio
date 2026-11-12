@@ -1,4 +1,6 @@
-# Design audit
+# Design audit (historical)
+
+> This audit was the input to the Astryx redesign. Several findings are fixed in the current build; use [design-system.md](design-system.md) and the later entries in [DECISIONS.md](../DECISIONS.md) for the current rules. Keep this file as the record of what drove the redesign, not as a live defect list.
 
 This audit covers the renderer UI/UX across first-run, collections, settings, and the three editor workspaces. It was done against the running app, the source, the tracked screenshots, and the E2E suite. The implementation plan is in the Astryx redesign work; this file records the findings that drove it.
 
