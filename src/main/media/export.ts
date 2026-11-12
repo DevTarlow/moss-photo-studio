@@ -119,7 +119,8 @@ export async function exportSetProject(input: {
       .filter((image) => image.shotId === shot.id && image.status === 'ready')
       .sort((a, b) => a.createdAt - b.createdAt || a.seq - b.seq)
     if (!ready.length) continue
-    const latest = ready[ready.length - 1]!
+    const pinned = shot.selectedImageId ? ready.find((image) => image.id === shot.selectedImageId) : undefined
+    const latest = pinned ?? ready[ready.length - 1]!
     const prefix = String(number).padStart(2, '0')
     const baseLabel = definition.fileLabel
     const latestPath = await ensureUniquePath(
@@ -138,7 +139,7 @@ export async function exportSetProject(input: {
       imageLabel: latest.label
     })
     if (input.options.includeVersions) {
-      for (const older of ready.slice(0, -1)) {
+      for (const older of ready.filter((image) => image.id !== latest.id)) {
         const suffix = versionSuffix(older.label, definition.label) || '-v1'
         const olderPath = await ensureUniquePath(
           input.folder,

@@ -58,10 +58,20 @@ function latestAttempt(images: Image[], shotId: string): Image | null {
     .at(-1) ?? null
 }
 
+function chosenReady(images: Image[], shot: PlanShot): Image | null {
+  if (shot.selectedImageId) {
+    const pinned = images.find(
+      (image) => image.id === shot.selectedImageId && image.status === 'ready' && image.shotId === shot.id
+    )
+    if (pinned) return pinned
+  }
+  return latestReady(images, shot.id)
+}
+
 function latestReadyAll(images: Image[], plan: PlanJson): Image[] {
   return plan.shots
     .filter((shot) => shot.enabled)
-    .map((shot) => latestReady(images, shot.id))
+    .map((shot) => chosenReady(images, shot))
     .filter((image): image is Image => Boolean(image))
 }
 
@@ -421,6 +431,23 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
     void requestRun('remake', [shotId], 1, true)
   }
 
+  const regenerateShot = (shotId: string): void => {
+    void requestRun('remake', [shotId], 1)
+  }
+
+  const pinImage = async (image: Image): Promise<void> => {
+    if (!plan || !image.shotId || image.status !== 'ready') return
+    if (!plan.shots.some((shot) => shot.id === image.shotId)) return
+    updatePlan({
+      ...plan,
+      shots: plan.shots.map((shot) =>
+        shot.id === image.shotId ? { ...shot, selectedImageId: image.id } : shot
+      )
+    })
+    await savePlan()
+    toast.status('Main version set for this shot.')
+  }
+
   const lastErrorCode = enabledShots
     .map((shot) => {
       const latest = latestAttempt(images, shot.id)
@@ -450,7 +477,7 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
   const lightboxImages = exportableImages
 
   const goOpenLibrary = (): void => {
-    void navigate('/library')
+    void navigate(project.productId ? `/product/${project.productId}` : '/library')
   }
   const goSettings = (): void => {
     void navigate('/settings/studio')
@@ -643,14 +670,17 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
                     const attempt = latestAttempt(images, shot.id)
                     const ready = attempt?.status === 'ready' ? attempt : null
                     const failed = attempt?.status === 'failed' ? attempt : null
+                    const chosen = chosenReady(images, shot)
+                    const shown = chosen ?? ready
+                    const pinned = Boolean(chosen && shot.selectedImageId === chosen.id)
                     return (
-                      <div key={shot.id} className="shot-card" data-state={ready ? 'done' : 'failed'}>
-                        {ready?.url ? (
+                      <div key={shot.id} className="shot-card" data-state={shown ? 'done' : 'failed'}>
+                        {shown?.url ? (
                           <button type="button" className="flex min-h-0 flex-1" onClick={() => {
-                            const index = lightboxImages.findIndex((image) => image.id === ready.id)
+                            const index = lightboxImages.findIndex((image) => image.id === shown.id)
                             setLightboxIndex(index >= 0 ? index : 0)
                           }}>
-                            <img src={ready.url} alt={`${shotDefinition(shot.type).label} of the product`} />
+                            <img src={shown.url} alt={`${shotDefinition(shot.type).label} of the product`} />
                           </button>
                         ) : (
                           <div className="flex flex-1 flex-col items-center justify-center gap-1 p-3 text-center">
@@ -661,8 +691,9 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
                         )}
                         <div className="shot-card-body">
                           <span className="min-w-0 flex-1 truncate text-[11px] font-medium">{shotDefinition(shot.type).label}</span>
-                          {ready && <span className="badge" data-tone="success">Made</span>}
-                          {!ready && failed && (
+                          {pinned && <span className="badge">Pinned</span>}
+                          {shown && <span className="badge" data-tone="success">Made</span>}
+                          {!shown && failed && (
                             <button
                               type="button"
                               className="text-[11px] font-semibold underline"
@@ -670,6 +701,16 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
                               onClick={() => retryShot(shot.id)}
                             >
                               Try Again · {usd(1)}
+                            </button>
+                          )}
+                          {ready && (
+                            <button
+                              type="button"
+                              className="text-[11px] underline"
+                              style={{ color: 'var(--white-80)' }}
+                              onClick={() => regenerateShot(shot.id)}
+                            >
+                              New · {usd(1)}
                             </button>
                           )}
                         </div>
@@ -734,7 +775,7 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
                 <Progress value={job.done + job.failed} max={job.total} label={`${job.done} of ${job.total} images made`} />
               </div>
               <Button variant="secondary" onClick={() => void stop()}>Stop After This Image</Button>
-              <Button variant="ghost" onClick={goOpenLibrary}>Open Library</Button>
+              <Button variant="ghost" onClick={goOpenLibrary}>Open All Work</Button>
             </>
           ) : phase === 'review' ? (
             <>
@@ -830,6 +871,8 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
         onEdit={openEditor}
         onSaveProduct={setSaveProductImage}
         onDelete={(image) => void deleteImage(image)}
+        onPin={(image) => void pinImage(image)}
+        isPinned={(image) => Boolean(plan?.shots.find((shot) => shot.id === image.shotId)?.selectedImageId === image.id)}
       />
     </>
   )

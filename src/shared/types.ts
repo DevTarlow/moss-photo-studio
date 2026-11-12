@@ -99,6 +99,8 @@ export interface PlanShot {
   personLook: string | null
   label: string
   featureText?: string
+  /** The version the seller pinned as this shot's main image for export. */
+  selectedImageId?: string | null
 }
 
 export interface PlanJson {

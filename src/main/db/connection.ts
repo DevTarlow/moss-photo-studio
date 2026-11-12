@@ -371,7 +371,7 @@ function seedDefaults(db: Db, libraryPath: string): void {
     set.run('defaultShape', JSON.stringify('square'))
     set.run('lastProjectId', JSON.stringify(null))
     set.run('libraryPath', JSON.stringify(libraryPath))
-    set.run('exportDefaults', JSON.stringify({ format: 'webp', quality: 90, maxDimension: null }))
+    set.run('exportDefaults', JSON.stringify({ format: 'jpeg', quality: 90, maxDimension: null }))
     set.run('exportFolders', JSON.stringify({}))
     set.run('windowState', JSON.stringify(null))
     set.run('licenseGraceNotified', JSON.stringify(false))

@@ -16,7 +16,9 @@ export function Lightbox({
   onEdit,
   onSaveProduct,
   onSavePerson,
-  onDelete
+  onDelete,
+  onPin,
+  isPinned
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -29,6 +31,8 @@ export function Lightbox({
   onSaveProduct?: (image: Image) => void
   onSavePerson?: (image: Image) => void
   onDelete?: (image: Image) => void
+  onPin?: (image: Image) => void
+  isPinned?: (image: Image) => boolean
 }): React.JSX.Element {
   const image = images[index]
   const [loaded, setLoaded] = useState(false)
@@ -87,7 +91,7 @@ export function Lightbox({
                 </IconButton>
               )}
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-3">
+            <div className="relative z-20 flex shrink-0 flex-wrap items-center justify-center gap-2 pt-3">
               {onDownload && image && (
                 <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onDownload(image)}>
                   <Download size={15} /> Download
@@ -96,6 +100,11 @@ export function Lightbox({
               {onSetCover && image && (
                 <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onSetCover(image)}>
                   <Star size={15} /> Set as Cover
+                </Button>
+              )}
+              {onPin && image && (
+                <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onPin(image)}>
+                  {isPinned?.(image) ? 'Main Version' : 'Use as Main'}
                 </Button>
               )}
               {onEdit && image && (

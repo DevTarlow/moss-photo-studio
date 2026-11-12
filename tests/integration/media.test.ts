@@ -223,10 +223,37 @@ describe('set export', () => {
     expect(manifest).toContain('Direction: a warm table')
     expect(manifest).toContain(shotDefinition('lifestyle').defaultDirection)
 
+    // A pinned older version becomes the unsuffixed main image; the newer
+    // version is exported beside it.
+    const pinnedPlan = {
+      ...plans.getActive(project.id)!.json,
+      shots: plans.getActive(project.id)!.json.shots.map((shot) =>
+        shot.id === shotOne.id ? { ...shot, selectedImageId: oldId } : shot
+      )
+    }
+    plans.save(project.id, pinnedPlan)
+    const pinnedFolder = path.join(dir, 'pinned-exports')
+    const pinned = await exportSetProject({
+      libraryPath: path.join(dir, 'library'),
+      projectName: project.name,
+      plan: pinnedPlan,
+      images: ready,
+      options: { format: 'webp', quality: 90, maxDimension: null, includeVersions: true },
+      folder: pinnedFolder,
+      workingPathFor
+    })
+    const pinnedMain = await centerPixel(path.join(pinnedFolder, '01-main-shot.webp'))
+    expect(pinnedMain.r).toBeGreaterThan(pinnedMain.g)
+    expect(pinnedMain.r).toBeGreaterThan(pinnedMain.b)
+    const other = pinned.paths.find((file) => path.basename(file).startsWith('01-main-shot-'))!
+    const otherPixel = await centerPixel(other)
+    expect(otherPixel.g).toBeGreaterThan(otherPixel.r)
+    expect(otherPixel.g).toBeGreaterThan(otherPixel.b)
+
     const second = await exportSetProject({
       libraryPath: path.join(dir, 'library'),
       projectName: project.name,
-      plan: plans.getActive(project.id)!.json,
+      plan: pinnedPlan,
       images: ready,
       options: { format: 'webp', quality: 90, maxDimension: null, includeVersions: false },
       folder,

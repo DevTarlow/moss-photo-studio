@@ -72,6 +72,7 @@ export function normalisePlan(plan: PlanJson): PlanJson {
         shot.type === 'onmodel' && shot.personLook && shot.personLook !== 'original'
           ? shot.personLook
           : null,
+      selectedImageId: typeof shot.selectedImageId === 'string' ? shot.selectedImageId : null,
       enabled: Boolean(shot.enabled)
     }))
   return {

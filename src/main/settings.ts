@@ -80,7 +80,8 @@ export class SettingsStore {
 
   exportDefaults(): ExportOptions {
     return this.get<ExportOptions>('exportDefaults', {
-      format: 'webp',
+      // Most marketplaces accept JPEG and some (Etsy) do not accept WebP.
+      format: 'jpeg',
       quality: 90,
       maxDimension: null
     })

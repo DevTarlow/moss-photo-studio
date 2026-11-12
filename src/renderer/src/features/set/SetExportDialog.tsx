@@ -89,7 +89,7 @@ export function SetExportDialog({
         <input type="checkbox" checked={includeVersions} onChange={(event) => setIncludeVersions(event.target.checked)} className="mt-0.5" />
         <span>
           Include every version
-          <span className="mt-0.5 block text-[11px]" style={{ color: 'var(--text-faint)' }}>Older versions get a -v2, -v3 suffix. The newest image for each shot stays unsuffixed.</span>
+          <span className="mt-0.5 block text-[11px]" style={{ color: 'var(--text-faint)' }}>Older versions get a -v2, -v3 suffix. The main version for each shot stays unsuffixed.</span>
         </span>
       </label>
       <div className="mt-3 grid grid-cols-2 gap-3">

@@ -91,8 +91,8 @@ async function screenshot(name: string, compare = true): Promise<void> {
 }
 
 async function gotoLibrary(): Promise<void> {
-  await page.getByRole('link', { name: 'Library', exact: true }).first().click()
-  await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
+  await page.getByRole('link', { name: 'All work', exact: true }).first().click()
+  await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible()
 }
 
 async function newSetFromLibrary(): Promise<void> {
@@ -289,7 +289,9 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await expect(page.getByText("What's next")).toBeVisible()
     await expect(page.getByText('Find these in the studio rail whenever you need them.')).toBeVisible()
     await page.getByRole('button', { name: 'Finish Setup' }).click()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
+    await expect(page.getByText('Listing kit')).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('link', { name: 'All work', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'New project' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Select' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'New Set', exact: true })).toBeVisible()
@@ -523,16 +525,16 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await dialog.getByRole('button', { name: 'Export', exact: true }).click()
     await expect.poll(() => fs.existsSync(path.join(exportFolder, 'set.txt')), { timeout: 20_000 }).toBe(true)
     const files = fs.readdirSync(exportFolder)
-    const images = files.filter((file) => file.endsWith('.webp'))
+    const images = files.filter((file) => file.endsWith('.jpg'))
     expect(images.length).toBe(6)
     expect(files).not.toContain('source.jpg')
     expect(images.sort()).toEqual([
-      '01-main-shot.webp',
-      '02-in-use.webp',
-      '03-close-up.webp',
-      '04-size-reference.webp',
-      '05-flat-lay.webp',
-      '06-gift-ready.webp'
+      '01-main-shot.jpg',
+      '02-in-use.jpg',
+      '03-close-up.jpg',
+      '04-size-reference.jpg',
+      '05-flat-lay.jpg',
+      '06-gift-ready.jpg'
     ])
     await expect(page.getByText(/6 images exported to "exports"\./)).toBeVisible({ timeout: 10_000 })
     await expect(page.getByRole('button', { name: 'Open Folder' })).toBeVisible()
@@ -758,8 +760,8 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.getByRole('button', { name: /Make This Change/ }).click()
     await expect(page.getByText(/The request timed out\./)).toBeVisible({ timeout: 20_000 })
     expect(await spendCents()).toBe(before)
-    await page.getByRole('link', { name: 'Library', exact: true }).first().click()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
+    await page.getByRole('link', { name: 'All work', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible()
     muse.control('normal')
     expect(pageErrors).toEqual([])
   })
@@ -813,7 +815,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.evaluate(() => { window.location.hash = '#/library' })
     await expect(page.getByText('Working offline', { exact: true }).first()).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText("License checks resume when you're connected.", { exact: true }).first()).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Open Settings' }).first()).toBeVisible()
     await expect(page.getByText('Finish setting up')).toHaveCount(0)
     await expect(page.getByText('Make a first set')).toHaveCount(0)
@@ -828,7 +830,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await expect(browse).toBeVisible()
     await browse.focus()
     await page.keyboard.press('Enter')
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible()
     await screenshot('license-expired-readonly')
     await page.locator('article.lib-card').first().getByRole('link', { name: /Open/ }).click()
     await expect(page.getByText(/Reactivate to make images/).first()).toBeVisible({ timeout: 20_000 })
@@ -868,8 +870,8 @@ test.describe.serial('Moss Photo Studio journey', () => {
         await window.moss.projects.create({ type: 'image', name: `Perf project ${index}` })
       }
     })
-    await page.getByRole('link', { name: 'Library', exact: true }).first().click()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('link', { name: 'All work', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible({ timeout: 20_000 })
     const total = await page.evaluate(async () => {
       const result = await window.moss.projects.list({ limit: 1 })
       return result.ok ? result.data.total : 0
