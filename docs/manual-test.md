@@ -7,7 +7,7 @@ This is the record of what was run, what passed, and what the acceptance owner s
 | Check | Result |
 | --- | --- |
 | `npm run typecheck` | Pass |
-| `npm test` | 122 tests pass in 12 files |
+| `npm test` | 176 tests pass in 18 files |
 | `npm run test:e2e` | 13 serial tests pass, including axe on dialogs, 510-project pagination, all-screen 1024 and 150% layout, and screenshot comparison |
 | `npm run audit:tokens` | All foreground/background token pairs pass AA in light and dark |
 | `npm run lint` | 0 errors, 0 warnings |
@@ -65,6 +65,12 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - Screenshot comparison passed on a second run with the live app.
 - Large library: 510 created projects loaded 20 at a time. Previous and Next moved between pages, and search found the oldest project.
 - Application menu: Export, Undo, Redo, Copy Image, zoom, and Toggle Panel enabled only in the correct editor states. Paste stayed available in the Library. The test read the native menu item state through Electron.
+- Set exports use the stored result file, so the brand badge is present; the integration test distinguishes the result file from the pre-badge working copy by colour.
+- A licence survives a store 5xx as offline/grace, an unreadable key is not treated as licensed, and the machine label contains no hostname.
+- The database passes `quick_check`; a corrupt live file recovers from the latest `VACUUM INTO` snapshot; the pre-migration backup includes committed WAL frames.
+- A backup restores into a new library and switches the restored database's library path; diagnostics contain no keys or images. The integration suite covers the round trip.
+- A paid job reserves its budget so two concurrent jobs cannot pass the same check; a preflight disk check blocks a run with too little free space; a short Create can be topped up by its missing count.
+- A source import is serialized per project, so two simultaneous first imports keep both originals.
 
 ## Coverage gaps in the automated artifact
 
