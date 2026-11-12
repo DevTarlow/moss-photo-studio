@@ -118,6 +118,11 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const job = running ?? (currentJob?.status === 'running' ? currentJob : null)
   const isRunning = Boolean(job)
   const completeJobs = runs.filter((run) => run.status !== 'running')
+  const reportableRun = jobToReport ?? runFilter
+  const remainingFromRun =
+    reportableRun && reportableRun.status !== 'running' && reportableRun.done > 0 && reportableRun.done < reportableRun.total
+      ? reportableRun.total - reportableRun.done
+      : 0
   // An example-started prompt can leave the selected product photo out of the run.
   const productReferenceActive = promptSource !== 'example' || exampleUsesProduct
   const activeProductRef = productReferenceActive ? productRef : null
@@ -347,6 +352,20 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       upsert(state)
       setCurrentJobId(result.jobId)
       handled.current.delete(result.jobId)
+    } catch (caught) {
+      setError(messageOf(caught))
+      toast.error(messageOf(caught))
+    }
+  }
+
+  const makeTheRest = async (): Promise<void> => {
+    if (!reportableRun || remainingFromRun < 1) return
+    setError(null)
+    try {
+      const result = await unwrap(window.moss.jobs.retryFailed({ jobId: reportableRun.id }))
+      handled.current.delete(result.jobId)
+      setCurrentJobId(result.jobId)
+      toast.status(`Making the other ${remainingFromRun} ${remainingFromRun === 1 ? 'image' : 'images'}.`)
     } catch (caught) {
       setError(messageOf(caught))
       toast.error(messageOf(caught))
@@ -694,16 +713,20 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                 <p className="meta mt-1" aria-live="polite">{job.done} made · {job.failed} failed · {job.total} total</p>
               </div>
             )}
-            {error && !isRunning && results.length === 0 ? (
+            {error && !isRunning ? (
               <div className="mb-4 rounded-[10px] border p-3" style={{ borderColor: 'var(--danger)', background: 'var(--danger-soft)' }} role="alert">
                 <p className="text-[12px] font-semibold">That did not come through.</p>
                 <p className="mt-1 text-[12px]">{error}</p>
                 <div className="mt-2">
-                  <Button variant="secondary" size="sm" onClick={() => void submit()}>Try Again</Button>
+                  {remainingFromRun > 0 ? (
+                    <Button variant="secondary" size="sm" onClick={() => void makeTheRest()}>
+                      Make the other {remainingFromRun} · {usd(remainingFromRun)}
+                    </Button>
+                  ) : (
+                    <Button variant="secondary" size="sm" onClick={() => void submit()}>Try Again</Button>
+                  )}
                 </div>
               </div>
-            ) : error ? (
-              <p className="mb-4 rounded-[8px] border p-3 text-[12px]" style={{ borderColor: 'var(--border)', color: 'var(--danger)' }} role="alert">{error}</p>
             ) : null}
             {results.length === 0 ? (
               !isRunning && (

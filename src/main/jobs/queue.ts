@@ -39,6 +39,7 @@ import type { LicenseController } from '../license/controller'
 import { absoluteInLibrary, workingFor, imageRelative } from '../media/paths'
 import { applyBadge } from '../media/badge'
 import { generateThumbnail, saveResultImage } from '../media/import'
+import { hasDiskRoom } from '../media/disk'
 
 
 export class JobStartError extends Error {
@@ -99,6 +100,7 @@ interface JobRun {
   cancelRequested: boolean
   finished: boolean
   activeCount: number
+  reservation: string | null
 }
 
 interface QueueDeps {
@@ -132,6 +134,9 @@ export class JobQueue {
   private readonly runs = new Map<string, JobRun>()
   private readonly waiting: Array<{ run: JobRun; item: RuntimeItem }> = []
   private inFlight = 0
+  /** Estimated cents held by jobs that are running or waiting to start. */
+  private reservedCents = 0
+  private readonly reservations = new Map<string, number>()
   private readonly now: () => number
 
   constructor(private readonly deps: QueueDeps) {
@@ -222,7 +227,8 @@ export class JobQueue {
       })
     }
     const estimate = estimateCents(specs.reduce((sum, item) => sum + item.requested, 0))
-    this.requireBudget(estimate)
+    await this.requireDiskRoom(estimate)
+    const reservation = this.requireBudget(estimate)
     const work: JobWork = {
       kind: 'set',
       projectId: project.id,
@@ -231,7 +237,12 @@ export class JobQueue {
       setPlan: plan,
       sourceImageId: sourceId
     }
-    return this.createJob(work, 'set')
+    try {
+      return await this.createJob(work, 'set', reservation)
+    } catch (error) {
+      this.releaseReservation(reservation)
+      throw error
+    }
   }
 
   async startCreate(input: CreateJobInput): Promise<{ jobId: string }> {
@@ -282,7 +293,8 @@ export class JobQueue {
         `This reference adds ${prompt.length - text.length} characters. Shorten your description by ${prompt.length - PROMPT_MAX}.`
       )
     }
-    this.requireBudget(estimateCents(input.count))
+    await this.requireDiskRoom(input.count)
+    const reservation = this.requireBudget(estimateCents(input.count))
     const work: JobWork = {
       kind: 'create',
       projectId: project.id,
@@ -311,7 +323,12 @@ export class JobQueue {
         }
       ]
     }
-    return this.createJob(work, 'create')
+    try {
+      return await this.createJob(work, 'create', reservation)
+    } catch (error) {
+      this.releaseReservation(reservation)
+      throw error
+    }
   }
 
   async startEdit(input: EditJobInput): Promise<{ jobId: string }> {
@@ -355,7 +372,8 @@ export class JobQueue {
         `That's ${text.length - MAX_PROMPT} characters over. Shorten it and try again.`
       )
     }
-    this.requireBudget(estimateCents(1))
+    await this.requireDiskRoom(1)
+    const reservation = this.requireBudget(estimateCents(1))
     const word = template ? templateWord(template) : input.kind === 'scene' ? 'Scene' : input.kind === 'model' ? 'Model' : 'Edit'
     const work: JobWork = {
       kind: 'edit',
@@ -385,7 +403,12 @@ export class JobQueue {
         }
       ]
     }
-    return this.createJob(work, 'edit')
+    try {
+      return await this.createJob(work, 'edit', reservation)
+    } catch (error) {
+      this.releaseReservation(reservation)
+      throw error
+    }
   }
 
   async retryFailed(jobId: string): Promise<{ jobId: string }> {
@@ -400,20 +423,46 @@ export class JobQueue {
     if (!oldWork) {
       throw new JobStartError('invalid_request', 'Try that again from the project.')
     }
-    const failedKeys = new Set(oldItems.filter((item) => item.status === 'failed').map((item) => item.key))
-    if (!failedKeys.size) throw new JobStartError('invalid_payload', 'There are no failed images to try again.')
+    const missing = new Map<string, number>()
+    for (const item of oldItems) {
+      if (item.status === 'failed') {
+        missing.set(item.key, Math.max(1, item.requested))
+      } else if (item.status === 'partial') {
+        const count = Math.max(0, item.requested - item.returned)
+        if (count) missing.set(item.key, count)
+      }
+    }
+    if (!missing.size) {
+      throw new JobStartError('invalid_payload', 'There are no failed or incomplete images to try again.')
+    }
     const project = this.requireProject(oldWork.projectId, null)
     this.requireNoRunningProject(project.id)
-    const specs = oldWork.items.filter((item) => failedKeys.has(item.key))
-    if (!specs.length) throw new JobStartError('invalid_payload', 'There are no failed images to try again.')
+    const specs = oldWork.items
+      .filter((item) => missing.has(item.key))
+      .map((item) => {
+        const requested = missing.get(item.key) ?? item.requested
+        return {
+          ...item,
+          requested,
+          label: item.createMode ? `Create ${requested} ${requested === 1 ? 'image' : 'images'}` : item.label,
+          pendingImageId: undefined
+        }
+      })
+    if (!specs.length) throw new JobStartError('invalid_payload', 'There are no failed or incomplete images to try again.')
     const estimate = estimateCents(specs.reduce((sum, item) => sum + item.requested, 0))
-    this.requireBudget(estimate)
+    await this.requireDiskRoom(estimate)
+    const reservation = this.requireBudget(estimate)
     const work: JobWork = {
       ...oldWork,
       projectName: project.name,
-      items: specs.map((spec) => ({ ...spec, pendingImageId: undefined }))
+      items: specs
     }
-    return this.createJob(work, work.kind)
+    try {
+      return await this.createJob(work, work.kind, reservation)
+    } catch (error) {
+      this.releaseReservation(reservation)
+      throw error
+    }
   }
 
   cancel(jobId: string): void {
@@ -466,21 +515,43 @@ export class JobQueue {
     }
   }
 
-  private requireBudget(estimate: number): void {
+  private async requireDiskRoom(images: number): Promise<void> {
+    const needed = 64 * 1024 * 1024 + images * 8 * 1024 * 1024
+    if (!(await hasDiskRoom(this.deps.libraryPath(), needed))) {
+      throw new JobStartError(
+        'disk_full',
+        'There is not enough free space to save the next images. Free some space and try again.'
+      )
+    }
+  }
+
+  private requireBudget(estimate: number): string | null {
     const cap = this.deps.settings.budgetCents()
-    if (cap === null) return
+    if (cap === null) return null
     const bounds = monthBounds(monthKey(new Date(this.now())))
     const spent = this.deps.usage.monthTotal(bounds.start, bounds.end)
-    if (spent + estimate > cap) {
+    if (spent + this.reservedCents + estimate > cap) {
       const limit = `$${(cap / 100).toFixed(2)}`
       throw new JobStartError(
         'budget',
         `This run would pass your ${limit} monthly limit. Raise it in Usage, or make fewer images.`
       )
     }
+    const token = crypto.randomUUID()
+    this.reservations.set(token, estimate)
+    this.reservedCents += estimate
+    return token
   }
 
-  private async createJob(work: JobWork, kind: JobKind): Promise<{ jobId: string }> {
+  private releaseReservation(token: string | null): void {
+    if (!token) return
+    const amount = this.reservations.get(token)
+    if (amount === undefined) return
+    this.reservedCents = Math.max(0, this.reservedCents - amount)
+    this.reservations.delete(token)
+  }
+
+  private async createJob(work: JobWork, kind: JobKind, reservation: string | null): Promise<{ jobId: string }> {
     const jobId = crypto.randomUUID()
     const items: RuntimeItem[] = []
     let labels = this.deps.images.labels(work.projectId)
@@ -560,7 +631,8 @@ export class JobQueue {
       items,
       cancelRequested: false,
       finished: false,
-      activeCount: 0
+      activeCount: 0,
+      reservation
     }
     items.forEach((item) => this.waiting.push({ run, item }))
     this.runs.set(jobId, run)
@@ -952,6 +1024,7 @@ export class JobQueue {
     run.state.finishedAt = this.now()
     run.state.currentLabel = undefined
     this.deps.jobs.updateCounters(run.state.id, run.state.done, run.state.failed, status, run.state.finishedAt)
+    this.releaseReservation(run.reservation)
     this.persist(run)
     this.runs.delete(run.state.id)
     this.deps.onUpdate(this.snapshotState(run))

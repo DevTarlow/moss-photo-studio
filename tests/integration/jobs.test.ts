@@ -201,6 +201,25 @@ describe('job queue create', () => {
     expect(event).toMatchObject({ requested: 4, returned: 2, costCents: 2, result: 'ok' })
   })
 
+  it('tops up a short create by the missing count', async () => {
+    server.control('short-count')
+    const project = imageProject()
+    const first = await queue.startCreate({
+      projectId: project.id,
+      prompt: 'A short run',
+      count: 4,
+      shape: 'square',
+      format: 'webp'
+    })
+    await waitForJob(first.jobId)
+    server.control('normal')
+    const retry = await queue.retryFailed(first.jobId)
+    const state = await waitForJob(retry.jobId)
+    expect(state.total).toBe(2)
+    expect(state.done).toBe(2)
+    expect(images.list(project.id, true)).toHaveLength(4)
+  })
+
   it('stores nothing and records zero when no image comes back', async () => {
     server.control('short-count')
     const project = imageProject()
@@ -290,6 +309,28 @@ describe('job queue create', () => {
     ).rejects.toBeInstanceOf(JobStartError)
     expect(server.requests()).toHaveLength(0)
     expect(monthEvents().total).toBe(0)
+  })
+
+  it('reserves the budget across two running jobs', async () => {
+    settings.set('budgetCents', 1)
+    server.control('slow')
+    const first = await queue.startCreate({
+      projectId: imageProject().id,
+      prompt: 'First',
+      count: 1,
+      shape: 'square',
+      format: 'webp'
+    })
+    await expect(
+      queue.startCreate({
+        projectId: imageProject().id,
+        prompt: 'Second',
+        count: 1,
+        shape: 'square',
+        format: 'webp'
+      })
+    ).rejects.toMatchObject({ code: 'budget' })
+    await waitForJob(first.jobId)
   })
 
   it('refuses without a key or a license', async () => {
