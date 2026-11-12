@@ -32,7 +32,37 @@ export class MediaService {
     }
   ) {}
 
+  private readonly importChains = new Map<string, Promise<unknown>>()
+
+  /**
+   * A project's first source is named `source.<ext>`. Two imports racing each
+   * other would both see an empty project and choose that name, so the second
+   * would overwrite the first original. Serialize imports per project.
+   */
   async importSource(input: {
+    projectId: string
+    bytes: Uint8Array
+    name?: string
+    label?: string
+    personId?: string | null
+  }): Promise<ImportResult> {
+    const previous = this.importChains.get(input.projectId) ?? Promise.resolve()
+    const next = previous.then(
+      () => this.importSourceNow(input),
+      () => this.importSourceNow(input)
+    )
+    const tail = next.then(
+      () => undefined,
+      () => undefined
+    )
+    this.importChains.set(input.projectId, tail)
+    void tail.finally(() => {
+      if (this.importChains.get(input.projectId) === tail) this.importChains.delete(input.projectId)
+    })
+    return next
+  }
+
+  private async importSourceNow(input: {
     projectId: string
     bytes: Uint8Array
     name?: string

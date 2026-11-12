@@ -126,6 +126,23 @@ describe('import pipeline', () => {
     expect(secondImage.url).not.toBe(firstImage.url)
     expect(projects.get(project.id)!.sourceImageId).toBe(second.imageId)
   })
+
+  it('keeps both originals when two imports arrive at once', async () => {
+    const project = projects.create({ type: 'photo', name: 'Concurrent photos' })
+    const firstBytes = await jpeg(620, 620)
+    const secondBytes = await jpeg(720, 720)
+    const [first, second] = await Promise.all([
+      media.importSource({ projectId: project.id, bytes: firstBytes, name: 'one.jpg' }),
+      media.importSource({ projectId: project.id, bytes: secondBytes, name: 'two.jpg' })
+    ])
+    expect(first.imageId).not.toBe(second.imageId)
+    const rows = images.list(project.id, true)
+    expect(rows).toHaveLength(2)
+    for (const [row, bytes] of [[rows[0]!, firstBytes], [rows[1]!, secondBytes]] as const) {
+      const relative = decodeURI(row.url!.replace('moss-media://library/', ''))
+      expect(Buffer.compare(fs.readFileSync(path.join(dir, 'library', relative)), bytes)).toBe(0)
+    }
+  })
 })
 
 describe('set export', () => {
