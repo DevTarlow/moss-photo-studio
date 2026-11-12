@@ -96,17 +96,22 @@ export function FirstSetPicker({
           })}
         </Stack>
         <Text type="supporting" color="secondary">
-          Examples on other products. Shots you turn on stay in color.
+          Examples on other products. Click a shot to add or remove it.
         </Text>
-        <div className="first-set-examples" aria-hidden="true">
+        <div className="first-set-examples" role="group" aria-label="Shot examples">
           {plan.shots.map((shot) => {
             const definition = shotDefinition(shot.type)
             const example = SHOT_EXAMPLES[shot.type]
             return (
-              <div
+              <button
                 key={shot.id}
+                type="button"
                 className="first-set-example"
                 data-enabled={shot.enabled ? 'true' : 'false'}
+                aria-label={`${definition.label} example`}
+                aria-pressed={shot.enabled}
+                disabled={disabled}
+                onClick={() => toggleShot(shot.id)}
               >
                 <span className="first-set-example-frame">
                   <img src={example.src} alt="" />
@@ -115,7 +120,7 @@ export function FirstSetPicker({
                 <Text type="supporting" display="block" className="first-set-example-label">
                   {definition.label}
                 </Text>
-              </div>
+              </button>
             )
           })}
         </div>
