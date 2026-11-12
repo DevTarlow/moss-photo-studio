@@ -1,8 +1,20 @@
-import type { PlanJson } from '@shared/types'
+import type { PlanJson, ShotType } from '@shared/types'
 import { enableFirstShots, firstShotsEnabled } from '@shared/plans'
 import { shotDefinition } from '@shared/prompts/shots'
 import { estimateCents, usd } from '@shared/cost'
 import { Badge, SegmentedControl, SegmentedControlItem, Stack, Text, ToggleButton } from '@astryxdesign/core'
+import { bundledUrl } from '../../lib/assets'
+
+const SHOT_EXAMPLES: Record<ShotType, { src: string; sample?: string }> = {
+  hero: { src: bundledUrl('tiles/examples/main.webp') },
+  lifestyle: { src: bundledUrl('tiles/examples/lifestyle.webp') },
+  detail: { src: bundledUrl('tiles/examples/jewelry.webp') },
+  scale: { src: bundledUrl('tiles/examples/size-reference.webp') },
+  flatlay: { src: bundledUrl('tiles/examples/flatlay.webp') },
+  gift: { src: bundledUrl('tiles/examples/gift.webp') },
+  feature: { src: bundledUrl('tiles/room-for-text.webp'), sample: 'Hand-glazed stoneware' },
+  onmodel: { src: bundledUrl('tiles/examples/on-a-person.webp') }
+}
 
 export function FirstSetPicker({
   plan,
@@ -83,6 +95,30 @@ export function FirstSetPicker({
             )
           })}
         </Stack>
+        <Text type="supporting" color="secondary">
+          Examples on other products. Shots you turn on stay in color.
+        </Text>
+        <div className="first-set-examples" aria-hidden="true">
+          {plan.shots.map((shot) => {
+            const definition = shotDefinition(shot.type)
+            const example = SHOT_EXAMPLES[shot.type]
+            return (
+              <div
+                key={shot.id}
+                className="first-set-example"
+                data-enabled={shot.enabled ? 'true' : 'false'}
+              >
+                <span className="first-set-example-frame">
+                  <img src={example.src} alt="" />
+                  {example.sample && <span className="first-set-example-text">{example.sample}</span>}
+                </span>
+                <Text type="supporting" display="block" className="first-set-example-label">
+                  {definition.label}
+                </Text>
+              </div>
+            )
+          })}
+        </div>
       </Stack>
 
       <Text weight="bold">

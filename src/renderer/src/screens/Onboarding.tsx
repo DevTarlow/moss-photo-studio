@@ -699,7 +699,7 @@ export function Onboarding(): React.JSX.Element {
                           Step 5 of 6 · optional
                         </Text>
                         <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
-                          Make your first set
+                          Make your first photo set
                         </Heading>
                         <Text type="body" color="secondary">
                           {product

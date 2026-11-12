@@ -237,7 +237,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await screenshot('onboarding-customize')
     await assertNoSeriousA11y('onboarding-customize')
     await page.getByRole('button', { name: 'Continue', exact: true }).click()
-    await expect(page.getByRole('heading', { name: 'Make your first set' })).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole('heading', { name: 'Make your first photo set' })).toBeVisible({ timeout: 20_000 })
     const make = page.getByRole('button', { name: /Make 6 Images · \$0\.06/ }).first()
     await expect(make).toBeVisible({ timeout: 20_000 })
     const shots = page.getByRole('group', { name: 'Choose the shots' })

@@ -58,7 +58,7 @@ test('onboarding saves the first photo as a Product without creating a set', asy
     await page.getByRole('button', { name: 'Continue', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Make it your own' })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Continue', exact: true }).click()
-    await expect(page.getByRole('heading', { name: 'Make your first set' })).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole('heading', { name: 'Make your first photo set' })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Save product only' }).click()
 
     await expect(page.getByRole('heading', { name: "You're set up." })).toBeVisible({ timeout: 20_000 })
@@ -122,7 +122,7 @@ test('onboarding lets the seller skip the product step and finish in the Library
     await page.getByRole('button', { name: 'Skip for now', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Make it your own' })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Continue', exact: true }).click()
-    await expect(page.getByRole('heading', { name: 'Make your first set' })).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole('heading', { name: 'Make your first photo set' })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('Add a product first')).toBeVisible()
     await page.getByRole('button', { name: 'Skip for now', exact: true }).click()
 
@@ -131,7 +131,7 @@ test('onboarding lets the seller skip the product step and finish in the Library
 
     // Ready keeps a Back exit to revisit the optional steps.
     await page.getByRole('button', { name: 'Back', exact: true }).click()
-    await expect(page.getByRole('heading', { name: 'Make your first set' })).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole('heading', { name: 'Make your first photo set' })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Skip for now', exact: true }).click()
 
     await expect(page.getByRole('heading', { name: "You're set up." })).toBeVisible({ timeout: 20_000 })
