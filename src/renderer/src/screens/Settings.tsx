@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   AlertTriangle,
+  Archive,
   Check,
   Copy,
   ExternalLink,
   FolderOpen,
+  HardDriveDownload,
   Loader2,
   ShieldCheck,
+  Stethoscope,
   Trash2,
   UserRound
 } from 'lucide-react'
@@ -279,6 +282,9 @@ function LibrarySection(): React.JSX.Element {
   const [stats, setStats] = useState<{ path: string; images: number; bytes: number } | null>(null)
   const [oldPath, setOldPath] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [backingUp, setBackingUp] = useState(false)
+  const [restoring, setRestoring] = useState(false)
+  const [diagnosing, setDiagnosing] = useState(false)
 
   const refreshStats = async (): Promise<void> => {
     try {
@@ -325,6 +331,53 @@ function LibrarySection(): React.JSX.Element {
     }
   }
 
+  const backupNow = async (): Promise<void> => {
+    setBackingUp(true)
+    try {
+      const result = await unwrap(window.moss.backup.create())
+      if (result.created) {
+        await refreshSettings()
+        toast.status(`Backup saved in ${result.folderName ?? 'the folder you chose'}.`)
+      }
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    } finally {
+      setBackingUp(false)
+    }
+  }
+
+  const restore = async (): Promise<void> => {
+    setRestoring(true)
+    try {
+      const result = await unwrap(window.moss.backup.restore())
+      if (result.started) toast.status('Restoring the library. The app will restart.')
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    } finally {
+      setRestoring(false)
+    }
+  }
+
+  const openBackup = async (): Promise<void> => {
+    try {
+      await unwrap(window.moss.backup.openLast())
+    } catch {
+      toast.error('There is no saved backup folder to open yet.')
+    }
+  }
+
+  const diagnostics = async (): Promise<void> => {
+    setDiagnosing(true)
+    try {
+      const result = await unwrap(window.moss.diagnostics.create())
+      toast.status(`Diagnostics saved in ${result.folderName}.`)
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    } finally {
+      setDiagnosing(false)
+    }
+  }
+
   return (
     <div>
       <SettingsTitle title="Storage" line="Everything the studio saves lives in one folder on this computer." />
@@ -353,6 +406,37 @@ function LibrarySection(): React.JSX.Element {
         )}
       </SectionCard>
       <p className="hint mt-3">Changing the folder copies the whole library. Nothing is deleted from the old location.</p>
+      <SectionCard className="mt-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="field-label">Backup</p>
+            <p className="hint mt-1">A copy of the library and database in one folder. Your Muse key and secrets are not included.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" disabled={backingUp} onClick={() => void backupNow()}>
+              {backingUp ? <Loader2 size={14} className="animate-spin" /> : <Archive size={15} />} Back Up Now
+            </Button>
+            <Button variant="secondary" disabled={restoring} onClick={() => void restore()}>
+              {restoring ? <Loader2 size={14} className="animate-spin" /> : <HardDriveDownload size={15} />} Restore
+            </Button>
+            <Button variant="ghost" disabled={!settings?.lastBackupAt} onClick={() => void openBackup()}>
+              <FolderOpen size={15} /> Open Backup
+            </Button>
+          </div>
+        </div>
+        <p className="hint mt-3">
+          {settings?.lastBackupAt ? `Last backup ${relativeTime(settings.lastBackupAt)}.` : 'No backup has been made yet.'}
+        </p>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
+          <div>
+            <p className="field-label">Diagnostics</p>
+            <p className="hint mt-1">App information, library counts and local logs for support. No keys, prompts or images.</p>
+          </div>
+          <Button variant="secondary" disabled={diagnosing} onClick={() => void diagnostics()}>
+            {diagnosing ? <Loader2 size={14} className="animate-spin" /> : <Stethoscope size={15} />} Create Diagnostics
+          </Button>
+        </div>
+      </SectionCard>
     </div>
   )
 }

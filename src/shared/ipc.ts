@@ -28,6 +28,8 @@ import type {
   UsageEvent,
   UsageListResult,
   UsageSummary,
+  BackupStatus,
+  BackupSummary,
   IpcResult,
   AdjustTransform,
   Format,
@@ -48,6 +50,11 @@ export interface IpcChannels {
   'app:copyLibraryPath': { request: undefined; response: { ok: true } }
   'app:readClipboardImage': { request: undefined; response: { bytes: Uint8Array | null; mime: string | null } }
   'app:reset': { request: undefined; response: { ok: true } }
+  'backup:create': { request: undefined; response: { created: boolean; folderName?: string; summary?: BackupSummary } }
+  'backup:restore': { request: undefined; response: { started: boolean; folderName?: string; summary?: BackupSummary } }
+  'backup:openLast': { request: undefined; response: { ok: true } }
+  'backup:status': { request: undefined; response: BackupStatus }
+  'diagnostics:create': { request: undefined; response: { folderName: string } }
   'dialog:pickLogo': { request: undefined; response: Brand | null }
   'settings:get': { request: { key: string }; response: { value: unknown } }
   'settings:set': { request: { key: string; value: unknown }; response: { ok: true } }
@@ -318,6 +325,15 @@ export interface MossApi {
     images: Call<'export:images'>
     set: Call<'export:set'>
     cancel: Call<'export:cancel'>
+  }
+  backup: {
+    create: CallVoid<'backup:create'>
+    restore: CallVoid<'backup:restore'>
+    openLast: CallVoid<'backup:openLast'>
+    status: CallVoid<'backup:status'>
+  }
+  diagnostics: {
+    create: CallVoid<'diagnostics:create'>
   }
   onJobUpdate(listener: JobUpdateListener): () => void
   onLicenseChanged(listener: LicenseChangeListener): () => void

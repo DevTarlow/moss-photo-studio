@@ -29,6 +29,8 @@ import { absoluteInLibrary, workingFor } from '../media/paths'
 import { applyLocalAdjust } from '../media/transform'
 import { exportImageToPath, exportOneImage, exportSetProject } from '../media/export'
 import { openExternalSafely } from '../security'
+import { SCHEMA_VERSION } from '../db/connection'
+import { createBackup, createDiagnostics, inspectBackup, stageRestore } from '../backup'
 import { runtimeEnv } from '../env'
 import { registerIpc, registerRaw, IpcFault } from './helpers'
 import { type SettingKey } from '../settings'
@@ -213,6 +215,22 @@ async function saveFileDialog(context: AppContext, options: Electron.SaveDialogO
   return window ? dialog.showSaveDialog(window, options) : dialog.showSaveDialog(options)
 }
 
+async function confirmRestore(context: AppContext, summary: { projects: number; images: number; createdAt: number }): Promise<boolean> {
+  const options: Electron.MessageBoxOptions = {
+    type: 'warning',
+    title: 'Restore this backup?',
+    message: `Restore ${summary.projects} ${summary.projects === 1 ? 'project' : 'projects'} and ${summary.images} ${summary.images === 1 ? 'image' : 'images'}?`,
+    detail:
+      'The restored library opens in the folder you choose. The current library stays where it is until the restore finishes. The app restarts to complete it, and your Muse key must be entered again.',
+    buttons: ['Restore', 'Cancel'],
+    defaultId: 1,
+    cancelId: 1
+  }
+  const window = context.getWindow()
+  const result = window ? await dialog.showMessageBox(window, options) : await dialog.showMessageBox(options)
+  return result.response === 0
+}
+
 function csvField(value: string | number | null | undefined): string {
   const text = value === null || value === undefined ? '' : String(value)
   if (/[",\n]/.test(text)) return `"${text.replaceAll('"', '""')}"`
@@ -302,6 +320,126 @@ export function registerIpcHandlers(context: AppContext): void {
   registerIpc(context, 'app:copyLibraryPath', voidSchema, async () => {
     await clipboard.writeText(context.libraryPath())
     return { ok: true as const }
+  })
+
+  registerIpc(context, 'backup:create', voidSchema, async () => {
+    if (context.queue.active().some((job) => job.status === 'running')) {
+      throw new IpcFault('already_running', 'Finish the images in progress before backing up.')
+    }
+    const pick = await openFolderDialog(context, {
+      title: 'Choose where to save the backup',
+      defaultPath: app.getPath('documents'),
+      properties: ['openDirectory', 'createDirectory']
+    })
+    if (pick.canceled || !pick.filePaths[0]) return { created: false }
+    let result
+    try {
+      result = await createBackup({
+        db: context.db,
+        userDataDir: context.userDataDir,
+        libraryPath: context.libraryPath(),
+        appVersion: app.getVersion(),
+        schemaVersion: SCHEMA_VERSION,
+        parentDir: pick.filePaths[0],
+        logger: context.logger
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message === 'backup_inside_library') {
+        throw new IpcFault('invalid_payload', 'Choose a folder outside the library for the backup.')
+      }
+      throw error
+    }
+    settings.set('lastBackupAt', Date.now())
+    settings.set('lastBackupDir', path.join(pick.filePaths[0], result.folderName))
+    return { created: true, ...result }
+  })
+
+  registerIpc(context, 'backup:restore', voidSchema, async () => {
+    if (context.queue.active().some((job) => job.status === 'running')) {
+      throw new IpcFault('already_running', 'Finish the images in progress before restoring.')
+    }
+    const pick = await openFolderDialog(context, {
+      title: 'Choose a Moss Photo Studio backup folder',
+      defaultPath: settings.get<string | null>('lastBackupDir', null) ?? app.getPath('documents'),
+      properties: ['openDirectory']
+    })
+    if (pick.canceled || !pick.filePaths[0]) return { started: false }
+    let inspected
+    try {
+      inspected = await inspectBackup(pick.filePaths[0])
+    } catch {
+      throw new IpcFault('invalid_payload', 'That folder is not a complete Moss Photo Studio backup.')
+    }
+    if (inspected.summary.schemaVersion > SCHEMA_VERSION) {
+      throw new IpcFault('invalid_payload', 'That backup was made by a newer version of Moss Photo Studio.')
+    }
+    if (!(await confirmRestore(context, inspected.summary))) return { started: false }
+    const target = await openFolderDialog(context, {
+      title: 'Choose an empty folder for the restored library',
+      defaultPath: app.getPath('documents'),
+      properties: ['openDirectory', 'createDirectory']
+    })
+    if (target.canceled || !target.filePaths[0]) return { started: false }
+    const targetPath = path.resolve(target.filePaths[0])
+    const currentLibrary = path.resolve(context.libraryPath())
+    const backupPath = path.resolve(pick.filePaths[0])
+    const nested = (a: string, b: string): boolean => a === b || a.startsWith(`${b}${path.sep}`) || b.startsWith(`${a}${path.sep}`)
+    if (nested(targetPath, currentLibrary) || nested(targetPath, backupPath)) {
+      throw new IpcFault('invalid_payload', 'Choose a folder away from the current library and the backup.')
+    }
+    try {
+      await stageRestore({
+        backupDir: pick.filePaths[0],
+        targetLibrary: target.filePaths[0],
+        userDataDir: context.userDataDir,
+        logger: context.logger
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message === 'restore_target_not_empty') {
+        throw new IpcFault('invalid_payload', 'Choose an empty folder for the restored library.')
+      }
+      throw error
+    }
+    // The renderer may show a toast, then the app restarts to swap the database.
+    setTimeout(() => {
+      app.relaunch()
+      app.exit(0)
+    }, 500)
+    return { started: true, folderName: inspected.folderName, summary: inspected.summary }
+  })
+
+  registerIpc(context, 'backup:openLast', voidSchema, async () => {
+    const folder = settings.get<string | null>('lastBackupDir', null)
+    if (!folder) throw new IpcFault('not_found')
+    const error = await shell.openPath(folder)
+    if (error) throw new IpcFault('not_found')
+    return { ok: true as const }
+  })
+
+  registerIpc(context, 'backup:status', voidSchema, () => ({
+    lastBackupAt: settings.get<number | null>('lastBackupAt', null)
+  }))
+
+  registerIpc(context, 'diagnostics:create', voidSchema, async () => {
+    let documents = app.getPath('documents')
+    try {
+      await fs.mkdir(documents, { recursive: true })
+    } catch {
+      documents = app.getPath('temp')
+    }
+    const result = await createDiagnostics({
+      userDataDir: context.userDataDir,
+      libraryPath: context.libraryPath(),
+      documentsDir: documents,
+      appVersion: app.getVersion(),
+      buildDate: context.buildDate,
+      schemaVersion: SCHEMA_VERSION,
+      db: context.db,
+      logger: context.logger
+    })
+    settings.set('lastDiagnosticsDir', result.folder)
+    await shell.openPath(result.folder)
+    return { folderName: result.folderName }
   })
 
   registerIpc(context, 'app:copyImage', z.object({ imageId: idSchema }), async ({ imageId }) => {

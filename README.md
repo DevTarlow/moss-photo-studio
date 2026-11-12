@@ -122,6 +122,8 @@ library/
   ...
 ```
 
+**Settings, Storage** can make a backup folder that contains a consistent snapshot of the database and a copy of the library. The backup does not include the Muse key or the encrypted secret files; enter the key again after a restore, and re-activate the license if asked. Restoring copies the backup into a new empty folder, switches the app to it, and restarts; the current library is left in place until the restore is verified. **Create Diagnostics** writes app information, library counts, and local logs to a folder for support; it contains no keys, prompts, or images.
+
 The Muse key is stored in `secrets.bin`, encrypted with Electron `safeStorage` when a system keyring is available. If no keyring is available, the app falls back to AES-256-GCM with a local key protected with file mode `0600`, and Settings shows a warning. The license key is stored encrypted in `license.json` and in the SQLite license row. No key is ever returned from the main process to the renderer, logged, or placed in a URL. Settings displays only the last four characters.
 
 No telemetry is sent. See [docs/privacy.md](docs/privacy.md).

@@ -139,6 +139,15 @@ const api: MossApi = {
     set: invoke('export:set'),
     cancel: invoke('export:cancel')
   },
+  backup: {
+    create: invokeVoid('backup:create'),
+    restore: invokeVoid('backup:restore'),
+    openLast: invokeVoid('backup:openLast'),
+    status: invokeVoid('backup:status')
+  },
+  diagnostics: {
+    create: invokeVoid('diagnostics:create')
+  },
   onJobUpdate: (listener) => subscribe('moss:job:update', listener as never),
   onLicenseChanged: (listener) => subscribe('moss:license:changed', listener as never),
   onMenuAction: (listener) => subscribe('moss:menu-action', listener as never),

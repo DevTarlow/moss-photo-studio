@@ -1,10 +1,11 @@
 import path from 'node:path'
 import { app, BrowserWindow, dialog, nativeTheme } from 'electron'
-import { APP_ID, APP_NAME, DEFAULT_BUDGET_CENTS, EMPTY_MENU_CONTEXT } from '@shared/constants'
+import { APP_ID, APP_NAME, DEFAULT_BUDGET_CENTS, EMPTY_MENU_CONTEXT, SUPPORT_EMAIL } from '@shared/constants'
 import type { JobState } from '@shared/types'
 import { runtimeEnv, appResourceRoot, defaultLibraryPath, isReleaseBuild } from './env'
 import { Logger } from './logger'
-import { openDatabase } from './db/connection'
+import { closeDatabase, openDatabase } from './db/connection'
+import { applyPendingRestore } from './backup'
 import { SettingsStore } from './settings'
 import { ProjectRepository } from './db/repositories/projects'
 import { PlanRepository } from './db/repositories/plans'
@@ -59,6 +60,7 @@ if (!gotLock) {
 let mainWindow: BrowserWindow | null = null
 let context: AppContext | null = null
 let quitConfirmed = false
+let pendingRestoreError: string | null = null
 let menuContext: MenuContext = { ...EMPTY_MENU_CONTEXT }
 let reopenMainWindow: (() => void) | null = null
 const broadcastTimers = new Map<string, NodeJS.Timeout>()
@@ -128,6 +130,17 @@ app.on('before-quit', (event) => {
     })
 })
 
+let dbClosed = false
+app.on('will-quit', () => {
+  if (!context || dbClosed) return
+  dbClosed = true
+  try {
+    closeDatabase(context.db)
+  } catch {
+    // A failed checkpoint or close must not block quitting.
+  }
+})
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
@@ -140,6 +153,8 @@ async function boot(): Promise<void> {
   const userDataDir = app.getPath('userData')
   const logger = new Logger(path.join(userDataDir, 'logs'))
   logger.info('app', 'starting', { status: isReleaseBuild ? 200 : 0 })
+  const restore = await applyPendingRestore({ userDataDir, logger })
+  pendingRestoreError = restore.error ?? null
   const db = openDatabase({
     file: path.join(userDataDir, 'library.sqlite'),
     libraryPath: defaultLibraryPath(),
@@ -313,6 +328,17 @@ async function boot(): Promise<void> {
     return window
   }
   mainWindow = openMainWindow()
+  if (pendingRestoreError) {
+    const message = pendingRestoreError
+    void dialog.showMessageBox({
+      type: 'warning',
+      title: 'Restore did not finish',
+      message,
+      detail: 'Your current library is unchanged. You can try restoring again from Settings, Storage.',
+      buttons: ['OK'],
+      defaultId: 0
+    })
+  }
   const recent = projects.recent(5)
   const rebuildMenu = (): void => {
     buildAppMenu({
@@ -368,12 +394,19 @@ async function boot(): Promise<void> {
 
 void app.whenReady().then(boot).catch((error: unknown) => {
   const message = error instanceof Error ? error.message : 'unknown'
-  // Do not include a path or a key. The message here is an internal code only.
+  // Do not include a key, a prompt, or a file path in the log line.
+  const newer = message.includes('newer')
+  const corrupt = message.includes('corrupt') || message.includes('not a database')
+  const detail = newer
+    ? 'This library was last opened by a newer version of Moss Photo Studio. Install the newer version to open it again.'
+    : corrupt
+      ? `The library database could not be opened. Your photos are still in ${defaultLibraryPath()}. Copy that folder somewhere safe and contact ${SUPPORT_EMAIL}.`
+      : 'Close the app and open it again. If this repeats, the library folder is safe and can be backed up.'
   void dialog.showMessageBox({
     type: 'error',
     title: APP_NAME,
     message: 'Moss Photo Studio could not start.',
-    detail: 'Close the app and open it again. If this repeats, the library is safe and can be backed up.',
+    detail,
     buttons: ['Close'],
     defaultId: 0
   })

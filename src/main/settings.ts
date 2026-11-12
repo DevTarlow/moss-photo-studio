@@ -29,7 +29,10 @@ export const SETTING_KEYS = [
   'exportFolders',
   'windowState',
   'licenseGraceNotified',
-  'reduceMotion'
+  'reduceMotion',
+  'lastBackupAt',
+  'lastBackupDir',
+  'lastDiagnosticsDir'
 ] as const
 
 export type SettingKey = (typeof SETTING_KEYS)[number]
@@ -132,7 +135,8 @@ export class SettingsStore {
       },
       windowState: this.windowState(),
       licenseGraceNotified: this.get<boolean>('licenseGraceNotified', false),
-      reduceMotion: ['system', 'reduce', 'full'].includes(reduceMotion) ? reduceMotion : 'system'
+      reduceMotion: ['system', 'reduce', 'full'].includes(reduceMotion) ? reduceMotion : 'system',
+      lastBackupAt: this.get<number | null>('lastBackupAt', null)
     }
   }
 }

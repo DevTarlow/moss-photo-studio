@@ -364,12 +364,26 @@ export interface SettingsAll {
   windowState: WindowState | null
   licenseGraceNotified: boolean
   reduceMotion: 'system' | 'reduce' | 'full'
+  lastBackupAt: number | null
 }
 
 export interface LibraryStats {
   path: string
   images: number
   bytes: number
+}
+
+export interface BackupSummary {
+  createdAt: number
+  appVersion: string
+  schemaVersion: number
+  projects: number
+  images: number
+  bytes: number
+}
+
+export interface BackupStatus {
+  lastBackupAt: number | null
 }
 
 export type MenuAction =
