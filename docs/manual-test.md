@@ -7,7 +7,7 @@ This is the record of what was run, what passed, and what the acceptance owner s
 | Check | Result |
 | --- | --- |
 | `npm run typecheck` | Pass |
-| `npm test` | 176 tests pass in 18 files |
+| `npm test` | 178 tests pass in 18 files |
 | `npm run test:e2e` | 13 serial tests pass, including axe on dialogs, 510-project pagination, all-screen 1024 and 150% layout, and screenshot comparison |
 | `npm run audit:tokens` | All foreground/background token pairs pass AA in light and dark |
 | `npm run lint` | 0 errors, 0 warnings |
@@ -44,14 +44,14 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 
 - Invalid activation key shows the approved "That key wasn't accepted" copy. A valid fake key activates. The key is not returned to the renderer.
 - Onboarding: six setup steps (welcome, connect Meta, add an optional product, make it your own with a logo and colors, make an optional first set, ready), a first-set picker with 1/3/6 count presets and per-shot toggles, first-run confirmation, first paid set. The first photo is saved as a Product and no set project exists until Make. The first paid set was started with Space on the focused primary button and finished through the first-run dialog with Tab and Enter.
-- Onboarding product-only path: Save product only creates one Product, no set, marks onboarding done, and reaches Ready; Finish Setup opens Products. This is covered by a focused E2E test.
+- Onboarding product-only path: Save product only creates one Product, no set, marks onboarding done, and reaches Ready; Finish Setup opens the saved product's hub, or Products when nothing was saved. This is covered by a focused E2E test.
 - A five-shot set costs `$0.05`. The primary button says the price before the click. Five requests produced five images.
 - The Set tool has a Plan/Review phase control, a plan preview board, a read-only review with an Edit Plan action, and no duplicate right inspector. Running hides the phase switch and keeps the plan read-only. The plan panel separator resizes with the mouse or arrow keys and persists its width.
 - A two-shot failure set showed the partial review, the failed cards, and `Try Again · $0.02`. The retry made exactly two requests. Total set requests were eight. Older ready images were preserved.
 - Image Editor: Kitchen table tile, a fitted canvas, a compare divider that can be dragged or moved with the slider and arrow keys, hold Space for the earlier version, local 1:1 crop, rotate, brightness, sharpen, apply locally free, version labels, and new version. The crop/rotate preview follows the exporter order; the crop box moves with arrow keys and resizes with Alt+arrow. The adjust-preview state is captured and axe-checked. Copy Image writes a PNG and Paste Image reads it back through the main-process clipboard.
 - Set preview: the lightbox opens on a blurred glass scrim, closes when clicking outside the image, and still closes with the X.
 - Create: four images, run cost, first result gets Newest, persistent Edit/Download/Save as Product/Save as Person/More actions, a result lightbox, Edit opens the editor, Back to Create returns to the result. The empty state shows eight starting cards under Examples with the line "Click a photo to load a starting description.", and the idea menu groups use darker bold titles. A failed run gets its own retry card.
-- Set export: six named WebP files and a UTF-8 `set.txt`, no overwrite, format and quality controls. The toast names the folder and count and offers Open Folder.
+- Set export: six named JPEG files (the export default) and a UTF-8 `set.txt`, no overwrite, format and quality controls. A pinned shot exports as the unsuffixed main file. The toast names the folder and count and offers Open Folder.
 - Usage: month total equals returned images times one cent, by-project rows, ledger, CSV totals sum to the displayed month spend, budget warning at `$10.00`, reset budget. A low budget exposes Make Fewer Images; in Set it reduces the run to one shot and removes the warning when one fits.
 - Products: saved products under Yours first, then 20 included unbranded starter products under Included; the header reads "20 included · N yours". Included cards have no rename/delete and open Use in a Set, Edit This Photo, and New Image from Reference. Create a Product opens the Image Generator with a blank dropper prompt and a Make a new product banner. A saved product keeps the existing rename, delete, search, sort, and pagination behavior.
 - People: Yours first, then the 24 bundled people under Included; user cards carry the rename/remove actions, and the included cards show Maya and the other synthetic reference people. Every included person opens with the candid main photo and four square studio-look thumbnails (Studio front, Studio angle, Full length, Seated); clicking the main photo opens a larger preview, choosing a look updates the main photo, and "Use the original" restores it. Create a set from "Studio angle" and check the on-person control shows the look; create an image from "Full length" and check the person chip and the project keep it. User-added people have no look strip. Create a Person opens the Image Generator with a portrait prompt and a Make a new person banner; Save as Person on a generated result adds the image under Yours.
@@ -87,8 +87,8 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 
 ### 3b. App shell and collections
 
-- [x] **A** The rail has Library, Products, People, Usage, a Tools section with Set, Image Editor, and Image Generator, and Settings. The top-bar New menu launches the same three tools from every main screen.
-- [x] **A** Library has one New entry point, one key/setup banner area, a Select mode, Select all, Clear, Delete, and a sticky bulk bar. The hover checkbox still works.
+- [x] **A** The rail has Products, All work, People, Usage, a Tools section with Set, Image Editor, and Image Generator, and Settings. Products is the home. The top-bar New menu launches the same three tools from every main screen.
+- [x] **A** All work has one New entry point, one key/setup banner area, a Select mode, Select all, Clear, Delete, and a sticky bulk bar. The hover checkbox still works.
 - [x] **A** Products and People have search, sort, and result counts. The Settings storage section is named Storage.
 - [x] **A** Settings uses the same SideNav as the rest of the app; the second settings aside is gone and the content is centered at 1440 and 1024.
 
@@ -114,7 +114,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 - [x] **A** Under three minutes: paste a key, add a product, continue through Make it your own, choose a category, choose the images (all six start selected), make six images, see Setup complete. The first photo is saved as a Product; no set exists until Make.
   - The automated journey completes this in seconds with the fake image host. Human timing with a real key is still an O check.
-- [x] **A** Onboarding has an optional Add product step with the same Skip for now action as the other optional steps, and Continue also works without a photo. The set step shows Add a product first with Skip for now; Ready says No product yet, has a Back button, and Finish Setup opens the Library. This is covered by a focused E2E test.
+- [x] **A** Onboarding has an optional Add product step with the same Skip for now action as the other optional steps, and Continue also works without a photo. The set step shows Add a product first with Skip for now; Ready says No product yet, has a Back button, and Finish Setup opens the saved product's hub, or Products when no product was saved. This is covered by a focused E2E test.
 - [x] **A** Onboarding has an optional Make it your own step between the product and the set. Continue saves the logo and colors and goes to the set step; Skip for now does the same without saving. Settings → Logo & Colors keeps the same fields and preview.
 - [ ] **O** On the first-set step, changing the count or switching a shot updates the price, and Save product only saves the Product, reaches Ready, and creates no set.
 
@@ -157,7 +157,7 @@ Mark each line only after it is run on the target machine. `A` items should be r
 
 - [x] **A** Fill the describe box, choose four images, create. Four results appear with persistent Edit, Download, Save as Product, Save as Person, and More actions; the image opens a lightbox; Edit opens one; Back to Create returns.
 - [x] **A** The empty state shows an Examples title with the line "Click a photo to load a starting description.", a person card, and eight starting cards; the Start from an idea menu has darker bold category titles.
-- [x] **A** Open Image Generator and leave without making an image. No Images project appears and the Library count is unchanged. Make one image, and the project appears.
+- [x] **A** Open Image Generator and leave without making an image. No Images project appears and the All work count is unchanged. Make one image, and the project appears.
 - [x] **A** With a product photo selected, click an example. The description is written for the product and the run sends it. Turn Use my product photo off: the example's own description loads, the run leaves the photo out, and the reference card says so. Editing the description returns to the normal reference rules.
 
 ### 12. Set export
