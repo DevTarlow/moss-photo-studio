@@ -69,9 +69,16 @@ const api: MossApi = {
   },
   products: {
     list: invokeVoid('products:list'),
+    detail: invoke('products:detail'),
     createFromImage: invoke('products:createFromImage'),
     createFromBytes: invoke('products:createFromBytes'),
+    createFromProject: invoke('products:createFromProject'),
     rename: invoke('products:rename'),
+    update: invoke('products:update'),
+    archive: invoke('products:archive'),
+    unarchive: invoke('products:unarchive'),
+    linkProject: invoke('products:linkProject'),
+    unlinkProject: invoke('products:unlinkProject'),
     delete: invoke('products:delete'),
     createProject: invoke('products:createProject'),
     importIntoProject: invoke('products:importIntoProject')

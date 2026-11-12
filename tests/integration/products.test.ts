@@ -106,6 +106,7 @@ describe('products', () => {
     const product = await productService.addFromBytes({ bytes: await jpeg(), name: 'Mug' })
     const set = await productService.createProject({ productId: product.id, type: 'set', shape: 'square', format: 'webp' })
     expect(projects.get(set.projectId)?.type).toBe('set')
+    expect(projects.get(set.projectId)?.productId).toBe(product.id)
     // The set asks what the seller sells before it gets a plan.
     expect(plans.getActive(set.projectId)).toBeNull()
     expect(projects.get(set.projectId)?.category).toBeNull()
@@ -126,6 +127,34 @@ describe('products', () => {
 
     const image = await productService.createProject({ productId: product.id, type: 'image', shape: 'square', format: 'webp' })
     expect(projects.get(image.projectId)?.type).toBe('image')
+  })
+
+  it('groups work into a product, links unfiled work, and archives without deleting it', async () => {
+    const product = await productService.addFromBytes({ bytes: await jpeg(), name: 'Candle' })
+    const set = await productService.createProject({ productId: product.id, type: 'set', shape: 'square', format: 'webp' })
+    const loose = await imageProject('Loose edit')
+    expect(productService.detail(product.id).counts.projects).toBe(1)
+    productService.linkProject(product.id, loose.projectId)
+    const detail = productService.detail(product.id)
+    expect(detail.counts.projects).toBe(2)
+    expect(detail.counts.sets).toBe(1)
+    expect(detail.projects.some((project) => project.id === set.projectId)).toBe(true)
+    productService.unlinkProject(loose.projectId)
+    expect(projects.get(loose.projectId)?.productId).toBeNull()
+
+    const archived = products.archive(product.id)
+    expect(archived?.status).toBe('archived')
+    expect(products.list()).toHaveLength(0)
+    expect(products.list({ includeArchived: true })).toHaveLength(1)
+    expect(projects.get(set.projectId)?.productId).toBe(product.id)
+  })
+
+  it('creates a product from an existing project and links it', async () => {
+    const source = await imageProject('Unfiled mug')
+    expect(projects.get(source.projectId)?.productId).toBeNull()
+    const product = await productService.createFromProject({ projectId: source.projectId, name: 'Mug' })
+    expect(projects.get(source.projectId)?.productId).toBe(product.id)
+    expect(productService.detail(product.id).counts.projects).toBe(1)
   })
 
   it('lists ready library images across projects with search and hides failed or deleted images', async () => {
@@ -157,6 +186,7 @@ describe('bundled products', () => {
     expect(source?.width).toBe(1024)
     expect(products.list()).toHaveLength(0)
     expect(projects.get(set.projectId)?.sourceImageId).toBe(set.imageId)
+    expect(projects.get(set.projectId)?.productId).toBeNull()
 
     const target = projects.create({ type: 'photo', name: 'Bundled target' })
     const imported = await productService.importIntoProject({

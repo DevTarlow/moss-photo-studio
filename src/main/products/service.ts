@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import type { Format, ImportResult, Product, ProjectType, Shape } from '@shared/types'
+import type { Format, ImportResult, Product, ProductDetail, ProjectType, Shape } from '@shared/types'
 import type { ProductRepository } from '../db/repositories/products'
 import type { ImageRepository } from '../db/repositories/images'
 import type { ProjectRepository } from '../db/repositories/projects'
@@ -53,7 +53,7 @@ export class ProductService {
     return { bytes, name: image.label || project?.name || 'Product' }
   }
 
-  async addFromBytes(input: { bytes: Uint8Array; name: string }): Promise<Product> {
+  async addFromBytes(input: { bytes: Uint8Array; name: string; category?: string | null }): Promise<Product> {
     const id = crypto.randomUUID()
     const normalised = await normaliseProduct({
       libraryPath: this.deps.libraryPath(),
@@ -67,7 +67,8 @@ export class ProductService {
         file: normalised.file,
         thumb: normalised.thumb,
         width: normalised.width,
-        height: normalised.height
+        height: normalised.height,
+        category: input.category ?? null
       })
     } catch (error) {
       await this.removeFiles([normalised.file, normalised.thumb])
@@ -77,7 +78,57 @@ export class ProductService {
 
   async saveFromImage(input: { imageId: string; name: string }): Promise<Product> {
     const source = await this.sourceBytes(input.imageId)
-    return this.addFromBytes({ bytes: source.bytes, name: cleanName(input.name, source.name) })
+    const product = await this.addFromBytes({ bytes: source.bytes, name: cleanName(input.name, source.name) })
+    const image = this.deps.images.get(input.imageId)
+    if (image) {
+      const project = this.deps.projects.get(image.projectId)
+      if (project && !project.productId) {
+        this.deps.projects.update(project.id, { productId: product.id })
+      }
+    }
+    return product
+  }
+
+  async createFromProject(input: { projectId: string; name?: string }): Promise<Product> {
+    const project = this.deps.projects.get(input.projectId)
+    if (!project) throw new ImageImportError('unreadable', 'That project is not here anymore.')
+    if (!project.sourceImageId) throw new ImageImportError('unreadable', 'Add a product photo first.')
+    const source = await this.sourceBytes(project.sourceImageId)
+    const product = await this.addFromBytes({
+      bytes: source.bytes,
+      name: cleanName(input.name ?? project.name, source.name),
+      category: project.category
+    })
+    this.deps.projects.update(project.id, { productId: product.id })
+    return product
+  }
+
+  detail(id: string): ProductDetail {
+    const product = this.deps.products.get(id)
+    if (!product) throw new ImageImportError('unreadable', 'That product is not here anymore.')
+    const projects = this.deps.projects.list({ productId: id, limit: 200 }).items
+    const sets = projects.filter((project) => project.type === 'set')
+    const images = projects.reduce((sum, project) => sum + project.imageCount, 0)
+    return {
+      product,
+      projects,
+      counts: { projects: projects.length, sets: sets.length, images },
+      latestSet: sets[0] ?? null
+    }
+  }
+
+  linkProject(productId: string, projectId: string): { ok: true } {
+    if (isBundledProduct(productId)) throw new ImageImportError('unreadable', 'Included products cannot own work.')
+    if (!this.deps.products.getRow(productId)) throw new ImageImportError('unreadable', 'That product is not here anymore.')
+    if (!this.deps.projects.get(projectId)) throw new ImageImportError('unreadable', 'That project is not here anymore.')
+    this.deps.projects.update(projectId, { productId })
+    return { ok: true }
+  }
+
+  unlinkProject(projectId: string): { ok: true } {
+    if (!this.deps.projects.get(projectId)) throw new ImageImportError('unreadable', 'That project is not here anymore.')
+    this.deps.projects.update(projectId, { productId: null })
+    return { ok: true }
   }
 
   private async removeFiles(files: string[]): Promise<void> {
@@ -128,6 +179,9 @@ export class ProductService {
     const project = this.deps.projects.create({
       type: input.type,
       name,
+      // Included products are resources, not product rows; a bundled source
+      // starts as unfiled work until the seller saves it as a Product.
+      productId: isBundledProduct(input.productId) ? null : input.productId,
       // A set has no plan until the seller picks what they sell. The set
       // workspace shows the category chooser first.
       category: null,

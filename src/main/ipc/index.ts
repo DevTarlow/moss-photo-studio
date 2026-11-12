@@ -14,6 +14,7 @@ import type {
   LicenseState,
   PlanJson,
   Product,
+  ProductDetail,
   Project,
   ProjectDetail,
   SettingsAll,
@@ -626,6 +627,7 @@ export function registerIpcHandlers(context: AppContext): void {
       filter: z.enum(['all', 'sets', 'photos', 'images']).optional(),
       sort: z.enum(['recent', 'oldest', 'name']).optional(),
       search: z.string().max(200).optional(),
+      productId: z.string().nullable().optional(),
       limit: z.number().int().min(1).max(200).optional(),
       offset: z.number().int().min(0).optional()
     }),
@@ -652,14 +654,17 @@ export function registerIpcHandlers(context: AppContext): void {
       type: projectTypeSchema,
       name: z.string().max(140).optional(),
       category: z.string().max(40).optional(),
+      productId: idSchema.optional(),
       draft: z.boolean().optional()
     }),
-    ({ type, name, category, draft }): ProjectDetail => {
+    ({ type, name, category, productId, draft }): ProjectDetail => {
+      if (productId && !context.products.exists(productId)) throw new IpcFault('not_found')
       const defaults = settings.all()
       const project = context.projects.create({
         type,
         name: name?.trim() || (type === 'set' ? 'Untitled set' : type === 'photo' ? 'Untitled photo' : 'Untitled image'),
         category: category ?? null,
+        productId: productId ?? null,
         shape: defaults.defaultShape,
         format: defaults.defaultFormat,
         draft
@@ -681,6 +686,7 @@ export function registerIpcHandlers(context: AppContext): void {
     const project = context.projects.create({
       type: createdType,
       name: name?.trim() || sourceProject.name,
+      productId: sourceProject.productId,
       // A new set asks what the seller sells before it has a plan.
       category: null,
       shape: createdType === 'set' && image.width && image.height
@@ -705,6 +711,64 @@ export function registerIpcHandlers(context: AppContext): void {
   })
 
   registerIpc(context, 'products:list', voidSchema, (): Product[] => context.products.list())
+
+  registerIpc(context, 'products:detail', z.object({ id: idSchema }), ({ id }): ProductDetail => {
+    if (isBundledProduct(id)) throw new IpcFault('invalid_payload', 'Included products do not have a product page.')
+    return context.productService.detail(id)
+  })
+
+  registerIpc(
+    context,
+    'products:update',
+    z.object({
+      id: idSchema,
+      patch: z.object({
+        name: z.string().trim().min(1).max(80).optional(),
+        category: z.string().max(40).nullable().optional(),
+        audience: z.string().max(200).nullable().optional(),
+        notes: z.string().max(2000).nullable().optional(),
+        status: z.enum(['active', 'archived']).optional()
+      })
+    }),
+    ({ id, patch }): Product => {
+      if (isBundledProduct(id)) throw new IpcFault('invalid_payload')
+      const product = context.products.update(id, patch)
+      if (!product) throw new IpcFault('not_found')
+      return product
+    }
+  )
+
+  registerIpc(context, 'products:archive', z.object({ id: idSchema }), ({ id }): Product => {
+    if (isBundledProduct(id)) throw new IpcFault('invalid_payload')
+    const product = context.products.archive(id)
+    if (!product) throw new IpcFault('not_found')
+    return product
+  })
+
+  registerIpc(context, 'products:unarchive', z.object({ id: idSchema }), ({ id }): Product => {
+    if (isBundledProduct(id)) throw new IpcFault('invalid_payload')
+    const product = context.products.unarchive(id)
+    if (!product) throw new IpcFault('not_found')
+    return product
+  })
+
+  registerIpc(
+    context,
+    'products:createFromProject',
+    z.object({ projectId: idSchema, name: z.string().max(80).optional() }),
+    ({ projectId, name }) => context.productService.createFromProject({ projectId, name })
+  )
+
+  registerIpc(
+    context,
+    'products:linkProject',
+    z.object({ productId: idSchema, projectId: idSchema }),
+    ({ productId, projectId }) => context.productService.linkProject(productId, projectId)
+  )
+
+  registerIpc(context, 'products:unlinkProject', z.object({ projectId: idSchema }), ({ projectId }) =>
+    context.productService.unlinkProject(projectId)
+  )
 
   registerIpc(
     context,

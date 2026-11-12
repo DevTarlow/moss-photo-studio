@@ -36,6 +36,8 @@ export interface Project {
   coverUrl: string | null
   sourceImageId: string | null
   category: string | null
+  /** The product this work belongs to, or null for unfiled work. */
+  productId: string | null
   shape: Shape
   format: Format
   /** The person look an image project was started from, if any. */
@@ -203,6 +205,19 @@ export interface Product {
   source: 'bundled' | 'user'
   blurb: string | null
   category: string | null
+  audience?: string | null
+  notes?: string | null
+  status?: 'active' | 'archived'
+  archivedAt?: number | null
+  projectCount?: number
+  imageCount?: number
+}
+
+export interface ProductDetail {
+  product: Product
+  projects: Project[]
+  counts: { projects: number; sets: number; images: number }
+  latestSet: Project | null
 }
 
 export interface LibraryImage {

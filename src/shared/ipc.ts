@@ -13,6 +13,7 @@ import type {
   PlanJson,
   PlanRecord,
   Product,
+  ProductDetail,
   LibraryImage,
   Project,
   ProjectDetail,
@@ -83,6 +84,7 @@ export interface IpcChannels {
       filter?: ProjectFilter
       sort?: ProjectSort
       search?: string
+      productId?: string | null
       limit?: number
       offset?: number
     }
@@ -90,7 +92,7 @@ export interface IpcChannels {
   }
   'projects:get': { request: { id: string }; response: ProjectDetail }
   'projects:create': {
-    request: { type: 'set' | 'photo' | 'image'; name?: string; category?: string; draft?: boolean }
+    request: { type: 'set' | 'photo' | 'image'; name?: string; category?: string; productId?: string; draft?: boolean }
     response: ProjectDetail
   }
   'projects:createFromImage': {
@@ -98,10 +100,23 @@ export interface IpcChannels {
     response: ProjectDetail
   }
   'products:list': { request: undefined; response: Product[] }
+  'products:detail': { request: { id: string }; response: ProductDetail }
   'products:createFromImage': { request: { imageId: string; name: string }; response: Product }
   'products:createFromBytes': { request: { bytes: Uint8Array; name: string }; response: Product }
+  'products:createFromProject': { request: { projectId: string; name?: string }; response: Product }
   'dialog:pickProduct': { request: undefined; response: Product | null }
   'products:rename': { request: { id: string; name: string }; response: Product }
+  'products:update': {
+    request: {
+      id: string
+      patch: { name?: string; category?: string | null; audience?: string | null; notes?: string | null; status?: 'active' | 'archived' }
+    }
+    response: Product
+  }
+  'products:archive': { request: { id: string }; response: Product }
+  'products:unarchive': { request: { id: string }; response: Product }
+  'products:linkProject': { request: { productId: string; projectId: string }; response: { ok: true } }
+  'products:unlinkProject': { request: { projectId: string }; response: { ok: true } }
   'products:delete': { request: { id: string }; response: { ok: true } }
   'products:createProject': {
     request: { productId: string; type: 'set' | 'photo' | 'image'; name?: string }
@@ -266,9 +281,16 @@ export interface MossApi {
   }
   products: {
     list: CallVoid<'products:list'>
+    detail: Call<'products:detail'>
     createFromImage: Call<'products:createFromImage'>
     createFromBytes: Call<'products:createFromBytes'>
+    createFromProject: Call<'products:createFromProject'>
     rename: Call<'products:rename'>
+    update: Call<'products:update'>
+    archive: Call<'products:archive'>
+    unarchive: Call<'products:unarchive'>
+    linkProject: Call<'products:linkProject'>
+    unlinkProject: Call<'products:unlinkProject'>
     delete: Call<'products:delete'>
     createProject: Call<'products:createProject'>
     importIntoProject: Call<'products:importIntoProject'>

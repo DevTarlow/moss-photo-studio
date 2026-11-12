@@ -13,6 +13,7 @@ interface ProjectRow {
   cover_image_id: string | null
   source_image_id: string | null
   category: string | null
+  product_id: string | null
   shape: 'square' | 'portrait' | 'landscape'
   format: 'webp' | 'jpeg' | 'png'
   person_look: string | null
@@ -25,6 +26,7 @@ export interface CreateProjectInput {
   type: 'set' | 'photo' | 'image'
   name: string
   category?: string | null
+  productId?: string | null
   shape?: 'square' | 'portrait' | 'landscape'
   format?: 'webp' | 'jpeg' | 'png'
   personLook?: string | null
@@ -61,6 +63,7 @@ export class ProjectRepository {
       coverUrl: row.cover_file ? libraryUrl(row.cover_file) : null,
       sourceImageId: row.source_image_id,
       category: row.category,
+      productId: row.product_id,
       shape: row.shape,
       format: row.format,
       personLook: row.person_look,
@@ -74,8 +77,8 @@ export class ProjectRepository {
     const id = crypto.randomUUID()
     this.db
       .prepare(
-        `INSERT INTO projects (id, type, name, created_at, updated_at, category, shape, format, person_look, draft)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO projects (id, type, name, created_at, updated_at, category, product_id, shape, format, person_look, draft)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         id,
@@ -84,6 +87,7 @@ export class ProjectRepository {
         timestamp,
         timestamp,
         input.category ?? null,
+        input.productId ?? null,
         input.shape ?? 'square',
         input.format ?? 'webp',
         input.personLook ?? null,
@@ -101,12 +105,20 @@ export class ProjectRepository {
     filter?: ProjectFilter
     sort?: ProjectSort
     search?: string
+    productId?: string | null
     limit?: number
     offset?: number
   } = {}): { items: Project[]; total: number } {
     const clauses: string[] = ['p.archived_at IS NULL', 'p.draft = 0']
     const params: unknown[] = []
     const filter = options.filter ?? 'all'
+    if (options.productId !== undefined) {
+      if (options.productId === null) clauses.push('p.product_id IS NULL')
+      else {
+        clauses.push('p.product_id = ?')
+        params.push(options.productId)
+      }
+    }
     if (filter === 'sets') clauses.push("p.type = 'set'")
     if (filter === 'photos') clauses.push("p.type = 'photo'")
     if (filter === 'images') clauses.push("p.type = 'image'")
@@ -164,6 +176,7 @@ export class ProjectRepository {
     shape?: string
     format?: string
     category?: string | null
+    productId?: string | null
     sourceImageId?: string | null
     coverImageId?: string | null
   }): Project | null {
@@ -188,6 +201,10 @@ export class ProjectRepository {
     if (patch.category !== undefined) {
       fields.push('category = ?')
       values.push(patch.category)
+    }
+    if (patch.productId !== undefined) {
+      fields.push('product_id = ?')
+      values.push(patch.productId)
     }
     if (patch.sourceImageId !== undefined) {
       fields.push('source_image_id = ?')

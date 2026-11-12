@@ -191,6 +191,46 @@ const migrations: Migration[] = [
     up(db) {
       db.exec('ALTER TABLE projects ADD COLUMN person_look TEXT')
     }
+  },
+  {
+    version: 6,
+    up(db) {
+      db.exec(`
+        ALTER TABLE projects ADD COLUMN product_id TEXT REFERENCES products(id) ON DELETE SET NULL;
+        CREATE INDEX IF NOT EXISTS idx_projects_product ON projects(product_id);
+
+        ALTER TABLE products ADD COLUMN status TEXT NOT NULL DEFAULT 'active';
+        ALTER TABLE products ADD COLUMN archived_at INTEGER;
+        ALTER TABLE products ADD COLUMN category TEXT;
+        ALTER TABLE products ADD COLUMN audience TEXT;
+        ALTER TABLE products ADD COLUMN notes TEXT;
+
+        ALTER TABLE brand ADD COLUMN audience TEXT;
+        ALTER TABLE brand ADD COLUMN voice TEXT;
+        ALTER TABLE brand ADD COLUMN policies TEXT;
+        ALTER TABLE brand ADD COLUMN default_platform TEXT;
+        ALTER TABLE brand ADD COLUMN style_preset TEXT;
+
+        ALTER TABLE images ADD COLUMN origin TEXT NOT NULL DEFAULT 'upload';
+        UPDATE images
+        SET origin = CASE
+          WHEN kind = 'upload' THEN 'upload'
+          WHEN kind = 'adjust' THEN 'local'
+          ELSE 'ai'
+        END;
+
+        CREATE TABLE IF NOT EXISTS listings (
+          id TEXT PRIMARY KEY,
+          product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+          platform TEXT NOT NULL,
+          version INTEGER NOT NULL,
+          json TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          UNIQUE (product_id, platform, version)
+        );
+        CREATE INDEX IF NOT EXISTS idx_listings_product ON listings(product_id, platform, created_at);
+      `)
+    }
   }
 ]
 
