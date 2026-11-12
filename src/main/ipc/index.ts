@@ -91,7 +91,14 @@ const brandPatchSchema = z.object({
   badgeEnabled: z.boolean().optional(),
   badgeCorner: z.enum(['br', 'bl', 'tr', 'tl']).optional(),
   badgeScale: z.enum(['s', 'm', 'l']).optional(),
-  badgeOpacity: z.number().int().min(60).max(100).optional()
+  badgeOpacity: z.number().int().min(60).max(100).optional(),
+  businessName: z.string().max(100).optional(),
+  sells: z.string().max(100).optional(),
+  audience: z.string().max(200).optional(),
+  voice: z.string().max(500).optional(),
+  policies: z.string().max(1000).optional(),
+  marketplaces: z.array(z.string().max(40)).max(12).optional(),
+  defaultPlatform: z.string().max(40).optional()
 })
 
 const rendererSettingKeys = [

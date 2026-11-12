@@ -4,6 +4,13 @@ import { libraryUrl } from '@shared/files'
 
 interface BrandRow {
   id: string
+  name: string | null
+  sells: string | null
+  marketplaces: string | null
+  audience: string | null
+  voice: string | null
+  policies: string | null
+  default_platform: string | null
   colors: string | null
   colors_enabled: number
   logo_file: string | null
@@ -40,7 +47,14 @@ export class BrandRepository {
         badgeEnabled: false,
         badgeCorner: 'br',
         badgeScale: 'm',
-        badgeOpacity: 100
+        badgeOpacity: 100,
+        businessName: '',
+        sells: '',
+        audience: '',
+        voice: '',
+        policies: '',
+        marketplaces: [],
+        defaultPlatform: 'etsy'
       }
     }
     return {
@@ -50,7 +64,14 @@ export class BrandRepository {
       badgeEnabled: Boolean(row.badge_enabled),
       badgeCorner: corners.includes(row.badge_corner as BadgeCorner) ? (row.badge_corner as BadgeCorner) : 'br',
       badgeScale: scales.includes(row.badge_scale as BadgeScale) ? (row.badge_scale as BadgeScale) : 'm',
-      badgeOpacity: Math.max(60, Math.min(100, Number(row.badge_opacity) || 100))
+      badgeOpacity: Math.max(60, Math.min(100, Number(row.badge_opacity) || 100)),
+      businessName: row.name ?? '',
+      sells: row.sells ?? '',
+      audience: row.audience ?? '',
+      voice: row.voice ?? '',
+      policies: row.policies ?? '',
+      marketplaces: parseArray(row.marketplaces).slice(0, 12),
+      defaultPlatform: row.default_platform ?? 'etsy'
     }
   }
 
@@ -67,12 +88,20 @@ export class BrandRepository {
         .filter((color) => /^#[0-9a-fA-F]{6}$/.test(color))
         .slice(0, 6),
       colorsEnabled: patch.colorsEnabled ?? current.colorsEnabled,
-      badgeOpacity: Math.max(60, Math.min(100, patch.badgeOpacity ?? current.badgeOpacity))
+      badgeOpacity: Math.max(60, Math.min(100, patch.badgeOpacity ?? current.badgeOpacity)),
+      businessName: (patch.businessName ?? current.businessName ?? '').slice(0, 100),
+      sells: (patch.sells ?? current.sells ?? '').slice(0, 100),
+      audience: (patch.audience ?? current.audience ?? '').slice(0, 200),
+      voice: (patch.voice ?? current.voice ?? '').slice(0, 500),
+      policies: (patch.policies ?? current.policies ?? '').slice(0, 1000),
+      marketplaces: (patch.marketplaces ?? current.marketplaces ?? []).slice(0, 12),
+      defaultPlatform: patch.defaultPlatform ?? current.defaultPlatform ?? 'etsy'
     }
     this.db
       .prepare(
         `UPDATE brand SET colors = ?, colors_enabled = ?, badge_enabled = ?, badge_corner = ?, badge_scale = ?,
-          badge_opacity = ?, updated_at = ? WHERE id = 'default'`
+          badge_opacity = ?, name = ?, sells = ?, marketplaces = ?, audience = ?, voice = ?, policies = ?,
+          default_platform = ?, updated_at = ? WHERE id = 'default'`
       )
       .run(
         JSON.stringify(next.colors),
@@ -81,6 +110,13 @@ export class BrandRepository {
         next.badgeCorner,
         next.badgeScale,
         next.badgeOpacity,
+        next.businessName ?? '',
+        next.sells ?? '',
+        JSON.stringify(next.marketplaces ?? []),
+        next.audience ?? '',
+        next.voice ?? '',
+        next.policies ?? '',
+        next.defaultPlatform ?? 'etsy',
         Date.now()
       )
     return this.get()

@@ -7,7 +7,7 @@ This is the record of what was run, what passed, and what the acceptance owner s
 | Check | Result |
 | --- | --- |
 | `npm run typecheck` | Pass |
-| `npm test` | 178 tests pass in 18 files |
+| `npm test` | 179 tests pass in 18 files |
 | `npm run test:e2e` | 13 serial tests pass, including axe on dialogs, 510-project pagination, all-screen 1024 and 150% layout, and screenshot comparison |
 | `npm run audit:tokens` | All foreground/background token pairs pass AA in light and dark |
 | `npm run lint` | 0 errors, 0 warnings |

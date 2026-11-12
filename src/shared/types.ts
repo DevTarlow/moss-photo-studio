@@ -245,6 +245,14 @@ export interface Brand {
   badgeCorner: BadgeCorner
   badgeScale: BadgeScale
   badgeOpacity: number
+  /** The seller profile that the Listing Writer will read. All optional. */
+  businessName?: string
+  sells?: string
+  audience?: string
+  voice?: string
+  policies?: string
+  marketplaces?: string[]
+  defaultPlatform?: string
 }
 
 export interface UsageEvent {

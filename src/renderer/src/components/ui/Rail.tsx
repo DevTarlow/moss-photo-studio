@@ -15,6 +15,7 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  Store,
   Users
 } from 'lucide-react'
 import { SideNav, SideNavItem, SideNavSection } from '@astryxdesign/core'
@@ -26,6 +27,7 @@ import { useConfirm } from './ConfirmProvider'
 const settingsIcons = {
   studio: <KeyRound size={18} strokeWidth={1.75} />,
   brand: <Palette size={18} strokeWidth={1.75} />,
+  business: <Store size={18} strokeWidth={1.75} />,
   library: <FolderOpen size={18} strokeWidth={1.75} />,
   appearance: <Monitor size={18} strokeWidth={1.75} />,
   license: <ShieldCheck size={18} strokeWidth={1.75} />,

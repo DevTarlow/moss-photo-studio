@@ -29,7 +29,7 @@ import { usd, formatDateTime, relativeTime } from '../lib/format'
 import { toast } from '../lib/toast'
 import { markUrl } from '../lib/assets'
 import { Skeleton } from '../components/ui/Skeleton'
-import { Card, Heading, Text } from '@astryxdesign/core'
+import { Card, Heading, Text, TextArea, TextInput } from '@astryxdesign/core'
 import { settingsSections } from '../lib/settingsSections'
 
 function SettingsTitle({ title, line }: { title: string; line: string }): React.JSX.Element {
@@ -54,6 +54,7 @@ export function Settings(): React.JSX.Element {
         <div className="mx-auto w-full max-w-[880px] px-8 py-7">
           {section === 'studio' && <StudioSection />}
           {section === 'brand' && <BrandSection />}
+          {section === 'business' && <BusinessSection />}
           {section === 'library' && <LibrarySection />}
           {section === 'appearance' && <AppearanceSection />}
           {section === 'license' && <LicenseSection />}
@@ -269,6 +270,100 @@ function BrandSection(): React.JSX.Element {
         </Button>
         <p className="hint">All fields are optional.</p>
       </div>
+    </div>
+  )
+}
+
+function BusinessSection(): React.JSX.Element {
+  const brand = useAppStore((state) => state.brand)
+  const refreshBrand = useAppStore((state) => state.refreshBrand)
+  const [value, setValue] = useState({
+    businessName: '',
+    sells: '',
+    audience: '',
+    voice: '',
+    policies: '',
+    marketplaces: '',
+    defaultPlatform: 'etsy'
+  })
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!brand) return
+    setValue({
+      businessName: brand.businessName ?? '',
+      sells: brand.sells ?? '',
+      audience: brand.audience ?? '',
+      voice: brand.voice ?? '',
+      policies: brand.policies ?? '',
+      marketplaces: (brand.marketplaces ?? []).join(', '),
+      defaultPlatform: brand.defaultPlatform ?? 'etsy'
+    })
+  }, [brand])
+
+  const save = async (): Promise<void> => {
+    setSaving(true)
+    try {
+      await unwrap(
+        window.moss.brand.update({
+          businessName: value.businessName.trim(),
+          sells: value.sells.trim(),
+          audience: value.audience.trim(),
+          voice: value.voice.trim(),
+          policies: value.policies.trim(),
+          marketplaces: value.marketplaces
+            .split(',')
+            .map((entry) => entry.trim())
+            .filter(Boolean)
+            .slice(0, 12),
+          defaultPlatform: value.defaultPlatform
+        })
+      )
+      await refreshBrand()
+      toast.status('Business profile saved.')
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div>
+      <SettingsTitle title="Business" line="The details used when the studio writes for your shop." />
+      <SectionCard>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextInput label="Business name" value={value.businessName} onChange={(next) => setValue({ ...value, businessName: next })} width="100%" />
+          <TextInput label="What you sell" value={value.sells} onChange={(next) => setValue({ ...value, sells: next })} placeholder="Hand-thrown ceramics" width="100%" />
+        </div>
+        <div className="mt-4">
+          <TextInput label="Who buys it" value={value.audience} onChange={(next) => setValue({ ...value, audience: next })} placeholder="People setting up a calm home office" width="100%" />
+        </div>
+        <div className="mt-4">
+          <TextArea label="How you write" value={value.voice} onChange={(next) => setValue({ ...value, voice: next })} rows={3} placeholder="Warm, specific, no hype. Short sentences." width="100%" />
+        </div>
+        <div className="mt-4">
+          <TextArea label="Standard answers" value={value.policies} onChange={(next) => setValue({ ...value, policies: next })} rows={4} placeholder="Materials, sizes, shipping times, and returns you repeat in listings." width="100%" />
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <TextInput label="Where you sell" value={value.marketplaces} onChange={(next) => setValue({ ...value, marketplaces: next })} placeholder="Etsy, my own shop" width="100%" />
+          <div>
+            <label className="field-label" htmlFor="default-platform">Main platform</label>
+            <select id="default-platform" className="field" value={value.defaultPlatform} onChange={(event) => setValue({ ...value, defaultPlatform: event.target.value })}>
+              <option value="etsy">Etsy</option>
+              <option value="shopify">Shopify</option>
+              <option value="own">My own site or in person</option>
+              <option value="other">Somewhere else</option>
+            </select>
+          </div>
+        </div>
+        <div className="mt-5 flex items-center justify-between gap-3 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
+          <p className="hint">Optional. The Listing Writer will use this instead of asking again.</p>
+          <Button variant="primary" disabled={saving} onClick={() => void save()}>
+            {saving ? <Loader2 size={14} className="animate-spin" /> : null} Save Profile
+          </Button>
+        </div>
+      </SectionCard>
     </div>
   )
 }
