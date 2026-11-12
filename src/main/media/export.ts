@@ -128,7 +128,9 @@ export async function exportSetProject(input: {
       extension,
       taken
     )
-    await encode(input.workingPathFor(latest), latestPath, input.options)
+    // Export the stored result, not the pre-badge working copy: the badge is
+    // composited onto the result file, and single-image exports use that file.
+    await encode(await sourceForImage(input.libraryPath, latest, input.workingPathFor(latest)), latestPath, input.options)
     files.push({
       path: latestPath,
       shotType: definition.label,
@@ -144,7 +146,7 @@ export async function exportSetProject(input: {
           extension,
           taken
         )
-        await encode(input.workingPathFor(older), olderPath, input.options)
+        await encode(await sourceForImage(input.libraryPath, older, input.workingPathFor(older)), olderPath, input.options)
         files.push({
           path: olderPath,
           shotType: definition.label,

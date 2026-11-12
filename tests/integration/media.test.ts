@@ -140,26 +140,36 @@ describe('set export', () => {
     plan.shots[0] = { ...shotOne, direction: 'a warm table' }
     plans.save(project.id, plan)
     const folder = path.join(dir, 'exports')
-    const writeImage = async (id: string, color: { r: number; g: number; b: number }) => {
-      const relative = path.posix.join('projects', project.id, 'images', `${id}.webp`)
-      const absolute = path.join(dir, 'library', relative)
-      fs.mkdirSync(path.dirname(absolute), { recursive: true })
-      await sharp({ create: { width: 500, height: 500, channels: 3, background: color } }).webp().toBuffer().then((buffer) => fs.writeFileSync(absolute, buffer))
-      return absolute
+    const writeImage = async (id: string, resultColor: { r: number; g: number; b: number }, workingColor: { r: number; g: number; b: number }) => {
+      const imagesDir = path.join(dir, 'library', 'projects', project.id, 'images')
+      const workingDir = path.join(dir, 'library', 'projects', project.id, 'working')
+      fs.mkdirSync(imagesDir, { recursive: true })
+      fs.mkdirSync(workingDir, { recursive: true })
+      const write = async (target: string, color: { r: number; g: number; b: number }) => {
+        const buffer = await sharp({ create: { width: 500, height: 500, channels: 3, background: color } }).webp().toBuffer()
+        fs.writeFileSync(target, buffer)
+      }
+      await write(path.join(imagesDir, `${id}.webp`), resultColor)
+      await write(path.join(workingDir, `${id}.webp`), workingColor)
     }
     const oldId = crypto.randomUUID()
     const newId = crypto.randomUUID()
     const otherId = crypto.randomUUID()
-    await writeImage(oldId, { r: 200, g: 100, b: 100 })
-    await writeImage(newId, { r: 100, g: 200, b: 100 })
-    await writeImage(otherId, { r: 100, g: 100, b: 200 })
+    await writeImage(oldId, { r: 200, g: 100, b: 100 }, { r: 20, g: 20, b: 40 })
+    await writeImage(newId, { r: 100, g: 200, b: 100 }, { r: 40, g: 20, b: 20 })
+    await writeImage(otherId, { r: 100, g: 100, b: 200 }, { r: 20, g: 40, b: 20 })
     const now = Date.now()
     images.create({ id: oldId, projectId: project.id, kind: 'render', status: 'ready', label: 'Main shot', shotId: shotOne.id, file: `projects/${project.id}/images/${oldId}.webp`, format: 'webp', costCents: 1, now: now - 2000 })
     images.create({ id: newId, projectId: project.id, kind: 'render', status: 'ready', label: 'Main shot 2', shotId: shotOne.id, file: `projects/${project.id}/images/${newId}.webp`, format: 'webp', costCents: 1, now: now - 1000 })
     images.create({ id: otherId, projectId: project.id, kind: 'render', status: 'ready', label: 'In use', shotId: shotTwo.id, file: `projects/${project.id}/images/${otherId}.webp`, format: 'webp', costCents: 1, now })
     const ready = images.list(project.id, false)
     const workingPathFor = (image: (typeof ready)[number]): string =>
-      path.join(dir, 'library', decodeURI(image.url!.replace('moss-media://library/', '')))
+      path.join(dir, 'library', 'projects', project.id, 'working', `${image.id}.webp`)
+    const centerPixel = async (file: string): Promise<{ r: number; g: number; b: number }> => {
+      const { data, info } = await sharp(file).raw().toBuffer({ resolveWithObject: true })
+      const offset = (Math.floor(info.height / 2) * info.width + Math.floor(info.width / 2)) * info.channels
+      return { r: data[offset]!, g: data[offset + 1]!, b: data[offset + 2]! }
+    }
     const result = await exportSetProject({
       libraryPath: path.join(dir, 'library'),
       projectName: project.name,
@@ -169,6 +179,14 @@ describe('set export', () => {
       folder,
       workingPathFor
     })
+    // The stored result (which carries the badge) must win over the
+    // pre-badge working copy used for model requests.
+    const newestPixel = await centerPixel(path.join(folder, '01-main-shot.webp'))
+    expect(newestPixel.g).toBeGreaterThan(newestPixel.r)
+    expect(newestPixel.g).toBeGreaterThan(newestPixel.b)
+    const olderPixel = await centerPixel(path.join(folder, '01-main-shot-v1.webp'))
+    expect(olderPixel.r).toBeGreaterThan(olderPixel.g)
+    expect(olderPixel.r).toBeGreaterThan(olderPixel.b)
     expect(result.paths.map((file) => path.basename(file)).sort()).toEqual([
       '01-main-shot-v1.webp',
       '01-main-shot.webp',
