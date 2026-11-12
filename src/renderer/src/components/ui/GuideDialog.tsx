@@ -16,7 +16,7 @@ export function GuideDialog(): React.JSX.Element {
   ]
   return (
     <Dialog open={open} onOpenChange={setOpen} title="A short guide" width={520} footer={
-      <Button variant="primary" onClick={() => { setOpen(false); navigate('/library') }}>Open My Library</Button>
+      <Button variant="primary" onClick={() => { setOpen(false); navigate('/products') }}>Open Products</Button>
     }>
       <div className="space-y-3">
         {rows.map(([title, body]) => (

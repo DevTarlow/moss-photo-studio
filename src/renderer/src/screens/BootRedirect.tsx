@@ -47,7 +47,7 @@ export function BootRedirect(): React.JSX.Element {
         }
       }
       setReady(true)
-      navigate('/library', { replace: true })
+      navigate('/products', { replace: true })
     }
     void decide()
     return () => {

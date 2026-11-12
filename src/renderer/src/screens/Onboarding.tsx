@@ -167,8 +167,8 @@ export function Onboarding(): React.JSX.Element {
       .set({ key: 'onboardingDismissed', value: true })
       .then(() => refreshSettings())
       .catch(() => undefined)
-    toast.status('You can finish setting up later from the Library.')
-    navigate('/library', { replace: true })
+    toast.status('You can finish setting up later from Products.')
+    navigate('/products', { replace: true })
   }
 
   const buildPlan = (categoryId: string): PlanJson | null => {
@@ -450,10 +450,10 @@ export function Onboarding(): React.JSX.Element {
       else if (!hasKey) void goTo(1)
       else void onMainRun()
     } else {
-      // A made set lives in the Library; a product-only setup has no set, so
-      // finish where the saved product actually is. With nothing saved, the
-      // Library's empty state is the useful landing.
-      navigate(setProjectId || !product ? '/library' : '/products', { replace: true })
+      // Product-first: finish on the product the setup just created, so its
+      // set, edits, and next steps are in one place. With nothing saved,
+      // Products is still the right home and its empty state points at Add.
+      navigate(product ? `/product/${product.id}` : '/products', { replace: true })
     }
   }
 

@@ -63,6 +63,13 @@ export class ProductRepository {
     return rows.map(mapProduct)
   }
 
+  listArchived(): Product[] {
+    const rows = this.db
+      .prepare(`${this.baseSelect()} WHERE p.status = 'archived' ORDER BY p.archived_at DESC, p.name ASC`)
+      .all() as ProductRow[]
+    return rows.map(mapProduct)
+  }
+
   get(id: string): Product | null {
     const row = this.db.prepare(`${this.baseSelect()} WHERE p.id = ?`).get(id) as ProductRow | undefined
     return row ? mapProduct(row) : null

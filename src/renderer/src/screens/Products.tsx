@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DropdownMenu } from 'radix-ui'
 import { Image as ImageIcon, Layers, Loader2, Package, Plus, Search, Sparkles } from 'lucide-react'
-import type { Product, ProjectType } from '@shared/types'
+import type { Product, Project, ProjectType } from '@shared/types'
 import { bundledProductCards } from '@shared/products'
 import { AppFrame } from '../components/ui/AppFrame'
 import { Button } from '../components/ui/Button'
@@ -33,7 +33,7 @@ function ProductCard({
 }): React.JSX.Element {
   return (
     <div className="card card-hover group relative overflow-hidden">
-      <button type="button" className="block w-full cursor-zoom-in" onClick={onOpen} aria-label={`Open ${product.name} larger`}>
+      <button type="button" className="block w-full cursor-pointer" onClick={onOpen} aria-label={`Open ${product.name}`}>
         <img
           src={product.thumbUrl}
           alt=""
@@ -44,7 +44,9 @@ function ProductCard({
       <div className="p-3">
         <p className="truncate text-[13px] font-semibold">{product.name}</p>
         <p className="meta mt-0.5">
-          {product.source === 'bundled' ? product.category : `Saved ${formatDate(product.createdAt)}`}
+          {product.source === 'bundled'
+            ? product.category
+            : `${product.projectCount ?? 0} work · ${product.imageCount ?? 0} ${product.imageCount === 1 ? 'image' : 'images'}`}
         </p>
         {product.blurb && <p className="mt-1 line-clamp-2 text-[11px]" style={{ color: 'var(--text-faint)' }}>{product.blurb}</p>}
       </div>
@@ -85,12 +87,17 @@ export function Products(): React.JSX.Element {
   const [preview, setPreview] = useState<Product | null>(null)
   const [renaming, setRenaming] = useState<Product | null>(null)
   const [renameValue, setRenameValue] = useState('')
+  const [unfiled, setUnfiled] = useState<Project[]>([])
+  const [archived, setArchived] = useState<Product[]>([])
 
   const load = async (): Promise<void> => {
     setLoading(true)
     setLoadError(null)
     try {
       await refreshProducts()
+      const loose = await unwrap(window.moss.projects.list({ productId: null, limit: 6 }))
+      setUnfiled(loose.items)
+      setArchived(await unwrap(window.moss.products.listArchived()))
     } catch {
       setLoadError('Could not load products. Try again.')
     } finally {
@@ -215,6 +222,30 @@ export function Products(): React.JSX.Element {
     setRenameValue(product.name)
   }
 
+  const restore = async (product: Product): Promise<void> => {
+    try {
+      await unwrap(window.moss.products.unarchive({ id: product.id }))
+      await load()
+      toast.status('Product restored.')
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    }
+  }
+
+  const makeProductFromProject = async (project: Project): Promise<void> => {
+    setBusy(true)
+    try {
+      const product = await unwrap(window.moss.products.createFromProject({ projectId: project.id, name: project.name }))
+      await refreshProducts()
+      toast.status('Product created.')
+      navigate(`/product/${product.id}`)
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <AppFrame>
       <div className="page-scroll">
@@ -227,7 +258,7 @@ export function Products(): React.JSX.Element {
                   ? `Showing ${matchingCount} of ${included.length + products.length}`
                   : `${included.length} included · ${products.length} yours`}
               </Text>
-              <Text type="supporting" color="secondary" className="block">The product photos you reuse in sets, the editor, and the generator.</Text>
+              <Text type="supporting" color="secondary" className="block">A product holds its source photo, its sets and edits, and the listing kit you make from them.</Text>
             </div>
             <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
               <Button variant="secondary" disabled={creatingProduct} onClick={() => void createProduct()}>
@@ -305,7 +336,7 @@ export function Products(): React.JSX.Element {
                         <ProductCard
                           key={product.id}
                           product={product}
-                          onOpen={() => setPreview(product)}
+                          onOpen={() => navigate(`/product/${product.id}`)}
                           onRename={() => openRename(product)}
                           onDelete={() => void remove(product)}
                         />
@@ -320,6 +351,49 @@ export function Products(): React.JSX.Element {
                       label="Your product pages"
                     />
                   )}
+                </section>
+              )}
+
+              {!search.trim() && unfiled.length > 0 && (
+                <section className="mt-8" aria-labelledby="unfiled-work-heading">
+                  <div className="flex items-baseline gap-2">
+                    <h2 id="unfiled-work-heading" className="section-label">Unfiled work</h2>
+                    <span className="meta-faint">{unfiled.length}</span>
+                  </div>
+                  <p className="hint mt-1">Sets and edits that are not under a product yet. Make a product from one to keep its listing kit together.</p>
+                  <div className="mt-3 grid gap-2">
+                    {unfiled.map((project) => (
+                      <div key={project.id} className="card flex flex-wrap items-center gap-2 p-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[13px] font-semibold">{project.name}</p>
+                          <p className="meta">{project.type === 'set' ? 'Set' : project.type === 'photo' ? 'Photo edit' : 'Image'} · {project.imageCount} {project.imageCount === 1 ? 'image' : 'images'}</p>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/project/${project.id}`)}>Open</Button>
+                        <Button variant="secondary" size="sm" disabled={busy} onClick={() => void makeProductFromProject(project)}>Make a Product</Button>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {archived.length > 0 && !search.trim() && (
+                <section className="mt-8" aria-labelledby="archived-products-heading">
+                  <div className="flex items-baseline gap-2">
+                    <h2 id="archived-products-heading" className="section-label">Archived</h2>
+                    <span className="meta-faint">{archived.length}</span>
+                  </div>
+                  <div className="mt-3 grid gap-2">
+                    {archived.map((product) => (
+                      <div key={product.id} className="card flex flex-wrap items-center gap-2 p-3">
+                        <img src={product.thumbUrl} alt="" className="h-10 w-10 rounded object-cover" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[13px] font-semibold">{product.name}</p>
+                          <p className="meta">Archived · {product.projectCount ?? 0} work kept</p>
+                        </div>
+                        <Button variant="secondary" size="sm" onClick={() => void restore(product)}>Restore</Button>
+                      </div>
+                    ))}
+                  </div>
                 </section>
               )}
 

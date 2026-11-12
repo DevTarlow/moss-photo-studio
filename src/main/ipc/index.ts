@@ -711,6 +711,7 @@ export function registerIpcHandlers(context: AppContext): void {
   })
 
   registerIpc(context, 'products:list', voidSchema, (): Product[] => context.products.list())
+  registerIpc(context, 'products:listArchived', voidSchema, (): Product[] => context.products.listArchived())
 
   registerIpc(context, 'products:detail', z.object({ id: idSchema }), ({ id }): ProductDetail => {
     if (isBundledProduct(id)) throw new IpcFault('invalid_payload', 'Included products do not have a product page.')

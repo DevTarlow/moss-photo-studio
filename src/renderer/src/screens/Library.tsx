@@ -382,7 +382,7 @@ export function Library(): React.JSX.Element {
         <div className="page-pad page-max">
           <div className="flex flex-wrap items-start gap-3">
             <div>
-              <Heading level={1}>Library</Heading>
+              <Heading level={1}>All work</Heading>
               <Text type="supporting" color="secondary">
                 {filtering
                   ? `Showing ${store.total} of ${allTotal || store.total}`
@@ -606,7 +606,7 @@ export function Library(): React.JSX.Element {
               total={store.total}
               onPage={changePage}
               busy={store.loading}
-              label="Library pages"
+              label="All work pages"
             />
           )}
         </div>
@@ -635,7 +635,7 @@ export function Library(): React.JSX.Element {
         open={Boolean(renameProject)}
         onOpenChange={(open) => { if (!open) setRenameProject(null) }}
         title="Rename project"
-        description="The new name shows in the Library and on exports."
+        description="The new name shows in All work and on exports."
         footer={
           <>
             <Button label="Cancel" variant="secondary" onClick={() => setRenameProject(null)} />

@@ -39,7 +39,7 @@ test('a set asks what you sell and the plan can change category before images', 
     const page = await app.firstWindow()
     await page.getByRole('button', { name: 'Look Around First' }).waitFor({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Look Around First' }).click()
-    await page.getByRole('heading', { name: 'Library', exact: true }).waitFor({ timeout: 20_000 })
+    await page.getByRole('heading', { name: 'Products', exact: true }).waitFor({ timeout: 20_000 })
 
     const bytes = Array.from(fs.readFileSync(productPhoto))
     const product = await page.evaluate(async (photo) => {
@@ -55,11 +55,11 @@ test('a set asks what you sell and the plan can change category before images', 
 
     // Reload so the app store sees the saved key and settings for the fake run.
     await page.reload()
-    await page.getByRole('heading', { name: 'Library', exact: true }).waitFor({ timeout: 20_000 })
+    await page.getByRole('heading', { name: 'Products', exact: true }).waitFor({ timeout: 20_000 })
 
     await page.getByRole('link', { name: 'Products', exact: true }).click()
-    await page.getByRole('button', { name: 'Open Category Mug larger' }).click()
-    await page.getByRole('button', { name: 'Use in a Set' }).click()
+    await page.getByRole('button', { name: 'Open Category Mug' }).click()
+    await page.getByRole('button', { name: 'Make a Set' }).first().click()
 
     await expect(page.getByRole('heading', { name: 'What do you sell?' })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Clothing and accessories' }).click()

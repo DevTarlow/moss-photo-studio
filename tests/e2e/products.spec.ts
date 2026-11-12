@@ -23,7 +23,7 @@ test('a generated image becomes a reusable product across the editor and generat
     await page.getByRole('button', { name: 'Look Around First' }).waitFor({ timeout: 20_000 })
     await page.waitForTimeout(300)
     await page.getByRole('button', { name: 'Look Around First' }).click()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()
 
     const projectId = await page.evaluate(async () => {
       const result = await window.moss.projects.create({ type: 'image', name: 'Mug generator' })
@@ -46,9 +46,9 @@ test('a generated image becomes a reusable product across the editor and generat
 
     await page.getByRole('link', { name: 'Products', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Open Ceramic Mug larger' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Open Ceramic Mug' })).toBeVisible()
 
-    await page.getByRole('link', { name: 'Library', exact: true }).click()
+    await page.getByRole('link', { name: 'All work', exact: true }).click()
     await page.getByRole('button', { name: 'New project' }).click()
     await page.getByRole('menuitem', { name: /Image Editor/ }).click()
     await expect(page.getByRole('dialog').getByRole('heading', { name: 'Image Editor', exact: true })).toBeVisible()
@@ -59,8 +59,8 @@ test('a generated image becomes a reusable product across the editor and generat
     await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 20_000 })
 
     await page.getByRole('link', { name: 'Products', exact: true }).click()
-    await page.getByRole('button', { name: 'Open Ceramic Mug larger' }).click()
-    await page.getByRole('dialog').getByRole('button', { name: 'New Image from Reference' }).click()
+    await page.getByRole('button', { name: 'Open Ceramic Mug' }).click()
+    await page.getByRole('button', { name: 'New Image' }).click()
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
 
     await page.getByRole('button', { name: 'Choose a Person' }).click()
@@ -72,16 +72,16 @@ test('a generated image becomes a reusable product across the editor and generat
     await expect(page.getByText('Newest')).toBeVisible({ timeout: 30_000 })
 
     await page.getByRole('link', { name: 'Products', exact: true }).click()
-    await page.getByRole('button', { name: 'Open Ceramic Mug larger' }).click()
-    const preview = page.getByRole('dialog')
-    await preview.getByRole('button', { name: 'Delete', exact: true }).click()
-    const confirm = page.getByRole('dialog').filter({ hasText: 'Projects and images already made from it stay' })
+    await page.getByRole('button', { name: 'Open Ceramic Mug' }).click()
+    await page.getByRole('button', { name: /More actions for Ceramic Mug/ }).click()
+    await page.getByRole('menuitem', { name: 'Delete' }).click()
+    const confirm = page.getByRole('dialog').filter({ hasText: 'become unfiled work' })
     await expect(confirm.getByRole('heading', { name: 'Delete "Ceramic Mug"?' })).toBeVisible()
     await confirm.getByRole('button', { name: 'Delete Product' }).click()
     await expect(page.getByText('No saved products yet')).toBeVisible()
 
-    await page.getByRole('link', { name: 'Library', exact: true }).click()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
+    await page.getByRole('link', { name: 'All work', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()
     await expect(page.getByText('Mug generator', { exact: true })).toBeVisible()
     await expect(page.getByText('Ceramic Mug', { exact: true }).first()).toBeVisible()
 

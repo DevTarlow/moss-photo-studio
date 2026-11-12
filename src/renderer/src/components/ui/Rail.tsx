@@ -34,8 +34,8 @@ const settingsIcons = {
 }
 
 const items = [
-  { to: '/library', label: 'Library', icon: <Images size={18} strokeWidth={1.75} /> },
   { to: '/products', label: 'Products', icon: <Package size={18} strokeWidth={1.75} /> },
+  { to: '/library', label: 'All work', icon: <Images size={18} strokeWidth={1.75} /> },
   { to: '/people', label: 'People', icon: <Users size={18} strokeWidth={1.75} /> },
   { to: '/usage', label: 'Usage', icon: <BarChart3 size={18} strokeWidth={1.75} /> }
 ]

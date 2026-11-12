@@ -21,14 +21,15 @@ test('an untouched Image Generator leaves no project behind', async () => {
     const page = await app.firstWindow()
     await page.getByRole('button', { name: 'Look around first' }).waitFor({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Look around first' }).click()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('link', { name: 'All work', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('0 projects', { exact: true })).toBeVisible()
 
     // Opening the tool and leaving again must not add an Images card.
     await page.getByRole('link', { name: 'Image Generator', exact: true }).click()
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
-    await page.getByRole('link', { name: 'Library', exact: true }).first().click()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('link', { name: 'All work', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('0 projects', { exact: true })).toBeVisible()
     await expect(page.locator('article.lib-card')).toHaveCount(0)
 
@@ -37,7 +38,8 @@ test('an untouched Image Generator leaves no project behind', async () => {
       await window.moss.settings.set({ key: 'firstRunConfirmShown', value: true })
     })
     await page.reload()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('link', { name: 'All work', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('0 projects', { exact: true })).toBeVisible()
 
     // The first image turns the draft into a real Library project, whether the
@@ -48,8 +50,8 @@ test('an untouched Image Generator leaves no project behind', async () => {
     await page.getByRole('button', { name: /Create 1 Image/ }).click()
     await expect(page.getByText('Newest')).toBeVisible({ timeout: 30_000 })
 
-    await page.getByRole('link', { name: 'Library', exact: true }).first().click()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('link', { name: 'All work', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('1 project', { exact: true })).toBeVisible()
     await expect(page.locator('article.lib-card')).toHaveCount(1)
   } finally {

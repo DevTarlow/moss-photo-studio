@@ -20,9 +20,9 @@ test('included products start a set and a generator project, and Create a Produc
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()
     await expect(page.getByText('20 included · 0 yours')).toBeVisible()
     await expect(page.getByText('Included', { exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Open Amber dropper bottle larger' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Open Amber dropper bottle' })).toBeVisible()
 
-    await page.getByRole('button', { name: 'Open Amber dropper bottle larger' }).click()
+    await page.getByRole('button', { name: 'Open Amber dropper bottle' }).click()
     const preview = page.getByRole('dialog')
     await expect(preview.getByRole('heading', { name: 'Amber dropper bottle' })).toBeVisible()
     await expect(preview.getByRole('button', { name: 'Rename' })).toHaveCount(0)
@@ -41,7 +41,7 @@ test('included products start a set and a generator project, and Create a Produc
     expect(setSource).toEqual({ type: 'set', label: 'Amber dropper bottle' })
 
     await page.getByRole('link', { name: 'Products', exact: true }).click()
-    await page.getByRole('button', { name: 'Open Amber dropper bottle larger' }).click()
+    await page.getByRole('button', { name: 'Open Amber dropper bottle' }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'New Image from Reference' }).click()
     await page.getByText('Describe the image').waitFor({ timeout: 20_000 })
     await expect(page.getByText('Amber dropper bottle', { exact: true }).first()).toBeVisible()

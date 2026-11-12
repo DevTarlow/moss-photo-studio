@@ -5,6 +5,7 @@ import { Onboarding } from './screens/Onboarding'
 import { Library } from './screens/Library'
 import { People } from './screens/People'
 import { Products } from './screens/Products'
+import { ProductDetail } from './screens/ProductDetail'
 import { Usage } from './screens/Usage'
 import { Settings } from './screens/Settings'
 import { Workspace } from './screens/Workspace'
@@ -17,11 +18,12 @@ const children = [
   { path: 'library', element: <Library /> },
   { path: 'people', element: <People /> },
   { path: 'products', element: <Products /> },
+  { path: 'product/:id', element: <ProductDetail /> },
   { path: 'usage', element: <Usage /> },
   { path: 'settings', element: <Navigate to="/settings/studio" replace /> },
   { path: 'settings/:section', element: <Settings /> },
   { path: 'project/:id', element: <Workspace /> },
-  { path: '*', element: <Navigate to="/library" replace /> }
+  { path: '*', element: <Navigate to="/products" replace /> }
 ]
 
 export const router = createHashRouter([

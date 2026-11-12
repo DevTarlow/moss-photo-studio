@@ -15,7 +15,9 @@ test('projects are selected on hover and deleted together after a confirm', asyn
     const page = await app.firstWindow()
     await page.getByRole('button', { name: 'Look Around First' }).waitFor({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Look Around First' }).click()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()
+    await page.getByRole('link', { name: 'All work', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible()
 
     await page.evaluate(async () => {
       await window.moss.projects.create({ type: 'image', name: 'Bulk One' })

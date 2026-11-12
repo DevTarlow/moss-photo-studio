@@ -69,6 +69,7 @@ const api: MossApi = {
   },
   products: {
     list: invokeVoid('products:list'),
+    listArchived: invokeVoid('products:listArchived'),
     detail: invoke('products:detail'),
     createFromImage: invoke('products:createFromImage'),
     createFromBytes: invoke('products:createFromBytes'),

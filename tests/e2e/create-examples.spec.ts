@@ -27,7 +27,7 @@ test('an example can use the selected product photo or stay as shown', async () 
     const page = await app.firstWindow()
     await page.getByRole('button', { name: 'Look around first' }).waitFor({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Look around first' }).click()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible({ timeout: 20_000 })
 
     const bytes = Array.from(fs.readFileSync(productPhoto))
     await page.evaluate(async (array) => {
@@ -36,7 +36,7 @@ test('an example can use the selected product photo or stay as shown', async () 
       await window.moss.products.createFromBytes({ bytes: new Uint8Array(array), name: 'Example Product' })
     }, bytes)
     await page.reload()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible({ timeout: 20_000 })
 
     await page.getByRole('link', { name: 'Image Generator', exact: true }).click()
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })

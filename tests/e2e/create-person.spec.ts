@@ -28,7 +28,7 @@ test('Create a Person opens the generator and saves a generated image as a perso
     await page.getByRole('button', { name: 'Look Around First' }).waitFor({ timeout: 20_000 })
     await page.waitForTimeout(300)
     await page.getByRole('button', { name: 'Look Around First' }).click()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible({ timeout: 20_000 })
 
     await page.getByRole('link', { name: 'People', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'People', exact: true })).toBeVisible()

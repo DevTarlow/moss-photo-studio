@@ -66,8 +66,9 @@ test('onboarding saves the first photo as a Product without creating a set', asy
     await expect(page.getByRole('button', { name: 'Open Products' })).toBeHidden()
     await expect(page.getByRole('button', { name: 'Open Library' })).toBeHidden()
     await page.getByRole('button', { name: 'Finish Setup' }).click()
-    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByRole('button', { name: 'Open product larger' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'product', exact: true })).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByText('Listing kit')).toBeVisible()
+    await expect(page.getByText('No work yet')).toBeVisible()
 
     const afterSave = await page.evaluate(async () => {
       const products = await window.moss.products.list()
@@ -136,7 +137,7 @@ test('onboarding lets the seller skip the product step and finish in the Library
 
     await expect(page.getByRole('heading', { name: "You're set up." })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Finish Setup' }).click()
-    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible({ timeout: 20_000 })
 
     const after = await page.evaluate(async () => {
       const products = await window.moss.products.list()
