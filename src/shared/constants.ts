@@ -10,7 +10,7 @@ export const MUSE_KEY_ORIGIN = 'https://dev.meta.ai'
 export const LICENSE_API_BASE = 'https://license.mossaistudio.com'
 export const LICENSE_PORTAL_URL = 'https://license.mossaistudio.com/account'
 // Replace with the real product-site checkout URL before release.
-export const LICENSE_STORE_URL = 'https://example.com/moss-photo-studio'
+export const LICENSE_STORE_URL = 'https://mossphotostudio.com'
 export const LICENSE_STORE_PLACEHOLDER = 'https://example.com/moss-photo-studio'
 export const LICENSE_API_HOST = new URL(LICENSE_API_BASE).host
 export const LICENSE_PORTAL_HOST = new URL(LICENSE_PORTAL_URL).host

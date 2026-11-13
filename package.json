@@ -79,6 +79,6 @@
     "better-sqlite3@13.0.3": true,
     "electron-winstaller@5.4.0": true
   },
-  "homepage": "https://example.com/moss-photo-studio",
+  "homepage": "https://mossphotostudio.com",
   "desktopName": "moss-photo-studio.desktop"
 }
