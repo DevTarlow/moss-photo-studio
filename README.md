@@ -44,6 +44,8 @@ Listing copy has its own text cost line. The Usage ledger tracks images and text
 
 A license costs $79 per year and covers two computers.
 
+Download the current Linux build from [GitHub Releases](https://github.com/DevTarlow/moss-photo-studio/releases). Install it, then activate with the key. Windows and macOS builds are not published yet.
+
 1. Buy at [mossphotostudio.com](https://mossphotostudio.com).
 2. Then the key arrives by email after checkout.
 3. Open **Settings, License** in the app and paste the key.
@@ -91,7 +93,7 @@ npm run build:linux
 
 `npm run build:linux` produces an AppImage and a deb under `release/`. Windows and macOS builds are configured but have not been verified in this environment. They need signing certificates before public distribution.
 
-The app checks for updates in **Settings, Updates**. But there is no automatic download or install. A new release is listed on the portal, and you install it yourself.
+The app checks for updates in **Settings, Updates**. But there is no automatic download or install. New builds are listed on the portal and published on [GitHub Releases](https://github.com/DevTarlow/moss-photo-studio/releases), and you install them yourself.
 
 ## Data and privacy
 
