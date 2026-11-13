@@ -219,6 +219,10 @@ export interface IpcChannels {
     request: { imageId: string; transform: AdjustTransform }
     response: { imageId: string }
   }
+  'adjust:applyBatch': {
+    request: { projectId: string; transform: AdjustTransform }
+    response: { count: number }
+  }
   'people:list': { request: undefined; response: Person[] }
   'people:create': {
     request: { name: string; bytes: Uint8Array; mime: string }
@@ -365,6 +369,7 @@ export interface MossApi {
   }
   adjust: {
     apply: Call<'adjust:apply'>
+    applyBatch: Call<'adjust:applyBatch'>
   }
   people: {
     list: CallVoid<'people:list'>

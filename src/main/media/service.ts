@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import type { Image, ImportResult, PhotoCheck, Project } from '@shared/types'
 import { shapeForImage } from '@shared/shapes'
-import { uploadLabel } from '@shared/labels'
+import { nextCountedLabel, uploadLabel } from '@shared/labels'
 import type { ProjectRepository } from '../db/repositories/projects'
 import type { ImageRepository } from '../db/repositories/images'
 import type { PeopleRepository } from '../db/repositories/people'
@@ -19,6 +19,7 @@ import {
 } from './import'
 import { absoluteInLibrary, originalRelative, workingFor } from './paths'
 import { inspectPhoto } from './preflight'
+import { applyLocalAdjust } from './transform'
 
 export class MediaService {
   constructor(
@@ -34,6 +35,53 @@ export class MediaService {
   ) {}
 
   private readonly importChains = new Map<string, Promise<unknown>>()
+
+  async applyBatchColor(projectId: string, transform: import('@shared/types').AdjustTransform): Promise<{ count: number; imageIds: string[] }> {
+    const project = this.deps.projects.get(projectId)
+    if (!project) throw new Error('not_found')
+    const ready = this.deps.images.list(projectId)
+    if (ready.length > 50) throw new Error('too_many')
+    const created: string[] = []
+    let labels = this.deps.images.labels(projectId)
+    for (const image of ready) {
+      const sourcePath = image.kind === 'upload'
+        ? workingFor(this.deps.libraryPath(), image.projectId, image.id)
+        : absoluteInLibrary(this.deps.libraryPath(), decodeURI(image.url!.replace('moss-media://library/', '')))
+      const id = crypto.randomUUID()
+      const result = await applyLocalAdjust({
+        libraryPath: this.deps.libraryPath(),
+        sourcePath,
+        imageId: id,
+        projectId,
+        transform
+      })
+      const label = nextCountedLabel('Adjust', labels)
+      labels = [...labels, label]
+      this.deps.images.create({
+        id,
+        projectId,
+        kind: 'adjust',
+        status: 'ready',
+        file: result.relative,
+        thumb: result.thumb,
+        width: result.width,
+        height: result.height,
+        format: 'webp',
+        prompt: null,
+        userText: 'Batch color grade',
+        shotId: image.shotId,
+        personId: image.personId,
+        label,
+        parentId: image.id,
+        rootId: image.rootId ?? image.id,
+        adjust: transform,
+        costCents: 0
+      })
+      created.push(id)
+    }
+    if (!project.coverImageId && created[0]) this.deps.images.setCover(projectId, created[0])
+    return { count: created.length, imageIds: created }
+  }
 
   async inspectImage(imageId: string): Promise<PhotoCheck | null> {
     const image = this.deps.images.get(imageId)

@@ -275,3 +275,25 @@ describe('HEIC guidance', () => {
     expect(() => assertImportable(bytes)).toThrow(/HEIC/)
   })
 })
+
+describe('batch color grade', () => {
+  it('creates a local version of every ready image without touching crop or rotation', async () => {
+    const project = projects.create({ type: 'photo', name: 'Batch grade' })
+    for (const shade of [70, 120, 180]) {
+      await media.importSource({
+        projectId: project.id,
+        bytes: await jpeg(700, 500, false),
+        name: `shade-${shade}.jpg`
+      })
+    }
+    const result = await media.applyBatchColor(project.id, { brightness: 10, contrast: 5 })
+    expect(result.count).toBe(3)
+    const all = images.list(project.id)
+    expect(all).toHaveLength(6)
+    const created = all.filter((image) => image.origin === 'local')
+    expect(created).toHaveLength(3)
+    expect(created.every((image) => image.kind === 'adjust' && Boolean(image.parentId))).toBe(true)
+    expect(created.every((image) => image.adjust?.brightness === 10 && image.adjust?.contrast === 5)).toBe(true)
+    expect(created.every((image) => !image.adjust?.crop && !image.adjust?.rotate)).toBe(true)
+  })
+})

@@ -1,4 +1,4 @@
-import { Crop, FlipHorizontal, FlipVertical, Redo2, RotateCcw, RotateCw, Undo2 } from 'lucide-react'
+import { Crop, FlipHorizontal, FlipVertical, Loader2, Redo2, RotateCcw, RotateCw, Sparkles, Undo2 } from 'lucide-react'
 import type { AdjustTransform } from '@shared/types'
 import { Button } from '../../components/ui/Button'
 import { Chip } from '../../components/ui/Chip'
@@ -75,7 +75,10 @@ export function AdjustPanel({
   onChange,
   onChangeWithHistory,
   onBegin,
-  onResetAll
+  onResetAll,
+  batchCount,
+  batchBusy,
+  onApplyBatch
 }: {
   transform: AdjustTransform
   width: number | null
@@ -88,6 +91,9 @@ export function AdjustPanel({
   onChangeWithHistory: (next: AdjustTransform) => void
   onBegin: () => void
   onResetAll: () => void
+  batchCount: number
+  batchBusy: boolean
+  onApplyBatch: () => void
 }): React.JSX.Element {
   const currentAspect = (() => {
     if (!transform.crop || !width || !height) return 'original'
@@ -180,6 +186,16 @@ export function AdjustPanel({
         <Slider label="Sharpen" min={0} max={100} value={transform.sharpen ?? 0} onBegin={onBegin} onChange={(value) => onChange(patch({ sharpen: value }))} />
         <Slider label="Vignette" min={0} max={100} value={transform.vignette ?? 0} onBegin={onBegin} onChange={(value) => onChange(patch({ vignette: value }))} />
       </section>
+
+      {batchCount > 1 && (
+        <div className="mt-5 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
+          <p className="text-[12px] font-semibold">Apply this grade to all</p>
+          <p className="hint mt-1">Creates a new local version of each of the {batchCount} ready images. Crop, rotate, and flips stay on this image.</p>
+          <Button variant="secondary" size="sm" className="mt-2" disabled={batchBusy} onClick={onApplyBatch}>
+            {batchBusy ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Apply to {batchCount} Images
+          </Button>
+        </div>
+      )}
 
       <div className="mt-5 flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={onResetAll}>Reset All</Button>

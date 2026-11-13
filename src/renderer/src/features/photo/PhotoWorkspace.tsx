@@ -76,6 +76,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const [personId, setPersonId] = useState('maya')
   const [sceneRef, setSceneRef] = useState<SourceChoice | null>(null)
   const [scenePickerOpen, setScenePickerOpen] = useState(false)
+  const [batchBusy, setBatchBusy] = useState(false)
   const [adjust, setAdjust] = useState<AdjustTransform>(emptyAdjust())
   const [undoStack, setUndoStack] = useState<AdjustTransform[]>([])
   const [redoStack, setRedoStack] = useState<AdjustTransform[]>([])
@@ -426,6 +427,36 @@ export function PhotoWorkspace(): React.JSX.Element {
     }
   }
 
+  const applyBatch = async (): Promise<void> => {
+    const count = ready.length
+    const ok = await confirm({
+      title: `Apply this color grade to ${count} images?`,
+      body: 'This creates a new local version of each ready image. Crop, rotate, flips, and the current selection stay as they are.',
+      confirmLabel: 'Apply to All'
+    })
+    if (!ok) return
+    setBatchBusy(true)
+    try {
+      const result = await unwrap(window.moss.adjust.applyBatch({
+        projectId: project.id,
+        transform: {
+          brightness: adjust.brightness ?? 0,
+          contrast: adjust.contrast ?? 0,
+          saturation: adjust.saturation ?? 0,
+          warmth: adjust.warmth ?? 0,
+          sharpen: adjust.sharpen ?? 0,
+          vignette: adjust.vignette ?? 0
+        }
+      }))
+      await useWorkspaceStore.getState().refresh()
+      toast.status(`${result.count} new local versions.`)
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    } finally {
+      setBatchBusy(false)
+    }
+  }
+
   const confirmFirstRun = async (): Promise<void> => {
     try {
       await unwrap(window.moss.settings.set({ key: 'firstRunConfirmShown', value: true }))
@@ -524,6 +555,16 @@ export function PhotoWorkspace(): React.JSX.Element {
             onChangeWithHistory={changeWithHistory}
             onBegin={beginAdjust}
             onResetAll={resetAll}
+            batchCount={Object.values({
+              brightness: adjust.brightness ?? 0,
+              contrast: adjust.contrast ?? 0,
+              saturation: adjust.saturation ?? 0,
+              warmth: adjust.warmth ?? 0,
+              sharpen: adjust.sharpen ?? 0,
+              vignette: adjust.vignette ?? 0
+            }).some((value) => value !== 0) ? ready.length : 0}
+            batchBusy={batchBusy}
+            onApplyBatch={() => void applyBatch()}
           />
         )}
       </div>

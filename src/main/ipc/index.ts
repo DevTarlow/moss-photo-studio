@@ -1215,6 +1215,43 @@ export function registerIpcHandlers(context: AppContext): void {
 
   registerIpc(
     context,
+    'adjust:applyBatch',
+    z.object({ projectId: idSchema, transform: adjustSchema }),
+    async ({ projectId, transform }): Promise<{ count: number }> => {
+      const project = context.projects.get(projectId)
+      if (!project) throw new IpcFault('not_found')
+      if (context.images.list(projectId).length > 50) {
+        throw new IpcFault('invalid_payload', 'That project has more than 50 ready images. Batch color is limited to 50 at a time.')
+      }
+      const colorOnly = {
+        brightness: transform.brightness ?? 0,
+        contrast: transform.contrast ?? 0,
+        saturation: transform.saturation ?? 0,
+        warmth: transform.warmth ?? 0,
+        sharpen: transform.sharpen ?? 0,
+        vignette: transform.vignette ?? 0
+      }
+      if (!Object.values(colorOnly).some((value) => value !== 0)) {
+        throw new IpcFault('invalid_payload', 'Change a light or color control before applying the batch.')
+      }
+      const result = await context.media.applyBatchColor(projectId, colorOnly)
+      context.usage.record({
+        projectId,
+        projectName: project.name,
+        action: 'adjust',
+        requestedN: result.count,
+        returnedN: result.count,
+        costCents: 0,
+        costMicros: 0,
+        durationMs: 0,
+        result: 'ok'
+      })
+      return { count: result.count }
+    }
+  )
+
+  registerIpc(
+    context,
     'adjust:apply',
     z.object({ imageId: idSchema, transform: adjustSchema }),
     async ({ imageId, transform }): Promise<{ imageId: string }> => {
