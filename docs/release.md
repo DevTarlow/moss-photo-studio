@@ -60,6 +60,9 @@ npm test
 npm run build
 npm run audit:tokens
 npm run test:e2e
+npm run portal:test
+npm --prefix portal run check
+npm --prefix portal run build
 MOSS_RELEASE=1 npm run release:gate
 ```
 

@@ -36,3 +36,6 @@ portal/firebase-debug.log
 portal/.astro/
 portal/.npm-logs/
 portal/functions/.npm-logs/
+portal/functions/.env
+portal/functions/.env.local
+portal/functions/.env.*.local
