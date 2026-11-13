@@ -88,7 +88,7 @@ test('onboarding saves the first photo as a Product without creating a set', asy
   }
 })
 
-test('onboarding lets the seller skip the product step and finish in the Library', async () => {
+test('onboarding lets the seller skip the product step and finish in Products', async () => {
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-onboarding-skip-'))
   const app = await electron.launch({
     args: ['.', '--no-sandbox'],
