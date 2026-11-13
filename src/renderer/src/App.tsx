@@ -82,6 +82,7 @@ function useJobCompletionToast(): void {
 
 function UpdateNotice(): React.JSX.Element | null {
   const navigate = useNavigate()
+  const location = useLocation()
   const [state, setState] = useState<AutoUpdateState | null>(null)
   const [dismissed, setDismissed] = useState<string | null>(null)
 
@@ -104,6 +105,7 @@ function UpdateNotice(): React.JSX.Element | null {
   }, [state?.version])
 
   if (!state?.supported || !['available', 'downloading', 'ready'].includes(state.status)) return null
+  if (location.pathname === '/settings/updates') return null
   if (dismissed && dismissed === state.version) return null
 
   const ready = state.status === 'ready'
