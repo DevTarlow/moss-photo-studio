@@ -7,7 +7,6 @@ This is the sibling application to `../moss-toolbox`. It is an Electron desktop 
 ## What is in the app
 
 - **App shell** with one rail: Studio (Products, All work, People, Usage), Tools (New Set, Image Editor, Image Generator), and Settings. Products is the home. The top-bar New menu launches the same three tools from any main screen. While Settings is open, its sections use the same rail.
-- **Clean shot** on a product: SAM 3.1 cuts the product itself out of the photo, and the app places those exact pixels on a 2048 px white canvas with padding and creates a linked photo project. This is the fidelity path: the product is not regenerated. It costs about a quarter cent of segmentation and is recorded as a cutout in Usage.
 - **Read the photo** on a product: one under-a-cent vision call proposes the product name, category, audience, and a few visible points; it fills only the blank details and records the text cost in Usage.
 - **Business profile** in Settings with the shop name, what you sell, who buys it, how you write, standard answers, marketplaces, and a main platform. It is optional and feeds the Listing Writer next.
 - **Products** as the home and hub. A product holds its source photo, the sets and edits linked to it, its listing copy (coming with the Listing Writer), and the export history. Open a product to make a set, change a photo, make a new image, link existing work, archive it, or restore it from the Archived section. Unfiled work is surfaced on the same page so older sets can be adopted.
@@ -160,7 +159,7 @@ See [docs/release.md](docs/release.md) for the owner release checklist, [MILESTO
 ## Not included
 
 - Cloud sync, accounts, or a hosted library.
-- Batch crop/rotate and other batch edits, and overlays other than the size label, upscaling, object eraser, or video. Clean shot is the supported cutout path, not a general background remover.
+- Batch crop/rotate and other batch edits, and overlays other than the size label, upscaling, object eraser, or video. Background cleanup is handled by the editor’s Background tiles; the product page no longer has a separate SAM Clean shot action.
 - Auto-updates.
 - Real Muse billing reconciliation.
 - A production store URL, product homepage, or commercial code-signing certificate. See [docs/release.md](docs/release.md) for the owner checklist.

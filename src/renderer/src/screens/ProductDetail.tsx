@@ -10,7 +10,6 @@ import {
   Link2,
   Loader2,
   Package,
-  Scissors,
   Sparkles,
   Trash2
 } from 'lucide-react'
@@ -89,7 +88,6 @@ export function ProductDetail(): React.JSX.Element {
   const [form, setForm] = useState({ category: '', audience: '', notes: '' })
   const [savingDetails, setSavingDetails] = useState(false)
   const [reading, setReading] = useState(false)
-  const [cleaning, setCleaning] = useState(false)
   const [linkOpen, setLinkOpen] = useState(false)
   const [kitOpen, setKitOpen] = useState(false)
   const [unfiled, setUnfiled] = useState<Project[]>([])
@@ -185,22 +183,6 @@ export function ProductDetail(): React.JSX.Element {
       toast.error(messageOf(caught))
     } finally {
       setReading(false)
-    }
-  }
-
-  const cleanShot = async (): Promise<void> => {
-    if (!detail) return
-    setCleaning(true)
-    try {
-      const result = await unwrap(window.moss.products.cleanShot({ id: detail.product.id }))
-      setDetail(result.detail)
-      await refreshProducts()
-      toast.status('Clean shot ready.')
-      navigate(`/project/${result.projectId}`)
-    } catch (caught) {
-      toast.error(messageOf(caught))
-    } finally {
-      setCleaning(false)
     }
   }
 
@@ -386,28 +368,6 @@ export function ProductDetail(): React.JSX.Element {
                   </div>
                 </div>
                 <p className="hint mt-3">A kit writes marketplace-sized images, alt text, a manifest, and the untouched original when the shop needs it.</p>
-              </div>
-
-              <div className="card mt-4 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="section-label">Clean shot</p>
-                    <p className="hint mt-1">Cut the product out of its photo and place it on a clean background. The product pixels stay the same.</p>
-                  </div>
-                  <Button variant="secondary" disabled={cleaning || !secrets?.hasKey} onClick={() => void cleanShot()}>
-                    {cleaning ? <Loader2 size={14} className="animate-spin" /> : <Scissors size={14} />} Make a clean shot · {LISTING_COST_LABEL}
-                  </Button>
-                </div>
-                {product.cutoutUrl && (
-                  <div className="mt-3 flex flex-wrap items-center gap-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
-                    <img src={product.cutoutUrl} alt={`${product.name} cutout`} className="h-20 w-20 rounded object-contain" style={{ background: 'var(--surface-2)' }} />
-                    <div className="min-w-0">
-                      <p className="text-[12px] font-semibold">Cutout ready</p>
-                      <p className="meta">Confidence {Math.round((product.cutoutConfidence ?? 0) * 100)}% · the exact pixels from the photo</p>
-                      <p className="hint mt-1">Make another clean shot to add a fresh 2048 px version to this product’s work.</p>
-                    </div>
-                  </div>
-                )}
               </div>
 
               <ListingPanel productId={product.id} productName={product.name} projectId={latest?.id ?? null} />

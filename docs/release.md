@@ -76,7 +76,7 @@ The Linux script produces an AppImage and a deb under `release/`. Windows and ma
 ## Real-account acceptance
 
 - Create a fresh library with a **real Meta key** and make one three-shot or six-shot set. Confirm the exact amount on the Meta bill and in Usage; the app records one cent per returned image.
-- Run **Read the photo**, **Clean shot**, and **Write listing** once with the real key. Confirm the text/cutout rows appear in Usage and the SAM request is billed separately.
+- Run **Read the photo** and **Write listing** once with the real key. Confirm the text rows appear in Usage.
 - Buy a license through the real store. Activate on two computers, confirm the third is refused, deactivate one, and reactivate. Test an offline launch inside the 14-day grace period.
 - Export an Etsy kit and inspect `listing.md`, `listing.csv`, `kit.json`, the JPEG dimensions, and the untouched original.
 - Run the manual checklist in [manual-test.md](manual-test.md), including a packaged build launched with `MOSS_DEV_UNLOCK=1`, `MOSS_MUSE_FAKE=1`, and `MOSS_E2E=1` to prove the packaged gate ignores test overrides.
@@ -87,4 +87,3 @@ The Linux script produces an AppImage and a deb under `release/`. Windows and ma
 - Batch color grading and a local size-label overlay are included; batch crop/rotate and other batch edits are not. No upscaling, object eraser, or video. The Image Generator has a scene reference.
 - HEIC is detected with a clear iPhone export message; it is not decoded.
 - Marketplace presets are dated. Amazon is deliberately not offered. Verify the current Etsy/Shopify/TikTok/eBay requirements before making public claims.
-- The clean shot handles one product on a clear background best. It is not a general background remover for transparent, reflective, or multi-item scenes.

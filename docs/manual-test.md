@@ -81,7 +81,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - The set plan shows a local Photo check only when the source is dark, flat, soft, or under 800 px; the unit tests cover the dark/flat/small case and a sharp checkerboard. It is not a gate and does not call Meta.
 - Compare with Source in the set lightbox shows the original beside the made image; the journey captures `set-lightbox-compare`.
 - From a Photo in the brand fields samples colors locally; the pure palette unit test covers the white-background filter. HEIC files get an explicit iPhone export message instead of the generic unsupported-type error.
-- Clean shot uses a fake SAM provider in E2E: the product hub produces a cutout and a linked 2048 px clean photo. The integration test checks the alpha composite, product cutout fields, linked project, and `cutout` usage micros. A real SAM run was done manually for the mug and the shirt; see `docs/api-notes.md`.
+- Background cleanup in the editor uses the Background tiles. The product page no longer has a separate Clean shot action; the old SAM backend and its integration test remain for future editor work but are not reachable from the product UI.
 
 ## Coverage gaps in the automated artifact
 

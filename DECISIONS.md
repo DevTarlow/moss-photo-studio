@@ -261,3 +261,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Launch inputs deferred
 
 113. **The owner has deferred the website, signing, store identity, and update choice while revisions continue.** On 2026-11-12 the owner confirmed the website is not set up, signing will happen later, and final launch information should be revisited later. The release gate therefore stays in place with placeholder URLs; it is not bypassed for a convenience build. Auto-update remains unimplemented. The options and recommendation are recorded in `docs/release.md`: manual downloads for v1, then `electron-updater` with a static HTTPS feed on object storage (or a version-check-only middle step), with GitHub Releases and managed services as alternatives. Any auto-updater requires signed builds, an update host, a feed layout, rollback, privacy copy, and CI release ownership; none of those are invented here.
+
+## Product Clean shot removed
+
+114. **The product-page Clean shot action was removed on the owner's request.** The editor's Background tiles already handle background cleanup, so the product hub no longer shows the SAM card, the Make a clean shot button, or the cutout preview. The product hub is now shorter and the editor is the single place for background work. The SAM client, parser, database cutout fields, service, IPC, and integration test remain in the codebase as an unused backend for possible future editor work; they are deliberately not presented to sellers. No release or privacy copy should describe a product-page clean shot.

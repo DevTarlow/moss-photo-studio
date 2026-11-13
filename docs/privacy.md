@@ -26,7 +26,6 @@ The app turns off Chromium's background networking, component updates, domain re
 - The platform and its title, description, feature, and tag caps.
 - A random installation id and a request id, like an image request.
 
-**Clean shot** sends the product photo and a short noun phrase to SAM 3.1 on the same Meta host. It receives geometry (a box and a mask), not a generated image. The mask and cutout are stored locally; only the product photo and concept leave the computer.
 
 From a Photo reads the image on this computer to pick colors; it does not send the image anywhere and does not save it.
 
