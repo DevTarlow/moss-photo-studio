@@ -16,7 +16,7 @@ This is the record of what was run, what passed, and what the acceptance owner s
 | Packaged override test | A packaged release launched to Activation with `MOSS_DEV_UNLOCK=1`, `MOSS_MUSE_FAKE=1`, and `MOSS_E2E=1` set, proving the build gate ignores them. `fakeMode` was false |
 | AppImage launch smoke | Extracted AppImage launched to Activation through Playwright with `APPIMAGE_EXTRACT_AND_RUN=1` |
 | deb launch smoke | `.deb` was unpacked with `dpkg-deb -x` and its executable launched to Activation. The package metadata, desktop entry, icons, and control scripts were inspected |
-| Screenshot baselines | 51 images in `tests/screenshots`, including the product hub. The 1440 by 900 light and dark images are compared with a maximum diff ratio of 0.01. The 1024 by 700 and 150% zoom images are captured fresh because Playwright can restore the Electron viewport under that helper |
+| Screenshot baselines | 52 images in `tests/screenshots`, including the product hub and the source compare. The 1440 by 900 light and dark images are compared with a maximum diff ratio of 0.01. The 1024 by 700 and 150% zoom images are captured fresh because Playwright can restore the Electron viewport under that helper |
 
 ### Commands used
 
@@ -74,6 +74,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - A product kit writes Etsy-sized JPEGs, the untouched original, the saved listing copy in `listing.md`, `listing.csv`, `kit.json`, and the disclosure; the integration test checks dimensions and the pinned main image. The kit flow also runs in the E2E kit spec.
 - The Listing Writer reads the product photo, plan directions, and Business profile, clamps titles/description/features/tags to Etsy, Shopify, or own-site caps, and saves versions. The E2E kit spec writes and edits a listing with the fake text provider.
 - Read the photo fills blank product details and stores the visible points; the integration test checks the analysis and the `analyze` usage row. The kit E2E clicks it before writing the listing.
+- Compare with Source in the set lightbox shows the original beside the made image; the journey captures `set-lightbox-compare`.
 - From a Photo in the brand fields samples colors locally; the pure palette unit test covers the white-background filter. HEIC files get an explicit iPhone export message instead of the generic unsupported-type error.
 - Clean shot uses a fake SAM provider in E2E: the product hub produces a cutout and a linked 2048 px clean photo. The integration test checks the alpha composite, product cutout fields, linked project, and `cutout` usage micros. A real SAM run was done manually for the mug and the shirt; see `docs/api-notes.md`.
 

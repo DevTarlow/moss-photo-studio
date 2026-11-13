@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Dialog as RadixDialog } from 'radix-ui'
-import { ChevronLeft, ChevronRight, Download, Image as ImageIcon, Package, Star, Trash2, UserPlus, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Columns2, Download, Image as ImageIcon, Package, Star, Trash2, UserPlus, X } from 'lucide-react'
 import type { Image } from '@shared/types'
 import { Button } from './Button'
 import { IconButton } from './IconButton'
@@ -18,7 +18,8 @@ export function Lightbox({
   onSavePerson,
   onDelete,
   onPin,
-  isPinned
+  isPinned,
+  source
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -33,12 +34,17 @@ export function Lightbox({
   onDelete?: (image: Image) => void
   onPin?: (image: Image) => void
   isPinned?: (image: Image) => boolean
+  source?: Image | null
 }): React.JSX.Element {
   const image = images[index]
   const [loaded, setLoaded] = useState(false)
+  const [compare, setCompare] = useState(false)
   useEffect(() => {
     setLoaded(false)
   }, [image?.id])
+  useEffect(() => {
+    if (!open) setCompare(false)
+  }, [open])
   useEffect(() => {
     if (!open) return
     const onKey = (event: KeyboardEvent): void => {
@@ -76,7 +82,18 @@ export function Lightbox({
                   <ChevronLeft size={24} />
                 </IconButton>
               )}
-              {image?.url && (
+              {compare && source?.url && image?.url ? (
+                <div className="pointer-events-auto grid h-full w-full grid-cols-2 gap-4">
+                  <figure className="flex min-h-0 flex-col items-center justify-center">
+                    <img src={source.url} alt="The source photo" className="max-h-[66vh] max-w-full rounded object-contain" />
+                    <figcaption className="lightbox-control mt-2 text-[11px]">Source photo</figcaption>
+                  </figure>
+                  <figure className="flex min-h-0 flex-col items-center justify-center">
+                    <img src={image.url} alt={image.label} className="max-h-[66vh] max-w-full rounded object-contain" />
+                    <figcaption className="lightbox-control mt-2 text-[11px]">Made image</figcaption>
+                  </figure>
+                </div>
+              ) : image?.url && (
                 <img
                   src={image.url}
                   alt={image.label}
@@ -92,6 +109,11 @@ export function Lightbox({
               )}
             </div>
             <div className="relative z-20 flex shrink-0 flex-wrap items-center justify-center gap-2 pt-3">
+              {source?.url && image?.url && (
+                <Button variant={compare ? 'primary' : 'secondary'} size="sm" className="pointer-events-auto" onClick={() => setCompare((value) => !value)}>
+                  <Columns2 size={15} /> {compare ? 'Single View' : 'Compare with Source'}
+                </Button>
+              )}
               {onDownload && image && (
                 <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onDownload(image)}>
                   <Download size={15} /> Download

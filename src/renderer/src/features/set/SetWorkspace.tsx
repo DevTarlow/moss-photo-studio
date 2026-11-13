@@ -875,6 +875,7 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
         onDelete={(image) => void deleteImage(image)}
         onPin={(image) => void pinImage(image)}
         isPinned={(image) => Boolean(plan?.shots.find((shot) => shot.id === image.shotId)?.selectedImageId === image.id)}
+        source={images.find((image) => image.id === project.sourceImageId) ?? null}
       />
     </>
   )

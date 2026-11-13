@@ -233,3 +233,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Brand colors from a photo
 
 106. **Color sampling is local and deliberately small.** From a Photo in the brand fields reads the chosen image into a 160 px canvas in the renderer, skips transparent and near-white/near-black pixels, runs a fixed-seed k-means in `src/shared/palette.ts`, dedupes close centers, and adds up to the remaining color slots. The image never goes to the main process, Meta, or disk. The fixed seed keeps the same photo yielding the same palette. A white product-photo backdrop is filtered so it does not crowd out the product colors; the seller can still add white or black by hand.
+
+## Source compare
+
+107. **The set review compares against the untouched source, not a previous AI version.** The Lightbox gets the project's source image and a Compare with Source toggle. The two-up view uses the original uploaded photo on the left and the selected made image on the right, with plain Source photo and Made image captions. It is a view only; it never changes a version. The E2E journey captures the two-up state and checks both captions. The fake host's made images are placeholders, so the screenshot exercises the layout rather than a real generated photo.
