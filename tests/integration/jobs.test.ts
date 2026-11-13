@@ -154,6 +154,20 @@ function monthEvents() {
 }
 
 describe('job queue create', () => {
+  it('appends the seller default look to the run prompt', async () => {
+    brand.update({ stylePreset: 'studio' })
+    const project = imageProject()
+    const { jobId } = await queue.startCreate({
+      projectId: project.id,
+      prompt: 'A mug on a table',
+      count: 1,
+      shape: 'square',
+      format: 'webp'
+    })
+    await waitForJob(jobId)
+    expect(String(server.requests()[0]?.body?.prompt)).toContain('Keep the setting clean and studio-like')
+  })
+
   it('sends a product and a scene reference, with the scene named as the second image', async () => {
     const sourceProject = imageProject('Source')
     const source = await media.importSource({

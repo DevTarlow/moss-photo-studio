@@ -11,6 +11,7 @@ interface BrandRow {
   voice: string | null
   policies: string | null
   default_platform: string | null
+  style_preset: string | null
   colors: string | null
   colors_enabled: number
   logo_file: string | null
@@ -71,7 +72,8 @@ export class BrandRepository {
       voice: row.voice ?? '',
       policies: row.policies ?? '',
       marketplaces: parseArray(row.marketplaces).slice(0, 12),
-      defaultPlatform: row.default_platform ?? 'etsy'
+      defaultPlatform: row.default_platform ?? 'etsy',
+      stylePreset: row.style_preset ?? 'none'
     }
   }
 
@@ -95,13 +97,14 @@ export class BrandRepository {
       voice: (patch.voice ?? current.voice ?? '').slice(0, 500),
       policies: (patch.policies ?? current.policies ?? '').slice(0, 1000),
       marketplaces: (patch.marketplaces ?? current.marketplaces ?? []).slice(0, 12),
-      defaultPlatform: patch.defaultPlatform ?? current.defaultPlatform ?? 'etsy'
+      defaultPlatform: patch.defaultPlatform ?? current.defaultPlatform ?? 'etsy',
+      stylePreset: patch.stylePreset ?? current.stylePreset ?? 'none'
     }
     this.db
       .prepare(
         `UPDATE brand SET colors = ?, colors_enabled = ?, badge_enabled = ?, badge_corner = ?, badge_scale = ?,
           badge_opacity = ?, name = ?, sells = ?, marketplaces = ?, audience = ?, voice = ?, policies = ?,
-          default_platform = ?, updated_at = ? WHERE id = 'default'`
+          default_platform = ?, style_preset = ?, updated_at = ? WHERE id = 'default'`
       )
       .run(
         JSON.stringify(next.colors),
@@ -117,6 +120,7 @@ export class BrandRepository {
         next.voice ?? '',
         next.policies ?? '',
         next.defaultPlatform ?? 'etsy',
+        next.stylePreset ?? 'none',
         Date.now()
       )
     return this.get()

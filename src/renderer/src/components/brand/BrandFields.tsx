@@ -3,6 +3,7 @@ import { ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react'
 import type { Brand } from '@shared/types'
 import { MAX_BRAND_COLORS, USED_BRAND_COLORS, toggleBrandColorUse } from '@shared/brandColors'
 import { paletteFromPixels } from '@shared/palette'
+import { STYLE_PRESETS } from '@shared/stylePresets'
 import { exampleUrl } from '../../lib/assets'
 import { Button } from '../ui/Button'
 import { Dropzone } from '../ui/Dropzone'
@@ -234,6 +235,19 @@ export function BrandFields({
             </Button>
           </div>
           <p className="hint mt-1">From a Photo reads the image on this computer. It is not uploaded or saved.</p>
+        </div>
+
+        <div>
+          <p className="field-label">Default look <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+          <p className="hint mb-2">A setting and light treatment added to every run, so a set feels related. It never changes the product.</p>
+          <select
+            className="field"
+            aria-label="Default look"
+            value={value.stylePreset ?? 'none'}
+            onChange={(event) => patch({ stylePreset: event.target.value })}
+          >
+            {STYLE_PRESETS.map((preset) => <option key={preset.id} value={preset.id}>{preset.label}</option>)}
+          </select>
         </div>
 
         <div>

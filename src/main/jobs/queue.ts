@@ -17,7 +17,8 @@ import type {
 import { estimateCents, monthBounds, monthKey } from '@shared/cost'
 import { MAX_CREATE_VARIANTS, MAX_PROMPT } from '@shared/constants'
 import { usedBrandColors } from '@shared/brandColors'
-import { composeChange, composeCreatePrompt, PROMPT_MAX } from '@shared/prompts/guards'
+import { appendWithinCap, composeChange, composeCreatePrompt, PROMPT_MAX } from '@shared/prompts/guards'
+import { styleClause } from '@shared/stylePresets'
 import { planSetPrompts } from '@shared/prompts/setPlan'
 import { nextCountedLabel, setImageLabel } from '@shared/labels'
 import { templateById, templateWord } from '@shared/prompts/templates'
@@ -699,6 +700,8 @@ export class JobQueue {
       return
     }
     try {
+      const style = styleClause(this.deps.brand.get().stylePreset)
+      if (style) item.spec.prompt = appendWithinCap(item.spec.prompt, style)
       const sourceImage = item.spec.sourceImageId ? this.deps.images.get(item.spec.sourceImageId) : null
       const productRow = item.spec.productId ? this.deps.products.getRow(item.spec.productId) : null
       const productPath = sourceImage

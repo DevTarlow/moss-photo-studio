@@ -280,6 +280,8 @@ export interface Brand {
   policies?: string
   marketplaces?: string[]
   defaultPlatform?: string
+  /** A consistent setting/light treatment appended to runs. */
+  stylePreset?: string
 }
 
 export interface UsageEvent {
