@@ -27,6 +27,7 @@ import { Lightbox } from '../../components/ui/Lightbox'
 import { SourcePickerDialog } from '../../components/sources/SourcePickerDialog'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { SaveProductDialog } from '../../components/products/SaveProductDialog'
+import { SavePersonDialog } from '../../components/people/SavePersonDialog'
 import { unwrap, messageOf } from '../../lib/ipc'
 import { toast } from '../../lib/toast'
 import { warnIfSmallPhoto } from '../../lib/photoWarnings'
@@ -85,6 +86,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const [compareValue, setCompareValue] = useState(50)
   const [addPhotoOpen, setAddPhotoOpen] = useState(false)
   const [saveProductImageId, setSaveProductImageId] = useState<string | null>(null)
+  const [savePersonImageId, setSavePersonImageId] = useState<string | null>(null)
   const [showOriginal, setShowOriginal] = useState(false)
   const [zoom, setZoom] = useState(1)
   const [currentJobId, setCurrentJobId] = useState<string | null>(null)
@@ -598,6 +600,7 @@ export function PhotoWorkspace(): React.JSX.Element {
       onNewVersion={startNewVersion}
       onFormatChange={(format) => { void useWorkspaceStore.getState().updateProject({ format }).catch(() => toast.error('The format could not be saved.')) }}
       onSaveProduct={selected ? () => setSaveProductImageId(selected.id) : undefined}
+      onSavePerson={selected ? () => setSavePersonImageId(selected.id) : undefined}
     />
   )
 
@@ -894,6 +897,11 @@ export function PhotoWorkspace(): React.JSX.Element {
         onOpenChange={(open) => { if (!open) setSaveProductImageId(null) }}
         imageId={saveProductImageId}
         defaultName={project.name}
+      />
+      <SavePersonDialog
+        open={Boolean(savePersonImageId)}
+        onOpenChange={(open) => { if (!open) setSavePersonImageId(null) }}
+        imageId={savePersonImageId}
       />
       <Lightbox
         open={lightboxOpen}

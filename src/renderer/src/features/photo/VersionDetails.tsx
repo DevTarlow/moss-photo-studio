@@ -1,4 +1,4 @@
-import { Package, Plus } from 'lucide-react'
+import { Package, Plus, UserPlus } from 'lucide-react'
 import type { Image, Project } from '@shared/types'
 import { templateById } from '@shared/prompts/templates'
 import { shapeLabel } from '@shared/shapes'
@@ -13,7 +13,8 @@ export function VersionDetails({
   onSelect,
   onNewVersion,
   onFormatChange,
-  onSaveProduct
+  onSaveProduct,
+  onSavePerson
 }: {
   project: Project
   selected: Image | null
@@ -23,6 +24,7 @@ export function VersionDetails({
   onNewVersion: () => void
   onFormatChange: (format: Project['format']) => void
   onSaveProduct?: () => void
+  onSavePerson?: () => void
 }): React.JSX.Element {
   const template = selected?.templateId ? templateById(selected.templateId) : undefined
   const templateName = selected?.templateId === 'quick-fix' ? 'Quick fix' : template?.label
@@ -59,10 +61,19 @@ export function VersionDetails({
             {selected.badge && <p className="meta">Logo badge added.</p>}
             {parentLabel && <p className="meta">From {parentLabel}</p>}
           </div>
-          {onSaveProduct && (
-            <Button variant="secondary" size="sm" className="mt-3" onClick={onSaveProduct}>
-              <Package size={14} /> Save as Product
-            </Button>
+          {(onSaveProduct || onSavePerson) && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {onSaveProduct && (
+                <Button variant="secondary" size="sm" onClick={onSaveProduct}>
+                  <Package size={14} /> Save as Product
+                </Button>
+              )}
+              {onSavePerson && (
+                <Button variant="secondary" size="sm" onClick={onSavePerson}>
+                  <UserPlus size={14} /> Save as Person
+                </Button>
+              )}
+            </div>
           )}
         </>
       ) : (
