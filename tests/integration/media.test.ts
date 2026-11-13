@@ -80,6 +80,7 @@ describe('import pipeline', () => {
     const result = await media.importSource({ projectId: project.id, bytes, name: 'mug.jpg' })
     const image = images.get(result.imageId!)!
     expect(image.isOriginal).toBe(true)
+    expect(image.origin).toBe('upload')
     expect(image.label).toBe('Original photo')
     const originalRelative = decodeURI(image.url!.replace('moss-media://library/', ''))
     const original = fs.readFileSync(path.join(dir, 'library', originalRelative))
@@ -263,5 +264,14 @@ describe('set export', () => {
     expect(after).toContain('01-main-shot-2.webp')
     expect(after).toContain('set-2.txt')
     expect(second.paths.length).toBe(2)
+  })
+})
+
+describe('HEIC guidance', () => {
+  it('names an iPhone HEIC file instead of a generic unsupported error', () => {
+    const bytes = new Uint8Array(64)
+    bytes.set([0, 0, 0, 0x18], 0)
+    bytes.set(Buffer.from('ftypheic'), 4)
+    expect(() => assertImportable(bytes)).toThrow(/HEIC/)
   })
 })

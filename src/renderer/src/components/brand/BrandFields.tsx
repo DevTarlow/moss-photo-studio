@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react'
 import type { Brand } from '@shared/types'
 import { MAX_BRAND_COLORS, USED_BRAND_COLORS, toggleBrandColorUse } from '@shared/brandColors'
+import { paletteFromPixels } from '@shared/palette'
 import { exampleUrl } from '../../lib/assets'
 import { Button } from '../ui/Button'
 import { Dropzone } from '../ui/Dropzone'
@@ -55,6 +56,8 @@ export function BrandFields({
   const [newColor, setNewColor] = useState(cssColor('--accent'))
   const [hex, setHex] = useState('')
   const [logoBusy, setLogoBusy] = useState(false)
+  const [paletteBusy, setPaletteBusy] = useState(false)
+  const photoInput = useRef<HTMLInputElement>(null)
   const usedCount = Math.min(USED_BRAND_COLORS, maxColors)
   const canChooseUsed = value.colorsEnabled && value.colors.length > usedCount
 
@@ -77,6 +80,37 @@ export function BrandFields({
 
   const addColor = (): void => {
     if (addColorValue(hex.trim() || newColor)) setHex('')
+  }
+
+  const useColorsFromPhoto = async (file: File): Promise<void> => {
+    setPaletteBusy(true)
+    try {
+      const bitmap = await createImageBitmap(file)
+      const scale = Math.min(1, 160 / Math.max(1, bitmap.width, bitmap.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale))
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale))
+      const context = canvas.getContext('2d', { willReadFrequently: true })
+      if (!context) throw new Error('no canvas')
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+      bitmap.close()
+      const picked = paletteFromPixels(context.getImageData(0, 0, canvas.width, canvas.height).data, 6)
+      const next = [...value.colors]
+      for (const color of picked) {
+        if (next.length >= maxColors) break
+        if (!next.some((entry) => entry.toLowerCase() === color.toLowerCase())) next.push(color)
+      }
+      if (next.length === value.colors.length) {
+        toast.error('No usable colors were found in that photo.')
+        return
+      }
+      patch({ colors: next })
+      toast.status(`Picked ${next.length - value.colors.length} colors from the photo.`)
+    } catch {
+      toast.error('That photo could not be read.')
+    } finally {
+      setPaletteBusy(false)
+    }
   }
 
   const chooseLogo = async (): Promise<void> => {
@@ -178,7 +212,28 @@ export function BrandFields({
             <Button variant="secondary" size="sm" onClick={addColor} disabled={value.colors.length >= maxColors}>
               <Plus size={14} /> Add Color
             </Button>
+            <input
+              ref={photoInput}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              aria-label="Pick colors from a photo"
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0]
+                event.currentTarget.value = ''
+                if (file) void useColorsFromPhoto(file)
+              }}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={paletteBusy || value.colors.length >= maxColors}
+              onClick={() => photoInput.current?.click()}
+            >
+              {paletteBusy ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} From a Photo
+            </Button>
           </div>
+          <p className="hint mt-1">From a Photo reads the image on this computer. It is not uploaded or saved.</p>
         </div>
 
         <div>

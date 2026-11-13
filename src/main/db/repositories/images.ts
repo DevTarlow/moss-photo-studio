@@ -23,6 +23,7 @@ interface ImageRow {
   parent_id: string | null
   root_id: string | null
   is_original: number
+  origin: 'upload' | 'ai' | 'local'
   cost_cents: number
   created_at: number
   error_code: string | null
@@ -84,6 +85,7 @@ function mapImage(row: ImageRow): Image {
     parentId: row.parent_id,
     rootId: row.root_id,
     isOriginal: Boolean(row.is_original),
+    origin: row.origin ?? 'ai',
     costCents: Number(row.cost_cents),
     createdAt: Number(row.created_at),
     errorCode: row.error_code,
@@ -156,6 +158,9 @@ export class ImageRepository {
           input.errorCode ?? null,
           created
         )
+      this.db
+        .prepare('UPDATE images SET origin = ? WHERE id = ?')
+        .run(input.kind === 'upload' ? 'upload' : input.kind === 'adjust' ? 'local' : 'ai', id)
       if (input.isOriginal || input.kind === 'upload') {
         this.db
           .prepare(

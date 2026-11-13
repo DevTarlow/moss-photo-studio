@@ -36,12 +36,25 @@ export function detectFormat(bytes: Uint8Array): Format | null {
   return null
 }
 
+function looksLikeHeic(bytes: Uint8Array): boolean {
+  if (bytes.length < 12) return false
+  const box = String.fromCharCode(...bytes.slice(4, 8))
+  const brand = String.fromCharCode(...bytes.slice(8, 12)).toLowerCase()
+  return box === 'ftyp' && ['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'mif1', 'msf1'].includes(brand)
+}
+
 export function assertImportable(bytes: Uint8Array): Format {
   if (bytes.byteLength > MAX_IMPORT_BYTES) {
     throw new ImageImportError('too_large', "That photo is larger than 40 MB. Try a smaller one.")
   }
   const format = detectFormat(bytes)
   if (!format) {
+    if (looksLikeHeic(bytes)) {
+      throw new ImageImportError(
+        'unsupported_type',
+        'That looks like an iPhone HEIC photo. Export it as JPEG in Photos, then try again.'
+      )
+    }
     throw new ImageImportError('unsupported_type', "That file isn't a JPEG, PNG, or WebP photo.")
   }
   return format

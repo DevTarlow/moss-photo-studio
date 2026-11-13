@@ -79,6 +79,7 @@ export interface Image {
   parentId: string | null
   rootId: string | null
   isOriginal: boolean
+  origin: 'upload' | 'ai' | 'local'
   costCents: number
   createdAt: number
   errorCode: string | null
