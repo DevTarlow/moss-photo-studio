@@ -366,6 +366,12 @@ export class JobQueue {
     if (input.personId && !this.deps.people.exists(input.personId)) {
       throw new JobStartError('invalid_payload', 'Choose a person for this change.')
     }
+    if (input.sceneImageId) {
+      const scene = this.deps.images.get(input.sceneImageId)
+      if (!scene || scene.status !== 'ready') {
+        throw new JobStartError('invalid_payload', 'That scene reference is not here anymore.')
+      }
+    }
     const template = input.templateId ? templateById(input.templateId) : undefined
     const brand = this.deps.brand.get()
     const palette = brand.colorsEnabled
@@ -375,6 +381,8 @@ export class JobQueue {
       text,
       kind: input.kind,
       hasReference: true,
+      hasPerson: Boolean(input.personId),
+      hasScene: Boolean(input.sceneImageId),
       isGiftShot: Boolean(input.isGiftShot || input.templateId === 'gift-ready'),
       palette
     })
@@ -402,7 +410,7 @@ export class JobQueue {
           productId: null,
           personId: input.personId ?? null,
           personLook: null,
-          sceneImageId: null,
+          sceneImageId: input.sceneImageId ?? null,
           shape: project.shape,
           format: project.format,
           userText: text,

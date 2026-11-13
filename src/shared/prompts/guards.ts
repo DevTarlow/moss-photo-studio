@@ -6,6 +6,10 @@ export const REF_GUARD =
 export const PERSON_REF_GUARD =
   ' Keep the person exactly as pictured in the reference - same face, hair, skin tone and body.'
 
+export function sceneReferenceGuard(index: number): string {
+  return ` Use @Image${index} as the scene reference. Use only its setting, light, and props; do not include its subject.`
+}
+
 export const SCENE_REF_GUARD =
   ' Use only the setting, lighting, and props from the scene reference; do not include any product or person from it.'
 
@@ -78,6 +82,8 @@ export interface ComposeChangeOptions {
   text: string
   kind: ChangeKind
   hasReference: boolean
+  hasPerson?: boolean
+  hasScene?: boolean
   isGiftShot?: boolean
   palette?: string[]
 }
@@ -86,6 +92,8 @@ export function composeChange({
   text,
   kind,
   hasReference,
+  hasPerson = false,
+  hasScene = false,
   isGiftShot = false,
   palette = []
 }: ComposeChangeOptions): string {
@@ -95,6 +103,7 @@ export function composeChange({
   else if (kind === 'edit') prompt = wrapEditPrompt(prompt)
   else if (kind === 'model') prompt = wrapModelPrompt(prompt)
   if (hasReference && kind !== 'model' && kind !== 'scene') prompt += REF_GUARD
+  if (hasScene) prompt = appendWithinCap(prompt, sceneReferenceGuard(hasPerson ? 3 : 2))
   if (isGiftShot) prompt = appendWithinCap(prompt, GIFT_CLAUSE)
   prompt = appendWithinCap(prompt, paletteClause(palette))
   return prompt

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Sparkles, Wand2 } from 'lucide-react'
+import { Mountain, Sparkles, Wand2, X } from 'lucide-react'
 import type { Person } from '@shared/types'
 import type { Template as TemplateType } from '@shared/prompts/templates'
 import { TEMPLATE_GROUPS, QUICK_FIX, templateAsset, templateById } from '@shared/prompts/templates'
@@ -8,6 +8,7 @@ import { isBundledPerson } from '@shared/people'
 import { PROMPT_MAX } from '@shared/prompts/guards'
 import type { ChangeKind } from '@shared/prompts/guards'
 import { Button } from '../../components/ui/Button'
+import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { TextareaCounter } from '../../components/ui/TextareaCounter'
 import { cn } from '../../lib/cn'
 
@@ -31,11 +32,14 @@ export function ChangePanel({
   templateId,
   personId,
   people,
+  sceneRef,
   disabled,
   onText,
   onKind,
   onTemplate,
   onPerson,
+  onChooseScene,
+  onClearScene,
   onClear
 }: {
   text: string
@@ -44,11 +48,14 @@ export function ChangePanel({
   templateId: string | null
   personId: string
   people: Person[]
+  sceneRef: SourceChoice | null
   disabled: boolean
   onText: (text: string, source: TextSource) => void
   onKind: (kind: ChangeKind) => void
   onTemplate: (id: string | null) => void
   onPerson: (id: string) => void
+  onChooseScene: () => void
+  onClearScene: () => void
   onClear: () => void
 }): React.JSX.Element {
   const [pending, setPending] = useState<PendingTile | null>(null)
@@ -152,6 +159,22 @@ export function ChangePanel({
             That's {text.length - PROMPT_MAX} characters over. Shorten it and try again.
           </p>
         )}
+      </div>
+
+      <div className="mt-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
+        <p className="field-label">Scene reference <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+        {sceneRef?.kind === 'image' ? (
+          <div className="flex items-center gap-2">
+            <img src={sceneRef.thumbUrl ?? ''} alt="" className="h-8 w-8 rounded object-cover" style={{ background: 'var(--surface-2)' }} />
+            <p className="min-w-0 flex-1 truncate text-[11px]">{sceneRef.label}</p>
+            <button type="button" className="icon-btn" aria-label="Remove scene reference" disabled={disabled} onClick={onClearScene}><X size={13} /></button>
+          </div>
+        ) : (
+          <Button variant="secondary" size="sm" className="mt-1 w-full justify-start" disabled={disabled} onClick={onChooseScene}>
+            <Mountain size={14} /> Choose a Scene
+          </Button>
+        )}
+        <p className="hint mt-1">Borrows the setting and light, never the subject.</p>
       </div>
 
       {kind === 'model' && (

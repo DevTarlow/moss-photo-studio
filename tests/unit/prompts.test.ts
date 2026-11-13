@@ -111,6 +111,13 @@ describe('composeChange', () => {
     expect(result).not.toContain(REF_GUARD)
   })
 
+  it('names the scene reference and adjusts the index when a person is present', () => {
+    expect(composeChange({ text: 'warmer', kind: 'edit', hasReference: true, hasScene: true }))
+      .toContain('Use @Image2 as the scene reference.')
+    expect(composeChange({ text: 'Hold it', kind: 'model', hasReference: true, hasPerson: true, hasScene: true }))
+      .toContain('Use @Image3 as the scene reference.')
+  })
+
   it('returns empty when the user typed nothing', () => {
     expect(composeChange({ text: '   ', kind: 'edit', hasReference: true })).toBe('')
   })

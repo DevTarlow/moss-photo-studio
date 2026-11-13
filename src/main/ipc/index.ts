@@ -1191,6 +1191,7 @@ export function registerIpcHandlers(context: AppContext): void {
       kind: z.enum(['', 'scene', 'edit', 'model']),
       templateId: z.string().max(80).optional(),
       personId: z.string().max(80).optional(),
+      sceneImageId: z.string().optional(),
       palette: z.array(z.string()).max(3).optional(),
       isGiftShot: z.boolean().optional()
     }),

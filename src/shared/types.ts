@@ -532,6 +532,7 @@ export interface EditJobInput {
   kind: '' | 'scene' | 'edit' | 'model'
   templateId?: string
   personId?: string
+  sceneImageId?: string
   palette?: string[]
   isGiftShot?: boolean
 }

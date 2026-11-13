@@ -74,6 +74,8 @@ export function PhotoWorkspace(): React.JSX.Element {
   const [kind, setKind] = useState<ChangeKind>('')
   const [templateId, setTemplateId] = useState<string | null>(null)
   const [personId, setPersonId] = useState('maya')
+  const [sceneRef, setSceneRef] = useState<SourceChoice | null>(null)
+  const [scenePickerOpen, setScenePickerOpen] = useState(false)
   const [adjust, setAdjust] = useState<AdjustTransform>(emptyAdjust())
   const [undoStack, setUndoStack] = useState<AdjustTransform[]>([])
   const [redoStack, setRedoStack] = useState<AdjustTransform[]>([])
@@ -410,6 +412,7 @@ export function PhotoWorkspace(): React.JSX.Element {
         kind,
         templateId: templateId ?? undefined,
         personId: kind === 'model' ? personId : undefined,
+        sceneImageId: sceneRef?.kind === 'image' ? sceneRef.imageId : undefined,
         palette: brand ? usedBrandColors(brand.colors) : undefined,
         isGiftShot: templateId === 'gift-ready'
       }))
@@ -498,11 +501,14 @@ export function PhotoWorkspace(): React.JSX.Element {
             templateId={templateId}
             personId={personId}
             people={people}
+            sceneRef={sceneRef}
             disabled={tabDisabled}
             onText={(next, source) => { setText(next); setTextSource(source); setError(null) }}
             onKind={setKind}
             onTemplate={setTemplateId}
             onPerson={setPersonId}
+            onChooseScene={() => setScenePickerOpen(true)}
+            onClearScene={() => setSceneRef(null)}
             onClear={() => { setText(''); setKind(''); setTemplateId(null) }}
           />
         ) : (
@@ -816,6 +822,14 @@ export function PhotoWorkspace(): React.JSX.Element {
         onUpload={() => void addPhotoWithFile()}
         title="Add a Photo"
         description="Use a saved product or any ready image in your library."
+      />
+      <SourcePickerDialog
+        open={scenePickerOpen}
+        onOpenChange={setScenePickerOpen}
+        onChoose={(choice) => { if (choice.kind === 'image') setSceneRef(choice) }}
+        title="Choose a Scene Reference"
+        description="Use a ready image for the setting, light, and props. Its subject is never copied."
+        libraryOnly
       />
       <SaveProductDialog
         open={Boolean(saveProductImageId)}

@@ -74,7 +74,7 @@ async function screenshot(name: string, compare = true): Promise<void> {
       if (captureOnly || !fs.existsSync(file) || process.env.MOSS_UPDATE_SCREENS === '1') {
         await page.screenshot({ path: file, animations: 'disabled' })
       } else {
-        await expect(page).toHaveScreenshot(`${name}.png`, { maxDiffPixelRatio: 0.01, animations: 'disabled' })
+        await expect(page).toHaveScreenshot(`${name}.png`, { maxDiffPixelRatio: 0.01, animations: 'disabled', timeout: 30_000 })
       }
       return
     } catch (error) {

@@ -473,6 +473,29 @@ describe('job queue create', () => {
   })
 })
 
+describe('job queue edit scene', () => {
+  it('sends the source and a scene reference for an edit', async () => {
+    const project = await setProject()
+    const sceneProject = imageProject('Edit scene')
+    const scene = await media.importSource({
+      projectId: sceneProject.id,
+      bytes: await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 70, g: 90, b: 110 } } }).jpeg().toBuffer(),
+      name: 'window.jpg'
+    })
+    const { jobId } = await queue.startEdit({
+      projectId: project.id,
+      imageId: project.sourceImageId!,
+      change: 'warmer light from the left',
+      kind: 'edit',
+      sceneImageId: scene.imageId!
+    })
+    await waitForJob(jobId)
+    const request = server.requests()[0]!
+    expect((request.body?.images as unknown[]).length).toBe(2)
+    expect(String(request.body?.prompt)).toContain('Use @Image2 as the scene reference.')
+  })
+})
+
 describe('job queue set', () => {
   it('makes one request per shot and streams updates', async () => {
     const project = await setProject()
