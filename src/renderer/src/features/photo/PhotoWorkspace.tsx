@@ -77,6 +77,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const [sceneRef, setSceneRef] = useState<SourceChoice | null>(null)
   const [scenePickerOpen, setScenePickerOpen] = useState(false)
   const [batchBusy, setBatchBusy] = useState(false)
+  const [labelBusy, setLabelBusy] = useState(false)
   const [adjust, setAdjust] = useState<AdjustTransform>(emptyAdjust())
   const [undoStack, setUndoStack] = useState<AdjustTransform[]>([])
   const [redoStack, setRedoStack] = useState<AdjustTransform[]>([])
@@ -457,6 +458,20 @@ export function PhotoWorkspace(): React.JSX.Element {
     }
   }
 
+  const addSizeLabel = async (width: number, height: number, unit: 'cm' | 'in'): Promise<void> => {
+    if (!selected) return
+    setLabelBusy(true)
+    try {
+      const result = await unwrap(window.moss.adjust.sizeLabel({ imageId: selected.id, width, height, unit }))
+      await useWorkspaceStore.getState().refresh(result.imageId)
+      toast.status('Size label added as a new version.')
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    } finally {
+      setLabelBusy(false)
+    }
+  }
+
   const confirmFirstRun = async (): Promise<void> => {
     try {
       await unwrap(window.moss.settings.set({ key: 'firstRunConfirmShown', value: true }))
@@ -565,6 +580,8 @@ export function PhotoWorkspace(): React.JSX.Element {
             }).some((value) => value !== 0) ? ready.length : 0}
             batchBusy={batchBusy}
             onApplyBatch={() => void applyBatch()}
+            labelBusy={labelBusy}
+            onAddSizeLabel={(width, height, unit) => void addSizeLabel(width, height, unit)}
           />
         )}
       </div>

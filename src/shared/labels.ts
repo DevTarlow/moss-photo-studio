@@ -1,7 +1,7 @@
 import type { ShotType } from './types'
 import { shotDefinition } from './prompts/shots'
 
-export type LabelWord = 'Scene' | 'Model' | 'Edit' | 'Created' | 'Adjust'
+export type LabelWord = 'Scene' | 'Model' | 'Edit' | 'Created' | 'Adjust' | 'Size'
 
 type CountedWord = LabelWord
 

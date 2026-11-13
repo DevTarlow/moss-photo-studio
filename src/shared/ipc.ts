@@ -223,6 +223,10 @@ export interface IpcChannels {
     request: { projectId: string; transform: AdjustTransform }
     response: { count: number }
   }
+  'adjust:sizeLabel': {
+    request: { imageId: string; width: number; height: number; unit: 'cm' | 'in' }
+    response: { imageId: string }
+  }
   'people:list': { request: undefined; response: Person[] }
   'people:create': {
     request: { name: string; bytes: Uint8Array; mime: string }
@@ -370,6 +374,7 @@ export interface MossApi {
   adjust: {
     apply: Call<'adjust:apply'>
     applyBatch: Call<'adjust:applyBatch'>
+    sizeLabel: Call<'adjust:sizeLabel'>
   }
   people: {
     list: CallVoid<'people:list'>

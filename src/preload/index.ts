@@ -129,7 +129,8 @@ const api: MossApi = {
   },
   adjust: {
     apply: invoke('adjust:apply'),
-    applyBatch: invoke('adjust:applyBatch')
+    applyBatch: invoke('adjust:applyBatch'),
+    sizeLabel: invoke('adjust:sizeLabel')
   },
   people: {
     list: invokeVoid('people:list'),

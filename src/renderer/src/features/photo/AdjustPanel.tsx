@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Crop, FlipHorizontal, FlipVertical, Loader2, Redo2, RotateCcw, RotateCw, Sparkles, Undo2 } from 'lucide-react'
 import type { AdjustTransform } from '@shared/types'
 import { Button } from '../../components/ui/Button'
@@ -78,7 +79,9 @@ export function AdjustPanel({
   onResetAll,
   batchCount,
   batchBusy,
-  onApplyBatch
+  onApplyBatch,
+  labelBusy,
+  onAddSizeLabel
 }: {
   transform: AdjustTransform
   width: number | null
@@ -94,7 +97,12 @@ export function AdjustPanel({
   batchCount: number
   batchBusy: boolean
   onApplyBatch: () => void
+  labelBusy: boolean
+  onAddSizeLabel: (width: number, height: number, unit: 'cm' | 'in') => void
 }): React.JSX.Element {
+  const [sizeWidth, setSizeWidth] = useState('')
+  const [sizeHeight, setSizeHeight] = useState('')
+  const [sizeUnit, setSizeUnit] = useState<'cm' | 'in'>('cm')
   const currentAspect = (() => {
     if (!transform.crop || !width || !height) return 'original'
     const ratio = (transform.crop.width * width) / (transform.crop.height * height)
@@ -196,6 +204,42 @@ export function AdjustPanel({
           </Button>
         </div>
       )}
+
+      <section className="mt-5 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
+        <h3 className="text-[12px] font-semibold">Size label</h3>
+        <p className="hint mt-1">Add a clean size badge as a new local version. The product stays untouched.</p>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          <input
+            className="field"
+            inputMode="decimal"
+            aria-label="Width"
+            placeholder="Width"
+            value={sizeWidth}
+            onChange={(event) => setSizeWidth(event.target.value)}
+          />
+          <input
+            className="field"
+            inputMode="decimal"
+            aria-label="Height"
+            placeholder="Height"
+            value={sizeHeight}
+            onChange={(event) => setSizeHeight(event.target.value)}
+          />
+          <select className="field" aria-label="Size unit" value={sizeUnit} onChange={(event) => setSizeUnit(event.target.value as 'cm' | 'in')}>
+            <option value="cm">cm</option>
+            <option value="in">in</option>
+          </select>
+        </div>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="mt-2"
+          disabled={labelBusy || !(Number(sizeWidth) > 0) || !(Number(sizeHeight) > 0)}
+          onClick={() => onAddSizeLabel(Number(sizeWidth), Number(sizeHeight), sizeUnit)}
+        >
+          {labelBusy ? <Loader2 size={14} className="animate-spin" /> : null} Add Size Label
+        </Button>
+      </section>
 
       <div className="mt-5 flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={onResetAll}>Reset All</Button>

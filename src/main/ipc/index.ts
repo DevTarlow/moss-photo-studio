@@ -28,6 +28,7 @@ import { safeBaseName } from '@shared/files'
 import { isBundledProduct } from '@shared/products'
 import { absoluteInLibrary, workingFor } from '../media/paths'
 import { applyLocalAdjust } from '../media/transform'
+import { addSizeLabel } from '../media/label'
 import { exportImageToPath, exportOneImage, exportSetProject } from '../media/export'
 import { openExternalSafely } from '../security'
 import { SCHEMA_VERSION } from '../db/connection'
@@ -1247,6 +1248,70 @@ export function registerIpcHandlers(context: AppContext): void {
         result: 'ok'
       })
       return { count: result.count }
+    }
+  )
+
+  registerIpc(
+    context,
+    'adjust:sizeLabel',
+    z.object({
+      imageId: idSchema,
+      width: z.number().positive().max(10_000),
+      height: z.number().positive().max(10_000),
+      unit: z.enum(['cm', 'in'])
+    }),
+    async ({ imageId, width, height, unit }): Promise<{ imageId: string }> => {
+      const source = context.images.get(imageId)
+      if (!source || source.status !== 'ready') throw new IpcFault('not_found')
+      const sourcePath = source.kind === 'upload'
+        ? workingFor(context.libraryPath(), source.projectId, source.id)
+        : path.join(context.libraryPath(), decodeURI(source.url!.replace('moss-media://library/', '')))
+      const newId = crypto.randomUUID()
+      const result = await addSizeLabel({
+        libraryPath: context.libraryPath(),
+        sourcePath,
+        imageId: newId,
+        projectId: source.projectId,
+        width,
+        height,
+        unit
+      })
+      const label = nextCountedLabel('Size', context.images.labels(source.projectId))
+      context.images.create({
+        id: newId,
+        projectId: source.projectId,
+        kind: 'adjust',
+        status: 'ready',
+        file: result.relative,
+        thumb: result.thumb,
+        width: result.width,
+        height: result.height,
+        format: 'webp',
+        prompt: null,
+        userText: 'Size label',
+        shotId: source.shotId,
+        personId: source.personId,
+        label,
+        parentId: source.id,
+        rootId: source.rootId ?? source.id,
+        costCents: 0
+      })
+      const project = context.projects.get(source.projectId)
+      context.usage.record({
+        projectId: source.projectId,
+        projectName: project?.name ?? 'Project',
+        imageId: newId,
+        action: 'adjust',
+        requestedN: 1,
+        returnedN: 1,
+        costCents: 0,
+        durationMs: 0,
+        result: 'ok'
+      })
+      if (project?.type === 'image' || !project?.coverImageId) {
+        context.images.setCover(source.projectId, newId)
+      }
+      return { imageId: newId }
     }
   )
 

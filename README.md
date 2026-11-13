@@ -25,6 +25,7 @@ This is the sibling application to `../moss-toolbox`. It is an Electron desktop 
 - **First run** opens in light mode with a Welcome screen and four setup steps: add the first product, make the studio your own with a logo and colors, make an optional first set, and a ready screen that previews the images made in the optional first set. The Meta key is asked for at the point of the first paid set, not before the product; the optional Connect Meta step remains in the setup rail, and Settings has the key later. The first photo is saved as a reusable Product; a set project is created only when the seller chooses to make images. Finish Setup opens that product's hub, or Products when no product was saved. All six recipe shots start selected, with 1, 3, or all presets, and the first three are the strongest shots for the chosen category. The customization step can be skipped, and the same logo and colors remain in Settings. The theme, density, and reduce-motion live in Settings.
 - **Listing Kit** from a product’s latest set: marketplace presets (Etsy, Shopify, Instagram feed, TikTok Shop, eBay, own site), platform-sized JPEGs, an untouched original when the shop needs it, an alt-text line per shot, the saved listing copy in `listing.md` when one exists for that shop, a `listing.csv` and `kit.json`, and an AI disclosure. Etsy defaults to 2000 px and a 1 MB guide; the kit is written locally and never uploaded.
 - **Local photo check** on the set plan: a free, on-device read of darkness, flat contrast, softness, and small size, with plain guidance. It never calls Meta and never blocks a run.
+- **Size label** in Local Adjust: enter width, height, and cm/in to create a new local version with a clean rounded size badge at the bottom. It is optional, free, and the product pixels stay untouched.
 - **Batch color grade** from the Local Adjust panel: apply the current brightness, contrast, saturation, warmth, sharpen, and vignette to every ready image in the project as new local versions. Crop, rotate, and flips stay per image; no API call and no charge.
 - **Source compare** in the set review: Compare with Source puts the untouched source photo beside the made image, so you can check the product before keeping a version.
 - **Listing Writer** on the product hub: titles, description, features, and tags written from the product photo, the set plan, and the optional Business profile. Etsy, Shopify, and own-site caps are clamped, the copy is editable and saved in versions, and the panel shows the estimated text cost (under a cent).
@@ -159,7 +160,7 @@ See [docs/release.md](docs/release.md) for the owner release checklist, [MILESTO
 ## Not included
 
 - Cloud sync, accounts, or a hosted library.
-- Batch crop/rotate and other batch edits, dimension overlays, upscaling, object eraser, or video. Clean shot is the supported cutout path, not a general background remover.
+- Batch crop/rotate and other batch edits, and overlays other than the size label, upscaling, object eraser, or video. Clean shot is the supported cutout path, not a general background remover.
 - Auto-updates.
 - Real Muse billing reconciliation.
 - A production store URL, product homepage, or commercial code-signing certificate. See [docs/release.md](docs/release.md) for the owner checklist.
