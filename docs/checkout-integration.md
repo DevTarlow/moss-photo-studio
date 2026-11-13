@@ -29,16 +29,18 @@ Stripe account unless per-app webhook credentials are added first.
 4. Optional but useful: set the Payment Link metadata (and, for subscriptions,
    `subscription_data.metadata`) to `moss_app=moss-photo-studio` through the Stripe API. The
    portal also works from the price id alone.
-5. Paste the Payment Link into `moss-photo-studio-site/src/data/site.ts`:
+5. Set the product site's public checkout URL in its build environment. For local builds, create
+   `moss-photo-studio-site/.env`; in deployment, set the same variable in the host's build settings:
 
-```ts
-// Before
-checkoutUrl: '',
-// After
-checkoutUrl: 'https://buy.stripe.com/...'
+```bash
+PUBLIC_CHECKOUT_URL=https://buy.stripe.com/...
+PUBLIC_SITE_LIVE=false
 ```
 
-The existing CTA reads `SITE.checkoutUrl`; no other site code is needed.
+The site reads `PUBLIC_CHECKOUT_URL` at build time in `src/data/site.ts` and exposes it as
+`SITE.checkoutUrl`. Leave `PUBLIC_SITE_LIVE=false` until checkout, waitlist, and legal pages are
+ready; the site stays noindex until it is true. The site's `.env.example` still says Lemon Squeezy
+in one comment; use the Stripe Payment Link here.
 
 6. The thank-you page should say, in plain words, that the license key is on its way to the
    Stripe checkout email, link to `https://license.mossaistudio.com/account`, and give the support
