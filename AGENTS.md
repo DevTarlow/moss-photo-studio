@@ -61,9 +61,15 @@ Follow this order. Do not skip the verification or the commit.
 
 - The requested change is implemented and no debug code remains.
 - The smallest relevant verification passed (or the reason it could not run is stated).
-- Docs are updated when behavior, setup, or architecture changed.
+- Docs are updated when behavior, setup, or architecture changed. If the change affects anything README.md covers, update it in the same task under the README rule below.
 - One logical commit exists for the task, with a message that matches the repo style.
 - The working tree is clean except for intentionally untracked files.
+
+### README.md
+
+README.md is the public, user-facing guide to the current build, not a changelog. If a change alters what the README covers, including features, requirements, commands, licensing, privacy, updates, costs, platform support, links, or project layout, update it as part of the same logical commit.
+
+Keep the existing user-first voice and structure. Weave the change into the relevant section instead of rewriting unrelated prose. Verify any link or command you touch. When in doubt, make the smallest edit that keeps the README true.
 
 ## 3. Commit rules
 
