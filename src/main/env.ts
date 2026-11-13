@@ -1,5 +1,6 @@
 import { app } from 'electron'
 import path from 'node:path'
+import { LICENSE_API_BASE } from '@shared/constants'
 
 /**
  * Environment switches are development and test-build tools only.
@@ -20,8 +21,8 @@ export const runtimeEnv = {
     ? process.env.MOSS_MUSE_BASE_URL?.replace(/\/+$/, '') || 'https://api.meta.ai/v1'
     : 'https://api.meta.ai/v1',
   licenseBaseUrl: allowOverrides
-    ? process.env.MOSS_LICENSE_API_BASE?.replace(/\/+$/, '') || 'https://api.lemonsqueezy.com'
-    : 'https://api.lemonsqueezy.com',
+    ? process.env.MOSS_LICENSE_API_BASE?.replace(/\/+$/, '') || LICENSE_API_BASE
+    : LICENSE_API_BASE,
   devUnlock: allowOverrides && process.env.MOSS_DEV_UNLOCK === '1',
   e2e: allowOverrides && process.env.MOSS_E2E === '1',
   userDataDir: allowOverrides ? process.env.MOSS_USER_DATA_DIR : undefined,

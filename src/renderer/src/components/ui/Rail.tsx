@@ -11,6 +11,7 @@ import {
   Monitor,
   Package,
   Palette,
+  RefreshCw,
   RotateCcw,
   Settings,
   ShieldCheck,
@@ -31,6 +32,7 @@ const settingsIcons = {
   library: <FolderOpen size={18} strokeWidth={1.75} />,
   appearance: <Monitor size={18} strokeWidth={1.75} />,
   license: <ShieldCheck size={18} strokeWidth={1.75} />,
+  updates: <RefreshCw size={18} strokeWidth={1.75} />,
   privacy: <Settings size={18} strokeWidth={1.75} />,
   about: <Info size={18} strokeWidth={1.75} />
 }

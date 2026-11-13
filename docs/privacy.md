@@ -1,11 +1,12 @@
 # Privacy
 
-Moss Photo Studio sends **three** things to other computers, and only when they are needed:
+Moss Photo Studio sends data to the following places, and only when it is needed:
 
 1. **To Meta Muse**, when you press a button that makes or changes an image, writes listing copy, or reads a product photo: your Muse key, the product photo and any person reference, the composed description or the listing facts and shop profile, the requested shape, format, and count for an image, and a random installation id in the API's `user` field. Meta also sees your IP address, as any service does.
-2. **To the license store (Lemon Squeezy)**, when you activate, validate, or deactivate a license: the license key, an instance id, and a short computer label.
-3. **To your browser**, if you click a link such as “Where to Get a Key”, “Buy a License”, or a Meta documentation link. The app opens the system browser. The app itself does not load the page.
-4. **Nothing else.** There is no telemetry endpoint, analytics SDK, remote logging, crash uploader, or auto-updater.
+2. **To the Moss license center (`license.mossaistudio.com`)**, when you activate, validate, or deactivate a license: the license key, an instance id, and a short computer label. The license center is a separate website that stores the buyer account and purchase email; the desktop app never signs in to it.
+3. **To the Moss license center (`license.mossaistudio.com`)**, when you press **Check for Updates** in Settings: the app slug, platform, architecture, update channel, and current version. It sends no install id, license key, email, or library data, and the app never downloads or installs an update by itself.
+4. **To your browser**, if you click a link such as “Where to Get a Key”, “Buy a License”, a download page, or a Meta documentation link. The app opens the system browser. The app itself does not load the page.
+5. **Nothing else.** There is no telemetry endpoint, analytics SDK, remote logging, crash uploader, or automatic updater.
 
 The app turns off Chromium's background networking, component updates, domain reliability, sync, and pings. The renderer has no network permission in its Content Security Policy except the two API hosts and its own local media scheme. It never calls those API hosts directly. All requests are made by the main process.
 
@@ -18,6 +19,12 @@ The app turns off Chromium's background networking, component updates, domain re
 - Your Muse key in an authorization header.
 - A random per-installation `user` id.
 - A generated `x-request-id` for support and log correlation.
+
+## What is sent with an update check
+
+- The app slug, operating system, architecture, update channel, and current version.
+- Nothing else. No install id, license key, email, library data, or usage history.
+- The check runs only when you press **Check for Updates**. The app does not check on launch, download, or install anything automatically.
 
 ## What is sent when writing listing copy
 
@@ -34,7 +41,7 @@ It does **not** send any other library image, project list, usage history, perso
 ## What is sent with a license request
 
 - The license key.
-- The store instance id, which is created by the store the first time a computer activates.
+- The portal instance id, which is created the first time a computer activates.
 - A label such as `linux-4f21a8c0`. It is derived from the OS and a random per-installation suffix. It is not a hostname, MAC address, disk serial, or account name.
 
 The license validation request happens no more than once per 24 hours automatically, with a check when the window regains focus. A manual **Check Now** is immediate. The last validation time is stored locally. A failed validation never deletes a license or hides the library: a store error or an unreadable response does not shorten the 14 day offline window, and only an explicit rejection by the store, or the end of that window, makes the license read-only. A license file that cannot be decrypted is not treated as licensed; the seller is asked to paste the key again.
@@ -62,11 +69,11 @@ Encrypted files are readable only by your operating-system user. The fallback ke
 - **Delete logs** removes the local log files.
 - **Backups and diagnostics** live in folders you chose. Delete them with the system file manager when you no longer need them.
 - **Remove the Muse key** deletes `secrets.bin` and the cached validation time and last four characters.
-- **Deactivate** tells the license store to release this computer, then clears local license data. If the store cannot be reached, the app does not pretend deactivation succeeded.
+- **Deactivate** tells the license center to release this computer, then clears local license data. If the portal cannot be reached, the app does not pretend deactivation succeeded.
 
 ## Children and accounts
 
-The app has no account, social feed, chat, advertising, or analytics. It never sells data. Do not use it to make images of other people without permission. Person references bundled with the app are synthetic illustrations, and user-added references are stored only on this computer.
+The app has no account, social feed, chat, advertising, or analytics. The license center is a separate website; its account is optional and is not used by the app. The app never sells data. Do not use it to make images of other people without permission. Person references bundled with the app are synthetic illustrations, and user-added references are stored only on this computer.
 
 ## Contact
 

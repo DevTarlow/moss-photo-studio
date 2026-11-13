@@ -1,11 +1,13 @@
 import { app, BrowserWindow, session, shell } from 'electron'
-import { APP_ALLOWED_EXTERNAL_HOSTS, SUPPORT_EMAIL } from '@shared/constants'
+import { APP_ALLOWED_EXTERNAL_HOSTS, LICENSE_API_BASE, SUPPORT_EMAIL } from '@shared/constants'
 import type { Logger } from './logger'
+
+const LICENSE_ORIGIN = new URL(LICENSE_API_BASE).origin
 
 function contentSecurityPolicy(dev: boolean): string {
   const connect = dev
-    ? "'self' https://api.meta.ai https://api.lemonsqueezy.com ws://127.0.0.1:* ws://localhost:* http://127.0.0.1:* http://localhost:*"
-    : "'self' https://api.meta.ai https://api.lemonsqueezy.com"
+    ? `'self' https://api.meta.ai ${LICENSE_ORIGIN} ws://127.0.0.1:* ws://localhost:* http://127.0.0.1:* http://localhost:*`
+    : `'self' https://api.meta.ai ${LICENSE_ORIGIN}`
   // Vite injects an inline React Refresh preamble into the dev page. Without
   // 'unsafe-inline' the policy blocks it, React never mounts, and the window
   // stays blank. Production builds keep the strict policy.
@@ -49,7 +51,7 @@ export function installSessionSecurity(dev: boolean, logger: Logger): void {
       if (dev && (url.protocol === 'ws:' || url.protocol === 'wss:' || url.hostname === '127.0.0.1' || url.hostname === 'localhost')) {
         return callback({})
       }
-      const allowed = ['https://api.meta.ai', 'https://api.lemonsqueezy.com']
+      const allowed = ['https://api.meta.ai', LICENSE_ORIGIN]
       if (allowed.some((prefix) => details.url.startsWith(`${prefix}/`))) return callback({})
       logger.warn('security', 'outbound_blocked', { status: 0 })
       return callback({ cancel: true })

@@ -60,6 +60,9 @@ const api: MossApi = {
     validate: invokeVoid('license:validate'),
     deactivate: invokeVoid('license:deactivate')
   },
+  updates: {
+    check: invokeVoid('updates:check')
+  },
   brand: {
     get: invokeVoid('brand:get'),
     update: invoke('brand:update'),

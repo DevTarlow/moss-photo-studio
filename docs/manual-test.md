@@ -66,7 +66,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - Large library: 510 created projects loaded 20 at a time. Previous and Next moved between pages, and search found the oldest project.
 - Application menu: Export, Undo, Redo, Copy Image, zoom, and Toggle Panel enabled only in the correct editor states. Paste stayed available in the Library. The test read the native menu item state through Electron.
 - Set exports use the stored result file, so the brand badge is present; the integration test distinguishes the result file from the pre-badge working copy by colour.
-- A licence survives a store 5xx as offline/grace, an unreadable key is not treated as licensed, and the machine label contains no hostname.
+- A licence survives a portal 5xx as offline/grace, an unreadable key is not treated as licensed, and the machine label contains no hostname.
 - The database passes `quick_check`; a corrupt live file recovers from the latest `VACUUM INTO` snapshot; the pre-migration backup includes committed WAL frames.
 - A backup restores into a new library and switches the restored database's library path; diagnostics contain no keys or images. The integration suite covers the round trip.
 - A paid job reserves its budget so two concurrent jobs cannot pass the same check; a preflight disk check blocks a run with too little free space; a short Create can be topped up by its missing count.
@@ -245,9 +245,9 @@ On Ubuntu 24.04, install `libfuse2t64` if the AppImage asks for FUSE 2. On a san
 
 ## Before a real release
 
-1. Replace `LICENSE_STORE_URL` in `src/shared/constants.ts` with the real store URL.
-2. Run `npm run build:linux` (the release gate now passes `--release` automatically). The gate fails while the store URL or homepage is a placeholder.
+1. Replace `LICENSE_STORE_URL` in `src/shared/constants.ts` with the real product-site checkout URL.
+2. Run `npm run build:linux` (the release gate now passes `--release` automatically). The gate fails while the product-site checkout URL or homepage is a placeholder.
 3. Add a real code-signing identity for Windows and Apple notarization for macOS.
-4. Run one real Muse generation and one real Lemon Squeezy activation.
+4. Run one real Muse generation and one real license activation through the Moss license center.
 5. Run the real-key, invoice, and product preservation O checks above.
 6. Regenerate screenshots only if the design changed intentionally, using `MOSS_UPDATE_SCREENS=1`.

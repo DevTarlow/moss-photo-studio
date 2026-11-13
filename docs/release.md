@@ -8,8 +8,8 @@ As of **2026-11-12**, the owner is still working on revisions and has deferred t
 
 - The website/landing page is not set up yet.
 - Code signing and notarization will be arranged later.
-- The store URL, product homepage, and real-purchase acceptance are later work.
-- Auto-updates are interesting, but the delivery model has not been chosen.
+- The product-site checkout URL, portal DNS, and real-purchase acceptance are later work.
+- Downloads and a version check are the current update scope; auto-install still waits for signing.
 
 Do not replace the placeholders with invented values. The release gate stays in place until the real values exist. The app remains in development; normal builds, tests, and the fake-host E2E are unaffected.
 
@@ -17,17 +17,17 @@ Do not replace the placeholders with invented values. The release gate stays in 
 
 These cannot be invented by the app:
 
-1. **License checkout URL** in `src/shared/constants.ts` (`LICENSE_STORE_URL`). It must be the real Lemon Squeezy checkout/product URL, not `example.com`. The Buy a License link is hidden until it is real.
+1. **Product-site checkout URL** in `src/shared/constants.ts` (`LICENSE_STORE_URL`). It must be the real checkout page on the app's own site (Payment Link or Checkout Session), not `example.com`. The Buy a License link is hidden until it is real. The portal URLs (`LICENSE_API_BASE`, `LICENSE_PORTAL_URL`) point at `license.mossaistudio.com`.
 2. **Product homepage** in `package.json` (`homepage`). This is the page a buyer should land on, for example `https://mossphotostudio.com`. The release gate checks it.
-3. **Store product and license policy**: the exact price, refund terms, computer limit, and support address. The current machine limit is two computers, and support is `support@mosstoolbox.com`; confirm both before selling.
+3. **Store product and license policy**: the exact price, renewal terms, refund terms, computer limit, and support address. The current machine limit is two computers, and support is `support@mosstoolbox.com`; confirm all of them before selling. The license portal is in `portal/`; its runbook covers Stripe, Email, Firebase, and the customer/admin flows.
 4. **Windows signing certificate**: an Authenticode/EV certificate and its password. electron-builder reads `CSC_LINK` (path or base64) and `CSC_KEY_PASSWORD`.
 5. **macOS Developer ID Application certificate**, plus notarization credentials. electron-builder reads `CSC_LINK`/`CSC_KEY_PASSWORD`; notarization reads `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID` (or an Apple API key).
-6. **Update decision**: the app has no auto-update channel today. If one is added, it needs a signed feed URL, a release host, and a staged rollout policy; do not ship an unsigned auto-updater.
+6. **Update decision**: the portal now stores release metadata and can answer a version check. The app has no auto-install channel today. `electron-updater` still needs signed builds, a feed URL, staged rollout, and rollback; do not ship an unsigned auto-updater.
 7. **Website/legal review**: `mossphotostudio.com` landing page, privacy policy that mentions Meta (including SAM and text), and the Etsy/AI disclosure wording. `docs/privacy.md` is the source of truth for what leaves the computer.
 
-## Auto-update options (decision deferred)
+## Update options
 
-The app currently ships **no auto-updater**. That remains the honest state until an update feed, signing identity, and owner decision exist. These are the realistic options when we return to launch:
+The app currently ships **no auto-installer**. It has a manual Check for Updates action in Settings, backed by the portal's release metadata; installers are downloaded and installed by hand. That remains the honest state until signing identity and a feed/rollout decision exist. These are the realistic options when we return to launch:
 
 | Option | What it gives us | Costs and constraints | Fit for Moss |
 | --- | --- | --- | --- |
@@ -35,7 +35,7 @@ The app currently ships **no auto-updater**. That remains the honest state until
 | **B. Static feed + `electron-updater` (recommended later)** | In-app check, background download, install on restart/quit, differential downloads, stable/beta channels. | Needs signed builds, an HTTPS feed (Cloudflare R2, S3, Bunny, or the website), `latest.yml`/`latest-mac.yml`/`latest-linux.yml`, and release discipline. Adds the update host to the privacy notes. | Best balance of control, cost, and local-first behavior once signing is ready. |
 | **C. GitHub Releases** | Free hosting and simple CI publishing through the GitHub provider. | Public downloads and a GitHub dependency; private-repo tokens are awkward for an installed app. Less control over rollout and branding. | Workable for a public open build; not the best fit for a paid desktop product. |
 | **D. Managed update service** | Dashboard, staged rollout, analytics, rollback. | Paid vendor, another account, and telemetry/privacy policy work. | Overkill for v1; revisit only if rollout volume justifies it. |
-| **E. Version check only** | The app asks a small HTTPS endpoint for the latest version and opens the download page; no silent install. | Still needs a host and a small JSON format; does not remove the need to sign installers for trust. Lower code and signing complexity than B. | A good middle step if we want a gentle reminder before full auto-update. |
+| **E. Version check only** | The app asks a small HTTPS endpoint for the latest version and opens the download page; no silent install. | Still needs a host and a small JSON format; does not remove the need to sign installers for trust. Lower code and signing complexity than B. | Implemented as the manual Settings, Updates check; the portal serves the release metadata and download page. |
 
 **Recommendation:** ship v1 with **manual downloads only**; when signing and the website are ready, use **B** with a generic static feed on object storage behind `updates.mossphotostudio.com` (or the website), starting with a stable channel. If the owner wants a smaller first step, use **E** and open the download page rather than installing silently.
 
@@ -48,7 +48,7 @@ If option B is chosen later, the implementation will need:
 - Privacy copy naming the update host and what it receives: app version, operating system, architecture, and the requested channel. No device identifier, library data, or usage history.
 - CI secrets and a release owner for signing, publishing, channel promotion, and rollback.
 
-No auto-update code is added until those are chosen; adding it now would create an unsigned, untestable update path.
+No auto-install code is added until those are chosen; adding it now would create an unsigned, untestable update path. The portal's downloads page and release endpoint are the supported middle step.
 
 ## Build and verify
 
@@ -77,13 +77,13 @@ The Linux script produces an AppImage and a deb under `release/`. Windows and ma
 
 - Create a fresh library with a **real Meta key** and make one three-shot or six-shot set. Confirm the exact amount on the Meta bill and in Usage; the app records one cent per returned image.
 - Run **Read the photo** and **Write listing** once with the real key. Confirm the text rows appear in Usage.
-- Buy a license through the real store. Activate on two computers, confirm the third is refused, deactivate one, and reactivate. Test an offline launch inside the 14-day grace period.
+- Buy through the real product-site Stripe checkout. Confirm the key email, the portal account, activation on two computers, the third refusal, a portal reset, and re-activation. Test an offline launch inside the 14-day grace period.
 - Export an Etsy kit and inspect `listing.md`, `listing.csv`, `kit.json`, the JPEG dimensions, and the untouched original.
 - Run the manual checklist in [manual-test.md](manual-test.md), including a packaged build launched with `MOSS_DEV_UNLOCK=1`, `MOSS_MUSE_FAKE=1`, and `MOSS_E2E=1` to prove the packaged gate ignores test overrides.
 
 ## Known v1 limits
 
-- No cloud sync, accounts, hosted library, auto-updates, or real Meta billing reconciliation.
+- No cloud sync or hosted library, no auto-installer, and no real Meta billing reconciliation. The license center is a separate web account; the desktop app stays account-free.
 - Batch color grading and a local size-label overlay are included; batch crop/rotate and other batch edits are not. No upscaling, object eraser, or video. The Image Generator has a scene reference.
 - HEIC is detected with a clear iPhone export message; it is not decoded.
 - Marketplace presets are dated. Amazon is deliberately not offered. Verify the current Etsy/Shopify/TikTok/eBay requirements before making public claims.

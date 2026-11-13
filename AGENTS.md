@@ -27,7 +27,7 @@ Before changing behavior, read [README.md](README.md) and [DECISIONS.md](DECISIO
 
 - Renderer reaches the outside world only through named IPC. It gets no Node, filesystem, network keys, or raw paths.
 - Main-process request payloads are parsed with zod. Keep the preload API deeply frozen.
-- Tests never touch real Meta or Lemon Squeezy hosts. Use the fake servers in `tests/fake-muse` and `tests/fake-license`.
+- Tests never touch real Meta or the live license portal. Use the fake servers in `tests/fake-muse` and `tests/fake-license`.
 - Never commit secrets, keys, `.env` files, or local user data. Never log a key.
 - Do not add a dependency for something small that the existing stack already does.
 

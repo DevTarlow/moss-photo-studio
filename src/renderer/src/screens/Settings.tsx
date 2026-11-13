@@ -14,8 +14,8 @@ import {
   Trash2,
   UserRound
 } from 'lucide-react'
-import type { Brand, LicenseState } from '@shared/types'
-import { APP_NAME, LICENSE_STORE_URL, SUPPORT_EMAIL, isStoreUrlPlaceholder } from '@shared/constants'
+import type { Brand, LicenseState, UpdateCheckResult } from '@shared/types'
+import { APP_NAME, APP_VERSION, LICENSE_API_HOST, LICENSE_PORTAL_URL, LICENSE_STORE_URL, SUPPORT_EMAIL, isStoreUrlPlaceholder } from '@shared/constants'
 import { AppFrame } from '../components/ui/AppFrame'
 import { Button } from '../components/ui/Button'
 import { Field } from '../components/ui/Field'
@@ -58,6 +58,7 @@ export function Settings(): React.JSX.Element {
           {section === 'library' && <LibrarySection />}
           {section === 'appearance' && <AppearanceSection />}
           {section === 'license' && <LicenseSection />}
+          {section === 'updates' && <UpdatesSection />}
           {section === 'privacy' && <PrivacySection />}
           {section === 'about' && <AboutSection />}
           {!settingsSections.some((item) => item.id === section) && <StudioSection />}
@@ -656,7 +657,7 @@ function LicenseSection(): React.JSX.Element {
 
   return (
     <div>
-      <SettingsTitle title="License" line="Your one-time license for Moss Photo Studio." />
+      <SettingsTitle title="License" line="Your Moss Photo Studio license, managed in the license center." />
       <SectionCard>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -697,6 +698,9 @@ function LicenseSection(): React.JSX.Element {
           <Button variant="secondary" disabled={busy || !license || license.source === 'dev'} onClick={() => void deactivate()}>
             <UserRound size={15} /> Deactivate This Machine
           </Button>
+          <button type="button" className="inline-flex items-center gap-1 text-[12px]" style={{ color: 'var(--accent)' }} onClick={() => void window.moss.app.openExternal({ url: LICENSE_PORTAL_URL })}>
+            Manage license <ExternalLink size={12} />
+          </button>
           {storeReady ? (
             <button type="button" className="inline-flex items-center gap-1 text-[12px]" style={{ color: 'var(--accent)' }} onClick={() => void window.moss.app.openExternal({ url: LICENSE_STORE_URL })}>
               Buy a license <ExternalLink size={12} />
@@ -755,7 +759,7 @@ function PrivacySection(): React.JSX.Element {
       <SettingsTitle title="Privacy" line="What leaves this computer, and what never does." />
       <SectionCard>
         <p className="text-[13px]">
-          Your photos and projects live on this computer. Two hosts receive anything: Meta gets the words and the image for a run, and the license store checks your key. Nothing else leaves.
+          Your photos and projects live on this computer. Two hosts receive anything: Meta gets the words and the image for a run, and the license center checks your key. Nothing else leaves.
         </p>
         <div className="mt-5 grid gap-3">
           <div className="rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
@@ -763,7 +767,7 @@ function PrivacySection(): React.JSX.Element {
             <p className="hint mt-1">Receives the direction and the working image for a run, plus a random install ID. It never receives your name, email, license key, file names, or library path.</p>
           </div>
           <div className="rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
-            <p className="text-[12px] font-semibold">api.lemonsqueezy.com</p>
+            <p className="text-[12px] font-semibold">{LICENSE_API_HOST}</p>
             <p className="hint mt-1">Receives your license key and machine label when you activate, validate, or deactivate. The key leaves the app only for those three license calls.</p>
           </div>
         </div>
@@ -795,6 +799,61 @@ function PrivacySection(): React.JSX.Element {
   )
 }
 
+function UpdatesSection(): React.JSX.Element {
+  const appInfo = useAppStore((state) => state.appInfo)
+  const [checking, setChecking] = useState(false)
+  const [result, setResult] = useState<UpdateCheckResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const check = async (): Promise<void> => {
+    setChecking(true)
+    setError(null)
+    setResult(null)
+    try {
+      setResult(await unwrap(window.moss.updates.check()))
+    } catch (caught) {
+      setError(messageOf(caught))
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  return (
+    <div>
+      <SettingsTitle title="Updates" line="Check for a newer build. Nothing downloads or installs on its own." />
+      <SectionCard>
+        <p className="text-[13px]">
+          You are on version <span className="font-mono">{appInfo?.version ?? APP_VERSION}</span>. The check sends
+          only the app, platform, architecture, channel, and current version to the license center. It sends no
+          install id, key, email, or library information.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Button variant="secondary" disabled={checking} onClick={() => void check()}>
+            {checking ? <Loader2 size={15} className="animate-spin" /> : null} Check for Updates
+          </Button>
+          {result && !result.available && <p className="hint">You are up to date.</p>}
+          {result?.available && (
+            <Button
+              variant="primary"
+              onClick={() => void window.moss.app.openExternal({ url: result.downloadPageUrl })}
+            >
+              Open Download Page <ExternalLink size={14} />
+            </Button>
+          )}
+        </div>
+        {result?.available && (
+          <div className="mt-4 rounded-[8px] border p-3 text-[12px]" style={{ borderColor: 'var(--border)' }}>
+            <p className="font-semibold">Version {result.version} is available{result.mandatory ? ' (required)' : ''}.</p>
+            {result.notes && <p className="hint mt-1">{result.notes}</p>}
+            <p className="hint mt-2">Installers are downloaded from the license center's Downloads page and installed by hand in this version.</p>
+          </div>
+        )}
+        {error && <p className="hint mt-3" style={{ color: 'var(--danger)' }}>{error}</p>}
+      </SectionCard>
+    </div>
+  )
+}
+
 function AboutSection(): React.JSX.Element {
   const appInfo = useAppStore((state) => state.appInfo)
   return (
@@ -815,7 +874,7 @@ function AboutSection(): React.JSX.Element {
           <div><dt className="section-label">Chromium</dt><dd className="mt-1 text-[12px] tabular">{appInfo?.releases.chromium}</dd></div>
           <div><dt className="section-label">Node</dt><dd className="mt-1 text-[12px] tabular">{appInfo?.releases.node}</dd></div>
         </dl>
-        <p className="hint mt-5">Updates are manual in this version.</p>
+        <p className="hint mt-5">Updates are checked manually in Settings, Updates. Nothing installs on its own.</p>
         <p className="hint mt-2">Support: <span className="font-mono">{SUPPORT_EMAIL}</span></p>
         <p className="meta mt-5">Copyright 2026 Moss Toolbox. All rights reserved.</p>
       </SectionCard>

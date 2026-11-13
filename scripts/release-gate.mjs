@@ -13,7 +13,11 @@ if (!release) {
 }
 const constants = fs.readFileSync('src/shared/constants.ts', 'utf8')
 if (/LICENSE_STORE_URL = 'https:\/\/example\.com\//.test(constants)) {
-  console.error('Release gate: replace LICENSE_STORE_URL with the real store URL before release.')
+  console.error('Release gate: replace LICENSE_STORE_URL with the real product-site checkout URL before release.')
+  process.exit(1)
+}
+if (/LICENSE_API_BASE = 'https:\/\/example\.com/.test(constants) || /LICENSE_PORTAL_URL = 'https:\/\/example\.com/.test(constants)) {
+  console.error('Release gate: replace the placeholder license portal URLs before release.')
   process.exit(1)
 }
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))

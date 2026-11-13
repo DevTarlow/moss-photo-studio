@@ -28,7 +28,8 @@ import { FakeMuseClient } from './muse/fake'
 import { FakeTextProvider, MuseTextClient } from './muse/text'
 import { FakeSamProvider, MuseSamClient } from './muse/sam'
 import { LicenseController } from './license/controller'
-import { LemonSqueezyProvider } from './license/lemonsqueezy'
+import { MossLicenseProvider } from './license/moss'
+import { UpdateService } from './updates'
 import { registerMediaScheme, installMediaProtocol } from './protocol'
 import { installSessionSecurity, hardenWebContents } from './security'
 import { createMainWindow } from './window'
@@ -189,7 +190,11 @@ async function boot(): Promise<void> {
     settings.set('budgetCents', DEFAULT_BUDGET_CENTS)
   }
 
-  const licenseProvider = new LemonSqueezyProvider({ baseUrl: runtimeEnv.licenseBaseUrl })
+  const licenseProvider = new MossLicenseProvider({ baseUrl: runtimeEnv.licenseBaseUrl })
+  const updates = new UpdateService({
+    baseUrl: runtimeEnv.licenseBaseUrl,
+    appSlug: 'moss-photo-studio'
+  })
   const license = new LicenseController({
     repo: licenseRepo,
     provider: licenseProvider,
@@ -300,6 +305,7 @@ async function boot(): Promise<void> {
     media,
     queue,
     license,
+    updates,
     provider,
     libraryPath,
     resourceRoot: () => resourceRoot,

@@ -7,10 +7,13 @@ export const APP_VERSION = '1.0.0'
 export const MUSE_BASE_URL = 'https://api.meta.ai/v1'
 export const MUSE_MODEL = 'muse-image-1.0'
 export const MUSE_KEY_ORIGIN = 'https://dev.meta.ai'
-export const LICENSE_API_BASE = 'https://api.lemonsqueezy.com'
-// Replace with the real store URL before release.
+export const LICENSE_API_BASE = 'https://license.mossaistudio.com'
+export const LICENSE_PORTAL_URL = 'https://license.mossaistudio.com/account'
+// Replace with the real product-site checkout URL before release.
 export const LICENSE_STORE_URL = 'https://example.com/moss-photo-studio'
 export const LICENSE_STORE_PLACEHOLDER = 'https://example.com/moss-photo-studio'
+export const LICENSE_API_HOST = new URL(LICENSE_API_BASE).host
+export const LICENSE_PORTAL_HOST = new URL(LICENSE_PORTAL_URL).host
 export const SUPPORT_EMAIL = 'support@mosstoolbox.com'
 
 export const MAX_PROMPT = 2000
@@ -47,11 +50,11 @@ export const APP_ALLOWED_EXTERNAL_HOSTS = [
   'dev.meta.ai',
   'docs.meta.ai',
   new URL(LICENSE_STORE_URL).host,
-  'api.lemonsqueezy.com'
+  LICENSE_PORTAL_HOST
 ] as const
 
 /** Hosts the renderer may contact. Used by the E2E no-stray-network assertion. */
-export const NETWORK_HOSTS = ['api.meta.ai', 'api.lemonsqueezy.com'] as const
+export const NETWORK_HOSTS = ['api.meta.ai', LICENSE_API_HOST] as const
 
 export const isStoreUrlPlaceholder = (url: string): boolean => url === LICENSE_STORE_PLACEHOLDER
 

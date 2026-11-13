@@ -93,7 +93,7 @@ export class LicenseController {
         status: parsed.status ?? 'licensed',
         activatedAt: parsed.activatedAt ?? null,
         lastValidatedAt: parsed.lastValidatedAt ?? null,
-        source: parsed.source ?? 'lemon'
+        source: parsed.source ?? 'moss'
       })
       this.logger.info('license', 'recovered_from_file')
     } catch {
@@ -202,7 +202,7 @@ export class LicenseController {
     }
     const rolledBack = last !== null && now < last - DAY
     const graceEnded = last !== null && now - last > GRACE_MS
-    const source = row.source === 'dev' ? 'dev' : 'lemon'
+    const source = row.source === 'dev' ? 'dev' : row.source === 'lemon' ? 'lemon' : 'moss'
     if (rolledBack) {
       return {
         status: 'expired',
@@ -224,7 +224,7 @@ export class LicenseController {
         offlineUntil,
         message:
           row.status === 'expired' && !graceEnded
-            ? "Meta says this license is no longer active. Buy a license or contact support."
+            ? "The license server says this license is no longer active. Buy a license or contact support."
             : "It's been 14 days since the last check. Connect to the internet and press Activate to keep using the studio."
       }
     }
@@ -347,7 +347,7 @@ export class LicenseController {
       status: 'licensed',
       activatedAt: now,
       lastValidatedAt: now,
-      source: 'lemon'
+      source: 'moss'
     })
     this.logger.info('license', 'activated')
     return this.emit()

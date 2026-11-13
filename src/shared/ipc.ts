@@ -9,6 +9,7 @@ import type {
   JobState,
   LicenseChangeListener,
   LicenseState,
+  UpdateCheckResult,
   Person,
   PlanJson,
   PlanRecord,
@@ -105,6 +106,7 @@ export interface IpcChannels {
   'license:activate': { request: { key: string }; response: LicenseState }
   'license:validate': { request: undefined; response: LicenseState }
   'license:deactivate': { request: undefined; response: LicenseState }
+  'updates:check': { request: undefined; response: UpdateCheckResult }
   'brand:get': { request: undefined; response: Brand }
   'brand:update': { request: Partial<Brand>; response: Brand }
   'brand:setLogo': { request: { bytes: Uint8Array; mime: string }; response: { logoFile: string } }
@@ -303,6 +305,9 @@ export interface MossApi {
     activate: Call<'license:activate'>
     validate: CallVoid<'license:validate'>
     deactivate: CallVoid<'license:deactivate'>
+  }
+  updates: {
+    check: CallVoid<'updates:check'>
   }
   brand: {
     get: CallVoid<'brand:get'>

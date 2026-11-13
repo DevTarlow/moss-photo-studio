@@ -6,7 +6,7 @@ import type {
   ValidateOutcome
 } from './provider'
 
-interface LemonOptions {
+interface MossOptions {
   baseUrl: string
   fetcher?: typeof fetch
   activateTimeoutMs?: number
@@ -22,37 +22,35 @@ function asRecord(value: unknown): JsonRecord {
   return value && typeof value === 'object' ? (value as JsonRecord) : {}
 }
 
-function isTransientStatus(status: number): boolean {
-  return status === 0 || status === 408 || status === 429 || status >= 500
+function isTransient(status: number): boolean {
+  return status === 0 || status === 401 || status === 403 || status === 408 || status === 425 || status === 429 || status >= 500
 }
 
-/**
- * A store response that should not cost the seller their license. A proxy
- * error, a rate limit, or an auth failure on the store's edge is not the same
- * thing as an expired key, so only an explicit 400/404/409/422 rejection is
- * allowed to reach the controller as invalid.
- */
-function httpFailure(status: number, body: JsonRecord): LicenseProviderError {
-  if (isTransientStatus(status)) return 'license_offline'
-  if (status === 400 || status === 404 || status === 409 || status === 422) {
-    const code = storeError(String(body.error ?? ''))
-    return code === 'unknown' ? 'license_invalid' : code
-  }
-  return 'license_offline'
-}
-
-function storeError(message: string): LicenseProviderError {
-  const text = message.toLowerCase()
-  if (text.includes('no available activations') || text.includes('activation limit') || text.includes('limit reached')) {
-    return 'license_limit'
-  }
-  if (text.includes('not found') || text.includes('invalid') || text.includes('expired') || text.includes('disabled') || text.includes('inactive')) {
+function bodyError(body: JsonRecord): LicenseProviderError {
+  const code = String(body.error ?? '').toLowerCase()
+  if (code === 'activation_limit') return 'license_limit'
+  if (code === 'license_expired' || code === 'license_revoked' || code === 'invalid_key') {
     return 'license_invalid'
   }
   return 'unknown'
 }
 
-async function postForm(
+/**
+ * The portal's errors are deliberate: only an explicit rejection may reach the
+ * controller as an invalid license. A portal outage, edge auth failure, or
+ * throttle is offline so the 14 day grace window still applies.
+ */
+function httpFailure(status: number, body: JsonRecord): LicenseProviderError {
+  if (status === 409) return 'license_limit'
+  if (isTransient(status)) return 'license_offline'
+  if (status === 400 || status === 404 || status === 410 || status === 422) {
+    const mapped = bodyError(body)
+    return mapped === 'unknown' ? 'license_invalid' : mapped
+  }
+  return 'license_offline'
+}
+
+async function postJson(
   url: string,
   fields: Record<string, string>,
   timeoutMs: number,
@@ -63,9 +61,9 @@ async function postForm(
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/json'
       },
-      body: new URLSearchParams(fields).toString(),
+      body: JSON.stringify(fields),
       signal: AbortSignal.timeout(timeoutMs)
     })
     const text = await response.text()
@@ -81,15 +79,15 @@ async function postForm(
   }
 }
 
-export class LemonSqueezyProvider implements LicenseProvider {
+export class MossLicenseProvider implements LicenseProvider {
   private readonly baseUrl: string
   private readonly fetcher: typeof fetch
   private readonly activateTimeoutMs: number
   private readonly validateTimeoutMs: number
   private readonly deactivateTimeoutMs: number
 
-  constructor(options: LemonOptions) {
-    this.baseUrl = options.baseUrl
+  constructor(options: MossOptions) {
+    this.baseUrl = options.baseUrl.replace(/\/+$/, '')
     this.fetcher = options.fetcher ?? fetch
     this.activateTimeoutMs = options.activateTimeoutMs ?? 15_000
     this.validateTimeoutMs = options.validateTimeoutMs ?? 10_000
@@ -97,9 +95,9 @@ export class LemonSqueezyProvider implements LicenseProvider {
   }
 
   async activate(input: { key: string; instanceName: string }): Promise<ActivateOutcome> {
-    const result = await postForm(
-      `${this.baseUrl}/v1/licenses/activate`,
-      { license_key: input.key, instance_name: input.instanceName },
+    const result = await postJson(
+      `${this.baseUrl}/api/v1/licenses/activate`,
+      { key: input.key, instance_name: input.instanceName },
       this.activateTimeoutMs,
       this.fetcher
     )
@@ -107,44 +105,41 @@ export class LemonSqueezyProvider implements LicenseProvider {
       return { ok: false, code: httpFailure(result.status, result.body) }
     }
     if (result.body.activated !== true) {
-      return { ok: false, code: storeError(String(result.body.error ?? 'activation failed')) }
+      const code = bodyError(result.body)
+      return { ok: false, code: code === 'unknown' ? 'license_invalid' : code }
     }
     const instance = asRecord(result.body.instance)
-    const license = asRecord(result.body.license_key)
-    const instanceId = typeof instance.id === 'string' || typeof instance.id === 'number' ? String(instance.id) : ''
+    const license = asRecord(result.body.license)
+    const instanceId = typeof instance.id === 'string' ? instance.id : ''
     if (!instanceId) return { ok: false, code: 'unknown' }
-    return {
-      ok: true,
-      instanceId,
-      status: typeof license.status === 'string' ? license.status : 'active'
-    }
+    const status = typeof license.status === 'string' ? license.status : 'active'
+    if (status !== 'active') return { ok: false, code: 'license_invalid' }
+    return { ok: true, instanceId, status }
   }
 
   async validate(input: { key: string; instanceId: string }): Promise<ValidateOutcome> {
-    const result = await postForm(
-      `${this.baseUrl}/v1/licenses/validate`,
-      { license_key: input.key, instance_id: input.instanceId },
+    const result = await postJson(
+      `${this.baseUrl}/api/v1/licenses/validate`,
+      { key: input.key, instance_id: input.instanceId },
       this.validateTimeoutMs,
       this.fetcher
     )
     if (!result.status.toString().startsWith('2')) {
       return { ok: false, code: httpFailure(result.status, result.body) }
     }
-    const license = asRecord(result.body.license_key)
-    const status = typeof license.status === 'string' ? license.status : ''
-    if (result.body.valid !== true) {
-      return { ok: false, code: 'license_invalid' }
+    if (result.body.valid === true) {
+      const license = asRecord(result.body.license)
+      const status = typeof license.status === 'string' ? license.status : 'active'
+      return { ok: true, status }
     }
-    if (status && status !== 'active') {
-      return { ok: false, code: 'license_invalid' }
-    }
-    return { ok: true, status: status || 'active' }
+    if (result.body.valid === false) return { ok: false, code: 'license_invalid' }
+    return { ok: false, code: 'unknown' }
   }
 
   async deactivate(input: { key: string; instanceId: string }): Promise<DeactivateOutcome> {
-    const result = await postForm(
-      `${this.baseUrl}/v1/licenses/deactivate`,
-      { license_key: input.key, instance_id: input.instanceId },
+    const result = await postJson(
+      `${this.baseUrl}/api/v1/licenses/deactivate`,
+      { key: input.key, instance_id: input.instanceId },
       this.deactivateTimeoutMs,
       this.fetcher
     )

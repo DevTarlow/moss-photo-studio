@@ -1,26 +1,26 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { startFakeLicense } from '../fake-license/server'
-import { LemonSqueezyProvider } from '@main/license/lemonsqueezy'
+import { MossLicenseProvider } from '@main/license/moss'
 
 let server: Awaited<ReturnType<typeof startFakeLicense>>
-let provider: LemonSqueezyProvider
+let provider: MossLicenseProvider
 
 beforeAll(async () => {
   server = await startFakeLicense()
-  provider = new LemonSqueezyProvider({ baseUrl: server.baseUrl })
+  provider = new MossLicenseProvider({ baseUrl: server.baseUrl })
 })
 afterAll(async () => server.close())
 beforeEach(() => server.reset())
 
-describe('Lemon Squeezy license provider', () => {
-  it('activates, validates, and deactivates a real store-shaped key', async () => {
-    const activated = await provider.activate({ key: 'MOSS-KEY-1', instanceName: 'linux-test-12345678' })
+describe('Moss license portal provider', () => {
+  it('activates, validates, and deactivates a real portal-shaped key', async () => {
+    const activated = await provider.activate({ key: 'MOSS-E2E-VALID-KEY', instanceName: 'linux-test-12345678' })
     expect(activated.ok).toBe(true)
     if (!activated.ok) return
     expect(activated.instanceId).toMatch(/^instance-/)
-    const validated = await provider.validate({ key: 'MOSS-KEY-1', instanceId: activated.instanceId })
+    const validated = await provider.validate({ key: 'MOSS-E2E-VALID-KEY', instanceId: activated.instanceId })
     expect(validated).toEqual({ ok: true, status: 'active' })
-    expect(await provider.deactivate({ key: 'MOSS-KEY-1', instanceId: activated.instanceId })).toEqual({ ok: true })
+    expect(await provider.deactivate({ key: 'MOSS-E2E-VALID-KEY', instanceId: activated.instanceId })).toEqual({ ok: true })
     expect(server.instances()).toHaveLength(0)
   })
 
@@ -28,7 +28,7 @@ describe('Lemon Squeezy license provider', () => {
     expect(await provider.activate({ key: 'bad', instanceName: 'test' })).toMatchObject({ ok: false, code: 'license_invalid' })
   })
 
-  it('surfaces the two-machine activation limit from the store', async () => {
+  it('surfaces the two-machine activation limit from the portal', async () => {
     expect((await provider.activate({ key: 'MOSS-KEY-2', instanceName: 'one' })).ok).toBe(true)
     expect((await provider.activate({ key: 'MOSS-KEY-2', instanceName: 'two' })).ok).toBe(true)
     expect(await provider.activate({ key: 'MOSS-KEY-2', instanceName: 'three' })).toMatchObject({ ok: false, code: 'license_limit' })
@@ -41,24 +41,24 @@ describe('Lemon Squeezy license provider', () => {
     expect(await provider.deactivate({ key: 'MOSS-KEY-3', instanceId: 'x' })).toMatchObject({ ok: false, code: 'license_offline' })
   })
 
-  it('maps a store server error to offline, never invalid', async () => {
+  it('maps a portal server error to offline, never invalid', async () => {
     server.control('server-error')
     expect(await provider.activate({ key: 'MOSS-KEY-5', instanceName: 'one' })).toMatchObject({ ok: false, code: 'license_offline' })
     expect(await provider.validate({ key: 'MOSS-KEY-5', instanceId: 'x' })).toMatchObject({ ok: false, code: 'license_offline' })
     expect(await provider.deactivate({ key: 'MOSS-KEY-5', instanceId: 'x' })).toMatchObject({ ok: false, code: 'license_offline' })
   })
 
-  it('maps expired and disabled statuses to invalid', async () => {
+  it('maps expired and revoked statuses to invalid', async () => {
     server.control('expired')
-    const result = await provider.activate({ key: 'MOSS-KEY-4', instanceName: 'one' })
-    expect(result).toMatchObject({ ok: false, code: 'license_invalid' })
-    const activated = await provider.activate({ key: 'MOSS-KEY-4', instanceName: 'one' })
-    expect(activated).toMatchObject({ ok: false, code: 'license_invalid' })
-    server.control('active')
-    const active = await provider.activate({ key: 'MOSS-KEY-4', instanceName: 'one' })
-    expect(active.ok).toBe(true)
-    if (!active.ok) return
-    server.control('expired')
-    expect(await provider.validate({ key: 'MOSS-KEY-4', instanceId: active.instanceId })).toMatchObject({ ok: false, code: 'license_invalid' })
+    expect(await provider.activate({ key: 'MOSS-KEY-4', instanceName: 'one' })).toMatchObject({ ok: false, code: 'license_invalid' })
+    expect(await provider.validate({ key: 'MOSS-KEY-4', instanceId: 'x' })).toMatchObject({ ok: false, code: 'license_invalid' })
+  })
+
+  it('sends the key only in the JSON body, never the URL', async () => {
+    await provider.activate({ key: 'MOSS-KEY-6', instanceName: 'one' })
+    const request = server.requests().at(-1)
+    expect(request?.path).toBe('/api/v1/licenses/activate')
+    expect(request?.path).not.toContain('MOSS-KEY-6')
+    expect(request?.json.key).toBe('MOSS-KEY-6')
   })
 })

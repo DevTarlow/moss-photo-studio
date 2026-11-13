@@ -5,6 +5,7 @@ export const settingsSections = [
   { id: 'library', label: 'Storage' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'license', label: 'License' },
+  { id: 'updates', label: 'Updates' },
   { id: 'privacy', label: 'Privacy' },
   { id: 'about', label: 'About' }
 ] as const

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
-import { LICENSE_STORE_URL, isStoreUrlPlaceholder } from '@shared/constants'
+import { Eye, EyeOff, ExternalLink, Loader2 } from 'lucide-react'
+import { LICENSE_PORTAL_URL, LICENSE_STORE_URL, isStoreUrlPlaceholder } from '@shared/constants'
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf, CallError } from '../lib/ipc'
 import { markUrl } from '../lib/assets'
@@ -142,7 +142,11 @@ export function Activation(): React.JSX.Element {
             )}
           </div>
           <p className="hint mt-6 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
-            Lost it? Check the email from the store. One key works on two computers.
+            Lost it? Check the key email, or open the{' '}
+            <button type="button" className="inline-flex items-center gap-1" style={{ color: 'var(--accent)' }} onClick={() => void window.moss.app.openExternal({ url: LICENSE_PORTAL_URL })}>
+              license center <ExternalLink size={11} />
+            </button>
+            . One key works on two computers.
           </p>
         </div>
       </main>

@@ -317,7 +317,7 @@ export type LicenseStatus = 'unlicensed' | 'licensed' | 'grace' | 'expired' | 'o
 
 export interface LicenseState {
   status: LicenseStatus
-  source: 'lemon' | 'dev' | null
+  source: 'moss' | 'lemon' | 'dev' | null
   machineLabel: string | null
   keyLast4: string | null
   lastValidatedAt: number | null
@@ -339,6 +339,15 @@ export interface ExportOptions {
   maxDimension: number | null
   includeVersions?: boolean
   filename?: string
+}
+
+export interface UpdateCheckResult {
+  available: boolean
+  version: string | null
+  notes: string | null
+  publishedAt: number | null
+  mandatory: boolean
+  downloadPageUrl: string
 }
 
 export interface AppInfo {

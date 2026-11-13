@@ -150,7 +150,7 @@ const migrations: Migration[] = [
           status TEXT NOT NULL,
           activated_at INTEGER,
           last_validated_at INTEGER,
-          source TEXT NOT NULL DEFAULT 'lemon'
+          source TEXT NOT NULL DEFAULT 'moss'
         );
       `)
     }
