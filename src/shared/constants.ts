@@ -2,7 +2,7 @@ import type { MenuContext } from './types'
 
 export const APP_NAME = 'Moss Photo Studio'
 export const APP_ID = 'com.mosstoolbox.photostudio'
-export const APP_VERSION = '1.0.1'
+export const APP_VERSION = '1.0.2'
 
 export const MUSE_BASE_URL = 'https://api.meta.ai/v1'
 export const MUSE_MODEL = 'muse-image-1.0'
