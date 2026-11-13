@@ -23,3 +23,16 @@ tests/screenshots/diff/
 .debug-badge/
 .packaged-config/
 *.tsbuildinfo
+
+# License portal (independent package)
+portal/node_modules/
+portal/dist/
+portal/functions/lib/
+portal/.env
+portal/.env.local
+portal/.env.*.local
+portal/.firebase/
+portal/firebase-debug.log
+portal/.astro/
+portal/.npm-logs/
+portal/functions/.npm-logs/
