@@ -9,7 +9,7 @@ As of **2026-11-12**, the owner is still working on revisions and has deferred t
 - The website/landing page is not set up yet.
 - Code signing and notarization will be arranged later.
 - The product-site checkout URL, portal DNS, and real-purchase acceptance are later work.
-- Downloads and a version check are the current update scope; auto-install still waits for signing.
+- Downloads and a version check are live. The Linux AppImage now auto-downloads and installs on restart through GitHub Releases; Windows and macOS auto-install still wait for signing.
 
 Do not replace the placeholders with invented values. The release gate stays in place until the real values exist. The app remains in development; normal builds, tests, and the fake-host E2E are unaffected.
 
@@ -22,24 +22,24 @@ These cannot be invented by the app:
 3. **Store product and license policy**: the exact price, renewal terms, refund terms, computer limit, and support address. The current machine limit is two computers, and support is `support@mosstoolbox.com`; confirm all of them before selling. The license portal source lives in the `moss-license-center` repository; its runbook covers Stripe, Email, Firebase, and the customer/admin flows.
 4. **Windows signing certificate**: an Authenticode/EV certificate and its password. electron-builder reads `CSC_LINK` (path or base64) and `CSC_KEY_PASSWORD`.
 5. **macOS Developer ID Application certificate**, plus notarization credentials. electron-builder reads `CSC_LINK`/`CSC_KEY_PASSWORD`; notarization reads `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID` (or an Apple API key).
-6. **Update decision**: the portal now stores release metadata and can answer a version check. The app has no auto-install channel today. `electron-updater` still needs signed builds, a feed URL, staged rollout, and rollback; do not ship an unsigned auto-updater.
+6. **Update decision**: the Linux AppImage uses `electron-updater` with GitHub Releases, background downloads, and install on restart. The deb and non-AppImage builds use the portal download page. Windows and macOS still need signing before auto-install can ship.
 7. **Website/legal review**: `mossphotostudio.com` landing page, privacy policy that mentions Meta (including SAM and text), and the Etsy/AI disclosure wording. `docs/privacy.md` is the source of truth for what leaves the computer.
 
 ## Update options
 
-The app currently ships **no auto-installer**. It has a manual Check for Updates action in Settings, backed by the portal's release metadata; installers are downloaded and installed by hand. That remains the honest state until signing identity and a feed/rollout decision exist. These are the realistic options when we return to launch:
+The Linux AppImage now uses **electron-updater** with GitHub Releases. The deb and Windows/macOS builds remain manual. These are the options considered:
 
 | Option | What it gives us | Costs and constraints | Fit for Moss |
 | --- | --- | --- | --- |
 | **A. Manual downloads only** | A new version is a new installer on the website; the app does not check anything. | No update host or extra privacy surface. Buyers must notice and re-download. | Best default until the website and signing exist. |
-| **B. Static feed + `electron-updater` (recommended later)** | In-app check, background download, install on restart/quit, differential downloads, stable/beta channels. | Needs signed builds, an HTTPS feed (Cloudflare R2, S3, Bunny, or the website), `latest.yml`/`latest-mac.yml`/`latest-linux.yml`, and release discipline. Adds the update host to the privacy notes. | Best balance of control, cost, and local-first behavior once signing is ready. |
+| **B. Static feed + `electron-updater` (implemented for Linux AppImage)** | In-app check, background download, install on restart/quit, differential downloads, stable/beta channels. | Needs signed builds, an HTTPS feed (Cloudflare R2, S3, Bunny, or the website), `latest.yml`/`latest-mac.yml`/`latest-linux.yml`, and release discipline. Adds the update host to the privacy notes. | Best balance of control, cost, and local-first behavior once signing is ready. |
 | **C. GitHub Releases** | Free hosting and simple CI publishing through the GitHub provider. | Public downloads and a GitHub dependency; private-repo tokens are awkward for an installed app. Less control over rollout and branding. | Workable for a public open build; not the best fit for a paid desktop product. |
 | **D. Managed update service** | Dashboard, staged rollout, analytics, rollback. | Paid vendor, another account, and telemetry/privacy policy work. | Overkill for v1; revisit only if rollout volume justifies it. |
 | **E. Version check only** | The app asks a small HTTPS endpoint for the latest version and opens the download page; no silent install. | Still needs a host and a small JSON format; does not remove the need to sign installers for trust. Lower code and signing complexity than B. | Implemented as the manual Settings, Updates check; the portal serves the release metadata and download page. |
 
-**Recommendation:** ship v1 with the implemented **E** path — manual downloads plus the Settings, Updates check that opens the portal download page. When signing and the website are ready, move to **B** with a generic static feed on object storage behind `updates.mossphotostudio.com` (or the website), starting with a stable channel.
+**Implemented:** option **B** for the Linux AppImage, using GitHub Releases as the feed. Option **E** remains the fallback for the deb and for any build where automatic updates are unavailable. Windows and macOS stay on **E** until they are signed and verified.
 
-If option B is chosen later, the implementation will need:
+The remaining platform work for option B:
 
 - `electron-updater` in the main process, a `publish` provider in `electron-builder.yml`, and update state exposed through named IPC (never renderer network).
 - Windows NSIS signed with the Authenticode certificate; macOS Developer ID, hardened runtime, notarization, and both dmg/zip artifacts for the updater; Linux AppImage updater support (deb updates stay with the package manager/manual download).
@@ -48,7 +48,7 @@ If option B is chosen later, the implementation will need:
 - Privacy copy naming the update host and what it receives: app version, operating system, architecture, and the requested channel. No device identifier, library data, or usage history.
 - CI secrets and a release owner for signing, publishing, channel promotion, and rollback.
 
-No auto-install code is added until those are chosen; adding it now would create an unsigned, untestable update path. The portal's downloads page and release endpoint are the supported middle step.
+The Linux AppImage path is implemented. The deb still updates through the package manager or a manual download; Windows and macOS remain manual until their signing identities exist.
 
 ## Build and verify
 
@@ -76,6 +76,19 @@ npm run build:mac
 
 The Linux script produces an AppImage and a deb under `release/`. Windows and macOS require the signing identities above and a host that can run those toolchains. The AppImage does not carry setuid permissions; document `--no-sandbox` or unprivileged user namespaces for distributions that block sandboxing.
 
+## Automatic update release
+
+The Linux AppImage reads `latest-linux.yml` from the latest GitHub Release.
+
+1. Bump `package.json` and `APP_VERSION`.
+2. Run `npm run build:linux`.
+3. Create a draft GitHub Release with the AppImage, deb, and `release/latest-linux.yml`.
+4. Upload `latest-linux.yml` after the AppImage so the feed never points at a missing file.
+5. Publish the draft.
+6. Add the same version to the portal release records for the manual download page.
+
+The installed AppImage checks on launch and every four hours, downloads in the background, and shows **Restart to Update** when ready. It does not force a restart.
+
 ## Real-account acceptance
 
 - Create a fresh library with a **real Meta key** and make one three-shot or six-shot set. Confirm the exact amount on the Meta bill and in Usage; the app records one cent per returned image.
@@ -86,7 +99,7 @@ The Linux script produces an AppImage and a deb under `release/`. Windows and ma
 
 ## Known v1 limits
 
-- No cloud sync or hosted library, no auto-installer, and no real Meta billing reconciliation. The license center is a separate web account; the desktop app stays account-free.
+- No cloud sync or hosted library. Automatic updates are Linux AppImage only; the deb and Windows/macOS builds remain manual. There is no real Meta billing reconciliation. The license center is a separate web account; the desktop app stays account-free.
 - Batch color grading and a local size-label overlay are included; batch crop/rotate and other batch edits are not. No upscaling, object eraser, or video. The Image Generator has a scene reference.
 - HEIC is detected with a clear iPhone export message; it is not decoded.
 - Marketplace presets are dated. Amazon is deliberately not offered. Verify the current Etsy/Shopify/TikTok/eBay requirements before making public claims.

@@ -14,7 +14,7 @@ import {
   Trash2,
   UserRound
 } from 'lucide-react'
-import type { Brand, LicenseState, UpdateCheckResult } from '@shared/types'
+import type { AutoUpdateState, Brand, LicenseState, UpdateCheckResult } from '@shared/types'
 import { APP_NAME, APP_VERSION, LICENSE_API_HOST, LICENSE_PORTAL_URL, LICENSE_STORE_URL, SUPPORT_EMAIL, isStoreUrlPlaceholder } from '@shared/constants'
 import { AppFrame } from '../components/ui/AppFrame'
 import { Button } from '../components/ui/Button'
@@ -801,11 +801,45 @@ function PrivacySection(): React.JSX.Element {
 
 function UpdatesSection(): React.JSX.Element {
   const appInfo = useAppStore((state) => state.appInfo)
+  const [auto, setAuto] = useState<AutoUpdateState | null>(null)
   const [checking, setChecking] = useState(false)
   const [result, setResult] = useState<UpdateCheckResult | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const check = async (): Promise<void> => {
+  useEffect(() => {
+    let active = true
+    void unwrap(window.moss.updates.state())
+      .then((state) => {
+        if (active) setAuto(state)
+      })
+      .catch(() => undefined)
+    const unsubscribe = window.moss.onUpdateState((state) => setAuto(state))
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [])
+
+  const checkAuto = async (): Promise<void> => {
+    setError(null)
+    try {
+      setAuto(await unwrap(window.moss.updates.autoCheck()))
+    } catch (caught) {
+      setError(messageOf(caught))
+    }
+  }
+
+  const install = async (): Promise<void> => {
+    setError(null)
+    try {
+      const installed = await unwrap(window.moss.updates.install())
+      if (!installed.ok) setError('The update is not ready to install yet.')
+    } catch (caught) {
+      setError(messageOf(caught))
+    }
+  }
+
+  const checkManual = async (): Promise<void> => {
     setChecking(true)
     setError(null)
     setResult(null)
@@ -818,37 +852,97 @@ function UpdatesSection(): React.JSX.Element {
     }
   }
 
+  const autoSupported = auto?.supported === true
+  const autoBusy = auto?.status === 'checking' || auto?.status === 'downloading'
+
   return (
     <div>
-      <SettingsTitle title="Updates" line="Check for a newer build. Nothing downloads or installs on its own." />
+      <SettingsTitle
+        title="Updates"
+        line={
+          autoSupported
+            ? 'Updates download in the background. You choose when to restart.'
+            : 'Check for a newer build. This build uses the manual download path.'
+        }
+      />
       <SectionCard>
         <p className="text-[13px]">
-          You are on version <span className="font-mono">{appInfo?.version ?? APP_VERSION}</span>. The check sends
-          only the app, platform, architecture, channel, and current version to the license center. It sends no
-          install id, key, email, or library information.
+          You are on version <span className="font-mono">{appInfo?.version ?? APP_VERSION}</span>.
         </p>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Button variant="secondary" disabled={checking} onClick={() => void check()}>
-            {checking ? <Loader2 size={15} className="animate-spin" /> : null} Check for Updates
-          </Button>
-          {result && !result.available && <p className="hint">You are up to date.</p>}
-          {result?.available && (
-            <Button
-              variant="primary"
-              onClick={() => void window.moss.app.openExternal({ url: result.downloadPageUrl })}
-            >
-              Open Download Page <ExternalLink size={14} />
-            </Button>
-          )}
-        </div>
-        {result?.available && (
-          <div className="mt-4 rounded-[8px] border p-3 text-[12px]" style={{ borderColor: 'var(--border)' }}>
-            <p className="font-semibold">Version {result.version} is available{result.mandatory ? ' (required)' : ''}.</p>
-            {result.notes && <p className="hint mt-1">{result.notes}</p>}
-            <p className="hint mt-2">Installers are downloaded from the license center's Downloads page and installed by hand in this version.</p>
-          </div>
+
+        {autoSupported ? (
+          <>
+            <p className="hint mt-2">
+              Automatic updates are available in the Linux AppImage build. The app checks GitHub Releases and sends
+              only its version, platform, and architecture. It sends no key, email, or library data.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Button variant="secondary" disabled={autoBusy} onClick={() => void checkAuto()}>
+                {autoBusy ? <Loader2 size={15} className="animate-spin" /> : null} Check for Updates
+              </Button>
+              {auto?.status === 'ready' && (
+                <Button variant="primary" onClick={() => void install()}>
+                  Restart to Update
+                </Button>
+              )}
+              {auto?.status === 'error' && (
+                <Button variant="secondary" onClick={() => void window.moss.app.openExternal({ url: auto.downloadPageUrl })}>
+                  Open Download Page <ExternalLink size={14} />
+                </Button>
+              )}
+            </div>
+
+            {auto?.status === 'idle' && <p className="hint mt-3">You are up to date.</p>}
+            {auto?.status === 'checking' && <p className="hint mt-3">Checking for a newer build.</p>}
+            {(auto?.status === 'available' || auto?.status === 'downloading') && (
+              <div className="mt-4 rounded-[8px] border p-3 text-[12px]" style={{ borderColor: 'var(--border)' }}>
+                <p className="font-semibold">
+                  Version {auto.version ?? 'newer build'} is downloading
+                  {auto.progress !== null ? ` (${Math.round(auto.progress)}%)` : ''}.
+                </p>
+                <p className="hint mt-1">It will be ready to install when the download finishes.</p>
+              </div>
+            )}
+            {auto?.status === 'ready' && (
+              <div className="mt-4 rounded-[8px] border p-3 text-[12px]" style={{ borderColor: 'var(--border)' }}>
+                <p className="font-semibold">Version {auto.version} is ready.</p>
+                <p className="hint mt-1">Restart when you are ready. Your library is not touched.</p>
+              </div>
+            )}
+            {auto?.notes && <p className="hint mt-3 whitespace-pre-line">{auto.notes}</p>}
+            {auto?.error && <p className="hint mt-3" style={{ color: 'var(--danger)' }}>{auto.error}</p>}
+            {error && <p className="hint mt-3" style={{ color: 'var(--danger)' }}>{error}</p>}
+          </>
+        ) : (
+          <>
+            <p className="hint mt-2">
+              Automatic install is available in the Linux AppImage build. This build uses the portal check below.
+              Nothing installs on its own.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Button variant="secondary" disabled={checking} onClick={() => void checkManual()}>
+                {checking ? <Loader2 size={15} className="animate-spin" /> : null} Check for Updates
+              </Button>
+              {result && !result.available && <p className="hint">You are up to date.</p>}
+              {result?.available && (
+                <Button
+                  variant="primary"
+                  onClick={() => void window.moss.app.openExternal({ url: result.downloadPageUrl })}
+                >
+                  Open Download Page <ExternalLink size={14} />
+                </Button>
+              )}
+            </div>
+            {result?.available && (
+              <div className="mt-4 rounded-[8px] border p-3 text-[12px]" style={{ borderColor: 'var(--border)' }}>
+                <p className="font-semibold">Version {result.version} is available{result.mandatory ? ' (required)' : ''}.</p>
+                {result.notes && <p className="hint mt-1">{result.notes}</p>}
+                <p className="hint mt-2">Installers are downloaded from the license center's Downloads page and installed by hand in this build.</p>
+              </div>
+            )}
+            {error && <p className="hint mt-3" style={{ color: 'var(--danger)' }}>{error}</p>}
+          </>
         )}
-        {error && <p className="hint mt-3" style={{ color: 'var(--danger)' }}>{error}</p>}
       </SectionCard>
     </div>
   )
@@ -874,7 +968,7 @@ function AboutSection(): React.JSX.Element {
           <div><dt className="section-label">Chromium</dt><dd className="mt-1 text-[12px] tabular">{appInfo?.releases.chromium}</dd></div>
           <div><dt className="section-label">Node</dt><dd className="mt-1 text-[12px] tabular">{appInfo?.releases.node}</dd></div>
         </dl>
-        <p className="hint mt-5">Updates are checked manually in Settings, Updates. Nothing installs on its own.</p>
+        <p className="hint mt-5">Update controls are in Settings, Updates.</p>
         <p className="hint mt-2">Support: <span className="font-mono">{SUPPORT_EMAIL}</span></p>
         <p className="meta mt-5">Copyright 2026 Moss Toolbox. All rights reserved.</p>
       </SectionCard>

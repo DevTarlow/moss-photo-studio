@@ -667,6 +667,9 @@ export function registerIpcHandlers(context: AppContext): void {
   registerIpc(context, 'license:validate', voidSchema, async () => context.license.validate())
   registerIpc(context, 'license:deactivate', voidSchema, async () => context.license.deactivate())
   registerIpc(context, 'updates:check', voidSchema, async () => context.updates.check())
+  registerIpc(context, 'updates:autoState', voidSchema, async () => context.autoUpdates.state())
+  registerIpc(context, 'updates:autoCheck', voidSchema, async () => context.autoUpdates.check())
+  registerIpc(context, 'updates:autoInstall', voidSchema, async () => context.autoUpdates.install())
 
   registerIpc(context, 'brand:get', voidSchema, (): Brand => context.brand.get())
   registerIpc(context, 'brand:update', brandPatchSchema, (patch) => context.brand.update(patch))

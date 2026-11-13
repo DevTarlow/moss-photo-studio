@@ -1,6 +1,6 @@
 import path from 'node:path'
-import { app, BrowserWindow, dialog, nativeTheme } from 'electron'
-import { APP_ID, APP_NAME, DEFAULT_BUDGET_CENTS, EMPTY_MENU_CONTEXT, SUPPORT_EMAIL } from '@shared/constants'
+import { app, BrowserWindow, dialog, nativeTheme, Notification } from 'electron'
+import { APP_ID, APP_NAME, APP_VERSION, DEFAULT_BUDGET_CENTS, EMPTY_MENU_CONTEXT, SUPPORT_EMAIL } from '@shared/constants'
 import type { JobState } from '@shared/types'
 import { runtimeEnv, appResourceRoot, defaultLibraryPath, isReleaseBuild } from './env'
 import { Logger } from './logger'
@@ -30,6 +30,8 @@ import { FakeSamProvider, MuseSamClient } from './muse/sam'
 import { LicenseController } from './license/controller'
 import { MossLicenseProvider } from './license/moss'
 import { UpdateService } from './updates'
+import { AutoUpdateService, type AutoUpdaterLike } from './autoUpdate'
+import { autoUpdater } from 'electron-updater'
 import { registerMediaScheme, installMediaProtocol } from './protocol'
 import { installSessionSecurity, hardenWebContents } from './security'
 import { createMainWindow } from './window'
@@ -65,6 +67,7 @@ if (!gotLock) {
 let mainWindow: BrowserWindow | null = null
 let context: AppContext | null = null
 let quitConfirmed = false
+let notifiedUpdateVersion: string | null = null
 let pendingRestoreError: string | null = null
 let menuContext: MenuContext = { ...EMPTY_MENU_CONTEXT }
 let reopenMainWindow: (() => void) | null = null
@@ -195,6 +198,12 @@ async function boot(): Promise<void> {
     baseUrl: runtimeEnv.licenseBaseUrl,
     appSlug: 'moss-photo-studio'
   })
+  const autoUpdates = new AutoUpdateService({
+    supported: isReleaseBuild && (process.platform !== 'linux' || Boolean(process.env.APPIMAGE)),
+    currentVersion: APP_VERSION,
+    downloadPageUrl: new URL('/downloads?app=moss-photo-studio', `${runtimeEnv.licenseBaseUrl}/`).toString(),
+    updater: autoUpdater as unknown as AutoUpdaterLike
+  })
   const license = new LicenseController({
     repo: licenseRepo,
     provider: licenseProvider,
@@ -306,6 +315,7 @@ async function boot(): Promise<void> {
     queue,
     license,
     updates,
+    autoUpdates,
     provider,
     libraryPath,
     resourceRoot: () => resourceRoot,
@@ -331,6 +341,23 @@ async function boot(): Promise<void> {
   license.onChange((state) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('moss:license:changed', state)
+    }
+  })
+  autoUpdates.subscribe((state) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('moss:update:state', state)
+    }
+    if (
+      state.status === 'ready' &&
+      state.version &&
+      state.version !== notifiedUpdateVersion &&
+      Notification.isSupported()
+    ) {
+      notifiedUpdateVersion = state.version
+      new Notification({
+        title: 'Update ready',
+        body: `Moss Photo Studio ${state.version} will install when you restart.`
+      }).show()
     }
   })
 
@@ -373,6 +400,12 @@ async function boot(): Promise<void> {
     return window
   }
   mainWindow = openMainWindow()
+  if (autoUpdates.state().supported) {
+    const initialCheck = setTimeout(() => { void autoUpdates.check() }, 15_000)
+    initialCheck.unref?.()
+    const periodicCheck = setInterval(() => { void autoUpdates.check() }, 4 * 60 * 60 * 1000)
+    periodicCheck.unref?.()
+  }
   if (pendingRestoreError) {
     const message = pendingRestoreError
     void dialog.showMessageBox({

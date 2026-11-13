@@ -1,6 +1,6 @@
 {
   "name": "moss-photo-studio",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A photo studio for people who sell things.",
   "main": "./out/main/index.js",
   "author": {
@@ -20,7 +20,7 @@
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",
     "build": "npm run typecheck && electron-vite build",
-    "build:linux": "node scripts/release-gate.mjs --release && npm run build && electron-builder --linux AppImage && node scripts/make-deb.mjs",
+    "build:linux": "node scripts/release-gate.mjs --release && npm run build && electron-builder --linux AppImage --publish never && node scripts/make-deb.mjs",
     "build:win": "node scripts/release-gate.mjs --release && npm run build && electron-builder --win nsis",
     "build:mac": "node scripts/release-gate.mjs --release && npm run build && electron-builder --mac dmg",
     "postinstall": "node scripts/postinstall.mjs",
@@ -39,6 +39,7 @@
     "@stylexjs/stylex": "0.19.0",
     "better-sqlite3": "^13.0.3",
     "clsx": "^2.1.1",
+    "electron-updater": "^6.8.11",
     "lucide-react": "^1.70.0",
     "radix-ui": "^1.8.1",
     "react": "^19.3.1",

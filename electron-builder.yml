@@ -20,12 +20,12 @@ linux:
   category: Graphics
   icon: icon.png
   syncDesktopName: true
-  artifactName: ${productName}-${version}-${arch}.${ext}
+  artifactName: Moss-Photo-Studio-${version}-${arch}.${ext}
 win:
   target:
     - nsis
   icon: icon.ico
-  artifactName: ${productName}-${version}-Setup.${ext}
+  artifactName: Moss-Photo-Studio-${version}-Setup.${ext}
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
@@ -35,8 +35,12 @@ mac:
     - dmg
   icon: icon.icns
   category: public.app-category.photography
-  artifactName: ${productName}-${version}-${arch}.${ext}
+  artifactName: Moss-Photo-Studio-${version}-${arch}.${ext}
 dmg:
   title: Moss Photo Studio ${version}
-publish: null
+publish:
+  provider: github
+  owner: DevTarlow
+  repo: moss-photo-studio
+  releaseType: release
 npmRebuild: false

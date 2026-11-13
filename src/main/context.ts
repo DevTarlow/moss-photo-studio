@@ -17,6 +17,7 @@ import type { MediaService } from './media/service'
 import type { JobQueue } from './jobs/queue'
 import type { LicenseController } from './license/controller'
 import type { UpdateService } from './updates'
+import type { AutoUpdateService } from './autoUpdate'
 import type { ImageProvider } from './muse/provider'
 import type { BrowserWindow } from 'electron'
 import type { MenuContext } from '@shared/types'
@@ -41,6 +42,7 @@ export interface AppContext {
   queue: JobQueue
   license: LicenseController
   updates: UpdateService
+  autoUpdates: AutoUpdateService
   provider: ImageProvider
   libraryPath: () => string
   resourceRoot: () => string

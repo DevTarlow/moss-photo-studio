@@ -93,7 +93,7 @@ exit 0
 `,
   { mode: 0o755 }
 )
-const output = path.join(root, 'release', `Moss Photo Studio-${version}-${arch}.deb`)
+const output = path.join(root, 'release', `Moss-Photo-Studio-${version}-${arch}.deb`)
 execFileSync('dpkg-deb', ['--root-owner-group', '--build', stage, output], { stdio: 'inherit' })
 fs.rmSync(stage, { recursive: true, force: true })
 console.log(`deb written: ${path.relative(root, output)}`)

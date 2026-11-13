@@ -350,6 +350,29 @@ export interface UpdateCheckResult {
   downloadPageUrl: string
 }
 
+export type AutoUpdateStatus =
+  | 'unsupported'
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'downloading'
+  | 'ready'
+  | 'error'
+
+export interface AutoUpdateState {
+  supported: boolean
+  status: AutoUpdateStatus
+  currentVersion: string
+  version: string | null
+  notes: string | null
+  progress: number | null
+  error: string | null
+  canInstall: boolean
+  downloadPageUrl: string
+}
+
+export type UpdateStateListener = (state: AutoUpdateState) => void
+
 export interface AppInfo {
   version: string
   isPackaged: boolean

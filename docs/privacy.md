@@ -4,9 +4,10 @@ Moss Photo Studio sends data to the following places, and only when it is needed
 
 1. **To Meta Muse**, when you press a button that makes or changes an image, writes listing copy, or reads a product photo: your Muse key, the product photo and any person reference, the composed description or the listing facts and shop profile, the requested shape, format, and count for an image, and a random installation id in the API's `user` field. Meta also sees your IP address, as any service does.
 2. **To the Moss license center (`license.mossaistudio.com`)**, when you activate, validate, or deactivate a license: the license key, an instance id, and a short computer label. The license center is a separate website that stores the buyer account and purchase email; the desktop app never signs in to it.
-3. **To the Moss license center (`license.mossaistudio.com`)**, when you press **Check for Updates** in Settings: the app slug, platform, architecture, update channel, and current version. It sends no install id, license key, email, or library data, and the app never downloads or installs an update by itself.
-4. **To your browser**, if you click a link such as “Where to Get a Key”, “Buy a License”, a download page, or a Meta documentation link. The app opens the system browser. The app itself does not load the page.
-5. **Nothing else.** There is no telemetry endpoint, analytics SDK, remote logging, crash uploader, or automatic updater.
+3. **To the Moss license center (`license.mossaistudio.com`)**, when a build without automatic updates uses **Check for Updates** in Settings: the app slug, platform, architecture, update channel, and current version. It sends no install id, license key, email, or library data.
+4. **To GitHub Releases (`github.com/DevTarlow/moss-photo-studio`)**, when the Linux AppImage checks for updates on launch, every four hours, or when you press **Check for Updates**: the app version, platform, architecture, and channel. GitHub also sees your IP address. It sends no install id, license key, email, library data, or usage history. The app downloads a newer build in the background and installs it only when you choose Restart.
+5. **To your browser**, if you click a link such as “Where to Get a Key”, “Buy a License”, a download page, or a Meta documentation link. The app opens the system browser. The app itself does not load the page.
+6. **Nothing else.** There is no telemetry endpoint, analytics SDK, remote logging, or crash uploader.
 
 The app turns off Chromium's background networking, component updates, domain reliability, sync, and pings. The renderer has no network permission in its Content Security Policy except the two API hosts and its own local media scheme. It never calls those API hosts directly. All requests are made by the main process.
 
@@ -22,9 +23,14 @@ The app turns off Chromium's background networking, component updates, domain re
 
 ## What is sent with an update check
 
-- The app slug, operating system, architecture, update channel, and current version.
+For the Linux AppImage, the app checks GitHub Releases on launch and every four hours:
+
+- The app version, operating system, architecture, and update channel.
+- GitHub also sees your IP address, as any HTTPS service does.
 - Nothing else. No install id, license key, email, library data, or usage history.
-- The check runs only when you press **Check for Updates**. The app does not check on launch, download, or install anything automatically.
+- A newer build downloads in the background. It installs only when you choose **Restart to Update**. There is no forced restart and no silent downgrade.
+
+Builds without automatic updates check the license center only when you press **Check for Updates**. That request sends the app slug, platform, architecture, channel, and current version. It sends no install id, key, email, or library data.
 
 ## What is sent when writing listing copy
 
@@ -79,4 +85,4 @@ The app has no account, social feed, chat, advertising, or analytics. The licens
 
 Support: support@mosstoolbox.com
 
-This document describes the build in this repository. A distributor that adds a hosted service, crash reporting, or an update channel must update this file before shipping.
+This document describes the build in this repository. A distributor that adds a hosted service, crash reporting, or another update channel must update this file before shipping.

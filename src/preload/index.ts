@@ -61,7 +61,10 @@ const api: MossApi = {
     deactivate: invokeVoid('license:deactivate')
   },
   updates: {
-    check: invokeVoid('updates:check')
+    check: invokeVoid('updates:check'),
+    state: invokeVoid('updates:autoState'),
+    autoCheck: invokeVoid('updates:autoCheck'),
+    install: invokeVoid('updates:autoInstall')
   },
   brand: {
     get: invokeVoid('brand:get'),
@@ -173,6 +176,7 @@ const api: MossApi = {
     save: invoke('listings:save')
   },
   onJobUpdate: (listener) => subscribe('moss:job:update', listener as never),
+  onUpdateState: (listener) => subscribe('moss:update:state', listener as never),
   onLicenseChanged: (listener) => subscribe('moss:license:changed', listener as never),
   onMenuAction: (listener) => subscribe('moss:menu-action', listener as never),
   onFlushRequest: (listener) => subscribe('moss:flush-before-close', listener as never),

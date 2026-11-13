@@ -93,7 +93,7 @@ npm run build:linux
 
 `npm run build:linux` produces an AppImage and a deb under `release/`. Windows and macOS builds are configured but have not been verified in this environment. They need signing certificates before public distribution.
 
-The app checks for updates in **Settings, Updates**. But there is no automatic download or install. New builds are listed on the portal and published on [GitHub Releases](https://github.com/DevTarlow/moss-photo-studio/releases), and you install them yourself.
+The Linux AppImage checks [GitHub Releases](https://github.com/DevTarlow/moss-photo-studio/releases) when it starts and every four hours. A newer build downloads in the background and installs when you choose Restart to Update. The deb and other builds use the portal download page and install by hand. There is no forced restart.
 
 ## Data and privacy
 
@@ -101,7 +101,7 @@ The library lives under the application data folder shown in **Settings, Storage
 
 The Meta key is stored in `secrets.bin`, encrypted with Electron's `safeStorage` when a system keyring is available. The fallback is AES-256-GCM with a local key protected by file mode `0600`. The license key is stored encrypted. No key is returned to the renderer, logged, or placed in a URL. Settings shows the last four characters only.
 
-The app sends prompts and the images you choose to Meta when you run a paid image or text action. Local Adjust, the Listing Kit, and the local photo check stay on your computer. No telemetry is sent.
+The app sends prompts and the images you choose to Meta when you run a paid image or text action. Local Adjust, the Listing Kit, and the local photo check stay on your computer. No telemetry is sent. The automatic update check goes to GitHub Releases and sends the app version, platform, architecture, and channel. It sends no key, email, or library data.
 
 See [docs/privacy.md](docs/privacy.md).
 
@@ -118,7 +118,7 @@ src/
 
 The renderer reaches the outside world only through named IPC methods. The main process parses every request payload with zod. External links open in the system browser and only for an allowlisted set of hosts.
 
-The app has no auto-update channel, cloud sync, or hosted library. Windows and macOS packages still need signing and verification. Real Meta billing reconciliation is also open. [docs/release.md](docs/release.md) has the owner checklist.
+The app has no cloud sync or hosted library. Automatic updates are supported for the Linux AppImage; Windows and macOS packages still need signing and verification. Real Meta billing reconciliation is also open. [docs/release.md](docs/release.md) has the owner checklist.
 
 More detail lives in [docs/licensing.md](docs/licensing.md), [docs/checkout-integration.md](docs/checkout-integration.md), [docs/api-notes.md](docs/api-notes.md), [docs/category-recipes.md](docs/category-recipes.md), [DECISIONS.md](DECISIONS.md), and [MILESTONES.md](MILESTONES.md).
 

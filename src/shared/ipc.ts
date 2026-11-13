@@ -10,6 +10,8 @@ import type {
   LicenseChangeListener,
   LicenseState,
   UpdateCheckResult,
+  AutoUpdateState,
+  UpdateStateListener,
   Person,
   PlanJson,
   PlanRecord,
@@ -107,6 +109,9 @@ export interface IpcChannels {
   'license:validate': { request: undefined; response: LicenseState }
   'license:deactivate': { request: undefined; response: LicenseState }
   'updates:check': { request: undefined; response: UpdateCheckResult }
+  'updates:autoState': { request: undefined; response: AutoUpdateState }
+  'updates:autoCheck': { request: undefined; response: AutoUpdateState }
+  'updates:autoInstall': { request: undefined; response: { ok: boolean } }
   'brand:get': { request: undefined; response: Brand }
   'brand:update': { request: Partial<Brand>; response: Brand }
   'brand:setLogo': { request: { bytes: Uint8Array; mime: string }; response: { logoFile: string } }
@@ -308,6 +313,9 @@ export interface MossApi {
   }
   updates: {
     check: CallVoid<'updates:check'>
+    state: CallVoid<'updates:autoState'>
+    autoCheck: CallVoid<'updates:autoCheck'>
+    install: CallVoid<'updates:autoInstall'>
   }
   brand: {
     get: CallVoid<'brand:get'>
@@ -419,6 +427,7 @@ export interface MossApi {
     save: Call<'listings:save'>
   }
   onJobUpdate(listener: JobUpdateListener): () => void
+  onUpdateState(listener: UpdateStateListener): () => void
   onLicenseChanged(listener: LicenseChangeListener): () => void
   onMenuAction(listener: (event: MenuEvent) => void): () => void
   onFlushRequest(listener: () => void): () => void
