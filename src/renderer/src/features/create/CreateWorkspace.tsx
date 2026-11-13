@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { DropdownMenu, Popover } from 'radix-ui'
 import { Banner, MoreMenu } from '@astryxdesign/core'
-import { ChevronDown, Download, Image as ImageIcon, Loader2, Mountain, Package, Pencil, Plus, Sparkles, UserPlus, X } from 'lucide-react'
+import { Check, ChevronDown, Download, Image as ImageIcon, Loader2, Mountain, Package, Pencil, Sparkles, UserPlus, UserRound, X } from 'lucide-react'
 import type { Format, Image, JobState, Project, Shape } from '@shared/types'
 import { MAX_PROMPT } from '@shared/constants'
 import { composeCreatePrompt } from '@shared/prompts/guards'
@@ -26,6 +26,7 @@ import { Sheet } from '../../components/ui/Sheet'
 import { Progress } from '../../components/ui/Progress'
 import { Switch } from '../../components/ui/Switch'
 import { FirstRunConfirm } from '../../components/ui/FirstRunConfirm'
+import { Dialog } from '../../components/ui/Dialog'
 import { BudgetWarning } from '../../components/ui/BudgetWarning'
 import { TextareaCounter } from '../../components/ui/TextareaCounter'
 import { Lightbox } from '../../components/ui/Lightbox'
@@ -89,6 +90,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   }, [preferredPersonLook, project.id])
   const [saveProductImage, setSaveProductImage] = useState<Image | null>(null)
   const [savePersonImage, setSavePersonImage] = useState<Image | null>(null)
+  const [personPreviewOpen, setPersonPreviewOpen] = useState(false)
   const [createPersonMode, setCreatePersonMode] = useState(false)
   const [createProductMode, setCreateProductMode] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
@@ -561,39 +563,71 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
 
       <div className="mt-4">
         <p className="field-label">Person reference <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
-        {selectedPerson ? (
-          <div className="flex items-center gap-2 rounded-[8px] border p-2" style={{ borderColor: 'var(--border)' }}>
-            <img src={selectedLook?.url ?? selectedPerson.portraitUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[11px] font-medium">{selectedPerson.name}{selectedPerson.ageBand ? ` · ${selectedPerson.ageBand}` : ''}{selectedLook ? ` · ${selectedLook.label}` : ''}</p>
-              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>Sent with the request so the person stays the same.</p>
-            </div>
-            <button type="button" className="icon-btn" aria-label="Remove person reference" onClick={() => { setPersonId(null); setPersonLook(null) }}><X size={14} /></button>
-          </div>
-        ) : people.length === 0 ? (
+        {people.length === 0 ? (
           <p className="hint">Add a person on the People page to use one here.</p>
         ) : (
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <Button variant="secondary" className="w-full justify-start" type="button">
-                <Plus size={15} /> Choose a Person
-              </Button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content className="menu-content min-w-[240px]" sideOffset={4}>
-                {people.map((person) => (
-                  <DropdownMenu.Item
-                    key={person.id}
-                    className="menu-item"
-                    onSelect={() => { setPersonId(person.id); setPersonLook(null) }}
+          <>
+            <div className="flex items-center gap-2">
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <button
+                    type="button"
+                    className="field flex h-8 min-w-0 flex-1 items-center justify-between gap-2 text-[11px]"
+                    aria-label={selectedPerson ? `Person reference: ${selectedPerson.name}` : 'Choose a Person'}
                   >
-                    <img src={person.portraitUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
-                    <span className="min-w-0 flex-1 truncate">{person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}</span>
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+                    <span className="truncate">
+                      {selectedPerson
+                        ? `${selectedPerson.name}${selectedPerson.ageBand ? ` · ${selectedPerson.ageBand}` : ''}${selectedLook ? ` · ${selectedLook.label}` : ''}`
+                        : 'Choose a Person'}
+                    </span>
+                    <ChevronDown size={13} className="shrink-0" />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content className="menu-content min-w-[240px]" sideOffset={4}>
+                    {people.map((person) => (
+                      <DropdownMenu.Item
+                        key={person.id}
+                        className="menu-item"
+                        onSelect={() => { setPersonId(person.id); setPersonLook(null) }}
+                      >
+                        <img src={person.portraitUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
+                        <span className="min-w-0 flex-1 truncate">{person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}</span>
+                        {person.id === selectedPerson?.id && <Check size={14} className="ml-auto shrink-0" />}
+                      </DropdownMenu.Item>
+                    ))}
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+              {selectedPerson ? (
+                <>
+                  <button
+                    type="button"
+                    className="shrink-0 cursor-pointer rounded-full border-0 bg-transparent p-0 hover:opacity-80"
+                    aria-label={`See ${selectedPerson.name} larger`}
+                    onClick={() => setPersonPreviewOpen(true)}
+                  >
+                    <img
+                      src={selectedLook?.url ?? selectedPerson.portraitUrl}
+                      alt=""
+                      className="h-8 w-8 rounded-full object-cover"
+                      onError={(event) => { event.currentTarget.style.visibility = 'hidden' }}
+                    />
+                  </button>
+                  <button type="button" className="icon-btn" aria-label="Remove person reference" onClick={() => { setPersonId(null); setPersonLook(null) }}><X size={14} /></button>
+                </>
+              ) : (
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border" style={{ borderColor: 'var(--border)', color: 'var(--text-faint)' }} aria-hidden>
+                  <UserRound size={15} />
+                </span>
+              )}
+            </div>
+            {selectedPerson ? (
+              <p className="hint mt-1">Sent with the request so the person stays the same.</p>
+            ) : (
+              <p className="hint mt-1">Pick a portrait to keep the same person in the image.</p>
+            )}
+          </>
         )}
       </div>
 
@@ -885,6 +919,22 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         imageId={saveProductImage?.id ?? null}
         defaultName={project.name}
       />
+      {selectedPerson && (
+        <Dialog
+          open={personPreviewOpen}
+          onOpenChange={setPersonPreviewOpen}
+          title={selectedPerson.name}
+          description={selectedPerson.ageBand ?? undefined}
+          width={460}
+          footer={<Button variant="secondary" onClick={() => setPersonPreviewOpen(false)}>Close</Button>}
+        >
+          <img
+            src={selectedLook?.url ?? selectedPerson.portraitUrl}
+            alt={`${selectedPerson.name}${selectedLook ? ` ${selectedLook.label}` : ''} portrait`}
+            className="mx-auto max-h-[60vh] w-full rounded-[12px] object-contain"
+          />
+        </Dialog>
+      )}
       <SavePersonDialog
         open={Boolean(savePersonImage)}
         onOpenChange={(open) => { if (!open) setSavePersonImage(null) }}
