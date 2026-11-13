@@ -20,7 +20,8 @@ export function SourcePickerDialog({
   onChoose,
   onUpload,
   title = 'Choose a Photo',
-  description = 'Use a saved product or any ready image in your library.'
+  description = 'Use a saved product or any ready image in your library.',
+  libraryOnly = false
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -28,9 +29,10 @@ export function SourcePickerDialog({
   onUpload?: () => void
   title?: string
   description?: string
+  libraryOnly?: boolean
 }): React.JSX.Element {
   const products = useAppStore((state) => state.products)
-  const [tab, setTab] = useState<'products' | 'library'>('products')
+  const [tab, setTab] = useState<'products' | 'library'>(libraryOnly ? 'library' : 'products')
   const [search, setSearch] = useState('')
   const [items, setItems] = useState<LibraryImage[]>([])
   const [total, setTotal] = useState(0)
@@ -65,12 +67,12 @@ export function SourcePickerDialog({
 
   useEffect(() => {
     if (!open) return
-    setTab('products')
+    setTab(libraryOnly ? 'library' : 'products')
     setSearch('')
     setLibraryPage(1)
     setProductPage(1)
     void loadLibrary('', 1)
-  }, [open])
+  }, [open, libraryOnly])
 
   useEffect(() => {
     if (!open || tab !== 'library') return
@@ -115,15 +117,17 @@ export function SourcePickerDialog({
       }
     >
       <div className="flex flex-wrap items-center gap-3">
-        <Segmented
-          label="Source type"
-          value={tab}
-          onChange={setTab}
-          options={[
-            { value: 'products', label: `Products (${products.length})` },
-            { value: 'library', label: 'Library' }
-          ]}
-        />
+        {!libraryOnly && (
+          <Segmented
+            label="Source type"
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: 'products', label: `Products (${products.length})` },
+              { value: 'library', label: 'Library' }
+            ]}
+          />
+        )}
         {tab === 'library' && (
           <div className="relative min-w-[200px] flex-1">
             <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-faint)' }} aria-hidden />

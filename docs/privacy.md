@@ -12,7 +12,7 @@ The app turns off Chromium's background networking, component updates, domain re
 ## What is sent with an image request
 
 - The product photo reference (an uploaded photo, a saved Product, or a ready library image), normalised to WebP with the long edge at most 2,048 pixels.
-- An optional person reference, normalised the same way. Product and person references can be sent together.
+- An optional person reference and an optional scene reference, normalised the same way. Product, person, and scene references can be sent together (at most three images).
 - The composed prompt. It contains the words you typed and the guard text that tells the model to keep the product unchanged.
 - The model, shape, output format, and image count.
 - Your Muse key in an authorization header.

@@ -520,6 +520,7 @@ export interface CreateJobInput {
   productId?: string
   personId?: string
   personLook?: string
+  sceneImageId?: string
 }
 
 export interface EditJobInput {

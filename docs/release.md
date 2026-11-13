@@ -48,7 +48,7 @@ The Linux script produces an AppImage and a deb under `release/`. Windows and ma
 ## Known v1 limits
 
 - No cloud sync, accounts, hosted library, auto-updates, or real Meta billing reconciliation.
-- No batch editing, scene-reference slot, dimension overlay, upscaling, object eraser, or video.
+- No batch editing, editor-side scene-reference slot, dimension overlay, upscaling, object eraser, or video. The Image Generator has a scene reference.
 - HEIC is detected with a clear iPhone export message; it is not decoded.
 - Marketplace presets are dated. Amazon is deliberately not offered. Verify the current Etsy/Shopify/TikTok/eBay requirements before making public claims.
 - The clean shot handles one product on a clear background best. It is not a general background remover for transparent, reflective, or multi-item scenes.

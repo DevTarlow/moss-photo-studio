@@ -63,6 +63,7 @@ interface WorkItemSpec {
   productId: string | null
   personId: string | null
   personLook: string | null
+  sceneImageId: string | null
   shape: Shape
   format: Format
   userText: string
@@ -214,6 +215,7 @@ export class JobQueue {
         productId: null,
         personId,
         personLook: item.personLook,
+        sceneImageId: null,
         shape: plan.shape,
         format: plan.format,
         userText: item.userText,
@@ -283,10 +285,18 @@ export class JobQueue {
     const legacyPerson = !input.personId && Boolean(source?.personId)
     const hasPerson = Boolean(input.personId) || legacyPerson
     const hasProduct = Boolean(source || input.productId) && !legacyPerson
-    if ((hasPerson || hasProduct) && input.count !== 1) {
+    const scene = input.sceneImageId ? this.deps.images.get(input.sceneImageId) : null
+    if (input.sceneImageId && (!scene || scene.status !== 'ready')) {
+      throw new JobStartError('invalid_payload', 'That scene reference is not here anymore.')
+    }
+    if (input.sceneImageId && !hasProduct) {
+      throw new JobStartError('invalid_payload', 'Choose a product reference before adding a scene.')
+    }
+    const hasScene = Boolean(input.sceneImageId)
+    if ((hasPerson || hasProduct || hasScene) && input.count !== 1) {
       throw new JobStartError('invalid_payload', 'References make one image at a time.')
     }
-    const prompt = composeCreatePrompt({ text, hasProduct, hasPerson })
+    const prompt = composeCreatePrompt({ text, hasProduct, hasPerson, hasScene })
     if (prompt.length > PROMPT_MAX) {
       throw new JobStartError(
         'invalid_payload',
@@ -310,6 +320,7 @@ export class JobQueue {
           productId: input.productId ?? null,
           personId: input.personId ?? null,
           personLook: input.personLook ?? null,
+          sceneImageId: input.sceneImageId ?? null,
           shape: input.shape,
           format: input.format,
           userText: text,
@@ -390,6 +401,7 @@ export class JobQueue {
           productId: null,
           personId: input.personId ?? null,
           personLook: null,
+          sceneImageId: null,
           shape: project.shape,
           format: project.format,
           userText: text,
@@ -701,6 +713,11 @@ export class JobQueue {
       if (item.spec.personId) {
         images.push(await fs.readFile(this.personPath(item.spec.personId, item.spec.personLook)))
       }
+      if (item.spec.sceneImageId) {
+        const scene = this.deps.images.get(item.spec.sceneImageId)
+        if (!scene || scene.status !== 'ready') throw new Error('scene_missing')
+        images.push(await fs.readFile(workingFor(this.deps.libraryPath(), scene.projectId, scene.id)))
+      }
       const onRateLimitWait = (waitMs: number): void => {
         item.state.waiting = waitMs > 0
         if (waitMs > 0) run.state.currentLabel = 'Waiting for Meta'
@@ -708,7 +725,7 @@ export class JobQueue {
         this.persist(run)
         this.deps.onUpdate(this.snapshotState(run))
       }
-      const result = item.spec.createMode && !item.spec.sourceImageId && !item.spec.productId && !item.spec.personId
+      const result = item.spec.createMode && !item.spec.sourceImageId && !item.spec.productId && !item.spec.personId && !item.spec.sceneImageId
         ? await this.deps.provider.generate({
             prompt: item.spec.prompt,
             count: item.spec.requested,

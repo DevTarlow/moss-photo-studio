@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { DropdownMenu, Popover } from 'radix-ui'
 import { Banner, MoreMenu } from '@astryxdesign/core'
-import { ChevronDown, Download, Image as ImageIcon, Loader2, Package, Pencil, Plus, Sparkles, UserPlus, X } from 'lucide-react'
+import { ChevronDown, Download, Image as ImageIcon, Loader2, Mountain, Package, Pencil, Plus, Sparkles, UserPlus, X } from 'lucide-react'
 import type { Format, Image, JobState, Project, Shape } from '@shared/types'
 import { MAX_PROMPT } from '@shared/constants'
 import { composeCreatePrompt } from '@shared/prompts/guards'
@@ -78,6 +78,8 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const [format, setFormat] = useState<Format>(project.format ?? settings?.defaultFormat ?? 'webp')
   const [productRef, setProductRef] = useState<SourceChoice | null>(null)
   const [personId, setPersonId] = useState<string | null>(null)
+  const [sceneRef, setSceneRef] = useState<SourceChoice | null>(null)
+  const [scenePickerOpen, setScenePickerOpen] = useState(false)
   const [personLook, setPersonLook] = useState<string | null>(
     preferredPersonLook && preferredPersonLook !== 'original' ? preferredPersonLook : null
   )
@@ -127,11 +129,12 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const productReferenceActive = promptSource !== 'example' || exampleUsesProduct
   const activeProductRef = productReferenceActive ? productRef : null
   const exampleUsesReference = Boolean(productRef) && exampleUsesProduct
-  const hasReference = Boolean(activeProductRef || personId)
+  const hasScene = Boolean(sceneRef && activeProductRef)
+  const hasReference = Boolean(activeProductRef || personId || hasScene)
   const requestedCount = hasReference ? 1 : count
   const selectedPerson = people.find((person) => person.id === personId) ?? null
   const selectedLook = selectedPerson?.looks.find((look) => look.key === personLook) ?? null
-  const composedPrompt = composeCreatePrompt({ text: prompt, hasProduct: Boolean(activeProductRef), hasPerson: Boolean(personId) })
+  const composedPrompt = composeCreatePrompt({ text: prompt, hasProduct: Boolean(activeProductRef), hasPerson: Boolean(personId), hasScene })
   const guardChars = composedPrompt.length - prompt.trim().length
   const results = images
     .filter((image) => image.status === 'ready' && image.kind !== 'upload')
@@ -346,7 +349,8 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         sourceImageId: activeProductRef?.kind === 'image' ? activeProductRef.imageId : undefined,
         productId: activeProductRef?.kind === 'product' ? activeProductRef.productId : undefined,
         personId: personId ?? undefined,
-        personLook: selectedLook?.key
+        personLook: selectedLook?.key,
+        sceneImageId: hasScene && sceneRef?.kind === 'image' ? sceneRef.imageId : undefined
       }))
       const state = await unwrap(window.moss.jobs.state({ jobId: result.jobId }))
       upsert(state)
@@ -593,8 +597,28 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         )}
       </div>
 
+      <div className="mt-4">
+        <p className="field-label">Scene reference <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+        {hasScene && sceneRef?.kind === 'image' ? (
+          <div className="flex items-center gap-2 rounded-[8px] border p-2" style={{ borderColor: 'var(--border)' }}>
+            <img src={sceneRef.thumbUrl ?? ''} alt="" className="h-10 w-10 rounded object-cover" style={{ background: 'var(--surface-2)' }} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[11px] font-medium">{sceneRef.label}</p>
+              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>The setting and light are borrowed; its subject is not.</p>
+            </div>
+            <button type="button" className="icon-btn" aria-label="Remove scene reference" onClick={() => setSceneRef(null)}><X size={14} /></button>
+          </div>
+        ) : activeProductRef ? (
+          <Button variant="secondary" className="w-full justify-start" type="button" onClick={() => setScenePickerOpen(true)}>
+            <Mountain size={15} /> Choose a Scene
+          </Button>
+        ) : (
+          <p className="hint">Choose a product reference first, then add a scene to borrow its setting and light.</p>
+        )}
+      </div>
+
       {hasReference && (
-        <p className="hint mt-2">A product and a person can be sent together. References make one image at a time.</p>
+        <p className="hint mt-2">A product, person, and scene can be sent together. References make one image at a time.</p>
       )}
 
       <div className="mt-5 space-y-4 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
@@ -846,6 +870,14 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         onUpload={() => void chooseFile()}
         title="Choose a Product Photo"
         description="Use a saved product or any ready image in your library."
+      />
+      <SourcePickerDialog
+        open={scenePickerOpen}
+        onOpenChange={setScenePickerOpen}
+        onChoose={(choice) => { if (choice.kind === 'image') setSceneRef(choice) }}
+        title="Choose a Scene Reference"
+        description="Use a ready image for the setting, light, and props. Its subject is never copied."
+        libraryOnly
       />
       <SaveProductDialog
         open={Boolean(saveProductImage)}

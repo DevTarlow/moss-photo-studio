@@ -11,7 +11,8 @@ import {
   paletteClause,
   composeChange,
   composeSetPrompt,
-  composeCreatePrompt
+  composeCreatePrompt,
+  SCENE_REF_GUARD
 } from '@shared/prompts/guards'
 
 describe('the preservation guards', () => {
@@ -67,6 +68,14 @@ describe('the created-image prompt', () => {
 
   it('wraps both references with the model prompt', () => {
     expect(composeCreatePrompt({ text: ' holding it ', hasProduct: true, hasPerson: true })).toBe(wrapModelPrompt('holding it'))
+  })
+
+  it('orders product, person, and scene references explicitly', () => {
+    const both = composeCreatePrompt({ text: 'On a windowsill', hasProduct: true, hasPerson: true, hasScene: true })
+    expect(both).toContain('Use @Image1 as the product, @Image2 as the person, and @Image3 as the scene reference.')
+    expect(both).toContain(SCENE_REF_GUARD)
+    const sceneOnly = composeCreatePrompt({ text: 'On a windowsill', hasProduct: true, hasPerson: false, hasScene: true })
+    expect(sceneOnly).toContain('Use @Image1 as the product and @Image2 as the scene reference.')
   })
 })
 

@@ -1175,7 +1175,9 @@ export function registerIpcHandlers(context: AppContext): void {
       format: formatSchema,
       sourceImageId: z.string().optional(),
       productId: z.string().optional(),
-      personId: z.string().optional()
+      personId: z.string().optional(),
+      personLook: z.string().max(80).optional(),
+      sceneImageId: z.string().optional()
     }),
     (request) => context.queue.startCreate(request)
   )

@@ -154,6 +154,36 @@ function monthEvents() {
 }
 
 describe('job queue create', () => {
+  it('sends a product and a scene reference, with the scene named as the second image', async () => {
+    const sourceProject = imageProject('Source')
+    const source = await media.importSource({
+      projectId: sourceProject.id,
+      bytes: await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 180, g: 170, b: 150 } } }).jpeg().toBuffer(),
+      name: 'mug.jpg'
+    })
+    const sceneProject = imageProject('Scene')
+    const scene = await media.importSource({
+      projectId: sceneProject.id,
+      bytes: await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 70, g: 90, b: 110 } } }).jpeg().toBuffer(),
+      name: 'windowsill.jpg'
+    })
+    const project = imageProject()
+    const { jobId } = await queue.startCreate({
+      projectId: project.id,
+      prompt: 'On the windowsill',
+      count: 1,
+      shape: 'square',
+      format: 'webp',
+      sourceImageId: source.imageId!,
+      sceneImageId: scene.imageId!
+    })
+    const state = await waitForJob(jobId)
+    expect(state.status).toBe('done')
+    const request = server.requests()[0]!
+    expect((request.body?.images as unknown[]).length).toBe(2)
+    expect(String(request.body?.prompt)).toContain('@Image2 as the scene reference')
+  })
+
   it('makes four images, writes four files, and records one four-cent row', async () => {
     const project = imageProject()
     const { jobId } = await queue.startCreate({

@@ -6,6 +6,9 @@ export const REF_GUARD =
 export const PERSON_REF_GUARD =
   ' Keep the person exactly as pictured in the reference - same face, hair, skin tone and body.'
 
+export const SCENE_REF_GUARD =
+  ' Use only the setting, lighting, and props from the scene reference; do not include any product or person from it.'
+
 export const EDIT_GUARD =
   ' Keep the product itself exactly the same - same shape, colours and details.'
 
@@ -25,11 +28,18 @@ export interface ComposeCreatePromptOptions {
   text: string
   hasProduct: boolean
   hasPerson: boolean
+  hasScene?: boolean
 }
 
-/** The created image can send a product reference, a person reference, or both. */
-export function composeCreatePrompt({ text, hasProduct, hasPerson }: ComposeCreatePromptOptions): string {
+/** The created image can send a product reference, a person reference, a scene reference, or all three. */
+export function composeCreatePrompt({ text, hasProduct, hasPerson, hasScene = false }: ComposeCreatePromptOptions): string {
   const trimmed = text.trim()
+  if (hasScene && hasProduct) {
+    const refs = hasPerson
+      ? 'Use @Image1 as the product, @Image2 as the person, and @Image3 as the scene reference.'
+      : 'Use @Image1 as the product and @Image2 as the scene reference.'
+    return `${refs} ${trimmed}${REF_GUARD}${hasPerson ? PERSON_REF_GUARD : ''}${SCENE_REF_GUARD}`
+  }
   if (hasProduct && hasPerson) return wrapModelPrompt(trimmed)
   if (hasPerson) return `${trimmed}${PERSON_REF_GUARD}`
   if (hasProduct) return `${trimmed}${REF_GUARD}`

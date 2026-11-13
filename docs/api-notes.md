@@ -126,6 +126,10 @@ Clean shot uses `POST /v1/responses` with `model: sam-3.1`, `stream: true`, `met
 
 The real mask shape, confidence, and cutout were checked on 2026-11-12 with the bundled speckled mug and the owner's shirt photo on a wood floor. The parser is bundled into the main process because it is ESM-only; it is excluded from `externalizeDepsPlugin`. The fake host uses a deterministic oval mask for E2E.
 
+## Reference order
+
+The Image Generator can send up to three references: product, person, scene. The request's `images` array is in that order and the prompt names the indices explicitly (`@Image1` product, `@Image2` person when present, then the scene). A three-reference edit was verified live on 2026-11-12 with the bundled mug, a person reference, and a lifestyle image. The scene is only a setting/light/prop reference; the prompt says not to copy its subject.
+
 ## Source images and request boundaries
 
 - Originals are copied byte for byte and never sent.
