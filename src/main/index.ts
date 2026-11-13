@@ -401,8 +401,9 @@ async function boot(): Promise<void> {
   }
   mainWindow = openMainWindow()
   if (autoUpdates.state().supported) {
-    const initialCheck = setTimeout(() => { void autoUpdates.check() }, 8_000)
-    initialCheck.unref?.()
+    // Check immediately. The renderer asks for the current state on mount, so
+    // an update found before the first paint still shows the banner.
+    void autoUpdates.check()
     const periodicCheck = setInterval(() => { void autoUpdates.check() }, 4 * 60 * 60 * 1000)
     periodicCheck.unref?.()
   }
