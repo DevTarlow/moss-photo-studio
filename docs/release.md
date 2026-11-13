@@ -87,7 +87,7 @@ The Linux AppImage reads `latest-linux.yml` from the latest GitHub Release.
 5. Publish the draft.
 6. Add the same version to the portal release records for the manual download page.
 
-The installed AppImage checks on launch and every four hours, downloads in the background, and shows **Restart to Update** when ready. It does not force a restart.
+The installed AppImage checks on launch and every four hours, downloads in the background, and shows a banner that links to **Settings, Updates**. When ready, it shows **Restart to Update**. It does not force a restart.
 
 ## Real-account acceptance
 

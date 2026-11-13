@@ -93,7 +93,7 @@ npm run build:linux
 
 `npm run build:linux` produces an AppImage and a deb under `release/`. Windows and macOS builds are configured but have not been verified in this environment. They need signing certificates before public distribution.
 
-The Linux AppImage checks [GitHub Releases](https://github.com/DevTarlow/moss-photo-studio/releases) when it starts and every four hours. A newer build downloads in the background and installs when you choose Restart to Update. The deb and other builds use the portal download page and install by hand. There is no forced restart.
+The Linux AppImage checks [GitHub Releases](https://github.com/DevTarlow/moss-photo-studio/releases) when it starts and every four hours. A newer build downloads in the background, a banner links to Settings, Updates, and it installs when you choose Restart to Update. The deb and other builds use the portal download page and install by hand. There is no forced restart.
 
 ## Data and privacy
 

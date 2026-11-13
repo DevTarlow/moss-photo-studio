@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowDownToLine } from 'lucide-react'
-import type { JobState } from '@shared/types'
+import type { AutoUpdateState, JobState } from '@shared/types'
 import { useAppStore } from './store/app'
 import { useJobsStore } from './store/jobs'
 import { useUiStore } from './store/ui'
@@ -78,6 +78,74 @@ function useJobCompletionToast(): void {
       }
     })
   }, [navigate])
+}
+
+function UpdateNotice(): React.JSX.Element | null {
+  const navigate = useNavigate()
+  const [state, setState] = useState<AutoUpdateState | null>(null)
+  const [dismissed, setDismissed] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    void window.moss.updates.state()
+      .then((result) => {
+        if (result.ok && active) setState(result.data)
+      })
+      .catch(() => undefined)
+    const unsubscribe = window.moss.onUpdateState((next) => setState(next))
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    setDismissed(null)
+  }, [state?.version])
+
+  if (!state?.supported || !['available', 'downloading', 'ready'].includes(state.status)) return null
+  if (dismissed && dismissed === state.version) return null
+
+  const ready = state.status === 'ready'
+  const percent = state.progress === null ? null : Math.round(state.progress)
+  const message = ready
+    ? `Version ${state.version ?? 'the new build'} is ready. Restart when you are ready.`
+    : state.status === 'downloading'
+      ? `Downloading ${state.version ?? 'the update'}${percent === null ? '' : ` (${percent}%)`}.`
+      : `Version ${state.version ?? 'a new build'} is available.`
+
+  return (
+    <div
+      className="fixed bottom-6 right-6 z-50 max-w-[390px] rounded-[10px] border p-4"
+      style={{ background: 'var(--surface)', borderColor: 'var(--border)', boxShadow: '0 12px 32px rgba(0,0,0,0.18)' }}
+    >
+      <p className="text-[13px] font-semibold">Update {state.version ?? ''}</p>
+      <p className="hint mt-1">{message}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Button variant="primary" size="sm" onClick={() => navigate('/settings/updates')}>
+          Review Update
+        </Button>
+        {ready && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              void unwrap(window.moss.updates.install()).catch(() => undefined)
+            }}
+          >
+            Restart
+          </Button>
+        )}
+        <button
+          type="button"
+          className="hint ml-auto underline"
+          onClick={() => setDismissed(state.version)}
+        >
+          Later
+        </button>
+      </div>
+    </div>
+  )
 }
 
 function useGlobalDrop(): { dragOver: boolean } {
@@ -443,6 +511,7 @@ export function RootLayout(): React.JSX.Element {
   return (
     <>
       <Outlet />
+      <UpdateNotice />
       <CommandPalette />
       <ShortcutsSheet />
       <GuideDialog />

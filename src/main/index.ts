@@ -401,7 +401,7 @@ async function boot(): Promise<void> {
   }
   mainWindow = openMainWindow()
   if (autoUpdates.state().supported) {
-    const initialCheck = setTimeout(() => { void autoUpdates.check() }, 15_000)
+    const initialCheck = setTimeout(() => { void autoUpdates.check() }, 8_000)
     initialCheck.unref?.()
     const periodicCheck = setInterval(() => { void autoUpdates.check() }, 4 * 60 * 60 * 1000)
     periodicCheck.unref?.()
