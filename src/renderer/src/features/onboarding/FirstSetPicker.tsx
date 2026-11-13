@@ -1,20 +1,9 @@
-import type { PlanJson, ShotType } from '@shared/types'
+import type { PlanJson } from '@shared/types'
 import { enableFirstShots, firstShotsEnabled } from '@shared/plans'
 import { shotDefinition } from '@shared/prompts/shots'
 import { estimateCents, usd } from '@shared/cost'
+import { SHOT_EXAMPLES } from '../../lib/shotExamples'
 import { Badge, SegmentedControl, SegmentedControlItem, Stack, Text, ToggleButton } from '@astryxdesign/core'
-import { bundledUrl } from '../../lib/assets'
-
-const SHOT_EXAMPLES: Record<ShotType, { src: string; sample?: string }> = {
-  hero: { src: bundledUrl('tiles/examples/main.webp') },
-  lifestyle: { src: bundledUrl('tiles/examples/lifestyle.webp') },
-  detail: { src: bundledUrl('tiles/examples/jewelry.webp') },
-  scale: { src: bundledUrl('tiles/examples/size-reference.webp') },
-  flatlay: { src: bundledUrl('tiles/examples/flatlay.webp') },
-  gift: { src: bundledUrl('tiles/examples/gift.webp') },
-  feature: { src: bundledUrl('tiles/room-for-text.webp'), sample: 'Hand-glazed stoneware' },
-  onmodel: { src: bundledUrl('tiles/examples/on-a-person.webp') }
-}
 
 export function FirstSetPicker({
   plan,

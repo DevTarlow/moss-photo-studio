@@ -211,3 +211,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Business profile
 
 100. **The seller profile lives in Settings and shares the brand row.** The Business section stores the shop name, what is sold, the audience, the voice, standard answers, the marketplaces, and the main platform in the existing `brand` row (columns added in migration 6). Every field is optional and capped at the repository, and the profile is preserved when colors, logo, or badge settings change. It does not call a model or leave the computer. The Listing Writer will read it instead of asking the seller again.
+
+## Onboarding order
+
+101. **The Meta key is asked for at the point of spend, not before the first product.** The welcome step opens the optional product step; the key step remains available in the setup rail as optional and is reached from the set step's Add your Meta key action. Saving the key returns to the set step rather than to the product step, so a seller who starts without a key can add one at the first paid action and continue. The key step's Add key later returns to where it came from. The set plan board now shows one example thumbnail per shot, using the same assets as onboarding, so the seller sees the kind of picture before paying. The six-step count is unchanged; Connect Meta is marked optional.

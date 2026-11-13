@@ -23,6 +23,7 @@ import { BudgetWarning } from '../../components/ui/BudgetWarning'
 import { Lightbox } from '../../components/ui/Lightbox'
 import { PlanPanel } from './PlanPanel'
 import { SourcePickerDialog } from '../../components/sources/SourcePickerDialog'
+import { SHOT_EXAMPLES } from '../../lib/shotExamples'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { SaveProductDialog } from '../../components/products/SaveProductDialog'
 import { SetExportDialog } from './SetExportDialog'
@@ -738,8 +739,9 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
                       : null
                     return (
                       <article key={shot.id} className="plan-shot">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-start gap-2">
                           <span className="text-[11px] font-semibold tabular" style={{ color: 'var(--text-faint)' }}>{String(index + 1).padStart(2, '0')}</span>
+                          <img src={SHOT_EXAMPLES[shot.type].src} alt="" className="h-12 w-12 shrink-0 rounded object-cover" />
                           <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">{definition.label}</span>
                           <span className="badge">On</span>
                         </div>

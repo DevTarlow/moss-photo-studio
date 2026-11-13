@@ -38,7 +38,7 @@ import { Lightbox } from '../components/ui/Lightbox'
 
 const STEPS = [
   { label: 'Welcome', optional: false },
-  { label: 'Connect Meta', optional: false },
+  { label: 'Connect Meta', optional: true },
   { label: 'Add product', optional: true },
   { label: 'Customize', optional: true },
   { label: 'Make a set', optional: true },
@@ -110,6 +110,7 @@ export function Onboarding(): React.JSX.Element {
   const [planDraft, setPlanDraft] = useState<PlanJson | null>(null)
   const [setProjectId, setSetProjectId] = useState<string | null>(null)
   const [keyValue, setKeyValue] = useState('')
+  const [keyReturn, setKeyReturn] = useState<number | null>(null)
   const [revealKey, setRevealKey] = useState(false)
   const [keyError, setKeyError] = useState<string | null>(null)
   const [keyBusy, setKeyBusy] = useState(false)
@@ -272,7 +273,9 @@ export function Onboarding(): React.JSX.Element {
       await unwrap(window.moss.secrets.setMuseKey({ key: keyValue.trim() }))
       await refreshSecrets()
       setKeyValue('')
-      await goTo(2)
+      const next = keyReturn ?? 2
+      setKeyReturn(null)
+      await goTo(next)
     } catch (caught) {
       setKeyError(messageOf(caught))
     } finally {
@@ -441,13 +444,13 @@ export function Onboarding(): React.JSX.Element {
     (step === 4 && Boolean(product) && hasKey && (!planDraft || imageCount === 0))
 
   const onPrimary = (): void => {
-    if (step === 0) void goTo(1)
+    if (step === 0) void goTo(2)
     else if (step === 1) void saveKey()
     else if (step === 2) void goTo(3)
     else if (step === 3) void saveBrandAndContinue()
     else if (step === 4) {
       if (!product) void finishToReady()
-      else if (!hasKey) void goTo(1)
+      else if (!hasKey) { setKeyReturn(4); void goTo(1) }
       else void onMainRun()
     } else {
       // Product-first: finish on the product the setup just created, so its
@@ -461,7 +464,7 @@ export function Onboarding(): React.JSX.Element {
     step === 0 ? (
       <Button label="Look around first" variant="ghost" onClick={skip} />
     ) : step === 1 ? (
-      <Button label="Add key later" variant="ghost" onClick={() => void goTo(2)} />
+      <Button label="Add key later" variant="ghost" onClick={() => { const next = keyReturn ?? 2; setKeyReturn(null); void goTo(next) }} />
     ) : step === 2 ? (
       <>
         {product && (
@@ -744,7 +747,7 @@ export function Onboarding(): React.JSX.Element {
                           status="warning"
                           title="Add your Meta key to make images"
                           description="You can add the key later, when you are ready to make a set."
-                          endContent={<Button label="Add key" variant="ghost" size="sm" onClick={() => void goTo(1)} />}
+                          endContent={<Button label="Add key" variant="ghost" size="sm" onClick={() => { setKeyReturn(4); void goTo(1) }} />}
                           collapsible={false}
                         />
                       )}
