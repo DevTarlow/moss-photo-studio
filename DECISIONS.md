@@ -237,3 +237,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Source compare
 
 107. **The set review compares against the untouched source, not a previous AI version.** The Lightbox gets the project's source image and a Compare with Source toggle. The two-up view uses the original uploaded photo on the left and the selected made image on the right, with plain Source photo and Made image captions. It is a view only; it never changes a version. The E2E journey captures the two-up state and checks both captions. The fake host's made images are placeholders, so the screenshot exercises the layout rather than a real generated photo.
+
+## Local photo check
+
+108. **Preflight is local, conservative, and non-blocking.** The set plan calls a main-process `media:inspect` that reads the working image, downsizes to 512 px, and computes mean brightness, contrast, and Laplacian variance. It warns below the thresholds in `src/media/preflight.ts` (small under 800 px, dark under a 55 mean, flat under 12 contrast, soft under 8 sharpness) and does nothing to the photo. White-background product photography is deliberately not called overexposed; the first sample at 239 mean is normal. The card only appears when there is a warning; it is guidance, not a gate. The thresholds are intentionally conservative so a clean studio photo does not get nagged.

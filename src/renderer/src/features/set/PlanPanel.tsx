@@ -25,6 +25,7 @@ import { Button } from '../../components/ui/Button'
 import { Dialog } from '../../components/ui/Dialog'
 import { Switch } from '../../components/ui/Switch'
 import { useConfirm } from '../../components/ui/ConfirmProvider'
+import { PhotoCheckNote } from '../../components/ui/PhotoCheckNote'
 
 type PlanPanelFormat = Format
 
@@ -275,6 +276,7 @@ export function PlanPanel({
   readOnly,
   running = false,
   sourceUrl,
+  sourceImageId,
   onChange,
   onSaveNow,
   onReset,
@@ -289,6 +291,7 @@ export function PlanPanel({
   readOnly: boolean
   running?: boolean
   sourceUrl: string | null
+  sourceImageId: string | null
   onChange: (plan: PlanJson) => void
   onSaveNow: () => void
   onReset: () => void
@@ -335,6 +338,7 @@ export function PlanPanel({
             <Sparkles size={20} />
           </div>
         )}
+        <PhotoCheckNote imageId={sourceImageId} />
         <div className="mt-2 flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <label className="text-[11px]" htmlFor="plan-category" style={{ color: 'var(--text-faint)' }}>What do you sell?</label>

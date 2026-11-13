@@ -38,6 +38,7 @@ import type {
   KitExportResult
 } from './types'
 import type { ListingCopy } from './listings'
+import type { PhotoCheck } from './types'
 
 export interface IpcChannels {
   'app:info': { request: undefined; response: AppInfo }
@@ -163,6 +164,7 @@ export interface IpcChannels {
     response: { items: LibraryImage[]; total: number }
   }
   'media:importFromImage': { request: { projectId: string; imageId: string }; response: ImportResult }
+  'media:inspect': { request: { imageId: string }; response: PhotoCheck | null }
   'dialog:importImage': {
     request: { projectId?: string; kind: 'source' | 'person'; type?: 'set' | 'photo'; name?: string }
     response: ImportResult | null
@@ -337,6 +339,7 @@ export interface MossApi {
   media: {
     importBytes: Call<'media:importBytes'>
     importFromImage: Call<'media:importFromImage'>
+    inspect: Call<'media:inspect'>
   }
   plans: {
     get: Call<'plans:get'>

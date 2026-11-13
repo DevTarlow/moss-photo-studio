@@ -539,6 +539,7 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
           readOnly={isRunning || phase === 'review'}
           running={isRunning}
           sourceUrl={source?.thumbUrl ?? source?.url ?? null}
+          sourceImageId={project.sourceImageId}
           onChange={updatePlan}
           onSaveNow={() => void saveNow()}
           onReset={resetPlan}

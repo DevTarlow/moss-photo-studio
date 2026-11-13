@@ -7,7 +7,7 @@ This is the record of what was run, what passed, and what the acceptance owner s
 | Check | Result |
 | --- | --- |
 | `npm run typecheck` | Pass |
-| `npm test` | 194 tests pass in 26 files |
+| `npm test` | 196 tests pass in 27 files |
 | `npm run test:e2e` | 13 serial journey tests plus the focused specs pass, including axe on dialogs, the kit/listing flow, 510-project pagination, all-screen 1024 and 150% layout, and screenshot comparison |
 | `npm run audit:tokens` | All foreground/background token pairs pass AA in light and dark |
 | `npm run lint` | 0 errors, 0 warnings |
@@ -74,6 +74,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - A product kit writes Etsy-sized JPEGs, the untouched original, the saved listing copy in `listing.md`, `listing.csv`, `kit.json`, and the disclosure; the integration test checks dimensions and the pinned main image. The kit flow also runs in the E2E kit spec.
 - The Listing Writer reads the product photo, plan directions, and Business profile, clamps titles/description/features/tags to Etsy, Shopify, or own-site caps, and saves versions. The E2E kit spec writes and edits a listing with the fake text provider.
 - Read the photo fills blank product details and stores the visible points; the integration test checks the analysis and the `analyze` usage row. The kit E2E clicks it before writing the listing.
+- The set plan shows a local Photo check only when the source is dark, flat, soft, or under 800 px; the unit tests cover the dark/flat/small case and a sharp checkerboard. It is not a gate and does not call Meta.
 - Compare with Source in the set lightbox shows the original beside the made image; the journey captures `set-lightbox-compare`.
 - From a Photo in the brand fields samples colors locally; the pure palette unit test covers the white-background filter. HEIC files get an explicit iPhone export message instead of the generic unsupported-type error.
 - Clean shot uses a fake SAM provider in E2E: the product hub produces a cutout and a linked 2048 px clean photo. The integration test checks the alpha composite, product cutout fields, linked project, and `cutout` usage micros. A real SAM run was done manually for the mug and the shirt; see `docs/api-notes.md`.

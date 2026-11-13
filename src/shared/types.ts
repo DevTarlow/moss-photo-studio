@@ -196,6 +196,20 @@ export interface Person {
   usedIn: number
 }
 
+export interface PhotoWarning {
+  code: 'small' | 'dark' | 'low_contrast' | 'soft'
+  message: string
+}
+
+export interface PhotoCheck {
+  width: number
+  height: number
+  brightness: number
+  contrast: number
+  sharpness: number
+  warnings: PhotoWarning[]
+}
+
 export interface ProductAnalysis {
   product: string
   category: string

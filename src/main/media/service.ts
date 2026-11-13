@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import type { Image, ImportResult, Project } from '@shared/types'
+import type { Image, ImportResult, PhotoCheck, Project } from '@shared/types'
 import { shapeForImage } from '@shared/shapes'
 import { uploadLabel } from '@shared/labels'
 import type { ProjectRepository } from '../db/repositories/projects'
@@ -18,6 +18,7 @@ import {
   writeOriginal
 } from './import'
 import { absoluteInLibrary, originalRelative, workingFor } from './paths'
+import { inspectPhoto } from './preflight'
 
 export class MediaService {
   constructor(
@@ -33,6 +34,32 @@ export class MediaService {
   ) {}
 
   private readonly importChains = new Map<string, Promise<unknown>>()
+
+  async inspectImage(imageId: string): Promise<PhotoCheck | null> {
+    const image = this.deps.images.get(imageId)
+    if (!image) return null
+    let bytes: Buffer | null = null
+    try {
+      bytes = await fs.readFile(workingFor(this.deps.libraryPath(), image.projectId, image.id))
+    } catch {
+      // A failed or partial import may only have the original.
+    }
+    if (!bytes && image.url) {
+      try {
+        bytes = await fs.readFile(
+          absoluteInLibrary(this.deps.libraryPath(), decodeURI(image.url.replace('moss-media://library/', '')))
+        )
+      } catch {
+        // Report no check below.
+      }
+    }
+    if (!bytes) return null
+    try {
+      return await inspectPhoto(bytes)
+    } catch {
+      return null
+    }
+  }
 
   /**
    * A project's first source is named `source.<ext>`. Two imports racing each

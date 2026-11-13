@@ -30,7 +30,7 @@ The app turns off Chromium's background networking, component updates, domain re
 
 From a Photo reads the image on this computer to pick colors; it does not send the image anywhere and does not save it.
 
-It does **not** send any other library image, project list, usage history, person names, your logo, or license key. The three saved colors you mark as used are included as hex values in the composed prompt when you make a set or change a photo, unless brand colors are switched off in Settings. A local adjustment never sends anything. Browsing the library never sends anything.
+It does **not** send any other library image, project list, usage history, person names, your logo, or license key. The three saved colors you mark as used are included as hex values in the composed prompt when you make a set or change a photo, unless brand colors are switched off in Settings. A local adjustment never sends anything. The photo check reads the working copy on this computer; it never sends or saves anything. Browsing the library never sends anything.
 
 ## What is sent with a license request
 

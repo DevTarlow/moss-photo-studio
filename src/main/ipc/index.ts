@@ -1064,6 +1064,13 @@ export function registerIpcHandlers(context: AppContext): void {
 
   registerIpc(
     context,
+    'media:inspect',
+    z.object({ imageId: idSchema }),
+    ({ imageId }) => context.media.inspectImage(imageId)
+  )
+
+  registerIpc(
+    context,
     'media:importFromImage',
     z.object({ projectId: idSchema, imageId: idSchema }),
     ({ projectId, imageId }) => context.media.importFromImage({ projectId, imageId })

@@ -102,7 +102,8 @@ const api: MossApi = {
   },
   media: {
     importBytes: invoke('media:importBytes'),
-    importFromImage: invoke('media:importFromImage')
+    importFromImage: invoke('media:importFromImage'),
+    inspect: invoke('media:inspect')
   },
   plans: {
     get: invoke('plans:get'),
