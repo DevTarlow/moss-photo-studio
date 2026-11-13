@@ -11,6 +11,7 @@ export interface NewUsageEvent {
   requestedN: number
   returnedN: number
   costCents: number
+  costMicros?: number
   durationMs?: number | null
   result: UsageResult
   errorCode?: string | null
@@ -26,8 +27,8 @@ export class UsageRepository {
       .prepare(
         `INSERT INTO usage_events
           (id, at, project_id, project_name, image_id, action, requested_n, returned_n, cost_cents,
-           duration_ms, result, error_code, request_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+           cost_micros, duration_ms, result, error_code, request_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         id,
@@ -39,6 +40,7 @@ export class UsageRepository {
         event.requestedN,
         event.returnedN,
         event.costCents,
+        event.costMicros ?? 0,
         event.durationMs ?? null,
         event.result,
         event.errorCode ?? null,
@@ -61,14 +63,15 @@ export class UsageRepository {
     return Number(row.cents)
   }
 
-  monthSummary(monthStart: number, monthEnd: number): { images: number; cents: number } {
+  monthSummary(monthStart: number, monthEnd: number): { images: number; cents: number; micros: number } {
     const row = this.db
       .prepare(
-        `SELECT COALESCE(SUM(returned_n), 0) AS images, COALESCE(SUM(cost_cents), 0) AS cents
+        `SELECT COALESCE(SUM(returned_n), 0) AS images, COALESCE(SUM(cost_cents), 0) AS cents,
+                COALESCE(SUM(cost_micros), 0) AS micros
          FROM usage_events WHERE at >= ? AND at < ?`
       )
-      .get(monthStart, monthEnd) as { images: number; cents: number }
-    return { images: Number(row.images), cents: Number(row.cents) }
+      .get(monthStart, monthEnd) as { images: number; cents: number; micros: number }
+    return { images: Number(row.images), cents: Number(row.cents), micros: Number(row.micros) }
   }
 
   byProject(monthStart: number, monthEnd: number): Array<{ projectId: string | null; name: string; images: number; spendCents: number }> {
@@ -141,6 +144,7 @@ export class UsageRepository {
         requested: Number(row.requested_n),
         returned: Number(row.returned_n),
         costCents: Number(row.cost_cents),
+        costMicros: Number(row.cost_micros ?? 0),
         uncertainBilling: billingUncertain((row.error_code ? String(row.error_code) : null) as never),
         durationMs: row.duration_ms === null ? null : Number(row.duration_ms),
         result: row.result as UsageResult,
@@ -172,6 +176,7 @@ export class UsageRepository {
       requested: Number(row.requested_n),
       returned: Number(row.returned_n),
       costCents: Number(row.cost_cents),
+      costMicros: Number(row.cost_micros ?? 0),
       uncertainBilling: billingUncertain((row.error_code ? String(row.error_code) : null) as never),
       durationMs: row.duration_ms === null ? null : Number(row.duration_ms),
       result: row.result as UsageResult,

@@ -231,7 +231,43 @@ const migrations: Migration[] = [
         CREATE INDEX IF NOT EXISTS idx_listings_product ON listings(product_id, platform, created_at);
       `)
     }
-  }
+  },
+  {
+    version: 7,
+    up(db) {
+      db.exec(`
+        CREATE TABLE usage_events_v7 (
+          id TEXT PRIMARY KEY,
+          at INTEGER NOT NULL,
+          project_id TEXT,
+          project_name TEXT,
+          image_id TEXT,
+          action TEXT NOT NULL CHECK (action IN ('create','set','edit','adjust','listing','analyze','cutout')),
+          requested_n INTEGER NOT NULL DEFAULT 0,
+          returned_n INTEGER NOT NULL DEFAULT 0,
+          cost_cents INTEGER NOT NULL DEFAULT 0,
+          cost_micros INTEGER NOT NULL DEFAULT 0,
+          duration_ms INTEGER,
+          result TEXT NOT NULL CHECK (result IN ('ok','failed')),
+          error_code TEXT,
+          request_id TEXT
+        );
+        INSERT INTO usage_events_v7
+          (id, at, project_id, project_name, image_id, action, requested_n, returned_n, cost_cents, cost_micros, duration_ms, result, error_code, request_id)
+        SELECT id, at, project_id, project_name, image_id, action, requested_n, returned_n, cost_cents, 0, duration_ms, result, error_code, request_id
+        FROM usage_events;
+        DROP TABLE usage_events;
+        ALTER TABLE usage_events_v7 RENAME TO usage_events;
+        CREATE INDEX IF NOT EXISTS idx_usage_at ON usage_events(at);
+      `)
+    }
+  },
+  {
+    version: 8,
+    up(db) {
+      db.exec('ALTER TABLE products ADD COLUMN analysis TEXT')
+    }
+  },
 ]
 
 export const SCHEMA_VERSION = migrations[migrations.length - 1]!.version

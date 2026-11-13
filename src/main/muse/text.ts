@@ -150,7 +150,20 @@ function field(text: string, label: string): string {
 /** Deterministic stand-in used by the fake host and E2E. */
 export class FakeTextProvider implements TextProvider {
   async generate(input: TextRequest): Promise<TextResult> {
-    const product = field(input.user, 'Product')
+    const product = field(input.user, 'Product') !== 'a handmade product' ? field(input.user, 'Product') : field(input.user, 'The seller calls it')
+    if (/look at one photo/i.test(input.system)) {
+      return {
+        ok: true,
+        requestId: crypto.randomUUID(),
+        costMicros: 0,
+        content: JSON.stringify({
+          product,
+          category: 'Home and lifestyle',
+          audience: 'People who like calm, useful objects',
+          points: ['Speckled glaze', 'Wide handle', 'A quiet everyday shape']
+        })
+      }
+    }
     return {
       ok: true,
       requestId: crypto.randomUUID(),

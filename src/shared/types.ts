@@ -16,7 +16,7 @@ export type ShotType =
 export type JobKind = 'set' | 'create' | 'edit'
 export type JobStatus = 'running' | 'done' | 'failed' | 'interrupted' | 'cancelled'
 export type JobItemStatus = 'queued' | 'running' | 'done' | 'partial' | 'failed' | 'cancelled'
-export type UsageAction = 'create' | 'set' | 'edit' | 'adjust'
+export type UsageAction = 'create' | 'set' | 'edit' | 'adjust' | 'listing' | 'analyze' | 'cutout'
 export type UsageResult = 'ok' | 'failed'
 export type BadgeCorner = 'br' | 'bl' | 'tr' | 'tl'
 export type BadgeScale = 's' | 'm' | 'l'
@@ -195,6 +195,15 @@ export interface Person {
   usedIn: number
 }
 
+export interface ProductAnalysis {
+  product: string
+  category: string
+  audience: string
+  points: string[]
+  createdAt: number
+  costMicros: number
+}
+
 export interface Product {
   id: string
   name: string
@@ -213,6 +222,7 @@ export interface Product {
   archivedAt?: number | null
   projectCount?: number
   imageCount?: number
+  analysis?: ProductAnalysis | null
 }
 
 export interface ProductDetail {
@@ -264,6 +274,7 @@ export interface UsageEvent {
   requested: number
   returned: number
   costCents: number
+  costMicros: number
   uncertainBilling: boolean
   durationMs: number | null
   result: UsageResult
@@ -274,6 +285,7 @@ export interface UsageSummary {
   month: string
   images: number
   spendCents: number
+  textMicros: number
   budgetCents: number | null
   projects: Array<{ projectId: string; name: string; images: number; spendCents: number }>
 }

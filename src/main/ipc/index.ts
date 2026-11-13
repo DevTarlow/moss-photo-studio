@@ -806,6 +806,11 @@ export function registerIpcHandlers(context: AppContext): void {
     return context.productService.detail(id)
   })
 
+  registerIpc(context, 'products:analyze', z.object({ id: idSchema }), async ({ id }): Promise<ProductDetail> => {
+    if (isBundledProduct(id)) throw new IpcFault('invalid_payload', 'Included products do not have a product page.')
+    return context.productService.analyze(id)
+  })
+
   registerIpc(
     context,
     'products:update',
@@ -1342,6 +1347,7 @@ export function registerIpcHandlers(context: AppContext): void {
       month: isoMonthLabel(month),
       images: totals.images,
       spendCents: totals.cents,
+      textMicros: totals.micros,
       budgetCents: settings.budgetCents(),
       projects: context.usage.byProject(bounds.start, bounds.end).map((row) => ({
         projectId: row.projectId ?? '',
@@ -1372,7 +1378,7 @@ export function registerIpcHandlers(context: AppContext): void {
   registerIpc(context, 'usage:exportCsv', z.object({ month: monthSchema }), async ({ month }) => {
     const bounds = monthBounds(month)
     const rows = context.usage.allForCsv(bounds.start, bounds.end)
-    const header = 'date,project,action,requested,returned,cost_usd,duration_ms,result,error'
+    const header = 'date,project,action,requested,returned,cost_usd,cost_micros,duration_ms,result,error'
     const lines = rows.map((row) =>
       [
         new Date(row.at).toISOString(),
@@ -1381,6 +1387,7 @@ export function registerIpcHandlers(context: AppContext): void {
         row.requested,
         row.returned,
         row.uncertainBilling ? '' : (row.costCents / 100).toFixed(2),
+        row.costMicros,
         row.durationMs ?? '',
         row.result,
         row.errorCode ?? ''

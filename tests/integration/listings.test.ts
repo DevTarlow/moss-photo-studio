@@ -13,6 +13,7 @@ import { BrandRepository } from '@main/db/repositories/brand'
 import { PeopleRepository } from '@main/db/repositories/people'
 import { ProductRepository } from '@main/db/repositories/products'
 import { ListingRepository } from '@main/db/repositories/listings'
+import { UsageRepository } from '@main/db/repositories/usage'
 import { MediaService } from '@main/media/service'
 import { ProductService } from '@main/products/service'
 import { ListingsService } from '@main/listings/service'
@@ -42,6 +43,7 @@ beforeEach(async () => {
   const people = new PeopleRepository(db)
   products = new ProductRepository(db)
   listings = new ListingRepository(db)
+  const usage = new UsageRepository(db)
   const media = new MediaService({ projects, images, plans, people, brand, libraryPath, logger })
   productService = new ProductService({
     products,
@@ -79,6 +81,7 @@ beforeEach(async () => {
     images,
     brand,
     listings,
+    usage,
     provider,
     libraryPath,
     logger
@@ -129,6 +132,10 @@ describe('listing writer', () => {
     expect(captured?.user).toContain('Shop: Moss Pottery')
     expect(captured?.user).toContain('Warm, specific, no hype')
     expect(listingsService.get(productId, 'etsy')?.copy.description).toContain('hand-finished mug')
+    const usage = new UsageRepository(db).monthSummary(0, Date.now() + 1)
+    expect(usage.micros).toBeGreaterThan(0)
+    const event = new UsageRepository(db).list({ monthStart: 0, monthEnd: Date.now() + 1 }).items[0]
+    expect(event).toMatchObject({ action: 'listing', costCents: 0, costMicros: 57, result: 'ok' })
   })
 
   it('clamps an edited listing and saves a new version', async () => {

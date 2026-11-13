@@ -2,7 +2,7 @@
 
 Moss Photo Studio sends **three** things to other computers, and only when they are needed:
 
-1. **To Meta Muse**, when you press a button that makes or changes an image, or writes listing copy: your Muse key, the product photo and any person reference, the composed description or the listing facts and shop profile, the requested shape, format, and count for an image, and a random installation id in the API's `user` field. Meta also sees your IP address, as any service does.
+1. **To Meta Muse**, when you press a button that makes or changes an image, writes listing copy, or reads a product photo: your Muse key, the product photo and any person reference, the composed description or the listing facts and shop profile, the requested shape, format, and count for an image, and a random installation id in the API's `user` field. Meta also sees your IP address, as any service does.
 2. **To the license store (Lemon Squeezy)**, when you activate, validate, or deactivate a license: the license key, an instance id, and a short computer label.
 3. **To your browser**, if you click a link such as “Where to Get a Key”, “Buy a License”, or a Meta documentation link. The app opens the system browser. The app itself does not load the page.
 4. **Nothing else.** There is no telemetry endpoint, analytics SDK, remote logging, crash uploader, or auto-updater.

@@ -25,6 +25,7 @@ import { useConfirm } from '../components/ui/ConfirmProvider'
 import { KitExportDialog } from '../components/set/KitExportDialog'
 import { ListingPanel } from '../components/listings/ListingPanel'
 import { useAppStore } from '../store/app'
+import { LISTING_COST_LABEL } from '@shared/cost'
 import { unwrap, messageOf } from '../lib/ipc'
 import { formatDateTime, relativeTime } from '../lib/format'
 import { toast } from '../lib/toast'
@@ -76,6 +77,7 @@ export function ProductDetail(): React.JSX.Element {
   const { id } = useParams()
   const navigate = useNavigate()
   const refreshProducts = useAppStore((state) => state.refreshProducts)
+  const secrets = useAppStore((state) => state.secrets)
   const confirm = useConfirm()
   const [detail, setDetail] = useState<ProductDetailData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -85,6 +87,7 @@ export function ProductDetail(): React.JSX.Element {
   const [renameValue, setRenameValue] = useState('')
   const [form, setForm] = useState({ category: '', audience: '', notes: '' })
   const [savingDetails, setSavingDetails] = useState(false)
+  const [reading, setReading] = useState(false)
   const [linkOpen, setLinkOpen] = useState(false)
   const [kitOpen, setKitOpen] = useState(false)
   const [unfiled, setUnfiled] = useState<Project[]>([])
@@ -160,6 +163,26 @@ export function ProductDetail(): React.JSX.Element {
       toast.error(messageOf(caught))
     } finally {
       setSavingDetails(false)
+    }
+  }
+
+  const readPhoto = async (): Promise<void> => {
+    if (!detail) return
+    setReading(true)
+    try {
+      const next = await unwrap(window.moss.products.analyze({ id: detail.product.id }))
+      setDetail(next)
+      setForm({
+        category: next.product.category ?? '',
+        audience: next.product.audience ?? '',
+        notes: next.product.notes ?? ''
+      })
+      await refreshProducts()
+      toast.status('Photo read. Check what we saw.')
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    } finally {
+      setReading(false)
     }
   }
 
@@ -350,7 +373,28 @@ export function ProductDetail(): React.JSX.Element {
               <ListingPanel productId={product.id} productName={product.name} projectId={latest?.id ?? null} />
 
               <div className="card mt-4 p-4">
-                <p className="section-label">Product details</p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="section-label">Product details</p>
+                  <div className="flex items-center gap-2">
+                    {!secrets?.hasKey && <span className="hint">Add your key first</span>}
+                    <Button variant="secondary" size="sm" disabled={reading || !secrets?.hasKey} onClick={() => void readPhoto()}>
+                      {reading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Read the photo · {LISTING_COST_LABEL}
+                    </Button>
+                  </div>
+                </div>
+                {product.analysis && (
+                  <div className="mt-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
+                    <p className="field-label">What we see</p>
+                    <p className="mt-1 text-[12px] font-semibold">{product.analysis.product || product.name}</p>
+                    {product.analysis.category && <p className="meta">{product.analysis.category}</p>}
+                    {product.analysis.audience && <p className="mt-1 text-[11px]" style={{ color: 'var(--text-muted)' }}>{product.analysis.audience}</p>}
+                    {product.analysis.points.length > 0 && (
+                      <ul className="mt-2 grid gap-1 text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                        {product.analysis.points.map((point, index) => <li key={index}>- {point}</li>)}
+                      </ul>
+                    )}
+                  </div>
+                )}
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <TextInput label="Category" value={form.category} onChange={(value) => setForm({ ...form, category: value })} placeholder="Ceramics and pottery" width="100%" />
                   <TextInput label="Who buys it" value={form.audience} onChange={(value) => setForm({ ...form, audience: value })} placeholder="People setting up a calm home office" width="100%" />

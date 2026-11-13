@@ -232,7 +232,9 @@ async function boot(): Promise<void> {
     plans,
     media,
     libraryPath,
-    resourceRoot: () => resourceRoot
+    resourceRoot: () => resourceRoot,
+    provider: textProvider,
+    usage
   })
 
   const listingsService = new ListingsService({
@@ -242,6 +244,7 @@ async function boot(): Promise<void> {
     images,
     brand,
     listings,
+    usage,
     provider: textProvider,
     libraryPath,
     logger

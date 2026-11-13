@@ -8,11 +8,13 @@ import type { ListingRepository } from '../db/repositories/listings'
 import type { PlanRepository } from '../db/repositories/plans'
 import type { ProductRepository } from '../db/repositories/products'
 import type { ProjectRepository } from '../db/repositories/projects'
+import type { UsageRepository } from '../db/repositories/usage'
 import type { Logger } from '../logger'
 import type { TextProvider } from '../muse/text'
 import { absoluteInLibrary } from '../media/paths'
 import { shotDefinition } from '@shared/prompts/shots'
 import { isBundledProduct } from '@shared/products'
+import { extractJsonObject } from '@shared/aiJson'
 import { ListingError } from './error'
 
 interface ListingFacts {
@@ -28,18 +30,6 @@ interface ListingFacts {
     voice: string
     policies: string
     marketplaces: string[]
-  }
-}
-
-function extractJson(text: string): unknown {
-  const cleaned = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
-  const start = cleaned.indexOf('{')
-  const end = cleaned.lastIndexOf('}')
-  if (start < 0 || end <= start) return null
-  try {
-    return JSON.parse(cleaned.slice(start, end + 1))
-  } catch {
-    return null
   }
 }
 
@@ -86,6 +76,7 @@ export class ListingsService {
       images: ImageRepository
       brand: BrandRepository
       listings: ListingRepository
+      usage: UsageRepository
       provider: TextProvider
       libraryPath: () => string
       logger: Logger
@@ -96,6 +87,8 @@ export class ListingsService {
     facts: ListingFacts
     image: { mime: string; bytes: Buffer }
     plan: PlanJson | null
+    projectId: string | null
+    projectName: string
   }> {
     if (isBundledProduct(productId)) {
       throw new ListingError('invalid_payload', 'Save the included product as your own first.')
@@ -126,7 +119,7 @@ export class ListingsService {
         product: product.name,
         category: product.category ?? plan?.category ?? '',
         audience: product.audience ?? '',
-        notes: product.notes ?? '',
+        notes: [product.notes, product.analysis?.points?.join('; ')].filter(Boolean).join(' '),
         shots,
         profile: {
           businessName: brand.businessName ?? '',
@@ -138,7 +131,9 @@ export class ListingsService {
         }
       },
       image: { mime: 'image/webp', bytes },
-      plan
+      plan,
+      projectId: project?.id ?? null,
+      projectName: project?.name ?? product.name
     }
   }
 
@@ -157,8 +152,22 @@ export class ListingsService {
       : built.facts
     const prompt = promptFor(facts, limits)
     const result = await this.deps.provider.generate({ ...prompt, image: built.image })
-    if (!result.ok) throw new ListingError(result.code)
-    const parsed = extractJson(result.content)
+    if (!result.ok) {
+      this.deps.usage.record({
+        projectId: built.projectId,
+        projectName: built.projectName,
+        action: 'listing',
+        requestedN: 0,
+        returnedN: 0,
+        costCents: 0,
+        costMicros: 0,
+        result: 'failed',
+        errorCode: result.code,
+        requestId: result.requestId
+      })
+      throw new ListingError(result.code)
+    }
+    const parsed = extractJsonObject(result.content)
     if (!parsed || typeof parsed !== 'object') throw new ListingError('invalid_request', 'The writer did not return a usable listing.')
     const raw = parsed as { titles?: unknown; description?: unknown; features?: unknown; tags?: unknown }
     const clamped = clampListingCopy(raw, limits.platform)
@@ -179,6 +188,17 @@ export class ListingsService {
       costMicros: result.costMicros
     }
     const saved = this.deps.listings.save(input.productId, copy)
+    this.deps.usage.record({
+      projectId: built.projectId,
+      projectName: built.projectName,
+      action: 'listing',
+      requestedN: 0,
+      returnedN: 0,
+      costCents: 0,
+      costMicros: result.costMicros,
+      result: 'ok',
+      requestId: result.requestId
+    })
     this.deps.logger.info('listings', 'generated', { count: copy.titles.length })
     return { id: saved.id, version: saved.version, copy: saved.copy }
   }

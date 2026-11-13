@@ -575,7 +575,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     const csv = fs.readdirSync(exportFolder).find((file) => file.endsWith('.csv'))!
     const contents = fs.readFileSync(path.join(exportFolder, csv), 'utf8')
     const rows = contents.trim().split('\n')
-    expect(rows[0]).toBe('date,project,action,requested,returned,cost_usd,duration_ms,result,error')
+    expect(rows[0]).toBe('date,project,action,requested,returned,cost_usd,cost_micros,duration_ms,result,error')
     expect(rows.length).toBeGreaterThan(2)
     const csvCents = rows.slice(1).reduce((sum, row) => sum + Math.round(Number(row.split(',')[5]) * 100), 0)
     expect(csvCents).toBe(before)

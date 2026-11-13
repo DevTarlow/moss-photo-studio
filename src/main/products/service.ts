@@ -1,11 +1,14 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import type { Format, ImportResult, Product, ProductDetail, ProjectType, Shape } from '@shared/types'
+import type { Format, ImportResult, Product, ProductAnalysis, ProductDetail, ProjectType, Shape } from '@shared/types'
 import type { ProductRepository } from '../db/repositories/products'
 import type { ImageRepository } from '../db/repositories/images'
 import type { ProjectRepository } from '../db/repositories/projects'
 import type { PlanRepository } from '../db/repositories/plans'
 import type { MediaService } from '../media/service'
+import type { TextProvider } from '../muse/text'
+import type { UsageRepository } from '../db/repositories/usage'
+import { extractJsonObject } from '@shared/aiJson'
 import { ImageImportError, normaliseProduct } from '../media/import'
 import { absoluteInLibrary, workingFor } from '../media/paths'
 import { shapeForImage } from '@shared/shapes'
@@ -25,6 +28,8 @@ export class ProductService {
       media: MediaService
       libraryPath: () => string
       resourceRoot: () => string
+      provider?: TextProvider
+      usage?: UsageRepository
     }
   ) {}
 
@@ -101,6 +106,103 @@ export class ProductService {
     })
     this.deps.projects.update(project.id, { productId: product.id })
     return product
+  }
+
+  async analyze(id: string): Promise<ProductDetail> {
+    const product = this.deps.products.get(id)
+    const row = this.deps.products.getRow(id)
+    if (!product || !row || isBundledProduct(id)) {
+      throw new ImageImportError('unreadable', 'That product is not here anymore.')
+    }
+    if (!this.deps.provider) throw new ImageImportError('unreadable', 'The photo reader is not available.')
+    let bytes: Buffer
+    try {
+      bytes = await fs.readFile(absoluteInLibrary(this.deps.libraryPath(), row.file))
+    } catch {
+      throw new ImageImportError('unreadable', 'The product photo is missing.')
+    }
+    const system = [
+      'You look at one photo of a product for a small shop.',
+      'Describe only what you can actually see. Never invent a material, a dimension, a certification, a brand, or a claim that the photo does not show.',
+      'Answer with JSON only, no prose and no code fence, in exactly this shape:',
+      '{"product": string, "category": string, "audience": string, "points": [string]}',
+      'Write a short product name, a plain category, one sentence about who would buy it, and at most 5 short things a buyer would notice.',
+      'Do not use markdown. Use regular hyphens and no em dashes.'
+    ].join(' ')
+    const user = [
+      `The seller calls it: ${product.name}`,
+      product.category ? `Their category: ${product.category}` : '',
+      'Read the attached photo and return the JSON object only.'
+    ]
+      .filter(Boolean)
+      .join('\n')
+    const result = await this.deps.provider.generate({
+      system,
+      user,
+      image: { mime: 'image/webp', bytes }
+    })
+    if (!result.ok) {
+      this.deps.usage?.record({
+        projectId: null,
+        projectName: product.name,
+        action: 'analyze',
+        requestedN: 0,
+        returnedN: 0,
+        costCents: 0,
+        costMicros: 0,
+        result: 'failed',
+        errorCode: result.code,
+        requestId: result.requestId
+      })
+      throw new ImageImportError('unreadable', 'The photo could not be read. Check your key and connection.')
+    }
+    const parsed = extractJsonObject(result.content)
+    if (!parsed || typeof parsed !== 'object') {
+      this.deps.usage?.record({
+        projectId: null,
+        projectName: product.name,
+        action: 'analyze',
+        requestedN: 0,
+        returnedN: 0,
+        costCents: 0,
+        costMicros: result.costMicros,
+        result: 'failed',
+        errorCode: 'invalid_request',
+        requestId: result.requestId
+      })
+      throw new ImageImportError('unreadable', 'The photo reader did not return a usable answer.')
+    }
+    const raw = parsed as { product?: unknown; category?: unknown; audience?: unknown; points?: unknown }
+    const analysis: ProductAnalysis = {
+      product: String(raw.product ?? product.name).trim().slice(0, 100),
+      category: String(raw.category ?? '').trim().slice(0, 60),
+      audience: String(raw.audience ?? '').trim().slice(0, 200),
+      points: (Array.isArray(raw.points) ? raw.points : [])
+        .map((point) => String(point ?? '').trim().slice(0, 120))
+        .filter(Boolean)
+        .slice(0, 5),
+      createdAt: Date.now(),
+      costMicros: result.costMicros
+    }
+    this.deps.products.setAnalysis(id, analysis)
+    if (!product.category && analysis.category) {
+      this.deps.products.update(id, { category: analysis.category })
+    }
+    if (!product.audience && analysis.audience) {
+      this.deps.products.update(id, { audience: analysis.audience })
+    }
+    this.deps.usage?.record({
+      projectId: null,
+      projectName: product.name,
+      action: 'analyze',
+      requestedN: 0,
+      returnedN: 0,
+      costCents: 0,
+      costMicros: result.costMicros,
+      result: 'ok',
+      requestId: result.requestId
+    })
+    return this.detail(id)
   }
 
   detail(id: string): ProductDetail {

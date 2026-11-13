@@ -26,7 +26,12 @@ function lastMonths(count: number): string[] {
   return result
 }
 
-const actionLabels = { create: 'Create', set: 'Set', edit: 'Edit', adjust: 'Adjust' } as const
+const actionLabels = { create: 'Create', set: 'Set', edit: 'Edit', adjust: 'Adjust', listing: 'Listing copy', analyze: 'Photo read', cutout: 'Cutout' } as const
+
+function microsLabel(micros: number): string {
+  if (micros <= 0) return 'Under a cent'
+  return `$${(micros / 1_000_000).toFixed(4)}`
+}
 
 export function Usage(): React.JSX.Element {
   const refreshSettings = useAppStore((state) => state.refreshSettings)
@@ -176,6 +181,9 @@ export function Usage(): React.JSX.Element {
                   <Text type="label" color="secondary" className="block">Spent</Text>
                   <Text weight="bold" className="mt-2 block tabular" style={{ fontSize: 24 }}>{usd(summary?.spendCents ?? 0)}</Text>
                   <Text type="supporting" color="secondary" className="block">Images that came back</Text>
+                  {(summary?.textMicros ?? 0) > 0 && (
+                    <Text type="supporting" color="secondary" className="block">Listing text: {microsLabel(summary!.textMicros)}</Text>
+                  )}
                 </Card>
                 <Card padding={4}>
                   <Text type="label" color="secondary" className="block">Budget</Text>
@@ -289,7 +297,7 @@ export function Usage(): React.JSX.Element {
                                 {event.returned === event.requested ? event.returned : `${event.returned} of ${event.requested}`}
                               </td>
                               <td className="whitespace-nowrap px-3 py-2 text-[12px] tabular">
-                                {event.uncertainBilling ? 'Unknown' : event.action === 'adjust' ? 'Free' : usd(event.costCents)}
+                                {event.uncertainBilling ? 'Unknown' : event.action === 'adjust' ? 'Free' : event.action === 'listing' || event.action === 'analyze' || event.action === 'cutout' ? microsLabel(event.costMicros) : usd(event.costCents)}
                               </td>
                               <td className="whitespace-nowrap px-3 py-2 text-[12px] tabular">
                                 {event.durationMs === null ? '-' : `${(event.durationMs / 1000).toFixed(1)}s`}

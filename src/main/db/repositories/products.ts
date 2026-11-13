@@ -1,5 +1,5 @@
 import type { Db } from '../connection'
-import type { Product } from '@shared/types'
+import type { Product, ProductAnalysis } from '@shared/types'
 import { libraryUrl } from '@shared/files'
 
 interface ProductRow {
@@ -16,8 +16,27 @@ interface ProductRow {
   notes: string | null
   status: string
   archived_at: number | null
+  analysis: string | null
   project_count?: number
   image_count?: number
+}
+
+function parseAnalysis(raw: string | null): ProductAnalysis | null {
+  if (!raw) return null
+  try {
+    const value = JSON.parse(raw) as Partial<ProductAnalysis>
+    if (!value || typeof value !== 'object' || !Array.isArray(value.points)) return null
+    return {
+      product: String(value.product ?? '').slice(0, 100),
+      category: String(value.category ?? '').slice(0, 60),
+      audience: String(value.audience ?? '').slice(0, 200),
+      points: value.points.map((point) => String(point).slice(0, 120)).filter(Boolean).slice(0, 6),
+      createdAt: Number(value.createdAt) || 0,
+      costMicros: Number(value.costMicros) || 0
+    }
+  } catch {
+    return null
+  }
 }
 
 function mapProduct(row: ProductRow): Product {
@@ -38,7 +57,8 @@ function mapProduct(row: ProductRow): Product {
     status: row.status === 'archived' ? 'archived' : 'active',
     archivedAt: row.archived_at,
     projectCount: Number(row.project_count ?? 0),
-    imageCount: Number(row.image_count ?? 0)
+    imageCount: Number(row.image_count ?? 0),
+    analysis: parseAnalysis(row.analysis)
   }
 }
 
@@ -139,6 +159,14 @@ export class ProductRepository {
       values.push(Date.now(), id)
       this.db.prepare(`UPDATE products SET ${fields.join(', ')} WHERE id = ?`).run(...values)
     }
+    return this.get(id)
+  }
+
+  setAnalysis(id: string, analysis: ProductAnalysis | null): Product | null {
+    if (!this.getRow(id)) return null
+    this.db
+      .prepare('UPDATE products SET analysis = ?, updated_at = ? WHERE id = ?')
+      .run(analysis ? JSON.stringify(analysis) : null, Date.now(), id)
     return this.get(id)
   }
 
