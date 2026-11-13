@@ -22,6 +22,8 @@ import { ErrorState } from '../components/ui/ErrorState'
 import { Field } from '../components/ui/Field'
 import { Skeleton } from '../components/ui/Skeleton'
 import { useConfirm } from '../components/ui/ConfirmProvider'
+import { KitExportDialog } from '../components/set/KitExportDialog'
+import { ListingPanel } from '../components/listings/ListingPanel'
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
 import { formatDateTime, relativeTime } from '../lib/format'
@@ -84,6 +86,7 @@ export function ProductDetail(): React.JSX.Element {
   const [form, setForm] = useState({ category: '', audience: '', notes: '' })
   const [savingDetails, setSavingDetails] = useState(false)
   const [linkOpen, setLinkOpen] = useState(false)
+  const [kitOpen, setKitOpen] = useState(false)
   const [unfiled, setUnfiled] = useState<Project[]>([])
 
   const load = async (): Promise<void> => {
@@ -333,10 +336,18 @@ export function ProductDetail(): React.JSX.Element {
                       {latest ? '→' : '3'}
                     </span>
                     <span>{latest ? 'Open the latest set to review and export' : 'Export comes after the first set'}</span>
-                    {latest && <Button variant="ghost" size="sm" className="ml-auto" onClick={() => navigate(`/project/${latest.id}`)}>Open set</Button>}
+                    {latest && (
+                      <div className="ml-auto flex items-center gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/project/${latest.id}`)}>Open set</Button>
+                        <Button variant="secondary" size="sm" onClick={() => setKitOpen(true)}>Export Kit</Button>
+                      </div>
+                    )}
                   </div>
                 </div>
+                <p className="hint mt-3">A kit writes marketplace-sized images, alt text, a manifest, and the untouched original when the shop needs it.</p>
               </div>
+
+              <ListingPanel productId={product.id} productName={product.name} projectId={latest?.id ?? null} />
 
               <div className="card mt-4 p-4">
                 <p className="section-label">Product details</p>
@@ -386,6 +397,16 @@ export function ProductDetail(): React.JSX.Element {
           </section>
         </div>
       </div>
+
+      {latest && (
+        <KitExportDialog
+          open={kitOpen}
+          onOpenChange={setKitOpen}
+          project={latest}
+          productName={product.name}
+          imageCount={latest.imageCount}
+        />
+      )}
 
       <Dialog
         open={renaming}

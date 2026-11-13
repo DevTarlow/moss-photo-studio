@@ -156,6 +156,14 @@ const api: MossApi = {
   diagnostics: {
     create: invokeVoid('diagnostics:create')
   },
+  kit: {
+    export: invoke('kit:export')
+  },
+  listings: {
+    get: invoke('listings:get'),
+    generate: invoke('listings:generate'),
+    save: invoke('listings:save')
+  },
   onJobUpdate: (listener) => subscribe('moss:job:update', listener as never),
   onLicenseChanged: (listener) => subscribe('moss:license:changed', listener as never),
   onMenuAction: (listener) => subscribe('moss:menu-action', listener as never),

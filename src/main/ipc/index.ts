@@ -32,6 +32,7 @@ import { exportImageToPath, exportOneImage, exportSetProject } from '../media/ex
 import { openExternalSafely } from '../security'
 import { SCHEMA_VERSION } from '../db/connection'
 import { createBackup, createDiagnostics, inspectBackup, stageRestore } from '../backup'
+import { createKitFolder, exportKit } from '../media/kit'
 import { runtimeEnv } from '../env'
 import { registerIpc, registerRaw, IpcFault } from './helpers'
 import { type SettingKey } from '../settings'
@@ -429,6 +430,81 @@ export function registerIpcHandlers(context: AppContext): void {
   registerIpc(context, 'backup:status', voidSchema, () => ({
     lastBackupAt: settings.get<number | null>('lastBackupAt', null)
   }))
+
+  const listingCopySchema = z.object({
+    titles: z.array(z.string().max(200)).max(5),
+    description: z.string().max(5000),
+    features: z.array(z.string().max(240)).max(10),
+    tags: z.array(z.string().max(60)).max(30),
+    altTexts: z.array(z.string().max(300)).max(30).optional(),
+    costMicros: z.number().int().min(0).optional()
+  })
+  const listingPlatformSchema = z.enum(['etsy', 'shopify', 'own'])
+
+  registerIpc(
+    context,
+    'listings:get',
+    z.object({ productId: idSchema, platform: listingPlatformSchema }),
+    ({ productId, platform }) => context.listingsService.get(productId, platform)
+  )
+  registerIpc(
+    context,
+    'listings:generate',
+    z.object({
+      productId: idSchema,
+      platform: listingPlatformSchema,
+      projectId: idSchema.nullable().optional(),
+      useProfile: z.boolean().optional()
+    }),
+    ({ productId, platform, projectId, useProfile }) =>
+      context.listingsService.generate({ productId, platform, projectId, useProfile })
+  )
+  registerIpc(
+    context,
+    'listings:save',
+    z.object({ productId: idSchema, platform: listingPlatformSchema, copy: listingCopySchema }),
+    ({ productId, platform, copy }) => context.listingsService.save({ productId, platform, copy })
+  )
+
+  registerIpc(
+    context,
+    'kit:export',
+    z.object({
+      projectId: idSchema,
+      platform: z.enum(['etsy', 'shopify', 'instagram', 'tiktok', 'ebay', 'own']),
+      includeOriginal: z.boolean().optional()
+    }),
+    async ({ projectId, platform, includeOriginal }) => {
+      const project = context.projects.get(projectId)
+      if (!project || project.type !== 'set') throw new IpcFault('not_found')
+      const plan = context.plans.getActive(projectId)
+      if (!plan) throw new IpcFault('invalid_payload', 'Plan the set first.')
+      const images = context.images.list(projectId, false)
+      if (!images.some((image) => image.status === 'ready' && image.shotId)) {
+        throw new IpcFault('invalid_payload', 'Make at least one image first.')
+      }
+      const pick = await openFolderDialog(context, {
+        title: 'Choose where to save the listing kit',
+        defaultPath: settings.exportFolderFor(projectId) ?? app.getPath('documents'),
+        properties: ['openDirectory', 'createDirectory']
+      })
+      if (pick.canceled || !pick.filePaths[0]) {
+        return { count: 0, folderName: '', warnings: [], includesOriginal: false }
+      }
+      const folder = await createKitFolder(pick.filePaths[0])
+      const result = await exportKit({
+        libraryPath: context.libraryPath(),
+        folder,
+        project,
+        plan: plan.json,
+        images,
+        platform,
+        includeOriginal
+      })
+      settings.rememberExportFolder(projectId, folder)
+      return result
+    }
+  )
 
   registerIpc(context, 'diagnostics:create', voidSchema, async () => {
     let documents = app.getPath('documents')

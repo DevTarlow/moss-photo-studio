@@ -34,8 +34,10 @@ import type {
   IpcResult,
   AdjustTransform,
   Format,
-  JobUpdateListener
+  JobUpdateListener,
+  KitExportResult
 } from './types'
+import type { ListingCopy } from './listings'
 
 export interface IpcChannels {
   'app:info': { request: undefined; response: AppInfo }
@@ -56,6 +58,33 @@ export interface IpcChannels {
   'backup:openLast': { request: undefined; response: { ok: true } }
   'backup:status': { request: undefined; response: BackupStatus }
   'diagnostics:create': { request: undefined; response: { folderName: string } }
+  'kit:export': {
+    request: { projectId: string; platform: string; includeOriginal?: boolean }
+    response: KitExportResult
+  }
+  'listings:get': {
+    request: { productId: string; platform: string }
+    response: { id: string; version: number; copy: ListingCopy } | null
+  }
+  'listings:generate': {
+    request: { productId: string; platform: string; projectId?: string | null; useProfile?: boolean }
+    response: { id: string; version: number; copy: ListingCopy }
+  }
+  'listings:save': {
+    request: {
+      productId: string
+      platform: string
+      copy: {
+        titles: string[]
+        description: string
+        features: string[]
+        tags: string[]
+        altTexts?: string[]
+        costMicros?: number
+      }
+    }
+    response: { id: string; version: number; copy: ListingCopy }
+  }
   'dialog:pickLogo': { request: undefined; response: Brand | null }
   'settings:get': { request: { key: string }; response: { value: unknown } }
   'settings:set': { request: { key: string; value: unknown }; response: { ok: true } }
@@ -358,6 +387,14 @@ export interface MossApi {
   }
   diagnostics: {
     create: CallVoid<'diagnostics:create'>
+  }
+  kit: {
+    export: Call<'kit:export'>
+  }
+  listings: {
+    get: Call<'listings:get'>
+    generate: Call<'listings:generate'>
+    save: Call<'listings:save'>
   }
   onJobUpdate(listener: JobUpdateListener): () => void
   onLicenseChanged(listener: LicenseChangeListener): () => void

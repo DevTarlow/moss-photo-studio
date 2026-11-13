@@ -103,6 +103,23 @@ Rate limiting:
 
 The app deliberately does not retry 401, 402, 403, policy refusals, 5xx, or malformed responses. The seller can choose **Try Again** manually. A refusal must never be retried automatically.
 
+## Text requests (Listing Writer)
+
+The Listing Writer uses the same Meta key and base URL with `POST /v1/chat/completions`, model `muse-ember-1.0`. The request sends a system prompt, a user message with the product facts and platform caps, and the normalised product photo as an `image_url` content part when the writer is reading the photo. `max_tokens` is 3000 because the model spends tokens on reasoning before the answer.
+
+The verified response shape on 2026-11-12:
+
+```json
+{
+  "choices": [{ "finish_reason": "stop", "message": { "content": "{\"titles\": [...]}" } }],
+  "usage": { "prompt_tokens": 567, "completion_tokens": 241, "total_tokens": 808 }
+}
+```
+
+`content` can be null when `finish_reason` is `length`; the client treats that as `provider_error`. The answer is parsed by finding the outermost JSON object, then clamped to the platform caps in `src/shared/listings.ts`. The listing stores the estimated token cost in micros (`prompt_tokens * 0.1 + completion_tokens * 0.5`) and the panel shows it; the image usage ledger does not yet include text rows.
+
+The request shape was checked against the live API with a short text prompt and a vision request. The app's own listing run is exercised with the fake text provider in the E2E suite, not against the live API in CI.
+
 ## Source images and request boundaries
 
 - Originals are copied byte for byte and never sent.

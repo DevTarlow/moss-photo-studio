@@ -7,8 +7,8 @@ This is the record of what was run, what passed, and what the acceptance owner s
 | Check | Result |
 | --- | --- |
 | `npm run typecheck` | Pass |
-| `npm test` | 179 tests pass in 19 files |
-| `npm run test:e2e` | 13 serial tests pass, including axe on dialogs, 510-project pagination, all-screen 1024 and 150% layout, and screenshot comparison |
+| `npm test` | 188 tests pass in 23 files |
+| `npm run test:e2e` | 13 serial journey tests plus the focused specs pass, including axe on dialogs, the kit/listing flow, 510-project pagination, all-screen 1024 and 150% layout, and screenshot comparison |
 | `npm run audit:tokens` | All foreground/background token pairs pass AA in light and dark |
 | `npm run lint` | 0 errors, 0 warnings |
 | `npm run build` | Pass |
@@ -16,7 +16,7 @@ This is the record of what was run, what passed, and what the acceptance owner s
 | Packaged override test | A packaged release launched to Activation with `MOSS_DEV_UNLOCK=1`, `MOSS_MUSE_FAKE=1`, and `MOSS_E2E=1` set, proving the build gate ignores them. `fakeMode` was false |
 | AppImage launch smoke | Extracted AppImage launched to Activation through Playwright with `APPIMAGE_EXTRACT_AND_RUN=1` |
 | deb launch smoke | `.deb` was unpacked with `dpkg-deb -x` and its executable launched to Activation. The package metadata, desktop entry, icons, and control scripts were inspected |
-| Screenshot baselines | 47 images in `tests/screenshots`. The 1440 by 900 light and dark images are compared with a maximum diff ratio of 0.01. The 1024 by 700 and 150% zoom images are captured fresh because Playwright can restore the Electron viewport under that helper |
+| Screenshot baselines | 51 images in `tests/screenshots`, including the product hub. The 1440 by 900 light and dark images are compared with a maximum diff ratio of 0.01. The 1024 by 700 and 150% zoom images are captured fresh because Playwright can restore the Electron viewport under that helper |
 
 ### Commands used
 
@@ -71,6 +71,8 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - A backup restores into a new library and switches the restored database's library path; diagnostics contain no keys or images. The integration suite covers the round trip.
 - A paid job reserves its budget so two concurrent jobs cannot pass the same check; a preflight disk check blocks a run with too little free space; a short Create can be topped up by its missing count.
 - A source import is serialized per project, so two simultaneous first imports keep both originals.
+- A product kit writes Etsy-sized JPEGs, the untouched original, `listing.csv`, `kit.json`, and the disclosure; the integration test checks dimensions and the pinned main image. The kit flow also runs in the E2E kit spec.
+- The Listing Writer reads the product photo, plan directions, and Business profile, clamps titles/description/features/tags to Etsy, Shopify, or own-site caps, and saves versions. The E2E kit spec writes and edits a listing with the fake text provider.
 
 ## Coverage gaps in the automated artifact
 
@@ -87,7 +89,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 
 ### 3b. App shell and collections
 
-- [x] **A** The rail has Products, All work, People, Usage, a Tools section with Set, Image Editor, and Image Generator, and Settings. Products is the home. The top-bar New menu launches the same three tools from every main screen. The Business settings section saves the shop profile that the Listing Writer will read.
+- [x] **A** The rail has Products, All work, People, Usage, a Tools section with Set, Image Editor, and Image Generator, and Settings. Products is the home. The top-bar New menu launches the same three tools from every main screen. The Business settings section saves the shop profile the Listing Writer reads.
 - [x] **A** All work has one New entry point, one key/setup banner area, a Select mode, Select all, Clear, Delete, and a sticky bulk bar. The hover checkbox still works.
 - [x] **A** Products and People have search, sort, and result counts. The Settings storage section is named Storage.
 - [x] **A** Settings uses the same SideNav as the rest of the app; the second settings aside is gone and the content is centered at 1440 and 1024.

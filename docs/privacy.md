@@ -2,14 +2,14 @@
 
 Moss Photo Studio sends **three** things to other computers, and only when they are needed:
 
-1. **To Meta Muse**, when you press a button that makes or changes an image: your Muse key, the image reference or references for that shot, the composed description, the requested shape, format, and count, and a random installation id in the API's `user` field. Meta also sees your IP address, as any service does.
+1. **To Meta Muse**, when you press a button that makes or changes an image, or writes listing copy: your Muse key, the product photo and any person reference, the composed description or the listing facts and shop profile, the requested shape, format, and count for an image, and a random installation id in the API's `user` field. Meta also sees your IP address, as any service does.
 2. **To the license store (Lemon Squeezy)**, when you activate, validate, or deactivate a license: the license key, an instance id, and a short computer label.
 3. **To your browser**, if you click a link such as “Where to Get a Key”, “Buy a License”, or a Meta documentation link. The app opens the system browser. The app itself does not load the page.
 4. **Nothing else.** There is no telemetry endpoint, analytics SDK, remote logging, crash uploader, or auto-updater.
 
 The app turns off Chromium's background networking, component updates, domain reliability, sync, and pings. The renderer has no network permission in its Content Security Policy except the two API hosts and its own local media scheme. It never calls those API hosts directly. All requests are made by the main process.
 
-## What is sent with a Muse request
+## What is sent with an image request
 
 - The product photo reference (an uploaded photo, a saved Product, or a ready library image), normalised to WebP with the long edge at most 2,048 pixels.
 - An optional person reference, normalised the same way. Product and person references can be sent together.
@@ -19,7 +19,14 @@ The app turns off Chromium's background networking, component updates, domain re
 - A random per-installation `user` id.
 - A generated `x-request-id` for support and log correlation.
 
-It does **not** send any other library image, project list, usage history, project names, person names, your logo, or license key. The three saved colors you mark as used are included as hex values in the composed prompt when you make a set or change a photo, unless brand colors are switched off in Settings. A local adjustment never sends anything. Browsing the library never sends anything.
+## What is sent when writing listing copy
+
+- The product photo, as the same normalised WebP reference used for images.
+- The product name, category, audience, and notes you saved, the shot directions of the set, and the shop profile fields (business name, what you sell, audience, voice, standard answers, marketplaces) when **Use my Business profile** is on.
+- The platform and its title, description, feature, and tag caps.
+- A random installation id and a request id, like an image request.
+
+It does **not** send any other library image, project list, usage history, person names, your logo, or license key. The three saved colors you mark as used are included as hex values in the composed prompt when you make a set or change a photo, unless brand colors are switched off in Settings. A local adjustment never sends anything. Browsing the library never sends anything.
 
 ## What is sent with a license request
 

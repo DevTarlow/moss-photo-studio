@@ -15,7 +15,9 @@ import { UsageRepository } from './db/repositories/usage'
 import { BrandRepository } from './db/repositories/brand'
 import { PeopleRepository } from './db/repositories/people'
 import { ProductRepository } from './db/repositories/products'
+import { ListingRepository } from './db/repositories/listings'
 import { ProductService } from './products/service'
+import { ListingsService } from './listings/service'
 import { LicenseRepository } from './db/repositories/license'
 import { SecretStore } from './secrets'
 import { SafeTextCipher } from './secretCipher'
@@ -23,6 +25,7 @@ import { MediaService } from './media/service'
 import { JobQueue, reconcileOnStartup } from './jobs/queue'
 import { MuseClient } from './muse/client'
 import { FakeMuseClient } from './muse/fake'
+import { FakeTextProvider, MuseTextClient } from './muse/text'
 import { LicenseController } from './license/controller'
 import { LemonSqueezyProvider } from './license/lemonsqueezy'
 import { registerMediaScheme, installMediaProtocol } from './protocol'
@@ -170,6 +173,7 @@ async function boot(): Promise<void> {
   const brand = new BrandRepository(db)
   const people = new PeopleRepository(db)
   const products = new ProductRepository(db)
+  const listings = new ListingRepository(db)
   const licenseRepo = new LicenseRepository(db)
   const cipher = new SafeTextCipher(userDataDir)
   const secrets = new SecretStore({ userDataDir, db, logger, cipher })
@@ -203,6 +207,14 @@ async function boot(): Promise<void> {
         logger
       })
 
+  const textProvider = runtimeEnv.fakeMode
+    ? new FakeTextProvider()
+    : new MuseTextClient({
+        apiKey: () => secrets.read(),
+        baseUrl: runtimeEnv.museBaseUrl,
+        logger
+      })
+
   const media = new MediaService({
     projects,
     images,
@@ -221,6 +233,18 @@ async function boot(): Promise<void> {
     media,
     libraryPath,
     resourceRoot: () => resourceRoot
+  })
+
+  const listingsService = new ListingsService({
+    products,
+    projects,
+    plans,
+    images,
+    brand,
+    listings,
+    provider: textProvider,
+    libraryPath,
+    logger
   })
 
   const queue = new JobQueue({
@@ -258,6 +282,8 @@ async function boot(): Promise<void> {
     people,
     products,
     productService,
+    listings,
+    listingsService,
     media,
     queue,
     license,

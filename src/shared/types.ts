@@ -411,6 +411,13 @@ export interface BackupStatus {
   lastBackupAt: number | null
 }
 
+export interface KitExportResult {
+  count: number
+  folderName: string
+  warnings: string[]
+  includesOriginal: boolean
+}
+
 export type MenuAction =
   | 'new-set'
   | 'new-photo'
