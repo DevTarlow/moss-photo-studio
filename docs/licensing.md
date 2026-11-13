@@ -1,7 +1,7 @@
 # Licensing and the Moss License Portal
 
 This document records the licensing decision, the contract between the desktop app and the
-portal, and the rules the portal must keep. The portal itself lives in [`portal/`](../portal/README.md).
+portal, and the rules the portal must keep. The portal source lives in the sibling `moss-ai-studio` repository under `portal/`; this document stays with the app-side contract.
 
 ## Decision
 
