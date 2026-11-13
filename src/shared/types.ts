@@ -223,6 +223,8 @@ export interface Product {
   projectCount?: number
   imageCount?: number
   analysis?: ProductAnalysis | null
+  cutoutUrl?: string | null
+  cutoutConfidence?: number | null
 }
 
 export interface ProductDetail {
@@ -367,6 +369,7 @@ export type ErrorCode =
   | 'unreadable'
   | 'cancelled'
   | 'export_failed'
+  | 'no_match'
 
 export type IpcResult<T> =
   | { ok: true; data: T }

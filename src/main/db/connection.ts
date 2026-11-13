@@ -268,6 +268,17 @@ const migrations: Migration[] = [
       db.exec('ALTER TABLE products ADD COLUMN analysis TEXT')
     }
   },
+  {
+    version: 9,
+    up(db) {
+      db.exec(`
+        ALTER TABLE products ADD COLUMN cutout_file TEXT;
+        ALTER TABLE products ADD COLUMN cutout_source_id TEXT;
+        ALTER TABLE products ADD COLUMN cutout_confidence REAL;
+        ALTER TABLE products ADD COLUMN cutout_at INTEGER;
+      `)
+    }
+  },
 ]
 
 export const SCHEMA_VERSION = migrations[migrations.length - 1]!.version

@@ -120,6 +120,12 @@ The verified response shape on 2026-11-12:
 
 The request shape was checked against the live API with a short text prompt and a vision request. The app's own listing run is exercised with the fake text provider in the E2E suite, not against the live API in CI.
 
+## Segmentation requests (Clean shot)
+
+Clean shot uses `POST /v1/responses` with `model: sam-3.1`, `stream: true`, `metadata: { include_confidence: "true", mask_encoding: "one_bit" }`, and one user message with `input_text` (a short noun phrase such as the product name) plus the normalised product photo as `input_image`. The response is SSE; the app collects `response.output_text.*` events and feeds them to `@meta-sam/parser` `parseImageStream`. It takes the largest returned mask, decodes the raster, builds a full-frame alpha mask, and composites the original pixels onto a 2048 px white canvas. A confidence below 0.35 or no mask is treated as `no_match`. SAM 3.1 is $2.50 per 1,000 images ($0.0025 each); the usage ledger records 2500 micros under `cutout`.
+
+The real mask shape, confidence, and cutout were checked on 2026-11-12 with the bundled speckled mug and the owner's shirt photo on a wood floor. The parser is bundled into the main process because it is ESM-only; it is excluded from `externalizeDepsPlugin`. The fake host uses a deterministic oval mask for E2E.
+
 ## Source images and request boundaries
 
 - Originals are copied byte for byte and never sent.

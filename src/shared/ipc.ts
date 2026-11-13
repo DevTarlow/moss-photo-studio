@@ -133,6 +133,7 @@ export interface IpcChannels {
   'products:detail': { request: { id: string }; response: ProductDetail }
   'products:createFromImage': { request: { imageId: string; name: string }; response: Product }
   'products:analyze': { request: { id: string }; response: ProductDetail }
+  'products:cleanShot': { request: { id: string }; response: { projectId: string; detail: ProductDetail } }
   'products:createFromBytes': { request: { bytes: Uint8Array; name: string }; response: Product }
   'products:createFromProject': { request: { projectId: string; name?: string }; response: Product }
   'dialog:pickProduct': { request: undefined; response: Product | null }
@@ -315,6 +316,7 @@ export interface MossApi {
     listArchived: CallVoid<'products:listArchived'>
     detail: Call<'products:detail'>
     analyze: Call<'products:analyze'>
+    cleanShot: Call<'products:cleanShot'>
     createFromImage: Call<'products:createFromImage'>
     createFromBytes: Call<'products:createFromBytes'>
     createFromProject: Call<'products:createFromProject'>

@@ -26,6 +26,7 @@ import { JobQueue, reconcileOnStartup } from './jobs/queue'
 import { MuseClient } from './muse/client'
 import { FakeMuseClient } from './muse/fake'
 import { FakeTextProvider, MuseTextClient } from './muse/text'
+import { FakeSamProvider, MuseSamClient } from './muse/sam'
 import { LicenseController } from './license/controller'
 import { LemonSqueezyProvider } from './license/lemonsqueezy'
 import { registerMediaScheme, installMediaProtocol } from './protocol'
@@ -215,6 +216,14 @@ async function boot(): Promise<void> {
         logger
       })
 
+  const samProvider = runtimeEnv.fakeMode
+    ? new FakeSamProvider()
+    : new MuseSamClient({
+        apiKey: () => secrets.read(),
+        baseUrl: runtimeEnv.museBaseUrl,
+        logger
+      })
+
   const media = new MediaService({
     projects,
     images,
@@ -234,7 +243,8 @@ async function boot(): Promise<void> {
     libraryPath,
     resourceRoot: () => resourceRoot,
     provider: textProvider,
-    usage
+    usage,
+    sam: samProvider
   })
 
   const listingsService = new ListingsService({

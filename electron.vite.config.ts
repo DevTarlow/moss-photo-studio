@@ -12,7 +12,7 @@ export default defineConfig({
       __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
       __MOSS_TEST_BUILD__: JSON.stringify(process.env.MOSS_TEST_BUILD === '1')
     },
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin({ exclude: ['@meta-sam/parser'] })],
     resolve: { alias: { '@shared': shared, '@main': path.resolve('src/main') } }
   },
   preload: {

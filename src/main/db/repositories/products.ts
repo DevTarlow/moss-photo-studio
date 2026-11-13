@@ -17,6 +17,10 @@ interface ProductRow {
   status: string
   archived_at: number | null
   analysis: string | null
+  cutout_file: string | null
+  cutout_source_id: string | null
+  cutout_confidence: number | null
+  cutout_at: number | null
   project_count?: number
   image_count?: number
 }
@@ -58,7 +62,9 @@ function mapProduct(row: ProductRow): Product {
     archivedAt: row.archived_at,
     projectCount: Number(row.project_count ?? 0),
     imageCount: Number(row.image_count ?? 0),
-    analysis: parseAnalysis(row.analysis)
+    analysis: parseAnalysis(row.analysis),
+    cutoutUrl: row.cutout_file ? libraryUrl(row.cutout_file) : null,
+    cutoutConfidence: row.cutout_confidence === null ? null : Number(row.cutout_confidence)
   }
 }
 
@@ -159,6 +165,14 @@ export class ProductRepository {
       values.push(Date.now(), id)
       this.db.prepare(`UPDATE products SET ${fields.join(', ')} WHERE id = ?`).run(...values)
     }
+    return this.get(id)
+  }
+
+  setCutout(id: string, input: { file: string; sourceId: string; confidence: number }): Product | null {
+    if (!this.getRow(id)) return null
+    this.db
+      .prepare('UPDATE products SET cutout_file = ?, cutout_source_id = ?, cutout_confidence = ?, cutout_at = ?, updated_at = ? WHERE id = ?')
+      .run(input.file, input.sourceId, input.confidence, Date.now(), Date.now(), id)
     return this.get(id)
   }
 

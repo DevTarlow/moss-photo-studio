@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import sharp from 'sharp'
 import type { Format, ImportResult, Product, ProductAnalysis, ProductDetail, ProjectType, Shape } from '@shared/types'
 import type { ProductRepository } from '../db/repositories/products'
 import type { ImageRepository } from '../db/repositories/images'
@@ -8,6 +9,8 @@ import type { PlanRepository } from '../db/repositories/plans'
 import type { MediaService } from '../media/service'
 import type { TextProvider } from '../muse/text'
 import type { UsageRepository } from '../db/repositories/usage'
+import type { SamProvider } from '../muse/sam'
+import { errorMessage } from '@shared/errors'
 import { extractJsonObject } from '@shared/aiJson'
 import { ImageImportError, normaliseProduct } from '../media/import'
 import { absoluteInLibrary, workingFor } from '../media/paths'
@@ -30,6 +33,7 @@ export class ProductService {
       resourceRoot: () => string
       provider?: TextProvider
       usage?: UsageRepository
+      sam?: SamProvider
     }
   ) {}
 
@@ -203,6 +207,108 @@ export class ProductService {
       requestId: result.requestId
     })
     return this.detail(id)
+  }
+
+  async cleanShot(id: string): Promise<{ projectId: string; detail: ProductDetail }> {
+    const product = this.deps.products.get(id)
+    const row = this.deps.products.getRow(id)
+    if (!product || !row || isBundledProduct(id)) {
+      throw new ImageImportError('unreadable', 'That product is not here anymore.')
+    }
+    if (!this.deps.sam) throw new ImageImportError('unreadable', 'The cutout tool is not available.')
+    let bytes: Buffer
+    try {
+      bytes = await fs.readFile(absoluteInLibrary(this.deps.libraryPath(), row.file))
+    } catch {
+      throw new ImageImportError('unreadable', 'The product photo is missing.')
+    }
+    const segmented = await this.deps.sam.segment({ bytes, mime: 'image/webp', concept: product.name })
+    if (!segmented.ok) {
+      this.deps.usage?.record({
+        projectId: null,
+        projectName: product.name,
+        action: 'cutout',
+        requestedN: 0,
+        returnedN: 0,
+        costCents: 0,
+        costMicros: 0,
+        result: 'failed',
+        errorCode: segmented.code,
+        requestId: segmented.requestId
+      })
+      throw new ImageImportError('unreadable', errorMessage(segmented.code))
+    }
+    const meta = await sharp(bytes).metadata()
+    const width = Math.max(1, meta.width ?? 0)
+    const height = Math.max(1, meta.height ?? 0)
+    const { bounds, raster, width: maskWidth } = segmented.mask
+    const alpha = Buffer.alloc(width * height * 4)
+    for (let y = 0; y < bounds.bottom - bounds.top; y += 1) {
+      for (let x = 0; x < bounds.right - bounds.left; x += 1) {
+        if (raster[y * maskWidth + x]) {
+          const at = ((bounds.top + y) * width + bounds.left + x) * 4
+          alpha[at + 3] = 255
+        }
+      }
+    }
+    const maskPng = await sharp(alpha, { raw: { width, height, channels: 4 } }).png().toBuffer()
+    const cutout = await sharp(bytes).ensureAlpha().composite([{ input: maskPng, blend: 'dest-in' }]).png().toBuffer()
+    const cutoutRelative = path.posix.join('products', `${id}-cutout.png`)
+    await fs.mkdir(path.dirname(absoluteInLibrary(this.deps.libraryPath(), cutoutRelative)), { recursive: true })
+    await fs.writeFile(absoluteInLibrary(this.deps.libraryPath(), cutoutRelative), cutout)
+    let trimmed = cutout
+    try {
+      trimmed = await sharp(cutout).trim().png().toBuffer()
+    } catch {
+      // A cutout touching every edge has nothing to trim.
+    }
+    const cleanSize = 2048
+    const object = await sharp(trimmed)
+      .resize({ width: Math.round(cleanSize * 0.84), height: Math.round(cleanSize * 0.84), fit: 'inside' })
+      .png()
+      .toBuffer()
+    const objectMeta = await sharp(object).metadata()
+    const clean = await sharp({
+      create: { width: cleanSize, height: cleanSize, channels: 3, background: { r: 255, g: 255, b: 255 } }
+    })
+      .composite([{
+        input: object,
+        left: Math.max(0, Math.round((cleanSize - (objectMeta.width ?? cleanSize)) / 2)),
+        top: Math.max(0, Math.round((cleanSize - (objectMeta.height ?? cleanSize)) / 2))
+      }])
+      .jpeg({ quality: 92 })
+      .toBuffer()
+    const project = this.deps.projects.create({
+      type: 'photo',
+      name: `${product.name} clean shot`,
+      productId: id,
+      shape: 'square',
+      format: 'jpeg'
+    })
+    try {
+      await this.deps.media.importSource({ projectId: project.id, bytes: clean, name: 'clean-shot.jpg' })
+    } catch (error) {
+      await this.deps.media.deleteProjectFiles(project.id).catch(() => undefined)
+      this.deps.projects.delete(project.id)
+      throw error
+    }
+    this.deps.products.setCutout(id, {
+      file: cutoutRelative,
+      sourceId: id,
+      confidence: segmented.mask.confidence ?? 0
+    })
+    this.deps.usage?.record({
+      projectId: project.id,
+      projectName: project.name,
+      action: 'cutout',
+      requestedN: 0,
+      returnedN: 0,
+      costCents: 0,
+      costMicros: segmented.costMicros,
+      result: 'ok',
+      requestId: segmented.requestId
+    })
+    return { projectId: project.id, detail: this.detail(id) }
   }
 
   detail(id: string): ProductDetail {

@@ -62,6 +62,12 @@ test('a product exports a marketplace kit with the original and a manifest', asy
     await page.getByRole('button', { name: /Read the photo/ }).click()
     await expect(page.getByText('What we see')).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('Speckled glaze')).toBeVisible()
+
+    await page.getByRole('button', { name: /Make a clean shot/ }).click()
+    await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 20_000 })
+    await page.evaluate((id) => { window.location.hash = `#/product/${id}` }, ids.productId)
+    await expect(page.getByRole('heading', { name: 'Kit candle', exact: true })).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByText('Cutout ready')).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('Listing copy', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: /Write listing/ }).click()
     await expect(page.getByRole('textbox', { name: 'Title 1', exact: true })).toHaveValue(/Kit candle/)

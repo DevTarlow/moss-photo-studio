@@ -811,6 +811,11 @@ export function registerIpcHandlers(context: AppContext): void {
     return context.productService.analyze(id)
   })
 
+  registerIpc(context, 'products:cleanShot', z.object({ id: idSchema }), async ({ id }) => {
+    if (isBundledProduct(id)) throw new IpcFault('invalid_payload', 'Included products do not have a product page.')
+    return context.productService.cleanShot(id)
+  })
+
   registerIpc(
     context,
     'products:update',

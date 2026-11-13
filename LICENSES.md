@@ -21,6 +21,7 @@ Third-party components keep their own licenses. The full text of each package's 
 | zod | MIT | https://github.com/colinhacks/zod |
 | better-sqlite3 | MIT | https://github.com/WiseLibs/better-sqlite3 |
 | SQLite | Public domain | https://sqlite.org/copyright.html |
+| @meta-sam/parser | SAM License (Meta) | https://dev.meta.ai/ |
 | sharp | Apache-2.0 | https://github.com/lovell/sharp |
 | libvips, bundled by sharp | LGPL-3.0-or-later | https://github.com/libvips/libvips |
 | Tailwind CSS and the Vite plugin | MIT | https://github.com/tailwindlabs/tailwindcss |
