@@ -29,7 +29,7 @@ This is the sibling application to `../moss-toolbox`. It is an Electron desktop 
 - **Source compare** in the set review: Compare with Source puts the untouched source photo beside the made image, so you can check the product before keeping a version.
 - **Listing Writer** on the product hub: titles, description, features, and tags written from the product photo, the set plan, and the optional Business profile. Etsy, Shopify, and own-site caps are clamped, the copy is editable and saved in versions, and the panel shows the estimated text cost (under a cent).
 - **Usage ledger** with image rows and text rows (listing copy, photo read), a separate text-cost line, CSV micros, and the budget limit. with the real returned-image cost, $0.01 per returned image, a monthly budget, and CSV export. Project rows follow the current project title, so a rename shows immediately; deleted projects read as Deleted project. Project spending and ledger rows show 20 per page.
-- **License activation** through the Moss license portal with a 14 day offline grace window and a read-only library when the license ends. The portal's admin/customer source lives in the sibling `moss-ai-studio` repository under `portal/`.
+- **License activation** through the Moss license portal with a 14 day offline grace window and a read-only library when the license ends. The portal's admin/customer source lives in the sibling `moss-license-center` repository.
 - **Desktop packaging** for Linux AppImage and deb. Windows NSIS and macOS DMG configuration is present and unverified.
 
 ## Requirements
@@ -61,7 +61,7 @@ MOSS_DEV_UNLOCK=1 MOSS_MUSE_FAKE=1 npm run dev
 
 ## The license portal
 
-The portal is an independent Astro + Firebase package in the sibling `moss-ai-studio` repository under `portal/`. It is not part of this app's install, tests, or build. Its README and `docs/runbook.md` hold the install, dev, test, and deploy commands.
+The portal is an independent Astro + Firebase package in the sibling `moss-license-center` repository. It is not part of this app's install, tests, or build. Its README and `docs/runbook.md` hold the install, dev, test, and deploy commands.
 
 The desktop app defaults to `https://license.mossaistudio.com`; tests and E2E override `MOSS_LICENSE_API_BASE` with the loopback fake in `tests/fake-license`. `docs/licensing.md` is the app-side contract; `docs/checkout-integration.md` is the product-site recipe; the portal repo's `docs/runbook.md` is deployment and recovery.
 
@@ -170,7 +170,7 @@ See [docs/licensing.md](docs/licensing.md) for the app-side license contract, [d
 - Real Muse billing reconciliation.
 - A production store URL, product homepage, or commercial code-signing certificate. See [docs/release.md](docs/release.md) for the owner checklist.
 
-The product-site checkout URL is a documented placeholder. `npm run release:gate` refuses a release build while `LICENSE_STORE_URL` points at `example.com` and `MOSS_RELEASE=1` is set. The Buy a License link stays hidden until the owner replaces the URL in `src/shared/constants.ts`. The license API points at `https://license.mossaistudio.com`; the portal source and runbook live in the `moss-ai-studio` repository under `portal/`.
+The product-site checkout URL is a documented placeholder. `npm run release:gate` refuses a release build while `LICENSE_STORE_URL` points at `example.com` and `MOSS_RELEASE=1` is set. The Buy a License link stays hidden until the owner replaces the URL in `src/shared/constants.ts`. The license API points at `https://license.mossaistudio.com`; the portal source and runbook live in the `moss-license-center` repository.
 
 ## License
 
