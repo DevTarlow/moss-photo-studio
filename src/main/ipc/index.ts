@@ -492,6 +492,10 @@ export function registerIpcHandlers(context: AppContext): void {
         return { count: 0, folderName: '', warnings: [], includesOriginal: false }
       }
       const folder = await createKitFolder(pick.filePaths[0])
+      const listingPlatform = platform === 'etsy' ? 'etsy' : platform === 'shopify' ? 'shopify' : platform === 'own' ? 'own' : null
+      const listing = project.productId && listingPlatform
+        ? context.listings.latest(project.productId, listingPlatform)?.copy ?? null
+        : null
       const result = await exportKit({
         libraryPath: context.libraryPath(),
         folder,
@@ -499,7 +503,8 @@ export function registerIpcHandlers(context: AppContext): void {
         plan: plan.json,
         images,
         platform,
-        includeOriginal
+        includeOriginal,
+        listing
       })
       settings.rememberExportFolder(projectId, folder)
       return result

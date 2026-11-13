@@ -71,7 +71,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - A backup restores into a new library and switches the restored database's library path; diagnostics contain no keys or images. The integration suite covers the round trip.
 - A paid job reserves its budget so two concurrent jobs cannot pass the same check; a preflight disk check blocks a run with too little free space; a short Create can be topped up by its missing count.
 - A source import is serialized per project, so two simultaneous first imports keep both originals.
-- A product kit writes Etsy-sized JPEGs, the untouched original, `listing.csv`, `kit.json`, and the disclosure; the integration test checks dimensions and the pinned main image. The kit flow also runs in the E2E kit spec.
+- A product kit writes Etsy-sized JPEGs, the untouched original, the saved listing copy in `listing.md`, `listing.csv`, `kit.json`, and the disclosure; the integration test checks dimensions and the pinned main image. The kit flow also runs in the E2E kit spec.
 - The Listing Writer reads the product photo, plan directions, and Business profile, clamps titles/description/features/tags to Etsy, Shopify, or own-site caps, and saves versions. The E2E kit spec writes and edits a listing with the fake text provider.
 
 ## Coverage gaps in the automated artifact

@@ -101,7 +101,17 @@ describe('listing kit', () => {
       plan,
       images: images.list(projectId, false),
       platform: 'etsy',
-      includeOriginal: true
+      includeOriginal: true,
+      listing: {
+        platform: 'etsy',
+        titles: ['Amber candle - hand poured'],
+        description: 'A hand-poured amber candle for slow evenings.',
+        features: ['Hand poured', 'Amber glass'],
+        tags: ['candle', 'handmade'],
+        altTexts: ['Amber candle'],
+        createdAt: Date.now(),
+        costMicros: 0
+      }
     })
     expect(result.count).toBe(2)
     expect(result.includesOriginal).toBe(true)
@@ -109,6 +119,7 @@ describe('listing kit', () => {
     const files = fs.readdirSync(folder)
     expect(files).toContain('kit.json')
     expect(files).toContain('listing.csv')
+    expect(files).toContain('listing.md')
     expect(files).toContain('README.txt')
     expect(files.some((file) => file === 'original.jpg')).toBe(true)
     const listing = files.filter((file) => file.endsWith('.jpg') && file !== 'original.jpg').sort()
@@ -122,6 +133,9 @@ describe('listing kit', () => {
     }
     expect(manifest.images[0]?.direction).toBe('a clean shot on a pale table')
     expect(manifest.images[0]?.altText).toContain('Amber candle')
+    const listingCopy = fs.readFileSync(path.join(folder, 'listing.md'), 'utf8')
+    expect(listingCopy).toContain('Amber candle - hand poured')
+    expect(listingCopy).toContain('A hand-poured amber candle')
     const csv = fs.readFileSync(path.join(folder, 'listing.csv'), 'utf8')
     expect(csv).toContain('Alt text')
     expect(csv).toContain('Amber candle')

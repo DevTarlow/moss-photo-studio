@@ -4,6 +4,7 @@ import sharp from 'sharp'
 import type { Image, KitExportResult, PlanJson, Project } from '@shared/types'
 import { shotDefinition } from '@shared/prompts/shots'
 import { marketplaceById, MARKETPLACES_AS_OF, type MarketplacePreset } from '@shared/marketplaces'
+import type { ListingCopy } from '@shared/listings'
 import { absoluteInLibrary, workingFor } from './paths'
 import { ensureUniquePath } from './export'
 
@@ -106,6 +107,7 @@ export async function exportKit(input: {
   images: Image[]
   platform: string
   includeOriginal?: boolean
+  listing?: ListingCopy | null
 }): Promise<KitExportResult> {
   const preset = marketplaceById(input.platform)
   const folder = input.folder
@@ -162,6 +164,7 @@ export async function exportKit(input: {
     }
   }
 
+  const listing = input.listing ?? null
   const manifest = {
     product: input.plan.productName || input.project.name,
     project: input.project.name,
@@ -171,9 +174,40 @@ export async function exportKit(input: {
     createdAt: new Date().toISOString(),
     disclosure: AI_DISCLOSURE,
     original: originalName,
+    listing: listing
+      ? {
+          platform: listing.platform,
+          titles: listing.titles,
+          description: listing.description,
+          features: listing.features,
+          tags: listing.tags
+        }
+      : null,
     images: written
   }
   await fs.writeFile(path.join(folder, 'kit.json'), JSON.stringify(manifest, null, 2), 'utf8')
+  if (listing) {
+    await fs.writeFile(
+      path.join(folder, 'listing.md'),
+      [
+        `# ${manifest.product} - ${listing.platform} listing copy`,
+        '',
+        '## Titles',
+        ...listing.titles.map((title, index) => `${index + 1}. ${title}`),
+        '',
+        '## Description',
+        listing.description,
+        '',
+        '## Features',
+        ...listing.features.map((feature) => `- ${feature}`),
+        '',
+        '## Tags',
+        listing.tags.join(', ') || '(no tags for this platform)',
+        ''
+      ].join('\n'),
+      'utf8'
+    )
+  }
   const csvEscape = (value: string): string => (/[",\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value)
   await fs.writeFile(
     path.join(folder, 'listing.csv'),
@@ -194,6 +228,7 @@ export async function exportKit(input: {
       `${written.length} listing ${written.length === 1 ? 'image' : 'images'} at ${preset.width} x ${preset.height}.`,
       preset.note,
       originalName ? `Included untouched original: ${originalName}. Keep it in the listing when the shop requires a real, unedited photo.` : '',
+      listing ? 'Included listing copy: listing.md (titles, description, features, tags).' : '',
       '',
       'AI disclosure:',
       AI_DISCLOSURE,

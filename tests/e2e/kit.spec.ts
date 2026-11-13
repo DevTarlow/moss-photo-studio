@@ -85,6 +85,7 @@ test('a product exports a marketplace kit with the original and a manifest', asy
     const files = fs.readdirSync(folder)
     expect(files.filter((file) => file.endsWith('.jpg'))).toHaveLength(6)
     expect(files).toContain('listing.csv')
+    expect(files).toContain('listing.md')
     expect(files).toContain('README.txt')
     expect(files.some((file) => file.startsWith('original.'))).toBe(true)
     const manifest = JSON.parse(fs.readFileSync(path.join(folder, 'kit.json'), 'utf8')) as {
@@ -94,6 +95,8 @@ test('a product exports a marketplace kit with the original and a manifest', asy
     expect(manifest.platform).toBe('Etsy')
     expect(manifest.images).toHaveLength(6)
     expect(manifest.images[0]?.altText).toContain('Kit candle')
+    const listingCopy = fs.readFileSync(path.join(folder, 'listing.md'), 'utf8')
+    expect(listingCopy).toContain('Kit candle - hand poured in small batches')
   } finally {
     await app.close().catch(() => undefined)
     fs.rmSync(userData, { recursive: true, force: true })
