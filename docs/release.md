@@ -37,7 +37,7 @@ The app currently ships **no auto-installer**. It has a manual Check for Updates
 | **D. Managed update service** | Dashboard, staged rollout, analytics, rollback. | Paid vendor, another account, and telemetry/privacy policy work. | Overkill for v1; revisit only if rollout volume justifies it. |
 | **E. Version check only** | The app asks a small HTTPS endpoint for the latest version and opens the download page; no silent install. | Still needs a host and a small JSON format; does not remove the need to sign installers for trust. Lower code and signing complexity than B. | Implemented as the manual Settings, Updates check; the portal serves the release metadata and download page. |
 
-**Recommendation:** ship v1 with **manual downloads only**; when signing and the website are ready, use **B** with a generic static feed on object storage behind `updates.mossphotostudio.com` (or the website), starting with a stable channel. If the owner wants a smaller first step, use **E** and open the download page rather than installing silently.
+**Recommendation:** ship v1 with the implemented **E** path — manual downloads plus the Settings, Updates check that opens the portal download page. When signing and the website are ready, move to **B** with a generic static feed on object storage behind `updates.mossphotostudio.com` (or the website), starting with a stable channel.
 
 If option B is chosen later, the implementation will need:
 
