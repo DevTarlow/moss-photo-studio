@@ -97,11 +97,12 @@ Rules:
 ## 5. Branch and remote
 
 - Default branch: **`main`**.
-- `origin` is a local Gitea server: `http://10.0.0.116:3000/tarlow/moss-photo-studio.git`.
+- `origin` is GitHub: `https://github.com/DevTarlow/moss-photo-studio.git`.
+- The former local Gitea remote is no longer used.
 - First-time setup on a fresh clone:
 
   ```bash
-  git remote add origin http://10.0.0.116:3000/tarlow/moss-photo-studio.git
+  git remote add origin https://github.com/DevTarlow/moss-photo-studio.git
   git push -u origin main
   ```
 
