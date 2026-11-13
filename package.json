@@ -1,6 +1,6 @@
 {
   "name": "moss-photo-studio",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A photo studio for people who sell things.",
   "main": "./out/main/index.js",
   "author": {
