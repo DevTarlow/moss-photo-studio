@@ -20,9 +20,9 @@
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",
     "build": "npm run typecheck && electron-vite build",
-    "build:linux": "node scripts/release-gate.mjs --release && npm run build && electron-builder --linux AppImage --publish never && node scripts/make-deb.mjs",
-    "build:win": "node scripts/release-gate.mjs --release && npm run build && electron-builder --win nsis",
-    "build:mac": "node scripts/release-gate.mjs --release && npm run build && electron-builder --mac dmg",
+    "build:linux": "node scripts/release-gate.mjs --release && npm run theme:check && npm run build && electron-builder --linux AppImage --publish never && node scripts/make-deb.mjs",
+    "build:win": "node scripts/release-gate.mjs --release && npm run theme:check && npm run build && electron-builder --win nsis",
+    "build:mac": "node scripts/release-gate.mjs --release && npm run theme:check && npm run build && electron-builder --mac dmg",
     "postinstall": "node scripts/postinstall.mjs",
     "assets": "node scripts/copy-assets.mjs",
     "icons": "node scripts/make-icons.mjs",
@@ -30,7 +30,9 @@
     "lint": "eslint src tests",
     "build:test": "MOSS_TEST_BUILD=1 npm run typecheck && MOSS_TEST_BUILD=1 electron-vite build",
     "release:gate": "node scripts/release-gate.mjs",
-    "lab": "node scripts/lab/run.mjs"
+    "lab": "node scripts/lab/run.mjs",
+    "theme:build": "astryx theme build src/renderer/src/theme/mossTheme.ts --out src/renderer/src/theme/moss-theme.css",
+    "theme:check": "astryx theme build src/renderer/src/theme/mossTheme.ts --out src/renderer/src/theme/moss-theme.css --check"
   },
   "dependencies": {
     "@astryxdesign/core": "0.7.11",

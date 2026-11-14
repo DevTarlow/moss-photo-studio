@@ -4,7 +4,10 @@ import { Link } from 'react-router-dom'
 import { LinkProvider } from '@astryxdesign/core/Link'
 import { Theme } from '@astryxdesign/core/theme'
 import { useAppStore } from '../store/app'
-import { mossTheme } from './mossTheme'
+// The built theme (npm run theme:build) carries __built, so Astryx skips runtime
+// style injection; its CSS arrives through styles/index.css. Edit mossTheme.ts,
+// then rebuild — the release gate fails if the two drift.
+import { mossTheme } from './moss'
 
 type RouterLinkProps = Omit<ComponentProps<typeof Link>, 'to'> & { href: string }
 

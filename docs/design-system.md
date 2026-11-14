@@ -52,10 +52,11 @@ Do not render a lucide component directly (`<Search size={14} />`). Direct SVG b
 @import 'tailwindcss/preflight.css' layer(base);
 @import '@astryxdesign/core/reset.css';
 @import '@astryxdesign/core/astryx.css';
+@import '../theme/moss-theme.css';
 @import 'tailwindcss/utilities.css' layer(utilities);
 ```
 
-`@astryxdesign/theme-neutral/theme.css` is not imported because the runtime `defineTheme` result injects the resolved theme CSS. Production should move to `astryx theme build` and a static theme stylesheet before a release.
+`@astryxdesign/theme-neutral/theme.css` is not imported. `mossTheme.ts` is the authoring source; `npm run theme:build` compiles it into `moss-theme.css` (static, scoped to `[data-astryx-theme="moss"]`) plus `moss.js`, `moss.d.ts`, and `moss.variants.d.ts`, which are committed. `MossThemeProvider` passes the built module to `Theme`, so `Theme` sees `__built` and skips runtime style injection. Edit the theme source, then rebuild: `npm run theme:check` fails when the committed output is stale, and every release build runs it first.
 
 Do not add unlayered global element styles that set `color` or `font` on `button`, `input`, `textarea`, or `select`: they beat every Astryx layer and silently break component state styling. The previous global `color: inherit` rule was removed for this reason.
 
@@ -97,6 +98,7 @@ CSP is unchanged: all Astryx CSS, fonts, and icons are bundled; there are no rem
 - Foundation, theme, providers, and CSS layer order are in place.
 - Colour has one owner: every semantic name in `tokens.css` aliases the theme, the mode block holds only elevation, and `npm run audit:tokens` reads `mossTheme` so a stale or missing token fails instead of rendering an inherited colour.
 - Every icon renders through Astryx `Icon` (211 call sites); no direct lucide elements remain.
+- The theme ships as static CSS: `npm run theme:build` regenerates `moss-theme.css` and the built module beside it, and release builds refuse to package a stale copy.
 - Activation is the first surface fully off the homegrown primitives: Astryx `TextInput` and `Button` replace the local `Field` and `Button` there.
 - Onboarding is redesigned with a Welcome screen and setup steps for the key, an optional product, an optional logo and colors, an optional first set, and Ready. Key-later, a persisted category, and sticky actions are unchanged.
 - The Astryx AppShell, TopNav, and SideNav now wrap the app; Library, Products, People, Usage, and Settings use Astryx controls and shared collection patterns.
