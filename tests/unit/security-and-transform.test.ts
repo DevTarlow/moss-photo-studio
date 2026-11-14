@@ -80,8 +80,11 @@ describe('renderer constraints', () => {
   walk(renderer)
 
   it('keeps every color in the token sources', () => {
+    // moss-theme.css is the compiled output of mossTheme.ts, so it is the same
+    // allowed source, not a new place to write colours.
+    const allowed = ['tokens.css', 'mossTheme.ts', 'moss-theme.css']
     const violations = files
-      .filter((file) => !['tokens.css', 'mossTheme.ts'].includes(path.basename(file)))
+      .filter((file) => !allowed.includes(path.basename(file)))
       .flatMap((file) => {
         const text = fs.readFileSync(file, 'utf8')
         const matches = text.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []
