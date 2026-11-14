@@ -3,11 +3,52 @@
  * Contrast audit for the design tokens, across every foreground/background
  * pair the app actually renders. Fails at WCAG AA: 4.5 for body text, 3 for
  * large text and icons.
+ *
+ * The audit reads the resolved `mossTheme` (the source of truth) and the app's
+ * product tokens in `tokens.css`. Any `var(--theme-token)` alias in that file
+ * must resolve in the theme, so a renamed or removed theme token fails here
+ * instead of silently rendering an inherited colour.
  */
 import fs from 'node:fs'
-import path from 'node:path'
 
-const css = fs.readFileSync(path.resolve('src/renderer/src/styles/tokens.css'), 'utf8')
+const cssPath = new URL('../src/renderer/src/styles/tokens.css', import.meta.url)
+const themePath = new URL('../src/renderer/src/theme/mossTheme.ts', import.meta.url)
+
+const { mossTheme } = await import(themePath.href)
+const css = fs.readFileSync(cssPath, 'utf8')
+
+/** Split `light-dark(a, b)` on its top-level comma; nested rgb()/rgba() stays intact. */
+function splitLightDark(value) {
+  const text = String(value).trim()
+  if (!text.startsWith('light-dark(') || !text.endsWith(')')) return { light: text, dark: text }
+  const inner = text.slice('light-dark('.length, -1)
+  let depth = 0
+  for (let index = 0; index < inner.length; index += 1) {
+    const character = inner[index]
+    if (character === '(') depth += 1
+    else if (character === ')') depth -= 1
+    else if (character === ',' && depth === 0) {
+      return { light: inner.slice(0, index).trim(), dark: inner.slice(index + 1).trim() }
+    }
+  }
+  return { light: inner.trim(), dark: inner.trim() }
+}
+
+const themeTokens = new Map()
+for (const source of [mossTheme.tokens, mossTheme.localTokens]) {
+  for (const [name, value] of Object.entries(source ?? {})) themeTokens.set(name, splitLightDark(value))
+}
+
+function resolve(value) {
+  const alias = /^var\(\s*(--[\w-]+)\s*\)$/.exec(value.trim())
+  if (!alias) return splitLightDark(value)
+  const resolved = themeTokens.get(alias[1])
+  if (!resolved) {
+    throw new Error(`tokens.css aliases ${alias[1]}, which mossTheme does not define`)
+  }
+  return resolved
+}
+
 function block(selector) {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const pattern = new RegExp(`${escaped}\\s*\\{([\\s\\S]*?)\\n\\}`)
@@ -15,6 +56,7 @@ function block(selector) {
   if (!match) throw new Error(`Missing token block ${selector}`)
   return match[1]
 }
+
 function parseTokens(body) {
   const tokens = {}
   for (const line of body.split('\n')) {
@@ -23,8 +65,20 @@ function parseTokens(body) {
   }
   return tokens
 }
-const light = parseTokens(block(':root'))
-const dark = { ...light, ...parseTokens(block("html[data-theme='dark']")) }
+
+const rootTokens = parseTokens(block(':root'))
+const overrides = parseTokens(block("html[data-theme='dark']"))
+
+const light = {}
+const dark = {}
+for (const [name, raw] of Object.entries(rootTokens)) {
+  const value = resolve(raw)
+  light[name] = value.light
+  dark[name] = value.dark
+}
+for (const [name, raw] of Object.entries(overrides)) {
+  dark[name] = resolve(raw).dark
+}
 
 const hexToRgb = (hex) => {
   const text = hex.trim()

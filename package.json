@@ -26,7 +26,7 @@
     "postinstall": "node scripts/postinstall.mjs",
     "assets": "node scripts/copy-assets.mjs",
     "icons": "node scripts/make-icons.mjs",
-    "audit:tokens": "node scripts/audit-tokens.mjs",
+    "audit:tokens": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit-tokens.mjs",
     "lint": "eslint src tests",
     "build:test": "MOSS_TEST_BUILD=1 npm run typecheck && MOSS_TEST_BUILD=1 electron-vite build",
     "release:gate": "node scripts/release-gate.mjs",
