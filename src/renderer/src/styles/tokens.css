@@ -1,76 +1,67 @@
+/*
+ * Product tokens for the parts Astryx has no semantic role for: the editor
+ * canvas, hairlines over photography, tints, and the app's short names.
+ *
+ * Every colour the theme already owns is an alias, so `mossTheme` is the only
+ * place a palette value is chosen and `html[data-theme]` (written by Astryx
+ * `Theme`) is the only place the mode is decided. Values that stay literal are
+ * written as `light-dark()` pairs for the same reason: one rule, both modes.
+ *
+ * Add a token here only when the theme genuinely has no role for it.
+ */
 :root {
-  --bg: #FAF7F2;
-  --surface: #FFFFFF;
-  --surface-2: #F4EFE6;
-  --rail: #F2EDE4;
-  --text: #1C1A17;
-  --text-muted: #5C574E;
-  --text-faint: #6E675B;
-  --border: #E4DCCF;
-  --border-strong: #D3C8B6;
-  --accent: #14532D;
-  --accent-hover: #0C3A1F;
-  --accent-soft: rgba(20,83,45,0.10);
-  --primary: #9A3412;
-  --primary-hover: #7C2D12;
-  --on-primary: #FFFFFF;
-  --canvas: #20201C;
-  --canvas-line: rgba(255,255,255,0.08);
-  --danger: #B91C1C;
-  --warning: #B45309;
-  --success: #14532D;
-  --focus: #14532D;
-  --canvas-text: #FFFFFF;
-  --canvas-muted: rgba(255,255,255,0.8);
-  --overlay: rgba(0,0,0,0.45);
+  /* Surfaces */
+  --bg: var(--color-background-body);
+  --surface: var(--color-background-surface);
+  --surface-2: var(--color-background-muted);
+  --rail: light-dark(#F2EDE4, #0E110B);
+
+  /* Text and lines */
+  --text: var(--color-text-primary);
+  --text-muted: var(--color-text-secondary);
+  --text-faint: var(--color-text-disabled);
+  --border: var(--color-border);
+  --border-strong: var(--color-border-emphasized);
+
+  /* Selection and status */
+  --accent: var(--color-accent);
+  --accent-soft: light-dark(rgba(20,83,45,0.10), rgba(134,199,154,0.14));
+  --focus: var(--color-accent);
+  --danger: var(--color-error);
+  --warning: var(--color-warning);
+  --success: var(--color-success);
+  --danger-soft: var(--color-error-muted);
+  --warning-soft: var(--color-warning-muted);
+
+  /* Primary action: the rust call to action, not the selection green */
+  --primary: var(--moss-primary);
+  --primary-hover: var(--moss-primary-hover);
+  --on-primary: var(--moss-primary-text);
+
+  /* Editor canvas */
+  --canvas: var(--moss-canvas);
+  --canvas-text: var(--moss-canvas-text);
+  --canvas-muted: var(--moss-canvas-muted);
+  --canvas-line: light-dark(rgba(255,255,255,0.08), rgba(255,255,255,0.06));
+  --crop-dim: light-dark(rgba(0,0,0,0.50), rgba(0,0,0,0.60));
+
+  /* Overlays and elevation */
+  --overlay: var(--color-overlay);
   --scrim: rgba(0,0,0,0.55);
-  --shadow: 0 12px 32px -12px rgba(20,18,14,0.28);
-  --shadow-dark: 0 16px 40px -16px rgba(0,0,0,0.6);
-  --danger-soft: rgba(185,28,28,0.10);
-  --warning-soft: rgba(180,83,9,0.10);
+  --shadow: var(--shadow-med);
+  --shadow-dark: 0 16px 40px -16px rgba(0,0,0,0.60);
+
+  /* Inks over media, fixed in both modes */
   --white-08: rgba(255,255,255,0.08);
   --white-20: rgba(255,255,255,0.20);
   --white-60: rgba(255,255,255,0.60);
   --white-80: rgba(255,255,255,0.80);
   --black-08: rgba(0,0,0,0.08);
-  --shimmer: rgba(255,255,255,0.10);
+  --shimmer: light-dark(rgba(255,255,255,0.10), rgba(255,255,255,0.07));
 }
+
+/* Elevation is not a colour, so it needs a real mode block: the dark UI rests
+   surfaces on a deeper shadow than the paper one. */
 html[data-theme='dark'] {
-  --bg: #131610;
-  --surface: #0C0E09;
-  --surface-2: #1A2016;
-  --rail: #0E110B;
-  --text: #E9E4D6;
-  --text-muted: #B9B3A2;
-  --text-faint: #8F8A7C;
-  --border: rgba(200,190,160,0.18);
-  --border-strong: rgba(200,190,160,0.30);
-  --accent: #86C79A;
-  --accent-hover: #A3D9B2;
-  --accent-soft: rgba(134,199,154,0.14);
-  --primary: #9A3412;
-  --primary-hover: #7C2D12;
-  --on-primary: #FFFFFF;
-  --canvas: #0B0B09;
-  --canvas-line: rgba(255,255,255,0.06);
-  --danger: #FCA5A5;
-  --warning: #E0A458;
-  --success: #86C79A;
-  --focus: #86C79A;
-  --canvas-text: #FFFFFF;
-  --canvas-muted: rgba(255,255,255,0.8);
-  --overlay: rgba(0,0,0,0.55);
-  --scrim: rgba(0,0,0,0.55);
-  --shadow: 0 16px 40px -16px rgba(0,0,0,0.6);
-  --shadow-dark: 0 16px 40px -16px rgba(0,0,0,0.6);
-  --danger-soft: rgba(252,165,165,0.12);
-  --warning-soft: rgba(224,164,88,0.12);
-  --white-08: rgba(255,255,255,0.08);
-  --white-20: rgba(255,255,255,0.20);
-  --white-60: rgba(255,255,255,0.60);
-  --white-80: rgba(255,255,255,0.80);
-  --black-08: rgba(0,0,0,0.08);
-  --shimmer: rgba(255,255,255,0.07);
+  --shadow: var(--shadow-dark);
 }
-:root { --crop-dim: rgba(0,0,0,0.5); }
-html[data-theme='dark'] { --crop-dim: rgba(0,0,0,0.6); }

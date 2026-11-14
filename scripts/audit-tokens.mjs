@@ -39,45 +39,55 @@ for (const source of [mossTheme.tokens, mossTheme.localTokens]) {
   for (const [name, value] of Object.entries(source ?? {})) themeTokens.set(name, splitLightDark(value))
 }
 
-function resolve(value) {
-  const alias = /^var\(\s*(--[\w-]+)\s*\)$/.exec(value.trim())
-  if (!alias) return splitLightDark(value)
-  const resolved = themeTokens.get(alias[1])
+function resolve(raw, seen = new Set()) {
+  const alias = /^var\(\s*(--[\w-]+)\s*\)$/.exec(raw.trim())
+  if (!alias) return splitLightDark(raw)
+  const target = alias[1]
+  if (seen.has(target)) throw new Error(`Circular token alias: ${[...seen, target].join(' -> ')}`)
+  const local = rootTokens[target]
+  if (local !== undefined) return resolve(local, new Set([...seen, target]))
+  const resolved = themeTokens.get(target)
   if (!resolved) {
-    throw new Error(`tokens.css aliases ${alias[1]}, which mossTheme does not define`)
+    throw new Error(`tokens.css aliases ${target}, which neither tokens.css nor mossTheme defines`)
   }
   return resolved
 }
 
-function block(selector) {
+function blockOrNull(selector) {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const pattern = new RegExp(`${escaped}\\s*\\{([\\s\\S]*?)\\n\\}`)
   const match = pattern.exec(css)
-  if (!match) throw new Error(`Missing token block ${selector}`)
-  return match[1]
+  return match ? match[1] : null
+}
+
+function block(selector) {
+  const body = blockOrNull(selector)
+  if (body === null) throw new Error(`Missing token block ${selector}`)
+  return body
 }
 
 function parseTokens(body) {
   const tokens = {}
   for (const line of body.split('\n')) {
-    const match = /--([\w-]+)\s*:\s*([^;]+);/.exec(line)
+    const match = /(--[\w-]+)\s*:\s*([^;]+);/.exec(line)
     if (match) tokens[match[1]] = match[2].trim()
   }
   return tokens
 }
 
 const rootTokens = parseTokens(block(':root'))
-const overrides = parseTokens(block("html[data-theme='dark']"))
+// Mode overrides are optional: a token that uses light-dark() needs no block.
+const overrides = parseTokens(blockOrNull("html[data-theme='dark']") ?? '')
 
 const light = {}
 const dark = {}
 for (const [name, raw] of Object.entries(rootTokens)) {
   const value = resolve(raw)
-  light[name] = value.light
-  dark[name] = value.dark
+  light[name.slice(2)] = value.light
+  dark[name.slice(2)] = value.dark
 }
 for (const [name, raw] of Object.entries(overrides)) {
-  dark[name] = resolve(raw).dark
+  dark[name.slice(2)] = resolve(raw).dark
 }
 
 const hexToRgb = (hex) => {

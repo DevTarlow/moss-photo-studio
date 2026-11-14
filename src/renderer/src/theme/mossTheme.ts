@@ -31,7 +31,8 @@ export const mossTheme = defineTheme({
   motion: { fast: 120, medium: 240, slow: 400, ratio: 0.75 },
   localTokens: {
     '--moss-primary': ['#9A3412', '#B45309'],
-    '--moss-primary-hover': ['#7C2D12', '#D97706'],
+    // Dark hover goes deeper, not brighter: white on #D97706 is 3.19:1, below AA.
+    '--moss-primary-hover': ['#7C2D12', '#9A3412'],
     '--moss-primary-text': '#FFFFFF',
     '--moss-canvas': ['#20201C', '#0B0B09'],
     '--moss-canvas-text': '#FFFFFF',
