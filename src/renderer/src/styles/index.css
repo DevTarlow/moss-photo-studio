@@ -76,18 +76,12 @@ input, textarea, select { accent-color: var(--accent); }
 .platform-darwin .app-topnav-wrap { padding-left: 78px; }
 .platform-win32 .app-topnav-wrap { padding-right: 150px; }
 .platform-linux .app-topnav-wrap { padding-left: 12px; }
+/* Layout only: the nav fills the drag wrapper, and the shell's main area may
+   shrink. The surface colours and padding belong to the theme's
+   app-shell-header, app-shell-sidenav, and top-nav targets. */
 .app-topnav-wrap .astryx-top-nav {
   flex: 1;
   min-width: 0;
-  background: transparent;
-  border: 0;
-}
-.app-shell .astryx-app-shell-header {
-  padding: 0;
-  background: var(--bg);
-}
-.app-shell .astryx-app-shell-sidenav {
-  background: var(--rail);
 }
 .app-shell .astryx-app-shell-main {
   min-height: 0;

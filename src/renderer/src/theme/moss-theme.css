@@ -541,6 +541,20 @@
     color: var(--color-text-accent);
   }
 
+  .astryx-app-shell-header {
+    padding: 0;
+    background-color: var(--color-background-body);
+  }
+
+  .astryx-app-shell-sidenav {
+    background-color: var(--rail);
+  }
+
+  .astryx-top-nav {
+    background-color: transparent;
+    border-width: 0;
+  }
+
   .astryx-text[data-color="primary"] { color: var(--color-text-primary); }
 
   .astryx-heading[data-color="primary"] { color: var(--color-text-primary); }

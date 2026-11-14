@@ -455,6 +455,23 @@ export const mossTheme = {
         "backgroundColor": "var(--color-accent-muted)",
         "color": "var(--color-text-accent)"
       }
+    },
+    "app-shell-header": {
+      "base": {
+        "padding": "0",
+        "backgroundColor": "var(--color-background-body)"
+      }
+    },
+    "app-shell-sidenav": {
+      "base": {
+        "backgroundColor": "var(--rail)"
+      }
+    },
+    "top-nav": {
+      "base": {
+        "backgroundColor": "transparent",
+        "borderWidth": "0"
+      }
     }
   },
   __onDark: {

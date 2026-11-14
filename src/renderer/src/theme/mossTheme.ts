@@ -103,6 +103,16 @@ export const mossTheme = defineTheme({
         color: 'var(--color-text-accent)'
       }
     },
+    'app-shell-header': {
+      base: { padding: '0', backgroundColor: 'var(--color-background-body)' }
+    },
+    'app-shell-sidenav': {
+      // The rail is its own product surface, not the page background.
+      base: { backgroundColor: 'var(--rail)' }
+    },
+    'top-nav': {
+      base: { backgroundColor: 'transparent', borderWidth: '0' }
+    },
     card: {
       base: {
         borderRadius: 'var(--radius-container)'

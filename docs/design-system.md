@@ -60,6 +60,8 @@ Do not render a lucide component directly (`<Search size={14} />`). Direct SVG b
 
 Do not add unlayered global element styles that set `color` or `font` on `button`, `input`, `textarea`, or `select`: they beat every Astryx layer and silently break component state styling. The previous global `color: inherit` rule was removed for this reason.
 
+Shell chrome belongs to the theme, not to internal class names: the `app-shell-header`, `app-shell-sidenav`, and `top-nav` targets own their surface colours and padding. `index.css` keeps only what is the wrapper's job — the drag region, the nav's flex sizing, and `app-shell-main`'s `min-height`, which is not a theme target.
+
 CSP is unchanged: all Astryx CSS, fonts, and icons are bundled; there are no remote assets. Local fonts are self-hosted under `resources/fonts`.
 
 ## Component map
@@ -99,6 +101,7 @@ CSP is unchanged: all Astryx CSS, fonts, and icons are bundled; there are no rem
 - Colour has one owner: every semantic name in `tokens.css` aliases the theme, the mode block holds only elevation, and `npm run audit:tokens` reads `mossTheme` so a stale or missing token fails instead of rendering an inherited colour.
 - Every icon renders through Astryx `Icon` (211 call sites); no direct lucide elements remain.
 - The theme ships as static CSS: `npm run theme:build` regenerates `moss-theme.css` and the built module beside it, and release builds refuse to package a stale copy.
+- The app shell's surfaces come from theme targets, so the rail, header, and top nav no longer depend on `.astryx-*` class selectors in `index.css`.
 - Activation is the first surface fully off the homegrown primitives: Astryx `TextInput` and `Button` replace the local `Field` and `Button` there.
 - Onboarding is redesigned with a Welcome screen and setup steps for the key, an optional product, an optional logo and colors, an optional first set, and Ready. Key-later, a persisted category, and sticky actions are unchanged.
 - The Astryx AppShell, TopNav, and SideNav now wrap the app; Library, Products, People, Usage, and Settings use Astryx controls and shared collection patterns.
