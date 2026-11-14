@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Dialog as RadixDialog } from 'radix-ui'
 import { ChevronLeft, ChevronRight, Columns2, Download, Image as ImageIcon, Package, Star, Trash2, UserPlus, X } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { Image } from '@shared/types'
 import { Button } from './Button'
 import { IconButton } from './IconButton'
@@ -72,14 +73,14 @@ export function Lightbox({
               <p className="lightbox-control text-[12px]">{image?.label ?? 'Image'}</p>
               <RadixDialog.Close asChild>
                 <IconButton label="Close preview" showTooltip={false} className="lightbox-control pointer-events-auto">
-                  <X size={18} />
+                  <Icon icon={X} size="md" />
                 </IconButton>
               </RadixDialog.Close>
             </div>
             <div className="relative flex min-h-0 flex-1 items-center justify-center">
               {index > 0 && (
                 <IconButton label="Previous image" className="lightbox-control pointer-events-auto absolute left-0 z-20" onClick={() => onIndex(index - 1)}>
-                  <ChevronLeft size={24} />
+                  <Icon icon={ChevronLeft} size="lg" />
                 </IconButton>
               )}
               {compare && source?.url && image?.url ? (
@@ -104,24 +105,24 @@ export function Lightbox({
               )}
               {index < images.length - 1 && (
                 <IconButton label="Next image" className="lightbox-control pointer-events-auto absolute right-0 z-20" onClick={() => onIndex(index + 1)}>
-                  <ChevronRight size={24} />
+                  <Icon icon={ChevronRight} size="lg" />
                 </IconButton>
               )}
             </div>
             <div className="relative z-20 flex shrink-0 flex-wrap items-center justify-center gap-2 pt-3">
               {source?.url && image?.url && (
                 <Button variant={compare ? 'primary' : 'secondary'} size="sm" className="pointer-events-auto" onClick={() => setCompare((value) => !value)}>
-                  <Columns2 size={15} /> {compare ? 'Single View' : 'Compare with Source'}
+                  <Icon icon={Columns2} size="sm" /> {compare ? 'Single View' : 'Compare with Source'}
                 </Button>
               )}
               {onDownload && image && (
                 <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onDownload(image)}>
-                  <Download size={15} /> Download
+                  <Icon icon={Download} size="sm" /> Download
                 </Button>
               )}
               {onSetCover && image && (
                 <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onSetCover(image)}>
-                  <Star size={15} /> Set as Cover
+                  <Icon icon={Star} size="sm" /> Set as Cover
                 </Button>
               )}
               {onPin && image && (
@@ -131,22 +132,22 @@ export function Lightbox({
               )}
               {onEdit && image && (
                 <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onEdit(image)}>
-                  <ImageIcon size={15} /> Open in Editor
+                  <Icon icon={ImageIcon} size="sm" /> Open in Editor
                 </Button>
               )}
               {onSaveProduct && image && (
                 <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onSaveProduct(image)}>
-                  <Package size={15} /> Save as Product
+                  <Icon icon={Package} size="sm" /> Save as Product
                 </Button>
               )}
               {onSavePerson && image && (
                 <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onSavePerson(image)}>
-                  <UserPlus size={15} /> Save as Person
+                  <Icon icon={UserPlus} size="sm" /> Save as Person
                 </Button>
               )}
               {onDelete && image && (
                 <Button variant="ghost" size="sm" className="lightbox-control pointer-events-auto" onClick={() => onDelete(image)}>
-                  <Trash2 size={15} /> Delete
+                  <Icon icon={Trash2} size="sm" /> Delete
                 </Button>
               )}
             </div>

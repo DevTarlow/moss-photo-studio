@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Keyboard, Search } from 'lucide-react'
-import { Button, IconButton, Kbd, TopNav, TopNavHeading } from '@astryxdesign/core'
+import { Button, Icon, IconButton, Kbd, TopNav, TopNavHeading } from '@astryxdesign/core'
 import { markUrl } from '../../lib/assets'
 import { useUiStore } from '../../store/ui'
 import { NewProjectButton } from '../library/NewProjectButton'
@@ -37,7 +37,7 @@ export function TopBar({
             {backTo && (
               <IconButton
                 label="Back to Library"
-                icon={<ArrowLeft size={16} />}
+                icon={<Icon icon={ArrowLeft} size="sm" />}
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate(backTo)}
@@ -58,13 +58,13 @@ export function TopBar({
               label="Search"
               variant="ghost"
               size="sm"
-              icon={<Search size={14} />}
+              icon={<Icon icon={Search} size="sm" />}
               endContent={<Kbd keys="mod+k" />}
               onClick={() => setPalette(true)}
             />
             <IconButton
               label="Keyboard shortcuts"
-              icon={<Keyboard size={17} />}
+              icon={<Icon icon={Keyboard} size="md" />}
               variant="ghost"
               onClick={() => setShortcuts(true)}
             />

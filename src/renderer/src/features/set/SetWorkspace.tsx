@@ -33,7 +33,7 @@ import { showExportToast } from '../../lib/exportFeedback'
 import { warnIfSmallPhoto } from '../../lib/photoWarnings'
 import { elapsedLabel } from '../../lib/format'
 import { currentMonth } from '../../store/library'
-import { ToggleButton, ToggleButtonGroup } from '@astryxdesign/core'
+import { Icon, ToggleButton, ToggleButtonGroup } from '@astryxdesign/core'
 import { usePanelWidth, WorkspaceResizeHandle } from '../../components/ui/WorkspaceResizeHandle'
 
 type Phase = 'plan' | 'review'
@@ -587,7 +587,7 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
               </ToggleButtonGroup>
             )}
             <p className="min-w-0 flex-1 truncate text-[12px] font-medium">{isRunning ? 'Making the set' : phase === 'review' ? 'Review the set' : 'Plan the set'}</p>
-            {leftHidden && <IconButton label="Open plan" onClick={() => setLeftSheet(true)}><PanelLeft size={16} /></IconButton>}
+            {leftHidden && <IconButton label="Open plan" onClick={() => setLeftSheet(true)}><Icon icon={PanelLeft} size="sm" /></IconButton>}
             {isRunning && <span className="badge" data-tone="success">Making</span>}
             {!isRunning && phase === 'review' && <span className="badge">{madeCount} of {enabledShots.length}</span>}
             {!isRunning && phase === 'review' && (
@@ -638,7 +638,7 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
                         <div className="relative flex flex-1 items-center justify-center" style={{ minHeight: 110 }}>
                           {state === 'running' ? <div className="shimmer-block absolute inset-0" /> : null}
                           <div className="relative z-[1] flex flex-col items-center gap-1 px-3 text-center">
-                            {state === 'failed' ? <AlertCircle size={20} style={{ color: 'var(--danger)' }} /> : <Sparkles size={18} />}
+                            {state === 'failed' ? <Icon icon={AlertCircle} size="md" style={{ color: 'var(--danger)' }} /> : <Icon icon={Sparkles} size="md" />}
                             <span className="text-[11px]" style={{ color: 'var(--white-80)' }}>
                               {state === 'failed' ? 'Failed' : state === 'running' ? (item?.waiting ? `Waiting for Meta · ${elapsedLabel(item?.startedAt, now)}` : `Making image ${index + 1} of ${job.total} · ${elapsedLabel(item?.startedAt, now)}`) : state === 'cancelled' ? 'Stopped' : 'Queued'}
                             </span>
@@ -686,7 +686,7 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
                           </button>
                         ) : (
                           <div className="flex flex-1 flex-col items-center justify-center gap-1 p-3 text-center">
-                            <AlertCircle size={20} style={{ color: failed ? 'var(--danger)' : 'var(--white-60)' }} />
+                            <Icon icon={AlertCircle} size="md" style={{ color: failed ? 'var(--danger)' : 'var(--white-60)' }} />
                             <span className="text-[11px] font-medium" style={{ color: failed ? 'var(--danger)' : 'var(--white-60)' }}>{failed ? 'Failed' : 'Not made'}</span>
                             {failed && <span className="text-[11px]" style={{ color: 'var(--white-80)' }}>{errorMessage((failed.errorCode ?? 'unknown') as never)}</span>}
                           </div>

@@ -1,4 +1,5 @@
 import { Package, Plus, UserPlus } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { Image, Project } from '@shared/types'
 import { templateById } from '@shared/prompts/templates'
 import { shapeLabel } from '@shared/shapes'
@@ -65,12 +66,12 @@ export function VersionDetails({
             <div className="mt-3 flex flex-wrap gap-2">
               {onSaveProduct && (
                 <Button variant="secondary" size="sm" onClick={onSaveProduct}>
-                  <Package size={14} /> Save as Product
+                  <Icon icon={Package} size="sm" /> Save as Product
                 </Button>
               )}
               {onSavePerson && (
                 <Button variant="secondary" size="sm" onClick={onSavePerson}>
-                  <UserPlus size={14} /> Save as Person
+                  <Icon icon={UserPlus} size="sm" /> Save as Person
                 </Button>
               )}
             </div>
@@ -85,7 +86,7 @@ export function VersionDetails({
           <p className="section-label">Versions</p>
           {selected && (
             <Button variant="secondary" size="sm" onClick={onNewVersion}>
-              <Plus size={14} /> New Version
+              <Icon icon={Plus} size="sm" /> New Version
             </Button>
           )}
         </div>

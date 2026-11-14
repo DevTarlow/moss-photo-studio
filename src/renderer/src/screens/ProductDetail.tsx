@@ -29,7 +29,7 @@ import { LISTING_COST_LABEL } from '@shared/cost'
 import { unwrap, messageOf } from '../lib/ipc'
 import { formatDateTime, relativeTime } from '../lib/format'
 import { toast } from '../lib/toast'
-import { Heading, Text, TextInput, TextArea } from '@astryxdesign/core'
+import { Heading, Icon, Text, TextArea, TextInput } from '@astryxdesign/core'
 
 const typeLabel: Record<ProjectType, string> = {
   set: 'Set',
@@ -38,9 +38,9 @@ const typeLabel: Record<ProjectType, string> = {
 }
 
 const typeIcon: Record<ProjectType, React.JSX.Element> = {
-  set: <Layers size={16} />,
-  photo: <ImageIcon size={16} />,
-  image: <Sparkles size={16} />
+  set: <Icon icon={Layers} size="sm" />,
+  photo: <Icon icon={ImageIcon} size="sm" />,
+  image: <Icon icon={Sparkles} size="sm" />
 }
 
 function ProjectRow({
@@ -64,7 +64,7 @@ function ProjectRow({
             {typeLabel[project.type]} · {project.imageCount} {project.imageCount === 1 ? 'image' : 'images'} · {relativeTime(project.updatedAt)}
           </span>
         </span>
-        <ArrowUpRight size={15} style={{ color: 'var(--text-faint)' }} />
+        <Icon icon={ArrowUpRight} size="sm" style={{ color: 'var(--text-faint)' }} />
       </button>
       <Button variant="ghost" size="sm" onClick={onUnlink} aria-label={`Unlink ${project.name} from this product`}>
         Unlink
@@ -290,7 +290,7 @@ export function ProductDetail(): React.JSX.Element {
       <div className="page-scroll">
         <div className="page-pad page-max">
           <button type="button" className="inline-flex items-center gap-1.5 text-[12px] font-medium" style={{ color: 'var(--text-muted)' }} onClick={() => navigate('/products')}>
-            <ArrowLeft size={14} /> Products
+            <Icon icon={ArrowLeft} size="sm" /> Products
           </button>
 
           <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
@@ -320,8 +320,8 @@ export function ProductDetail(): React.JSX.Element {
                   <DropdownMenu.Portal>
                     <DropdownMenu.Content className="menu-content" align="end" sideOffset={4}>
                       <DropdownMenu.Item className="menu-item" onSelect={() => setRenaming(true)}>Rename</DropdownMenu.Item>
-                      <DropdownMenu.Item className="menu-item" onSelect={() => void archive()}><Archive size={14} /> Archive</DropdownMenu.Item>
-                      <DropdownMenu.Item className="menu-item" data-danger="true" onSelect={() => void remove()}><Trash2 size={14} /> Delete</DropdownMenu.Item>
+                      <DropdownMenu.Item className="menu-item" onSelect={() => void archive()}><Icon icon={Archive} size="sm" /> Archive</DropdownMenu.Item>
+                      <DropdownMenu.Item className="menu-item" data-danger="true" onSelect={() => void remove()}><Icon icon={Trash2} size="sm" /> Delete</DropdownMenu.Item>
                     </DropdownMenu.Content>
                   </DropdownMenu.Portal>
                 </DropdownMenu.Root>
@@ -329,20 +329,20 @@ export function ProductDetail(): React.JSX.Element {
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button variant="primary" disabled={busy} onClick={() => void start('set')}>
-                  {busy ? <Loader2 size={15} className="animate-spin" /> : <Layers size={15} />} Make a Set
+                  {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Layers} size="sm" />} Make a Set
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void start('photo')}>
-                  <ImageIcon size={15} /> Change a Photo
+                  <Icon icon={ImageIcon} size="sm" /> Change a Photo
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void start('image')}>
-                  <Sparkles size={15} /> New Image
+                  <Icon icon={Sparkles} size="sm" /> New Image
                 </Button>
               </div>
 
               <div className="card mt-5 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="section-label">Listing kit</p>
-                  <Button variant="ghost" size="sm" onClick={() => void openLink()}><Link2 size={14} /> Link existing work</Button>
+                  <Button variant="ghost" size="sm" onClick={() => void openLink()}><Icon icon={Link2} size="sm" /> Link existing work</Button>
                 </div>
                 <div className="mt-3 grid gap-2">
                   <div className="flex items-center gap-2 text-[12px]">
@@ -378,7 +378,7 @@ export function ProductDetail(): React.JSX.Element {
                   <div className="flex items-center gap-2">
                     {!secrets?.hasKey && <span className="hint">Add your key first</span>}
                     <Button variant="secondary" size="sm" disabled={reading || !secrets?.hasKey} onClick={() => void readPhoto()}>
-                      {reading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Read the photo · {LISTING_COST_LABEL}
+                      {reading ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Read the photo · {LISTING_COST_LABEL}
                     </Button>
                   </div>
                 </div>
@@ -404,7 +404,7 @@ export function ProductDetail(): React.JSX.Element {
                 </div>
                 <div className="mt-3 flex justify-end">
                   <Button variant="secondary" disabled={savingDetails} onClick={() => void saveDetails()}>
-                    {savingDetails ? <Loader2 size={14} className="animate-spin" /> : null} Save Details
+                    {savingDetails ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Save Details
                   </Button>
                 </div>
               </div>
@@ -419,7 +419,7 @@ export function ProductDetail(): React.JSX.Element {
             {projects.length === 0 ? (
               <div className="mt-3">
                 <EmptyState
-                  icon={<Package size={22} />}
+                  icon={<Icon icon={Package} size="lg" />}
                   title="No work yet"
                   line="Make a set from the source photo, or link an existing set or edit."
                   action={<Button variant="secondary" onClick={() => void start('set')}>Make a Set</Button>}

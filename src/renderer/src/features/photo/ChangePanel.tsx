@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Mountain, Sparkles, Wand2, X } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { Person } from '@shared/types'
 import type { Template as TemplateType } from '@shared/prompts/templates'
 import { TEMPLATE_GROUPS, QUICK_FIX, templateAsset, templateById } from '@shared/prompts/templates'
@@ -116,7 +117,7 @@ export function ChangePanel({
         onClick={() => chooseTile({ id: QUICK_FIX.id, label: QUICK_FIX.label, prompt: QUICK_FIX.prompt, kind: 'edit' })}
       >
         <span className="grid h-8 w-8 place-items-center rounded-full" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
-          <Wand2 size={16} />
+          <Icon icon={Wand2} size="sm" />
         </span>
         <span className="min-w-0">
           <span className="block text-[12px] font-semibold">Quick fix</span>
@@ -167,11 +168,11 @@ export function ChangePanel({
           <div className="flex items-center gap-2">
             <img src={sceneRef.thumbUrl ?? ''} alt="" className="h-8 w-8 rounded object-cover" style={{ background: 'var(--surface-2)' }} />
             <p className="min-w-0 flex-1 truncate text-[11px]">{sceneRef.label}</p>
-            <button type="button" className="icon-btn" aria-label="Remove scene reference" disabled={disabled} onClick={onClearScene}><X size={13} /></button>
+            <button type="button" className="icon-btn" aria-label="Remove scene reference" disabled={disabled} onClick={onClearScene}><Icon icon={X} size="xsm" /></button>
           </div>
         ) : (
           <Button variant="secondary" size="sm" className="mt-1 w-full justify-start" disabled={disabled} onClick={onChooseScene}>
-            <Mountain size={14} /> Choose a Scene
+            <Icon icon={Mountain} size="sm" /> Choose a Scene
           </Button>
         )}
         <p className="hint mt-1">Borrows the setting and light, never the subject.</p>
@@ -229,12 +230,12 @@ export function ChangePanel({
 
       {textSource === 'tile' && selectedTemplate && (
         <p className="mt-4 flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--text-faint)' }}>
-          <Sparkles size={11} /> Studio words from {selectedTemplate.label}.
+          <Icon icon={Sparkles} size="xsm" /> Studio words from {selectedTemplate.label}.
         </p>
       )}
       {textSource === 'tile' && templateId === QUICK_FIX.id && (
         <p className="mt-4 flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--text-faint)' }}>
-          <Sparkles size={11} /> Studio words from Quick fix.
+          <Icon icon={Sparkles} size="xsm" /> Studio words from Quick fix.
         </p>
       )}
     </div>

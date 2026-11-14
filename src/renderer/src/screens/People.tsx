@@ -18,7 +18,7 @@ import { fileToBytes } from '../lib/files'
 import { toast } from '../lib/toast'
 import { COLLECTION_PAGE_SIZE } from '@shared/constants'
 import { DropdownMenu } from 'radix-ui'
-import { Heading, Selector, Text, TextInput } from '@astryxdesign/core'
+import { Heading, Icon, Selector, Text, TextInput } from '@astryxdesign/core'
 
 function PersonCard({
   person,
@@ -255,10 +255,10 @@ export function People(): React.JSX.Element {
             </div>
             <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
               <Button variant="secondary" disabled={creatingPerson} onClick={() => void createPerson()}>
-                <Sparkles size={16} /> Create a Person
+                <Icon icon={Sparkles} size="sm" /> Create a Person
               </Button>
               <Button variant="primary" onClick={() => setAddOpen(true)}>
-                <UserPlus size={16} /> Add a Person
+                <Icon icon={UserPlus} size="sm" /> Add a Person
               </Button>
             </div>
           </div>
@@ -271,7 +271,7 @@ export function People(): React.JSX.Element {
                 value={search}
                 onChange={setSearch}
                 placeholder="Search people"
-                startIcon={<Search size={15} />}
+                startIcon={<Icon icon={Search} size="sm" />}
                 hasClear
                 width="100%"
               />
@@ -300,13 +300,13 @@ export function People(): React.JSX.Element {
             </div>
           ) : people.length === 0 ? (
             <EmptyState
-              icon={<Users size={22} />}
+              icon={<Icon icon={Users} size="lg" />}
               title="No people yet"
               line="Add a person to put your products on someone."
             />
           ) : matching.length === 0 ? (
             <EmptyState
-              icon={<Search size={22} />}
+              icon={<Icon icon={Search} size="lg" />}
               title={`No people match "${search.trim()}".`}
               line="Try a different name."
               action={<Button variant="secondary" onClick={() => setSearch('')}>Clear Search</Button>}
@@ -321,7 +321,7 @@ export function People(): React.JSX.Element {
             {yours.length === 0 ? (
               <div className="mt-3">
                 <EmptyState
-                  icon={<Users size={22} />}
+                  icon={<Icon icon={Users} size="lg" />}
                   title="Add your own person"
                   line="Add the person you want in your photos. One clear portrait, reused in every set."
                   action={<Button variant="secondary" onClick={() => setAddOpen(true)}>Add a Person</Button>}

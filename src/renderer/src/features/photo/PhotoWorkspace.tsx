@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Download, Loader2, Maximize2, PanelLeft, PanelRight, Plus } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { AdjustTransform, Image, Project } from '@shared/types'
 import { estimateCents, usd } from '@shared/cost'
 import { errorMessage, billingUncertain } from '@shared/errors'
@@ -667,13 +668,13 @@ export function PhotoWorkspace(): React.JSX.Element {
         <section className="ws-center">
           <div className="flex items-center gap-2 border-b px-4" style={{ height: 44, borderColor: 'var(--border)', background: 'var(--bg)' }}>
             {backLabel && (
-              <Button variant="ghost" size="sm" onClick={goBackToProject}><ArrowLeft size={14} /> {backLabel}</Button>
+              <Button variant="ghost" size="sm" onClick={goBackToProject}><Icon icon={ArrowLeft} size="sm" /> {backLabel}</Button>
             )}
             <p className="min-w-0 flex-1 truncate text-[12px] font-medium">{selected?.label ?? 'Photo'}</p>
             {(leftHidden || rightHidden) && (
               <div className="flex items-center gap-1">
-                {leftHidden && <IconButton label="Open change panel" onClick={() => setLeftSheet(true)}><PanelLeft size={16} /></IconButton>}
-                {(rightHidden || rightCollapsed) && <IconButton label="Open version details" onClick={() => { if (rightHidden) setRightSheet(true); else setRightCollapsed(false) }}><PanelRight size={16} /></IconButton>}
+                {leftHidden && <IconButton label="Open change panel" onClick={() => setLeftSheet(true)}><Icon icon={PanelLeft} size="sm" /></IconButton>}
+                {(rightHidden || rightCollapsed) && <IconButton label="Open version details" onClick={() => { if (rightHidden) setRightSheet(true); else setRightCollapsed(false) }}><Icon icon={PanelRight} size="sm" /></IconButton>}
               </div>
             )}
             {tab === 'change' && (
@@ -682,7 +683,7 @@ export function PhotoWorkspace(): React.JSX.Element {
               </Button>
             )}
             <Button variant="ghost" size="sm" disabled={!selected || isRunning} onClick={() => setExportOpen(true)}>
-              <Download size={14} /> Export
+              <Icon icon={Download} size="sm" /> Export
             </Button>
           </div>
           <div className="canvas-wrap canvas-surface">
@@ -746,7 +747,7 @@ export function PhotoWorkspace(): React.JSX.Element {
                 <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'var(--scrim)' }} role="status" aria-live="polite">
                   <div className="text-center">
                     <div className="mx-auto shimmer-block h-24 w-64 rounded-[10px]" aria-hidden />
-                    <Loader2 size={18} className="mx-auto mt-4 animate-spin" aria-hidden />
+                    <Icon icon={Loader2} size="md" className="mx-auto mt-4 animate-spin" aria-hidden />
                     <p className="mt-2 text-[13px] font-semibold" style={{ color: 'var(--canvas-text)' }}>{jobItem?.waiting ? 'Waiting for Meta' : 'Making your change'} · {elapsedLabel(jobItem?.startedAt ?? runningJob.startedAt, now)}</p>
                     <p className="canvas-meta mt-1 text-[11px]">{usd(runningJob.costCents)} so far</p>
                   </div>
@@ -761,7 +762,7 @@ export function PhotoWorkspace(): React.JSX.Element {
                 title="Preview larger"
                 onClick={() => setLightboxOpen(true)}
               >
-                <Maximize2 size={15} />
+                <Icon icon={Maximize2} size="sm" />
               </button>
             )}
             {compare && parent && (
@@ -816,7 +817,7 @@ export function PhotoWorkspace(): React.JSX.Element {
                       aria-label="New version from this image"
                       onClick={startNewVersion}
                     >
-                      <Plus size={12} />
+                      <Icon icon={Plus} size="xsm" />
                     </button>
                   )}
                 </div>
@@ -843,11 +844,11 @@ export function PhotoWorkspace(): React.JSX.Element {
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Button variant="ghost" size="sm" disabled={isRunning} onClick={() => setAddPhotoOpen(true)}>
-            <Plus size={14} /> Add Photo
+            <Icon icon={Plus} size="sm" /> Add Photo
           </Button>
           {tab === 'adjust' ? (
             <Button variant="primary" disabled={applyDisabled} onClick={() => void applyAdjust()}>
-              {applyBusy ? <Loader2 size={14} className="animate-spin" /> : null} Apply Locally · Free
+              {applyBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Apply Locally · Free
             </Button>
           ) : overBudget ? (
             <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => navigate('/usage')} />

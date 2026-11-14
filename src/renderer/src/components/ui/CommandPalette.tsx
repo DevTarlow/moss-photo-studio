@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Command as CommandIcon, CornerDownLeft, Search } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { Project } from '@shared/types'
 import { unwrap } from '../../lib/ipc'
 import { useAppStore } from '../../store/app'
@@ -176,7 +177,7 @@ export function CommandPalette(): React.JSX.Element {
     <Dialog open={open} onOpenChange={setOpen} title="Jump anywhere" hideClose width={560} className="p-0">
       <div className="-mt-2">
         <div className="flex items-center gap-2 border-b px-4" style={{ borderColor: 'var(--border)' }}>
-          <Search size={16} style={{ color: 'var(--text-faint)' }} />
+          <Icon icon={Search} size="sm" style={{ color: 'var(--text-faint)' }} />
           <input
             ref={inputRef}
             value={query}
@@ -206,7 +207,7 @@ export function CommandPalette(): React.JSX.Element {
             aria-expanded
           />
           <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--text-faint)' }}>
-            <CornerDownLeft size={12} /> to open
+            <Icon icon={CornerDownLeft} size="xsm" /> to open
           </span>
         </div>
         <div ref={listRef} id="command-results" role="listbox" className="max-h-[380px] overflow-y-auto py-2">
@@ -232,7 +233,7 @@ export function CommandPalette(): React.JSX.Element {
                   onMouseEnter={() => setActive(index)}
                   onClick={() => void item.run()}
                 >
-                  <CommandIcon size={13} style={{ color: index === active ? 'var(--accent)' : 'var(--text-faint)' }} aria-hidden />
+                  <Icon icon={CommandIcon} size="xsm" style={{ color: index === active ? 'var(--accent)' : 'var(--text-faint)' }} aria-hidden />
                   <span className="min-w-0 flex-1 truncate text-[12.5px]">{item.label}</span>
                   {item.hint && <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>{item.hint}</span>}
                 </button>

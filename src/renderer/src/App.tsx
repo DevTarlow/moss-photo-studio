@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowDownToLine } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { AutoUpdateState, JobState } from '@shared/types'
 import { useAppStore } from './store/app'
 import { useJobsStore } from './store/jobs'
@@ -521,7 +522,7 @@ export function RootLayout(): React.JSX.Element {
       {dragOver && (
         <div className="drop-overlay" aria-hidden>
           <div className="drop-overlay-inner flex items-center gap-2">
-            <ArrowDownToLine size={18} /> Drop to add. Hold Shift for a set.
+            <Icon icon={ArrowDownToLine} size="md" /> Drop to add. Hold Shift for a set.
           </div>
         </div>
       )}

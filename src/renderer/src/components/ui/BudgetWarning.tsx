@@ -1,6 +1,6 @@
 import { AlertTriangle } from 'lucide-react'
 import { usd } from '@shared/cost'
-import { Button } from '@astryxdesign/core'
+import { Button, Icon } from '@astryxdesign/core'
 
 export function BudgetWarning({
   limitCents,
@@ -13,7 +13,7 @@ export function BudgetWarning({
 }): React.JSX.Element {
   return (
     <div className="flex w-full flex-wrap items-center gap-3 rounded-[10px] border p-3" style={{ borderColor: 'var(--warning)', background: 'var(--warning-soft)' }}>
-      <AlertTriangle size={18} style={{ color: 'var(--warning)' }} aria-hidden />
+      <Icon icon={AlertTriangle} size="md" style={{ color: 'var(--warning)' }} aria-hidden />
       <p className="min-w-[200px] flex-1 text-[12px]">
         This run would pass your {usd(limitCents)} monthly limit. Raise it in Usage{onFewer ? ', or make fewer images' : ''}.
       </p>

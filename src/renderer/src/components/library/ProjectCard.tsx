@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Image as ImageIcon, Layers, MoreHorizontal, Sparkles } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { Project } from '@shared/types'
 import type { JobState } from '@shared/types'
 import { formatDate } from '../../lib/format'
@@ -38,7 +39,7 @@ export function ProjectCard({
 }: ProjectCardProps): React.JSX.Element {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLButtonElement>(null)
-  const Icon = TypeIcon[project.type]
+  const TypeGlyph = TypeIcon[project.type]
   const progress = job ? Math.min(100, job.total ? ((job.done + job.failed) / job.total) * 100 : 0) : 0
   // While a selection exists, a click anywhere on the card toggles it instead
   // of opening the project. Use the capture phase so the card's links never
@@ -67,7 +68,7 @@ export function ProjectCard({
     <DropdownMenu.Root open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenu.Trigger asChild>
         <button ref={menuRef} type="button" className="icon-btn opacity-0 group-hover:opacity-100 focus:opacity-100" aria-label={`Actions for ${project.name}`}>
-          <MoreHorizontal size={16} />
+          <Icon icon={MoreHorizontal} size="sm" />
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
@@ -94,7 +95,7 @@ export function ProjectCard({
           <img src={project.coverUrl} alt="" className="lib-thumb relative z-10 pointer-events-none" />
         ) : (
           <div className="lib-thumb relative z-10 grid place-items-center pointer-events-none" style={{ color: 'var(--text-faint)' }}>
-            <Icon size={18} />
+            <Icon icon={TypeGlyph} size="md" />
           </div>
         )}
         <div className="min-w-0 flex-1 pointer-events-none">
@@ -136,7 +137,7 @@ export function ProjectCard({
         <img src={project.coverUrl} alt="" className="lib-cover pointer-events-none relative z-0" />
       ) : (
         <div className="lib-cover-empty pointer-events-none relative z-0">
-          <Icon size={24} />
+          <Icon icon={TypeGlyph} size="lg" />
         </div>
       )}
       <div className="pointer-events-none relative z-10 p-3">

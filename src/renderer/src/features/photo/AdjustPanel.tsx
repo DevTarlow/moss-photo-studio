@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Crop, FlipHorizontal, FlipVertical, Loader2, Redo2, RotateCcw, RotateCw, Sparkles, Undo2 } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { AdjustTransform } from '@shared/types'
 import { Button } from '../../components/ui/Button'
 import { Chip } from '../../components/ui/Chip'
@@ -148,15 +149,15 @@ export function AdjustPanel({
       <div className="flex items-center justify-between gap-2">
         <p className="section-label">Local adjust</p>
         <div className="flex items-center gap-1">
-          <IconButton label="Undo" disabled={!canUndo} onClick={onUndo}><Undo2 size={15} /></IconButton>
-          <IconButton label="Redo" disabled={!canRedo} onClick={onRedo}><Redo2 size={15} /></IconButton>
+          <IconButton label="Undo" disabled={!canUndo} onClick={onUndo}><Icon icon={Undo2} size="sm" /></IconButton>
+          <IconButton label="Redo" disabled={!canRedo} onClick={onRedo}><Icon icon={Redo2} size="sm" /></IconButton>
         </div>
       </div>
       <p className="hint mt-1">Free. No API call. The original stays untouched.</p>
 
       <section className="mt-5">
         <div className="flex items-center gap-2">
-          <Crop size={14} style={{ color: 'var(--text-muted)' }} />
+          <Icon icon={Crop} size="sm" style={{ color: 'var(--text-muted)' }} />
           <h3 className="text-[12px] font-semibold">Crop</h3>
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -171,16 +172,16 @@ export function AdjustPanel({
         <h3 className="text-[12px] font-semibold">Rotate and flip</h3>
         <div className="mt-2 flex flex-wrap gap-2">
           <Button variant="secondary" size="sm" onClick={() => onChangeWithHistory({ ...transform, rotate: (((transform.rotate ?? 0) + 270) % 360) as AdjustTransform['rotate'] })}>
-            <RotateCcw size={14} /> Left
+            <Icon icon={RotateCcw} size="sm" /> Left
           </Button>
           <Button variant="secondary" size="sm" onClick={() => onChangeWithHistory({ ...transform, rotate: (((transform.rotate ?? 0) + 90) % 360) as AdjustTransform['rotate'] })}>
-            <RotateCw size={14} /> Right
+            <Icon icon={RotateCw} size="sm" /> Right
           </Button>
           <IconButton label="Flip horizontal" active={transform.flipH} onClick={() => onChangeWithHistory(patch({ flipH: !transform.flipH }))}>
-            <FlipHorizontal size={16} />
+            <Icon icon={FlipHorizontal} size="sm" />
           </IconButton>
           <IconButton label="Flip vertical" active={transform.flipV} onClick={() => onChangeWithHistory(patch({ flipV: !transform.flipV }))}>
-            <FlipVertical size={16} />
+            <Icon icon={FlipVertical} size="sm" />
           </IconButton>
         </div>
       </section>
@@ -200,7 +201,7 @@ export function AdjustPanel({
           <p className="text-[12px] font-semibold">Apply this grade to all</p>
           <p className="hint mt-1">Creates a new local version of each of the {batchCount} ready images. Crop, rotate, and flips stay on this image.</p>
           <Button variant="secondary" size="sm" className="mt-2" disabled={batchBusy} onClick={onApplyBatch}>
-            {batchBusy ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Apply to {batchCount} Images
+            {batchBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Apply to {batchCount} Images
           </Button>
         </div>
       )}
@@ -237,7 +238,7 @@ export function AdjustPanel({
           disabled={labelBusy || !(Number(sizeWidth) > 0) || !(Number(sizeHeight) > 0)}
           onClick={() => onAddSizeLabel(Number(sizeWidth), Number(sizeHeight), sizeUnit)}
         >
-          {labelBusy ? <Loader2 size={14} className="animate-spin" /> : null} Add Size Label
+          {labelBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Add Size Label
         </Button>
       </section>
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AlertCircle, Check, X } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import { useToastStore } from '../../lib/toast'
 import type { ToastItem } from '../../lib/toast'
 
@@ -22,7 +23,7 @@ function ToastRow({ item }: { item: ToastItem }): React.JSX.Element {
       onBlur={() => setPaused(false)}
     >
       <span className="mt-0.5" style={{ color: item.tone === 'error' ? 'var(--danger)' : 'var(--accent)' }} aria-hidden>
-        {item.tone === 'error' ? <AlertCircle size={16} /> : <Check size={16} />}
+        {item.tone === 'error' ? <Icon icon={AlertCircle} size="sm" /> : <Icon icon={Check} size="sm" />}
       </span>
       <div className="min-w-0 flex-1">
         <p>{item.message}</p>
@@ -42,7 +43,7 @@ function ToastRow({ item }: { item: ToastItem }): React.JSX.Element {
       </div>
       {item.tone === 'error' && (
         <button type="button" className="icon-btn toast-close h-6 w-6" aria-label="Close message" onClick={() => dismiss(item.id)}>
-          <X size={14} />
+          <Icon icon={X} size="sm" />
         </button>
       )}
     </div>

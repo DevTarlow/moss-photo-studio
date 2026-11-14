@@ -29,7 +29,7 @@ import { usd, formatDateTime, relativeTime } from '../lib/format'
 import { toast } from '../lib/toast'
 import { markUrl } from '../lib/assets'
 import { Skeleton } from '../components/ui/Skeleton'
-import { Card, Heading, Text, TextArea, TextInput } from '@astryxdesign/core'
+import { Card, Heading, Icon, Text, TextArea, TextInput } from '@astryxdesign/core'
 import { settingsSections } from '../lib/settingsSections'
 
 function SettingsTitle({ title, line }: { title: string; line: string }): React.JSX.Element {
@@ -160,7 +160,7 @@ function StudioSection(): React.JSX.Element {
       <SettingsTitle title="API key" line="Your Muse key and how making an image is priced." />
       {secrets.backend === 'basic_text' && !backendDismissed && secrets.hasKey && (
         <div className="verify-banner mb-4 flex items-start gap-2" role="status">
-          <AlertTriangle size={16} className="mt-0.5" style={{ color: 'var(--warning)' }} aria-hidden />
+          <Icon icon={AlertTriangle} size="sm" className="mt-0.5" style={{ color: 'var(--warning)' }} aria-hidden />
           <div className="flex-1">
             <p>Your system keyring isn't available. The key is stored with basic protection on this computer.</p>
             <button type="button" className="mt-1 font-semibold" onClick={() => setBackendDismissed(true)}>Dismiss</button>
@@ -176,12 +176,12 @@ function StudioSection(): React.JSX.Element {
             ) : (
               <p className="meta">A key from Meta. The app never shows it again after saving.</p>
             )}
-            <p className="meta mt-1 flex items-center gap-1"><Check size={13} style={{ color: secrets.hasKey ? 'var(--accent)' : 'var(--text-faint)' }} /> {checked}</p>
+            <p className="meta mt-1 flex items-center gap-1"><Icon icon={Check} size="xsm" style={{ color: secrets.hasKey ? 'var(--accent)' : 'var(--text-faint)' }} /> {checked}</p>
           </div>
           {secrets.hasKey && !editing && (
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" disabled={busy} onClick={() => void testSaved()}>
-                {busy ? <Loader2 size={14} className="animate-spin" /> : null} Test Connection
+                {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Test Connection
               </Button>
               <Button variant="ghost" onClick={() => { setEditing(true); setKey('') }}>Replace</Button>
               <Button variant="ghost" onClick={() => void remove()}>Remove</Button>
@@ -208,7 +208,7 @@ function StudioSection(): React.JSX.Element {
             </div>
             <div className="mt-3 flex items-center gap-2">
               <Button variant="primary" disabled={busy} onClick={() => void testAndSave()}>
-                {busy ? <Loader2 size={14} className="animate-spin" /> : null} Test and Save
+                {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Test and Save
               </Button>
               <button
                 type="button"
@@ -216,7 +216,7 @@ function StudioSection(): React.JSX.Element {
                 style={{ color: 'var(--accent)' }}
                 onClick={() => setKeyGuideOpen(true)}
               >
-                Where do I get a key? <ExternalLink size={12} />
+                Where do I get a key? <Icon icon={ExternalLink} size="xsm" />
               </button>
             </div>
           </div>
@@ -224,7 +224,7 @@ function StudioSection(): React.JSX.Element {
       </SectionCard>
       <SectionCard className="mt-4">
         <div className="flex items-start gap-3">
-          <ShieldCheck size={18} style={{ color: 'var(--accent)' }} aria-hidden />
+          <Icon icon={ShieldCheck} size="md" style={{ color: 'var(--accent)' }} aria-hidden />
           <div>
             <p className="text-[12px] font-semibold">One cent an image</p>
             <p className="hint mt-1">
@@ -267,7 +267,7 @@ function BrandSection(): React.JSX.Element {
       <BrandFields value={value} onChange={setValue} />
       <div className="mt-6 flex items-center gap-3">
         <Button variant="primary" disabled={saving} onClick={() => void save()}>
-          {saving ? <Loader2 size={14} className="animate-spin" /> : null} Save Changes
+          {saving ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Save Changes
         </Button>
         <p className="hint">All fields are optional.</p>
       </div>
@@ -361,7 +361,7 @@ function BusinessSection(): React.JSX.Element {
         <div className="mt-5 flex items-center justify-between gap-3 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
           <p className="hint">Optional. The Listing Writer will use this instead of asking again.</p>
           <Button variant="primary" disabled={saving} onClick={() => void save()}>
-            {saving ? <Loader2 size={14} className="animate-spin" /> : null} Save Profile
+            {saving ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Save Profile
           </Button>
         </div>
       </SectionCard>
@@ -486,13 +486,13 @@ function LibrarySection(): React.JSX.Element {
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => void window.moss.app.openPath({ kind: 'library' })}>
-            <FolderOpen size={15} /> Open Folder
+            <Icon icon={FolderOpen} size="sm" /> Open Folder
           </Button>
           <Button variant="secondary" onClick={() => void copyPath()}>
-            <Copy size={15} /> Copy Path
+            <Icon icon={Copy} size="sm" /> Copy Path
           </Button>
           <Button variant="secondary" disabled={busy} onClick={() => void changeLocation()}>
-            {busy ? <Loader2 size={14} className="animate-spin" /> : null} Change Location
+            {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Change Location
           </Button>
         </div>
         {oldPath && (
@@ -510,13 +510,13 @@ function LibrarySection(): React.JSX.Element {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" disabled={backingUp} onClick={() => void backupNow()}>
-              {backingUp ? <Loader2 size={14} className="animate-spin" /> : <Archive size={15} />} Back Up Now
+              {backingUp ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Archive} size="sm" />} Back Up Now
             </Button>
             <Button variant="secondary" disabled={restoring} onClick={() => void restore()}>
-              {restoring ? <Loader2 size={14} className="animate-spin" /> : <HardDriveDownload size={15} />} Restore
+              {restoring ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={HardDriveDownload} size="sm" />} Restore
             </Button>
             <Button variant="ghost" disabled={!settings?.lastBackupAt} onClick={() => void openBackup()}>
-              <FolderOpen size={15} /> Open Backup
+              <Icon icon={FolderOpen} size="sm" /> Open Backup
             </Button>
           </div>
         </div>
@@ -529,7 +529,7 @@ function LibrarySection(): React.JSX.Element {
             <p className="hint mt-1">App information, library counts and local logs for support. No keys, prompts or images.</p>
           </div>
           <Button variant="secondary" disabled={diagnosing} onClick={() => void diagnostics()}>
-            {diagnosing ? <Loader2 size={14} className="animate-spin" /> : <Stethoscope size={15} />} Create Diagnostics
+            {diagnosing ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Stethoscope} size="sm" />} Create Diagnostics
           </Button>
         </div>
       </SectionCard>
@@ -603,8 +603,8 @@ function AppearanceSection(): React.JSX.Element {
 
 function LicenseStatusChip({ license }: { license: LicenseState | null }): React.JSX.Element {
   if (!license) return <span className="badge">Unknown</span>
-  if (license.status === 'licensed') return <span className="badge" data-tone="success"><Check size={12} /> Licensed</span>
-  if (license.status === 'grace') return <span className="badge" data-tone="warning"><AlertTriangle size={12} /> Offline grace</span>
+  if (license.status === 'licensed') return <span className="badge" data-tone="success"><Icon icon={Check} size="xsm" /> Licensed</span>
+  if (license.status === 'grace') return <span className="badge" data-tone="warning"><Icon icon={AlertTriangle} size="xsm" /> Offline grace</span>
   if (license.status === 'expired') return <span className="badge" data-tone="danger">Expired</span>
   return <span className="badge" data-tone="warning">Not activated</span>
 }
@@ -693,17 +693,17 @@ function LicenseSection(): React.JSX.Element {
         {license?.message && <p className="hint mt-4">{license.message}</p>}
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
           <Button variant="secondary" disabled={checking || !license || license.source === 'dev'} onClick={() => void checkNow()}>
-            {checking ? <Loader2 size={14} className="animate-spin" /> : null} Check Now
+            {checking ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Check Now
           </Button>
           <Button variant="secondary" disabled={busy || !license || license.source === 'dev'} onClick={() => void deactivate()}>
-            <UserRound size={15} /> Deactivate This Machine
+            <Icon icon={UserRound} size="sm" /> Deactivate This Machine
           </Button>
           <button type="button" className="inline-flex items-center gap-1 text-[12px]" style={{ color: 'var(--accent)' }} onClick={() => void window.moss.app.openExternal({ url: LICENSE_PORTAL_URL })}>
-            Manage license <ExternalLink size={12} />
+            Manage license <Icon icon={ExternalLink} size="xsm" />
           </button>
           {storeReady ? (
             <button type="button" className="inline-flex items-center gap-1 text-[12px]" style={{ color: 'var(--accent)' }} onClick={() => void window.moss.app.openExternal({ url: LICENSE_STORE_URL })}>
-              Buy a license <ExternalLink size={12} />
+              Buy a license <Icon icon={ExternalLink} size="xsm" />
             </button>
           ) : (
             <p className="hint">Ask the person who sold you this copy for a key.</p>
@@ -782,15 +782,15 @@ function PrivacySection(): React.JSX.Element {
             <p className="hint mt-1">A random ID created on first launch. It is not you. It helps Meta handle repeated requests.</p>
           </div>
           <Button variant="secondary" onClick={() => void window.moss.app.openPath({ kind: 'logs' })}>
-            <FolderOpen size={15} /> Open Log Folder
+            <Icon icon={FolderOpen} size="sm" /> Open Log Folder
           </Button>
         </div>
         <div className="mt-5 flex flex-wrap gap-2 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
           <Button variant="secondary" onClick={() => void deleteUsage()}>
-            <Trash2 size={15} /> Delete All Usage History
+            <Icon icon={Trash2} size="sm" /> Delete All Usage History
           </Button>
           <Button variant="secondary" onClick={() => void deleteLogs()}>
-            <Trash2 size={15} /> Delete Logs
+            <Icon icon={Trash2} size="sm" /> Delete Logs
           </Button>
         </div>
       </SectionCard>
@@ -878,7 +878,7 @@ function UpdatesSection(): React.JSX.Element {
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Button variant="secondary" disabled={autoBusy} onClick={() => void checkAuto()}>
-                {autoBusy ? <Loader2 size={15} className="animate-spin" /> : null} Check for Updates
+                {autoBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Check for Updates
               </Button>
               {auto?.status === 'ready' && (
                 <Button variant="primary" onClick={() => void install()}>
@@ -887,7 +887,7 @@ function UpdatesSection(): React.JSX.Element {
               )}
               {auto?.status === 'error' && (
                 <Button variant="secondary" onClick={() => void window.moss.app.openExternal({ url: auto.downloadPageUrl })}>
-                  Open Download Page <ExternalLink size={14} />
+                  Open Download Page <Icon icon={ExternalLink} size="sm" />
                 </Button>
               )}
             </div>
@@ -921,7 +921,7 @@ function UpdatesSection(): React.JSX.Element {
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Button variant="secondary" disabled={checking} onClick={() => void checkManual()}>
-                {checking ? <Loader2 size={15} className="animate-spin" /> : null} Check for Updates
+                {checking ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Check for Updates
               </Button>
               {result && !result.available && <p className="hint">You are up to date.</p>}
               {result?.available && (
@@ -929,7 +929,7 @@ function UpdatesSection(): React.JSX.Element {
                   variant="primary"
                   onClick={() => void window.moss.app.openExternal({ url: result.downloadPageUrl })}
                 >
-                  Open Download Page <ExternalLink size={14} />
+                  Open Download Page <Icon icon={ExternalLink} size="sm" />
                 </Button>
               )}
             </div>

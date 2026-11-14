@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { Brand } from '@shared/types'
 import { MAX_BRAND_COLORS, USED_BRAND_COLORS, toggleBrandColorUse } from '@shared/brandColors'
 import { paletteFromPixels } from '@shared/palette'
@@ -181,7 +182,7 @@ export function BrandFields({
                     <span className="badge pill-sm">Used</span>
                   ) : null}
                   <button type="button" className="icon-btn h-5 w-5" aria-label={`Remove ${color}`} onClick={() => patch({ colors: value.colors.filter((entry) => entry !== color) })}>
-                    <Trash2 size={12} />
+                    <Icon icon={Trash2} size="xsm" />
                   </button>
                 </span>
               )
@@ -211,7 +212,7 @@ export function BrandFields({
               />
             </div>
             <Button variant="secondary" size="sm" onClick={addColor} disabled={value.colors.length >= maxColors}>
-              <Plus size={14} /> Add Color
+              <Icon icon={Plus} size="sm" /> Add Color
             </Button>
             <input
               ref={photoInput}
@@ -231,7 +232,7 @@ export function BrandFields({
               disabled={paletteBusy || value.colors.length >= maxColors}
               onClick={() => photoInput.current?.click()}
             >
-              {paletteBusy ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} From a Photo
+              {paletteBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={ImagePlus} size="sm" />} From a Photo
             </Button>
           </div>
           <p className="hint mt-1">From a Photo reads the image on this computer. It is not uploaded or saved.</p>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { DropdownMenu, Popover } from 'radix-ui'
-import { Banner, MoreMenu } from '@astryxdesign/core'
+import { Banner, Icon, MoreMenu } from '@astryxdesign/core'
 import { Check, ChevronDown, Download, Image as ImageIcon, Loader2, Mountain, Package, Pencil, Sparkles, UserPlus, UserRound, X } from 'lucide-react'
 import type { Format, Image, JobState, Project, Shape } from '@shared/types'
 import { MAX_PROMPT } from '@shared/constants'
@@ -490,8 +490,8 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         <Popover.Root>
           <Popover.Trigger asChild>
             <button type="button" className="btn btn-secondary w-full justify-between">
-              <span className="flex items-center gap-2"><Sparkles size={15} /> Start from an Idea</span>
-              <ChevronDown size={14} />
+              <span className="flex items-center gap-2"><Icon icon={Sparkles} size="sm" /> Start from an Idea</span>
+              <Icon icon={ChevronDown} size="sm" />
             </button>
           </Popover.Trigger>
           <Popover.Portal>
@@ -551,12 +551,12 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                 syncExampleText(exampleUsesProduct, false)
               }}
             >
-              <X size={14} />
+              <Icon icon={X} size="sm" />
             </button>
           </div>
         ) : (
           <Button variant="secondary" className="w-full justify-start" type="button" onClick={() => setPickerOpen(true)}>
-            <ImageIcon size={15} /> Choose a Product Photo
+            <Icon icon={ImageIcon} size="sm" /> Choose a Product Photo
           </Button>
         )}
       </div>
@@ -580,7 +580,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                         ? `${selectedPerson.name}${selectedPerson.ageBand ? ` · ${selectedPerson.ageBand}` : ''}${selectedLook ? ` · ${selectedLook.label}` : ''}`
                         : 'Choose a Person'}
                     </span>
-                    <ChevronDown size={13} className="shrink-0" />
+                    <Icon icon={ChevronDown} size="xsm" className="shrink-0" />
                   </button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
@@ -593,7 +593,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                       >
                         <img src={person.portraitUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
                         <span className="min-w-0 flex-1 truncate">{person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}</span>
-                        {person.id === selectedPerson?.id && <Check size={14} className="ml-auto shrink-0" />}
+                        {person.id === selectedPerson?.id && <Icon icon={Check} size="sm" className="ml-auto shrink-0" />}
                       </DropdownMenu.Item>
                     ))}
                   </DropdownMenu.Content>
@@ -614,11 +614,11 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                       onError={(event) => { event.currentTarget.style.visibility = 'hidden' }}
                     />
                   </button>
-                  <button type="button" className="icon-btn" aria-label="Remove person reference" onClick={() => { setPersonId(null); setPersonLook(null) }}><X size={14} /></button>
+                  <button type="button" className="icon-btn" aria-label="Remove person reference" onClick={() => { setPersonId(null); setPersonLook(null) }}><Icon icon={X} size="sm" /></button>
                 </>
               ) : (
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border" style={{ borderColor: 'var(--border)', color: 'var(--text-faint)' }} aria-hidden>
-                  <UserRound size={15} />
+                  <Icon icon={UserRound} size="sm" />
                 </span>
               )}
             </div>
@@ -640,11 +640,11 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
               <p className="truncate text-[11px] font-medium">{sceneRef.label}</p>
               <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>The setting and light are borrowed; its subject is not.</p>
             </div>
-            <button type="button" className="icon-btn" aria-label="Remove scene reference" onClick={() => setSceneRef(null)}><X size={14} /></button>
+            <button type="button" className="icon-btn" aria-label="Remove scene reference" onClick={() => setSceneRef(null)}><Icon icon={X} size="sm" /></button>
           </div>
         ) : activeProductRef ? (
           <Button variant="secondary" className="w-full justify-start" type="button" onClick={() => setScenePickerOpen(true)}>
-            <Mountain size={15} /> Choose a Scene
+            <Icon icon={Mountain} size="sm" /> Choose a Scene
           </Button>
         ) : (
           <p className="hint">Choose a product reference first, then add a scene to borrow its setting and light.</p>
@@ -763,7 +763,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
             {isRunning && job && (
               <div className="card mb-5 p-4">
                 <div className="flex items-center gap-2">
-                  <Loader2 size={15} className="animate-spin" style={{ color: 'var(--accent)' }} />
+                  <Icon icon={Loader2} size="sm" className="animate-spin" style={{ color: 'var(--accent)' }} />
                   <p className="text-[12px] font-semibold">Making {job.total} {job.total === 1 ? 'image' : 'images'} · {elapsedLabel(job.startedAt, now)}</p>
                   <p className="meta ml-auto tabular">{usd(job.costCents)} so far</p>
                 </div>
@@ -836,16 +836,16 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                     </button>
                     <div className="flex flex-wrap items-center gap-1 border-t px-2 py-2" style={{ borderColor: 'var(--border)' }}>
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/project/${project.id}?view=photo&image=${image.id}`)}>
-                        <Pencil size={13} /> Edit
+                        <Icon icon={Pencil} size="xsm" /> Edit
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => void download(image)}>
-                        <Download size={13} /> Download
+                        <Icon icon={Download} size="xsm" /> Download
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => setSaveProductImage(image)}>
-                        <Package size={13} /> Save as Product
+                        <Icon icon={Package} size="xsm" /> Save as Product
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => setSavePersonImage(image)}>
-                        <UserPlus size={13} /> Save as Person
+                        <Icon icon={UserPlus} size="xsm" /> Save as Person
                       </Button>
                       <div className="ml-auto">
                         <MoreMenu
@@ -888,7 +888,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
             <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => navigate('/usage')} onFewer={requestedCount > 1 ? () => setCount((current) => Math.max(1, current - 1)) : undefined} />
           ) : (
             <Button variant="primary" disabled={!canSubmit || isRunning || promptTooLongForReference} onClick={() => void submit()}>
-              {isRunning ? <Loader2 size={14} className="animate-spin" /> : null}
+              {isRunning ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null}
               Create {requestedCount} {requestedCount === 1 ? 'Image' : 'Images'} · {usd(estimateCents(requestedCount))}
             </Button>
           )}

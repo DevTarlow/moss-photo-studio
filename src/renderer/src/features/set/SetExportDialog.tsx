@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { Format, Project } from '@shared/types'
 import { Dialog } from '../../components/ui/Dialog'
 import { Button } from '../../components/ui/Button'
@@ -74,7 +75,7 @@ export function SetExportDialog({
               {cancelling ? 'Stopping...' : 'Cancel'}
             </Button>
             <Button variant="primary" disabled>
-              <Loader2 size={14} className="animate-spin" /> Exporting...
+              <Icon icon={Loader2} size="sm" className="animate-spin" /> Exporting...
             </Button>
           </>
         ) : (

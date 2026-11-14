@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type { DragEvent } from 'react'
 import { ImagePlus } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import { isSupportedImage } from '../../lib/files'
 import { useToastStore } from '../../lib/toast'
 
@@ -58,7 +59,7 @@ export function Dropzone({
         style={compact ? { minHeight: 130, padding: 20 } : undefined}
       >
         <div className="grid h-10 w-10 place-items-center rounded-full" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
-          <ImagePlus size={20} />
+          <Icon icon={ImagePlus} size="md" />
         </div>
         <p className="font-semibold">{line}</p>
         {hint && <p className="hint max-w-[380px]">{hint}</p>}

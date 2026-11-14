@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import { Dialog } from '../ui/Dialog'
 import { Field } from '../ui/Field'
 import { Button } from '../ui/Button'
@@ -56,7 +57,7 @@ export function SavePersonDialog({
         <>
           <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={busy}>Cancel</Button>
           <Button variant="primary" onClick={() => void save()} disabled={busy}>
-            {busy ? <Loader2 size={14} className="animate-spin" /> : null} Save Person
+            {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Save Person
           </Button>
         </>
       }

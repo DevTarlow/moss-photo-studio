@@ -4,7 +4,7 @@ import type { ListingCopy, ListingPlatform } from '@shared/listings'
 import { LISTING_PLATFORMS, limitsFor } from '@shared/listings'
 import { LISTING_COST_LABEL } from '@shared/cost'
 import { Button } from '../ui/Button'
-import { TextArea, TextInput } from '@astryxdesign/core'
+import { Icon, TextArea, TextInput } from '@astryxdesign/core'
 import { useAppStore } from '../../store/app'
 import { unwrap, messageOf } from '../../lib/ipc'
 import { formatDateTime } from '../../lib/format'
@@ -158,14 +158,14 @@ export function ListingPanel({
 
       {loading ? (
         <p className="mt-4 flex items-center gap-2 text-[12px]" style={{ color: 'var(--text-muted)' }}>
-          <Loader2 size={14} className="animate-spin" /> Checking for a saved listing...
+          <Icon icon={Loader2} size="sm" className="animate-spin" /> Checking for a saved listing...
         </p>
       ) : !listing ? (
         <div className="mt-4 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
           <p className="text-[12px]">No listing copy for {productName} on {limits.label} yet.</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Button variant="primary" disabled={generating || !secrets?.hasKey} onClick={() => void generate()}>
-              {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Write listing · {LISTING_COST_LABEL}
+              {generating ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Write listing · {LISTING_COST_LABEL}
             </Button>
             {!secrets?.hasKey && <span className="hint">Add your Muse key in Settings first.</span>}
           </div>
@@ -194,7 +194,7 @@ export function ListingPanel({
                   />
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => void copy(title, `Title ${index + 1}`)} aria-label={`Copy title ${index + 1}`}>
-                  <Copy size={14} />
+                  <Icon icon={Copy} size="sm" />
                 </Button>
               </div>
             ))}
@@ -223,7 +223,7 @@ export function ListingPanel({
                   />
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => void copy(feature, `Feature ${index + 1}`)} aria-label={`Copy feature ${index + 1}`}>
-                  <Copy size={14} />
+                  <Icon icon={Copy} size="sm" />
                 </Button>
               </div>
             ))}
@@ -240,10 +240,10 @@ export function ListingPanel({
 
           <div className="mt-4 flex flex-wrap items-center gap-2 border-t pt-3" style={{ borderColor: 'var(--border)' }}>
             <Button variant="primary" disabled={saving} onClick={() => void save()}>
-              {saving ? <Loader2 size={14} className="animate-spin" /> : null} Save Listing
+              {saving ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Save Listing
             </Button>
             <Button variant="secondary" disabled={generating} onClick={() => void generate()}>
-              {generating ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} Write Again · {LISTING_COST_LABEL}
+              {generating ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={RefreshCw} size="sm" />} Write Again · {LISTING_COST_LABEL}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => void copy(allText, 'Listing')}>Copy All</Button>
             <span className="hint ml-auto">{limits.label} limits checked {limits.asOf}.</span>

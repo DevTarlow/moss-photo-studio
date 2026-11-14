@@ -1,6 +1,7 @@
 import type { ReactNode, RefObject } from 'react'
 import { Dialog as RadixDialog } from 'radix-ui'
 import { X } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import { cn } from '../../lib/cn'
 
 export interface DialogProps {
@@ -54,7 +55,7 @@ export function Dialog({
           {!hideClose && (
             <RadixDialog.Close asChild>
               <button type="button" className="icon-btn dialog-close" aria-label={closeLabel}>
-                <X size={16} />
+                <Icon icon={X} size="sm" />
               </button>
             </RadixDialog.Close>
           )}

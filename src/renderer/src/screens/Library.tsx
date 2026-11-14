@@ -38,6 +38,7 @@ import {
   ClickableCard,
   Grid,
   Heading,
+  Icon,
   Selector,
   Text,
   TextInput,
@@ -400,7 +401,7 @@ export function Library(): React.JSX.Element {
                 label={selectMode ? 'Done selecting' : 'Select'}
                 variant={selectMode ? 'secondary' : 'ghost'}
                 size="sm"
-                icon={<CheckSquare size={14} />}
+                icon={<Icon icon={CheckSquare} size="sm" />}
                 onClick={() => {
                   if (selectMode) setSelected(new Set())
                   setSelectMode((current) => !current)
@@ -473,7 +474,7 @@ export function Library(): React.JSX.Element {
                 value={search}
                 onChange={setSearch}
                 placeholder="Search projects"
-                startIcon={<Search size={15} />}
+                startIcon={<Icon icon={Search} size="sm" />}
                 hasClear
                 width="100%"
               />
@@ -509,8 +510,8 @@ export function Library(): React.JSX.Element {
                   if (value === 'grid' || value === 'list') store.setView(value)
                 }}
               >
-                <ToggleButton value="grid" label="Grid view" isIconOnly icon={<Grid2X2 size={14} />} size="sm" />
-                <ToggleButton value="list" label="List view" isIconOnly icon={<List size={14} />} size="sm" />
+                <ToggleButton value="grid" label="Grid view" isIconOnly icon={<Icon icon={Grid2X2} size="sm" />} size="sm" />
+                <ToggleButton value="list" label="List view" isIconOnly icon={<Icon icon={List} size="sm" />} size="sm" />
               </ToggleButtonGroup>
             </div>
           </div>
@@ -531,7 +532,7 @@ export function Library(): React.JSX.Element {
                   label="Delete"
                   variant="destructive"
                   size="sm"
-                  icon={<Trash2 size={14} />}
+                  icon={<Icon icon={Trash2} size="sm" />}
                   isLoading={deleting}
                   isDisabled={deleting}
                   onClick={() => void removeSelected()}
@@ -548,7 +549,7 @@ export function Library(): React.JSX.Element {
             ) : empty ? (
               filtering ? (
                 <EmptyState
-                  icon={<Search size={22} />}
+                  icon={<Icon icon={Search} size="lg" />}
                   title={`No projects match "${store.search.trim() || filters.find((f) => f.id === store.filter)?.label}".`}
                   line="Try a different word."
                   action={<Button label="Clear Search" variant="secondary" onClick={() => { setSearch(''); store.setFilter('all'); store.setSearch(''); void store.load() }} />}

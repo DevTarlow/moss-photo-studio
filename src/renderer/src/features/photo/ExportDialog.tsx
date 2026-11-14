@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Copy, Loader2 } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { Format, Image, Project } from '@shared/types'
 import { Dialog } from '../../components/ui/Dialog'
 import { Button } from '../../components/ui/Button'
@@ -89,11 +90,11 @@ export function ExportDialog({
       footer={
         <>
           <Button variant="ghost" disabled={copying || busy} onClick={() => void copy()}>
-            {copying ? <Loader2 size={14} className="animate-spin" /> : <Copy size={14} />} Copy Image
+            {copying ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Copy} size="sm" />} Copy Image
           </Button>
           <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={busy}>Cancel</Button>
           <Button variant="primary" onClick={() => void run()} disabled={busy || !image}>
-            {busy ? <Loader2 size={14} className="animate-spin" /> : null} Export
+            {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Export
           </Button>
         </>
       }

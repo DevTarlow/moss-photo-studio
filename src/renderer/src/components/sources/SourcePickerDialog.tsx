@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Loader2, Package, Plus, Search } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { LibraryImage } from '@shared/types'
 import { Dialog } from '../ui/Dialog'
 import { Button } from '../ui/Button'
@@ -109,7 +110,7 @@ export function SourcePickerDialog({
         <>
           {onUpload && (
             <Button variant="ghost" className="mr-auto" onClick={() => { onUpload(); onOpenChange(false) }}>
-              <Plus size={14} /> Choose a File
+              <Icon icon={Plus} size="sm" /> Choose a File
             </Button>
           )}
           <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
@@ -130,7 +131,7 @@ export function SourcePickerDialog({
         )}
         {tab === 'library' && (
           <div className="relative min-w-[200px] flex-1">
-            <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-faint)' }} aria-hidden />
+            <Icon icon={Search} size="sm" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-faint)' }} aria-hidden />
             <input
               className="field h-8 pl-8 text-[12px]"
               type="search"
@@ -147,7 +148,7 @@ export function SourcePickerDialog({
         {tab === 'products' ? (
           products.length === 0 ? (
             <div className="flex flex-col items-center py-10 text-center">
-              <Package size={22} style={{ color: 'var(--text-faint)' }} />
+              <Icon icon={Package} size="lg" style={{ color: 'var(--text-faint)' }} />
               <p className="mt-2 text-[13px] font-semibold">No saved products yet</p>
               <p className="meta mt-1 max-w-[320px]">Save a product photo from an image, or add one from a file.</p>
             </div>
@@ -179,7 +180,7 @@ export function SourcePickerDialog({
           )
         ) : loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 size={18} className="animate-spin" style={{ color: 'var(--text-faint)' }} />
+            <Icon icon={Loader2} size="md" className="animate-spin" style={{ color: 'var(--text-faint)' }} />
           </div>
         ) : error ? (
           <p className="error-text py-6 text-center" role="alert">{error}</p>

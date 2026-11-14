@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, ExternalLink, Loader2 } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import { LICENSE_PORTAL_URL, LICENSE_STORE_URL, isStoreUrlPlaceholder } from '@shared/constants'
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf, CallError } from '../lib/ipc'
@@ -102,13 +103,13 @@ export function Activation(): React.JSX.Element {
               style={{ color: 'var(--text-faint)' }}
               onClick={() => setShow((value) => !value)}
             >
-              {show ? <EyeOff size={12} /> : <Eye size={12} />} {show ? 'Hide key' : 'Show key'}
+              {show ? <Icon icon={EyeOff} size="xsm" /> : <Icon icon={Eye} size="xsm" />} {show ? 'Hide key' : 'Show key'}
             </button>
           </div>
           <Button variant="primary" className="mt-5 w-full" disabled={busy} onClick={() => void activate()}>
             {busy ? (
               <>
-                <Loader2 size={16} className="animate-spin" /> Activating...
+                <Icon icon={Loader2} size="sm" className="animate-spin" /> Activating...
               </>
             ) : (
               'Activate'
@@ -144,7 +145,7 @@ export function Activation(): React.JSX.Element {
           <p className="hint mt-6 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
             Lost it? Check the key email, or open the{' '}
             <button type="button" className="inline-flex items-center gap-1" style={{ color: 'var(--accent)' }} onClick={() => void window.moss.app.openExternal({ url: LICENSE_PORTAL_URL })}>
-              license center <ExternalLink size={11} />
+              license center <Icon icon={ExternalLink} size="xsm" />
             </button>
             . One key works on two computers.
           </p>

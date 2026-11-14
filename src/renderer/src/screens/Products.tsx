@@ -18,7 +18,7 @@ import { unwrap, messageOf } from '../lib/ipc'
 import { formatDate } from '../lib/format'
 import { toast } from '../lib/toast'
 import { COLLECTION_PAGE_SIZE } from '@shared/constants'
-import { Heading, Selector, Text, TextInput } from '@astryxdesign/core'
+import { Heading, Icon, Selector, Text, TextInput } from '@astryxdesign/core'
 
 function ProductCard({
   product,
@@ -262,10 +262,10 @@ export function Products(): React.JSX.Element {
             </div>
             <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
               <Button variant="secondary" disabled={creatingProduct} onClick={() => void createProduct()}>
-                <Sparkles size={16} /> Create a Product
+                <Icon icon={Sparkles} size="sm" /> Create a Product
               </Button>
               <Button variant="primary" onClick={() => void addProduct()} disabled={busy}>
-                {busy ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} Add Product
+                {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Plus} size="sm" />} Add Product
               </Button>
             </div>
           </div>
@@ -278,7 +278,7 @@ export function Products(): React.JSX.Element {
                 value={search}
                 onChange={setSearch}
                 placeholder="Search products"
-                startIcon={<Search size={15} />}
+                startIcon={<Icon icon={Search} size="sm" />}
                 hasClear
                 width="100%"
               />
@@ -303,7 +303,7 @@ export function Products(): React.JSX.Element {
             <ErrorState message={loadError} onRetry={() => void load()} />
           ) : search.trim() && matchingCount === 0 ? (
             <EmptyState
-              icon={<Search size={22} />}
+              icon={<Icon icon={Search} size="lg" />}
               title={`No products match "${search.trim()}".`}
               line="Try a different word."
               action={<Button variant="secondary" onClick={() => setSearch('')}>Clear Search</Button>}
@@ -323,7 +323,7 @@ export function Products(): React.JSX.Element {
                   ) : filteredProducts.length === 0 ? (
                     <div className="mt-3">
                       <EmptyState
-                        icon={<Package size={22} />}
+                        icon={<Icon icon={Package} size="lg" />}
                         title="No saved products yet"
                         line="Save a product photo from an image, or add one from a file."
                         action={<Button variant="secondary" onClick={() => void addProduct()}>Add Product</Button>}
@@ -448,13 +448,13 @@ export function Products(): React.JSX.Element {
               <p className="section-label">Start with this product</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button variant="primary" disabled={busy} onClick={() => void startProject(preview, 'set')}>
-                  <Layers size={15} /> Use in a Set
+                  <Icon icon={Layers} size="sm" /> Use in a Set
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'photo')}>
-                  <ImageIcon size={15} /> Edit This Photo
+                  <Icon icon={ImageIcon} size="sm" /> Edit This Photo
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'image')}>
-                  <Sparkles size={15} /> New Image from Reference
+                  <Icon icon={Sparkles} size="sm" /> New Image from Reference
                 </Button>
               </div>
             </div>

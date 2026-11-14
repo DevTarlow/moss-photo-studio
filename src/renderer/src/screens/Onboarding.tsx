@@ -21,8 +21,7 @@ import {
   Step,
   Stepper,
   Text,
-  TextInput
-} from '@astryxdesign/core'
+  TextInput, Icon } from '@astryxdesign/core'
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
 import { fileToBytes } from '../lib/files'
@@ -555,9 +554,9 @@ export function Onboarding(): React.JSX.Element {
                         </Text>
                       </Stack>
                       <Grid columns={{ minWidth: 180 }} gap={3}>
-                        <ToolCard icon={<Layers size={20} />} title="Set" body="One photo in, a full set out." />
-                        <ToolCard icon={<ImageIcon size={20} />} title="Image Editor" body="Change a photo you already have." />
-                        <ToolCard icon={<Sparkles size={20} />} title="Image Generator" body="Describe a picture and make it." />
+                        <ToolCard icon={<Icon icon={Layers} size="md" />} title="Set" body="One photo in, a full set out." />
+                        <ToolCard icon={<Icon icon={ImageIcon} size="md" />} title="Image Editor" body="Change a photo you already have." />
+                        <ToolCard icon={<Icon icon={Sparkles} size="md" />} title="Image Generator" body="Describe a picture and make it." />
                       </Grid>
                     </>
                   )}
@@ -833,7 +832,7 @@ export function Onboarding(): React.JSX.Element {
                             className="grid h-10 w-10 place-items-center rounded-full"
                             style={{ background: 'var(--color-accent-muted)', color: 'var(--color-text-accent)' }}
                           >
-                            <Check size={20} />
+                            <Icon icon={Check} size="md" />
                           </span>
                           <Stack gap={0.5} className="flex-1">
                             <Text weight="bold">
@@ -885,9 +884,9 @@ export function Onboarding(): React.JSX.Element {
                           </Text>
                         </Stack>
                         <Grid columns={{ minWidth: 180 }} gap={3}>
-                          <ToolCard icon={<Layers size={20} />} title="Set" body="Open your set or start another." />
-                          <ToolCard icon={<ImageIcon size={20} />} title="Image Editor" body="Change a photo you already have." />
-                          <ToolCard icon={<Sparkles size={20} />} title="Image Generator" body="Describe a picture and make it." />
+                          <ToolCard icon={<Icon icon={Layers} size="md" />} title="Set" body="Open your set or start another." />
+                          <ToolCard icon={<Icon icon={ImageIcon} size="md" />} title="Image Editor" body="Change a photo you already have." />
+                          <ToolCard icon={<Icon icon={Sparkles} size="md" />} title="Image Generator" body="Describe a picture and make it." />
                         </Grid>
                       </Stack>
                     </>
@@ -904,7 +903,7 @@ export function Onboarding(): React.JSX.Element {
                     label="Back"
                     variant="ghost"
                     size="sm"
-                    icon={<ArrowLeft size={14} />}
+                    icon={<Icon icon={ArrowLeft} size="sm" />}
                     isDisabled={brandBusy}
                     onClick={() => void goTo(step - 1)}
                   />

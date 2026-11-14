@@ -14,7 +14,7 @@ import { toast } from '../lib/toast'
 import { currentMonth } from '../store/library'
 import { errorMessage } from '@shared/errors'
 import { COLLECTION_PAGE_SIZE } from '@shared/constants'
-import { Button, Card, Heading, ProgressBar, Selector, Text, TextInput } from '@astryxdesign/core'
+import { Button, Card, Heading, Icon, ProgressBar, Selector, Text, TextInput } from '@astryxdesign/core'
 
 function lastMonths(count: number): string[] {
   const result: string[] = []
@@ -154,7 +154,7 @@ export function Usage(): React.JSX.Element {
                 options={months.map((value) => ({ value, label: shortMonthLabel(value) }))}
                 width={130}
               />
-              <Button label="Export CSV" variant="secondary" icon={<Download size={15} />} onClick={() => void exportCsv()} />
+              <Button label="Export CSV" variant="secondary" icon={<Icon icon={Download} size="sm" />} onClick={() => void exportCsv()} />
             </div>
           </div>
 
@@ -266,7 +266,7 @@ export function Usage(): React.JSX.Element {
                   <span className="meta-faint">{total} {total === 1 ? 'row' : 'rows'}</span>
                 </div>
                 {events.length === 0 ? (
-                  <EmptyState icon={<BarChart3 size={22} />} title="No images made yet" line="Your runs and their cost show up here." />
+                  <EmptyState icon={<Icon icon={BarChart3} size="lg" />} title="No images made yet" line="Your runs and their cost show up here." />
                 ) : (
                   <div className="card mt-2 overflow-x-auto">
                     <table className="w-full min-w-[780px] border-collapse text-left">

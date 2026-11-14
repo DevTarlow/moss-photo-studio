@@ -19,35 +19,35 @@ import {
   Store,
   Users
 } from 'lucide-react'
-import { SideNav, SideNavItem, SideNavSection } from '@astryxdesign/core'
+import { Icon, SideNav, SideNavItem, SideNavSection } from '@astryxdesign/core'
 import { useAppStore } from '../../store/app'
 import { settingsSections } from '../../lib/settingsSections'
 import { toast } from '../../lib/toast'
 import { useConfirm } from './ConfirmProvider'
 
 const settingsIcons = {
-  studio: <KeyRound size={18} strokeWidth={1.75} />,
-  brand: <Palette size={18} strokeWidth={1.75} />,
-  business: <Store size={18} strokeWidth={1.75} />,
-  library: <FolderOpen size={18} strokeWidth={1.75} />,
-  appearance: <Monitor size={18} strokeWidth={1.75} />,
-  license: <ShieldCheck size={18} strokeWidth={1.75} />,
-  updates: <RefreshCw size={18} strokeWidth={1.75} />,
-  privacy: <Settings size={18} strokeWidth={1.75} />,
-  about: <Info size={18} strokeWidth={1.75} />
+  studio: <Icon icon={KeyRound} size="md" strokeWidth={1.75} />,
+  brand: <Icon icon={Palette} size="md" strokeWidth={1.75} />,
+  business: <Icon icon={Store} size="md" strokeWidth={1.75} />,
+  library: <Icon icon={FolderOpen} size="md" strokeWidth={1.75} />,
+  appearance: <Icon icon={Monitor} size="md" strokeWidth={1.75} />,
+  license: <Icon icon={ShieldCheck} size="md" strokeWidth={1.75} />,
+  updates: <Icon icon={RefreshCw} size="md" strokeWidth={1.75} />,
+  privacy: <Icon icon={Settings} size="md" strokeWidth={1.75} />,
+  about: <Icon icon={Info} size="md" strokeWidth={1.75} />
 }
 
 const items = [
-  { to: '/products', label: 'Products', icon: <Package size={18} strokeWidth={1.75} /> },
-  { to: '/library', label: 'All work', icon: <Images size={18} strokeWidth={1.75} /> },
-  { to: '/people', label: 'People', icon: <Users size={18} strokeWidth={1.75} /> },
-  { to: '/usage', label: 'Usage', icon: <BarChart3 size={18} strokeWidth={1.75} /> }
+  { to: '/products', label: 'Products', icon: <Icon icon={Package} size="md" strokeWidth={1.75} /> },
+  { to: '/library', label: 'All work', icon: <Icon icon={Images} size="md" strokeWidth={1.75} /> },
+  { to: '/people', label: 'People', icon: <Icon icon={Users} size="md" strokeWidth={1.75} /> },
+  { to: '/usage', label: 'Usage', icon: <Icon icon={BarChart3} size="md" strokeWidth={1.75} /> }
 ]
 
 const tools = [
-  { to: '/library?new=set', label: 'New Set', icon: <Layers size={18} strokeWidth={1.75} /> },
-  { to: '/library?new=photo', label: 'Image Editor', icon: <ImageIcon size={18} strokeWidth={1.75} /> },
-  { to: '/library?new=image', label: 'Image Generator', icon: <Sparkles size={18} strokeWidth={1.75} /> }
+  { to: '/library?new=set', label: 'New Set', icon: <Icon icon={Layers} size="md" strokeWidth={1.75} /> },
+  { to: '/library?new=photo', label: 'Image Editor', icon: <Icon icon={ImageIcon} size="md" strokeWidth={1.75} /> },
+  { to: '/library?new=image', label: 'Image Generator', icon: <Icon icon={Sparkles} size="md" strokeWidth={1.75} /> }
 ]
 
 export function Rail({
@@ -89,7 +89,7 @@ export function Rail({
           {appInfo && !appInfo.isPackaged && !appInfo.e2e && (
             <SideNavItem
               label="Reset App"
-              icon={<RotateCcw size={18} strokeWidth={1.75} />}
+              icon={<Icon icon={RotateCcw} size="md" strokeWidth={1.75} />}
               onClick={() => void resetApp()}
               isDisabled={resetting}
             />
@@ -97,7 +97,7 @@ export function Rail({
           {!inSettings && (
             <SideNavItem
               label="Settings"
-              icon={<Settings size={18} strokeWidth={1.75} />}
+              icon={<Icon icon={Settings} size="md" strokeWidth={1.75} />}
               href="/settings/studio"
               isSelected={false}
             />

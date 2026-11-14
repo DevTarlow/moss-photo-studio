@@ -1,4 +1,5 @@
 import { AlertCircle } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import { Button } from './Button'
 
 export function ErrorState({
@@ -10,7 +11,7 @@ export function ErrorState({
 }): React.JSX.Element {
   return (
     <div className="flex flex-col items-center py-16 text-center" role="alert">
-      <AlertCircle size={28} style={{ color: 'var(--danger)' }} aria-hidden />
+      <Icon icon={AlertCircle} size="lg" style={{ color: 'var(--danger)' }} aria-hidden />
       <p className="mt-3 font-semibold">{message}</p>
       {onRetry && (
         <Button className="mt-4" variant="secondary" onClick={onRetry}>

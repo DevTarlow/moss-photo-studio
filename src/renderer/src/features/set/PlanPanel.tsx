@@ -15,6 +15,7 @@ import {
   Utensils,
   Wand2
 } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { Format, Image, Person, PlanJson, PlanShot } from '@shared/types'
 import { MAX_SET_SHOTS } from '@shared/constants'
 
@@ -180,7 +181,7 @@ function ShotCard({
                         ? `${selectedPerson.name}${selectedPerson.ageBand ? ` · ${selectedPerson.ageBand}` : ''}${selectedLook ? ` · ${selectedLook.label}` : ''}`
                         : 'Choose a person'}
                     </span>
-                    <ChevronDown size={13} className="shrink-0" />
+                    <Icon icon={ChevronDown} size="xsm" className="shrink-0" />
                   </button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
@@ -200,7 +201,7 @@ function ShotCard({
                           <span className="min-w-0 flex-1 truncate">
                             {person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}
                           </span>
-                          {selected && <Check size={14} className="ml-auto shrink-0" />}
+                          {selected && <Icon icon={Check} size="sm" className="ml-auto shrink-0" />}
                         </DropdownMenu.Item>
                       )
                     })}
@@ -335,7 +336,7 @@ export function PlanPanel({
           </div>
         ) : (
           <div className="mt-3 grid h-[100px] place-items-center rounded-[8px]" style={{ background: 'var(--surface-2)', color: 'var(--text-faint)' }}>
-            <Sparkles size={20} />
+            <Icon icon={Sparkles} size="md" />
           </div>
         )}
         <PhotoCheckNote imageId={sourceImageId} />
@@ -408,7 +409,7 @@ export function PlanPanel({
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
                 <Button variant="secondary" size="sm" disabled={readOnly || !canAdd}>
-                  <Plus size={14} /> Add a Shot
+                  <Icon icon={Plus} size="sm" /> Add a Shot
                 </Button>
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
@@ -443,7 +444,7 @@ export function PlanPanel({
               }).then((ok) => { if (ok) onReset() })
             }}
           >
-            <Wand2 size={14} /> Reset the Plan
+            <Icon icon={Wand2} size="sm" /> Reset the Plan
           </Button>
         </div>
       </div>

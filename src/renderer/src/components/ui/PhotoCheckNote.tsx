@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { PhotoCheck } from '@shared/types'
 import { unwrap } from '../../lib/ipc'
 
@@ -25,7 +26,7 @@ export function PhotoCheckNote({ imageId }: { imageId: string | null }): React.J
   return (
     <div className="mt-2 rounded-[8px] border p-2.5" style={{ borderColor: 'var(--border)' }}>
       <p className="flex items-center gap-1.5 text-[11px] font-semibold">
-        <AlertTriangle size={13} /> Photo check
+        <Icon icon={AlertTriangle} size="xsm" /> Photo check
       </p>
       <ul className="mt-1 grid gap-1 text-[11px]" style={{ color: 'var(--text-muted)' }}>
         {check.warnings.map((warning) => <li key={warning.code}>{warning.message}</li>)}

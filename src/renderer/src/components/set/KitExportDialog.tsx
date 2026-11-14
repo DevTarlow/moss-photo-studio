@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { Project } from '@shared/types'
 import { MARKETPLACES, MARKETPLACES_AS_OF, marketplaceById } from '@shared/marketplaces'
 import { Dialog } from '../ui/Dialog'
@@ -69,7 +70,7 @@ export function KitExportDialog({
       footer={
         exporting ? (
           <Button variant="primary" disabled>
-            <Loader2 size={14} className="animate-spin" /> Writing the kit...
+            <Icon icon={Loader2} size="sm" className="animate-spin" /> Writing the kit...
           </Button>
         ) : (
           <>

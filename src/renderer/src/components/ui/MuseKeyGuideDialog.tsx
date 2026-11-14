@@ -1,4 +1,5 @@
 import { ExternalLink } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import { MUSE_KEY_ORIGIN } from '@shared/constants'
 import { Button } from './Button'
 import { Dialog } from './Dialog'
@@ -48,7 +49,7 @@ export function MuseKeyGuideDialog({
         <>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>Got it</Button>
           <Button variant="primary" onClick={() => void window.moss.app.openExternal({ url: MUSE_KEY_ORIGIN })}>
-            Open Meta Dashboard <ExternalLink size={14} />
+            Open Meta Dashboard <Icon icon={ExternalLink} size="sm" />
           </Button>
         </>
       }

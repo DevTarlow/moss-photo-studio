@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { DropdownMenu } from 'radix-ui'
 import { Copy, Download, Pencil, Trash2 } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 
 export function ProjectMenuContent({
   onRename,
@@ -16,17 +17,17 @@ export function ProjectMenuContent({
   return (
     <DropdownMenu.Content className="menu-content" align="end" sideOffset={6} collisionPadding={12}>
       <DropdownMenu.Item className="menu-item" onSelect={onRename}>
-        <Pencil size={14} /> Rename
+        <Icon icon={Pencil} size="sm" /> Rename
       </DropdownMenu.Item>
       <DropdownMenu.Item className="menu-item" onSelect={onDuplicate}>
-        <Copy size={14} /> Duplicate
+        <Icon icon={Copy} size="sm" /> Duplicate
       </DropdownMenu.Item>
       <DropdownMenu.Item className="menu-item" onSelect={onExport}>
-        <Download size={14} /> Export
+        <Icon icon={Download} size="sm" /> Export
       </DropdownMenu.Item>
       <DropdownMenu.Separator className="menu-separator" />
       <DropdownMenu.Item className="menu-item" data-danger="true" onSelect={onDelete}>
-        <Trash2 size={14} /> Delete
+        <Icon icon={Trash2} size="sm" /> Delete
       </DropdownMenu.Item>
     </DropdownMenu.Content>
   )

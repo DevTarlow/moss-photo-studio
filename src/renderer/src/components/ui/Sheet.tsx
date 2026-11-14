@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Dialog as RadixDialog } from 'radix-ui'
 import { X } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 
 export function Sheet({
   open,
@@ -23,7 +24,7 @@ export function Sheet({
           <div className="flex h-[52px] items-center gap-2 border-b px-4" style={{ borderColor: 'var(--border)' }}>
             <RadixDialog.Title className="flex-1 text-[13px] font-semibold">{title}</RadixDialog.Title>
             <RadixDialog.Close asChild>
-              <button type="button" className="icon-btn" aria-label="Close panel"><X size={16} /></button>
+              <button type="button" className="icon-btn" aria-label="Close panel"><Icon icon={X} size="sm" /></button>
             </RadixDialog.Close>
           </div>
           <div className="scroll-area flex-1">{children}</div>
