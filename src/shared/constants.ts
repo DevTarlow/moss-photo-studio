@@ -14,7 +14,7 @@ export const LICENSE_STORE_URL = 'https://mossphotostudio.com'
 export const LICENSE_STORE_PLACEHOLDER = 'https://example.com/moss-photo-studio'
 export const LICENSE_API_HOST = new URL(LICENSE_API_BASE).host
 export const LICENSE_PORTAL_HOST = new URL(LICENSE_PORTAL_URL).host
-export const SUPPORT_EMAIL = 'support@mosstoolbox.com'
+export const SUPPORT_EMAIL = 'tarlow@mossaistudio.com'
 
 export const MAX_PROMPT = 2000
 export const MAX_SET_SHOTS = 8

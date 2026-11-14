@@ -60,7 +60,7 @@ Version: ${version}
 Section: graphics
 Priority: optional
 Architecture: ${arch}
-Maintainer: Moss Toolbox <support@mosstoolbox.com>
+Maintainer: Moss Toolbox <tarlow@mossaistudio.com>
 Installed-Size: ${installedKb}
 Depends: libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0
 Homepage: ${pkg.homepage}

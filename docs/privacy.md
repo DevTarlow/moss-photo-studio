@@ -83,6 +83,6 @@ The app has no account, social feed, chat, advertising, or analytics. The licens
 
 ## Contact
 
-Support: support@mosstoolbox.com
+Support: tarlow@mossaistudio.com
 
 This document describes the build in this repository. A distributor that adds a hosted service, crash reporting, or another update channel must update this file before shipping.
