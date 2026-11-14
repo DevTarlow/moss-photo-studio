@@ -2,7 +2,21 @@ import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['node_modules/**', 'out/**', 'release/**', 'dist/**', 'test-results/**', 'tests/screenshots/**', '.cache/**'] },
+  {
+    // The theme build emits moss.js and its declarations; they are generated,
+    // not authored, and carry a triple-slash reference the rules reject.
+    ignores: [
+      'node_modules/**',
+      'out/**',
+      'release/**',
+      'dist/**',
+      'test-results/**',
+      'tests/screenshots/**',
+      '.cache/**',
+      'src/renderer/src/theme/moss.js',
+      'src/renderer/src/theme/moss*.d.ts'
+    ]
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
