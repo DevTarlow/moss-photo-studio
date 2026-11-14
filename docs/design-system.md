@@ -26,6 +26,21 @@ Astryx is beta. Pin exact versions and commit the lockfile; do not upgrade casua
 
 The theme is applied by `src/renderer/src/theme/MossThemeProvider.tsx`. It resolves the saved `theme` setting, including the OS preference for `system`, passes it to Astryx `Theme`, and wires `LinkProvider` to a small React Router adapter so Astryx links stay inside the hash router.
 
+`src/renderer/src/styles/tokens.css` keeps the app's short names (`--bg`, `--text`, `--accent`) but holds no palette of its own: each semantic name is a `var(--color-…)` alias to a theme token, and the values the theme has no role for (the rail, the canvas, tints, media inks) use `light-dark()` pairs so one rule covers both modes. Elevation is the one exception that still needs an `html[data-theme='dark']` block, because `light-dark()` only accepts colours. Adding a literal palette value to that file means the theme is no longer the source of truth; add a theme token instead.
+
+## Icons
+
+Render every icon through Astryx `Icon`: pass the lucide component to the `icon` prop and pick a semantic size.
+
+```tsx
+import { Icon } from '@astryxdesign/core'
+import { Search } from 'lucide-react'
+
+<Icon icon={Search} size="sm" />
+```
+
+Do not render a lucide component directly (`<Search size={14} />`). Direct SVG bypasses the theme's icon size and colour roles and cannot fill `IconButton`/`Button` icon slots. The four sizes are the theme's (xsm 12, sm 16, md 20, lg 24); do not pass pixel sizes. `Icon` accepts standard SVG props (`strokeWidth`, `className`, `aria-hidden`), so `svg.lucide` styling and the `Property 'icon'` typing stay intact.
+
 ## CSS and providers
 
 `src/renderer/src/styles/index.css` establishes the layer order and imports:
@@ -80,6 +95,9 @@ CSP is unchanged: all Astryx CSS, fonts, and icons are bundled; there are no rem
 ## Current status
 
 - Foundation, theme, providers, and CSS layer order are in place.
+- Colour has one owner: every semantic name in `tokens.css` aliases the theme, the mode block holds only elevation, and `npm run audit:tokens` reads `mossTheme` so a stale or missing token fails instead of rendering an inherited colour.
+- Every icon renders through Astryx `Icon` (211 call sites); no direct lucide elements remain.
+- Activation is the first surface fully off the homegrown primitives: Astryx `TextInput` and `Button` replace the local `Field` and `Button` there.
 - Onboarding is redesigned with a Welcome screen and setup steps for the key, an optional product, an optional logo and colors, an optional first set, and Ready. Key-later, a persisted category, and sticky actions are unchanged.
 - The Astryx AppShell, TopNav, and SideNav now wrap the app; Library, Products, People, Usage, and Settings use Astryx controls and shared collection patterns.
 - The Set tool has Plan and Review phases, a plan preview board, a read-only review, and no duplicate right panel. Photo has a fitted canvas, exporter-aligned rotate/crop preview, a draggable compare divider, and keyboard crop controls. Create results have persistent Edit, Download, Save as Product, and More actions plus a lightbox. Workspace panels can be resized and persist their widths. The custom canvas, crop overlay, filmstrip, and brand preview remain custom.

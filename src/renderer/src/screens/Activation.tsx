@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, ExternalLink, Loader2 } from 'lucide-react'
-import { Icon } from '@astryxdesign/core'
+import { Eye, EyeOff, ExternalLink } from 'lucide-react'
+import { Button, Icon, TextInput } from '@astryxdesign/core'
 import { LICENSE_PORTAL_URL, LICENSE_STORE_URL, isStoreUrlPlaceholder } from '@shared/constants'
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf, CallError } from '../lib/ipc'
 import { markUrl } from '../lib/assets'
-import { Button } from '../components/ui/Button'
-import { Field } from '../components/ui/Field'
 import { toast } from '../lib/toast'
 
 export function Activation(): React.JSX.Element {
@@ -83,19 +81,18 @@ export function Activation(): React.JSX.Element {
             </div>
           )}
           <div className="mt-5">
-            <Field
+            <TextInput
               label="License key"
               value={key}
-              onChange={(event) => setKey(event.target.value)}
+              onChange={(value) => setKey(value)}
               placeholder="Your license key"
               type={show ? 'text' : 'password'}
-              disabled={busy}
-              autoFocus
-              error={error}
-              className="font-mono"
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') void activate()
-              }}
+              isDisabled={busy}
+              hasAutoFocus
+              status={error ? { type: 'error', message: error } : undefined}
+              containerClassName="font-mono"
+              width="100%"
+              onEnter={() => void activate()}
             />
             <button
               type="button"
@@ -106,15 +103,14 @@ export function Activation(): React.JSX.Element {
               {show ? <Icon icon={EyeOff} size="xsm" /> : <Icon icon={Eye} size="xsm" />} {show ? 'Hide key' : 'Show key'}
             </button>
           </div>
-          <Button variant="primary" className="mt-5 w-full" disabled={busy} onClick={() => void activate()}>
-            {busy ? (
-              <>
-                <Icon icon={Loader2} size="sm" className="animate-spin" /> Activating...
-              </>
-            ) : (
-              'Activate'
-            )}
-          </Button>
+          <Button
+            variant="primary"
+            className="mt-5"
+            width="100%"
+            isLoading={busy}
+            onClick={() => void activate()}
+            label="Activate"
+          />
           <div className="mt-4 flex flex-col items-start gap-2">
             {storeReady ? (
               <button
