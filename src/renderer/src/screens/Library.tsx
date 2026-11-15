@@ -90,7 +90,7 @@ export function Library(): React.JSX.Element {
   const [productsTab, setProductsTab] = useState(false)
   const [setsTab, setSetsTab] = useState(false)
   const [sets, setSets] = useState<SetSummary[]>([])
-  const [setsLoading, setSetsLoading] = useState(false)
+  const [setsLoading, setSetsLoading] = useState(true)
   const [setsError, setSetsError] = useState<string | null>(null)
   const [setPage, setSetPage] = useState(1)
   const [productPage, setProductPage] = useState(1)
@@ -147,6 +147,10 @@ export function Library(): React.JSX.Element {
       setSetsLoading(false)
     }
   }
+
+  useEffect(() => {
+    void loadSets()
+  }, [])
 
   useEffect(() => {
     if (setsTab) void loadSets()
@@ -477,6 +481,11 @@ export function Library(): React.JSX.Element {
                         {` · ${userProducts.length} ${userProducts.length === 1 ? 'product' : 'products'}`}
                       </span>
                     )}
+                    {sets.length > 0 && (
+                      <span>
+                        {` · ${sets.length} ${sets.length === 1 ? 'set' : 'sets'}`}
+                      </span>
+                    )}
                   </>
                 ) : filtering ? (
                   `Showing ${store.total} of ${allTotal || store.total}`
@@ -602,13 +611,7 @@ export function Library(): React.JSX.Element {
               }}
             >
               {filters.map((filter) => (
-                <ToggleButton
-                  key={filter.id}
-                  value={filter.id}
-                  label={filter.label}
-                  icon={filter.id === 'sets' ? <Icon icon={Layers} size="sm" /> : undefined}
-                  size="sm"
-                />
+                <ToggleButton key={filter.id} value={filter.id} label={filter.label} size="sm" />
               ))}
             </ToggleButtonGroup>
             {!setsTab && (
@@ -696,6 +699,23 @@ export function Library(): React.JSX.Element {
                     product={product}
                     onOpen={() => navigate(`/product/${product.id}`)}
                   />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {!productsTab && !setsTab && store.filter === 'all' && !selectMode && selected.size === 0 && filteredSets.length > 0 && (
+            <section className="mt-5" aria-labelledby="all-sets-heading">
+              <div className="flex items-baseline gap-2">
+                <h2 id="all-sets-heading" className="section-label">Sets</h2>
+                <span className="meta-faint">{filteredSets.length}</span>
+              </div>
+              <div
+                className="mt-3 grid gap-4"
+                style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}
+              >
+                {filteredSets.map((set) => (
+                  <SetCard key={set.id} set={set} onOpen={() => navigate(`/sets/${set.id}`)} />
                 ))}
               </div>
             </section>
