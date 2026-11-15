@@ -50,6 +50,7 @@ export const SUPPORTED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp'] a
 export const APP_ALLOWED_EXTERNAL_HOSTS = [
   'dev.meta.ai',
   'docs.meta.ai',
+  new URL(STUDIO_URL).host,
   new URL(LICENSE_STORE_URL).host,
   LICENSE_PORTAL_HOST
 ] as const
