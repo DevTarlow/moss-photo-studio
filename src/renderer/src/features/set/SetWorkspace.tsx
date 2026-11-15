@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertCircle, PanelLeft, Sparkles } from 'lucide-react'
+import { AlertCircle, PackageCheck, PanelLeft, Sparkles } from 'lucide-react'
 import type { Image, JobItemState, JobState, PlanJson, PlanShot, Project } from '@shared/types'
 import { MAX_SET_SHOTS } from '@shared/constants'
 import { CATEGORY_CHIPS, recipeById } from '@shared/prompts/recipes'
@@ -784,6 +784,11 @@ export function SetWorkspace({ preferredPersonId, preferredPersonLook }: { prefe
             <>
               {madeCount > 0 && (
                 <Button variant="ghost" onClick={() => setLightboxIndex(0)}>View Images</Button>
+              )}
+              {exportableImages.length > 0 && (
+                <Button variant="ghost" onClick={() => navigate(`/listing-kit?project=${project.id}`)}>
+                  <Icon icon={PackageCheck} size="sm" /> Listing Kit
+                </Button>
               )}
               {(madeCount > 0 && madeCount < enabledShots.length) || (exportableImages.length > 0 && madeCount === 0) ? (
                 <Button variant="secondary" onClick={() => setExportOpen(true)}>Export What I Have</Button>

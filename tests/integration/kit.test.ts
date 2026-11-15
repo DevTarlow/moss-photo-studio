@@ -188,4 +188,61 @@ describe('listing kit', () => {
     const offset = Math.floor((pixel.info.height / 2) * pixel.info.width + pixel.info.width / 2) * pixel.info.channels
     expect(pixel.data[offset]).toBeGreaterThan(pixel.data[offset + 1] ?? 0)
   })
+
+  it('packs one selected ready image for a project without a plan', async () => {
+    const project = projects.create({ type: 'image', name: 'Mug studio shot' })
+    const imageId = crypto.randomUUID()
+    const relative = path.posix.join('projects', project.id, 'images', `${imageId}.webp`)
+    const absolute = path.join(dir, 'library', relative)
+    fs.mkdirSync(path.dirname(absolute), { recursive: true })
+    await sharp({ create: { width: 900, height: 1200, channels: 3, background: { r: 180, g: 120, b: 80 } } })
+      .webp()
+      .toFile(absolute)
+    images.create({
+      id: imageId,
+      projectId: project.id,
+      kind: 'render',
+      status: 'ready',
+      label: 'Mug front 2',
+      prompt: 'a mug on a pale table',
+      file: relative,
+      format: 'webp',
+      costCents: 1
+    })
+    const folder = await createKitFolder(path.join(dir, 'kits'))
+    const result = await exportKit({
+      libraryPath: libraryPath(),
+      folder,
+      project: projects.get(project.id)!,
+      images: images.list(project.id, false),
+      imageIds: [imageId],
+      productName: 'Glazed mug',
+      platform: 'etsy',
+      includeOriginal: false
+    })
+    expect(result.count).toBe(1)
+    expect(result.includesOriginal).toBe(false)
+    const files = fs.readdirSync(folder)
+    expect(files).toContain('kit.json')
+    expect(files).toContain('listing.csv')
+    expect(files).toContain('README.txt')
+    expect(files).not.toContain('listing.md')
+    const listing = files.filter((file) => file.endsWith('.jpg'))
+    expect(listing).toHaveLength(1)
+    expect(listing[0]).toMatch(/^01-mug-front-2-etsy\.jpg$/)
+    const meta = await sharp(path.join(folder, listing[0]!)).metadata()
+    expect(meta.width).toBe(2000)
+    expect(meta.height).toBe(2000)
+    const manifest = JSON.parse(fs.readFileSync(path.join(folder, 'kit.json'), 'utf8')) as {
+      product: string
+      project: string
+      images: Array<{ shot: string; direction: string; altText: string }>
+    }
+    expect(manifest.product).toBe('Glazed mug')
+    expect(manifest.project).toBe('Mug studio shot')
+    expect(manifest.images[0]?.shot).toBe('Mug front 2')
+    expect(manifest.images[0]?.direction).toBe('a mug on a pale table')
+    expect(manifest.images[0]?.altText).toContain('Glazed mug')
+    expect(manifest.images[0]?.altText).toContain('Mug front 2')
+  })
 })

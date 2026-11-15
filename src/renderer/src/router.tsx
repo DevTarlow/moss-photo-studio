@@ -6,6 +6,7 @@ import { Library } from './screens/Library'
 import { People } from './screens/People'
 import { Products } from './screens/Products'
 import { ProductDetail } from './screens/ProductDetail'
+import { ListingKit } from './screens/ListingKit'
 import { Usage } from './screens/Usage'
 import { Settings } from './screens/Settings'
 import { Workspace } from './screens/Workspace'
@@ -19,6 +20,7 @@ const children = [
   { path: 'people', element: <People /> },
   { path: 'products', element: <Products /> },
   { path: 'product/:id', element: <ProductDetail /> },
+  { path: 'listing-kit', element: <ListingKit /> },
   { path: 'usage', element: <Usage /> },
   { path: 'settings', element: <Navigate to="/settings/studio" replace /> },
   { path: 'settings/:section', element: <Settings /> },

@@ -15,6 +15,7 @@ export function KitExportDialog({
   project,
   productName,
   imageCount,
+  imageIds,
   onExported
 }: {
   open: boolean
@@ -22,12 +23,15 @@ export function KitExportDialog({
   project: Project
   productName: string
   imageCount: number
+  /** When present, pack exactly these ready images instead of the set's plan shots. */
+  imageIds?: string[]
   onExported?: (count: number) => void
 }): React.JSX.Element {
   const [platform, setPlatform] = useState('etsy')
   const [includeOriginal, setIncludeOriginal] = useState(true)
   const [exporting, setExporting] = useState(false)
   const preset = marketplaceById(platform)
+  const canIncludeOriginal = Boolean(project.sourceImageId)
 
   const choosePlatform = (next: string): void => {
     setPlatform(next)
@@ -38,7 +42,7 @@ export function KitExportDialog({
     setExporting(true)
     try {
       const result = await unwrap(
-        window.moss.kit.export({ projectId: project.id, platform, includeOriginal })
+        window.moss.kit.export({ projectId: project.id, platform, includeOriginal, imageIds })
       )
       if (result.count === 0) {
         toast.error('There are no ready images to kit yet.')
@@ -89,21 +93,23 @@ export function KitExportDialog({
         </select>
         <p className="hint mt-2">{preset.note}</p>
       </div>
-      <label className="mt-4 flex items-start gap-2 text-[12px]">
-        <input
-          type="checkbox"
-          checked={includeOriginal}
-          disabled={exporting}
-          onChange={(event) => setIncludeOriginal(event.target.checked)}
-          className="mt-0.5"
-        />
-        <span>
-          Include the untouched original photo
-          <span className="mt-0.5 block text-[11px]" style={{ color: 'var(--text-faint)' }}>
-            Recommended for Etsy. The kit writes `original` beside the listing images and names it in the manifest.
+      {canIncludeOriginal && (
+        <label className="mt-4 flex items-start gap-2 text-[12px]">
+          <input
+            type="checkbox"
+            checked={includeOriginal}
+            disabled={exporting}
+            onChange={(event) => setIncludeOriginal(event.target.checked)}
+            className="mt-0.5"
+          />
+          <span>
+            Include the untouched original photo
+            <span className="mt-0.5 block text-[11px]" style={{ color: 'var(--text-faint)' }}>
+              Recommended for Etsy. The kit writes `original` beside the listing images and names it in the manifest.
+            </span>
           </span>
-        </span>
-      </label>
+        </label>
+      )}
       <div className="mt-4 rounded-[8px] border p-3 text-[11px]" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
         <p>Each image is written at {preset.width} × {preset.height}, with an alt-text line and a CSV manifest.</p>
         <p className="mt-1">Rules checked {MARKETPLACES_AS_OF}. Check the shop's current limits before uploading.</p>

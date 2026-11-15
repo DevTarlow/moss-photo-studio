@@ -852,6 +852,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                           label={`More actions for ${image.label}`}
                           size="sm"
                           items={[
+                            { label: 'Make a Listing Kit', onClick: () => navigate(`/listing-kit?image=${image.id}`) },
                             { label: "Use as a Set's Photo", onClick: () => void useAsSet(image) },
                             { label: 'Delete', onClick: () => void remove(image) }
                           ]}

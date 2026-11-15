@@ -63,7 +63,7 @@ export interface IpcChannels {
   'backup:status': { request: undefined; response: BackupStatus }
   'diagnostics:create': { request: undefined; response: { folderName: string } }
   'kit:export': {
-    request: { projectId: string; platform: string; includeOriginal?: boolean }
+    request: { projectId: string; platform: string; includeOriginal?: boolean; imageIds?: string[] }
     response: KitExportResult
   }
   'listings:get': {

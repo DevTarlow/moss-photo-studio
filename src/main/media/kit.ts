@@ -21,6 +21,13 @@ interface KitImage {
   bytes: number
 }
 
+interface KitEntry {
+  image: Image
+  label: string
+  direction: string
+  fileLabel: string
+}
+
 function imageFile(libraryPath: string, image: Image): string {
   if (image.kind !== 'upload' && image.url) {
     return absoluteInLibrary(libraryPath, decodeURI(image.url.replace('moss-media://library/', '')))
@@ -37,11 +44,62 @@ function originalFile(libraryPath: string, image: Image): string | null {
   }
 }
 
-function altText(productName: string, shot: PlanJson['shots'][number], max: number): string {
-  const definition = shotDefinition(shot.type)
-  const direction = shot.direction.trim() || definition.defaultDirection
-  const text = `${productName}: ${definition.label}. ${direction}`
+function altText(productName: string, label: string, direction: string, max: number): string {
+  const text = `${productName}: ${label}. ${direction}`
   return text.slice(0, max).trim()
+}
+
+/** A short, filename-safe word from a shot or image label. */
+function slug(text: string): string {
+  return (
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40) || 'listing-image'
+  )
+}
+
+function imageDirection(image: Image): string {
+  if (image.isOriginal || image.kind === 'upload') return 'The original photo, as uploaded'
+  if (image.kind === 'adjust') return 'A locally adjusted listing image'
+  const text = image.userText?.trim() || image.prompt?.trim() || ''
+  return text.replace(/\s+/g, ' ').slice(0, 500) || 'The image as made'
+}
+
+function imageEntries(images: Image[], imageIds: string[]): KitEntry[] {
+  const wanted = new Set(imageIds)
+  return images
+    .filter((image) => wanted.has(image.id) && image.status === 'ready')
+    .sort((a, b) => a.createdAt - b.createdAt || a.seq - b.seq)
+    .map((image) => ({
+      image,
+      label: image.label || 'Listing image',
+      direction: imageDirection(image),
+      fileLabel: slug(image.label || 'Listing image')
+    }))
+}
+
+function planEntries(images: Image[], plan: PlanJson): KitEntry[] {
+  const entries: KitEntry[] = []
+  for (const shot of plan.shots) {
+    if (!shot.enabled) continue
+    const definition = shotDefinition(shot.type)
+    const ready = images
+      .filter((image) => image.shotId === shot.id && image.status === 'ready')
+      .sort((a, b) => a.createdAt - b.createdAt || a.seq - b.seq)
+    const chosen =
+      (shot.selectedImageId ? ready.find((image) => image.id === shot.selectedImageId) : undefined) ??
+      ready.at(-1)
+    if (!chosen) continue
+    entries.push({
+      image: chosen,
+      label: definition.label,
+      direction: shot.direction.trim() || definition.defaultDirection,
+      fileLabel: definition.fileLabel
+    })
+  }
+  return entries
 }
 
 async function encode(
@@ -103,8 +161,12 @@ export async function exportKit(input: {
   libraryPath: string
   folder: string
   project: Project
-  plan: PlanJson
+  plan?: PlanJson | null
   images: Image[]
+  /** When present, pack exactly these ready images instead of the plan shots. */
+  imageIds?: string[]
+  /** The product name for alt text and the manifest. Falls back to the plan or project name. */
+  productName?: string
   platform: string
   includeOriginal?: boolean
   listing?: ListingCopy | null
@@ -114,30 +176,32 @@ export async function exportKit(input: {
   const taken = new Set<string>()
   const written: KitImage[] = []
   const warnings: string[] = []
-  const enabled = input.plan.shots.filter((shot) => shot.enabled)
+  const productName =
+    input.productName?.trim() || input.plan?.productName.trim() || input.project.name
+  let entries: KitEntry[]
+  if (input.imageIds?.length) {
+    entries = imageEntries(input.images, input.imageIds)
+  } else {
+    if (!input.plan) throw new Error('kit_plan_missing')
+    entries = planEntries(input.images, input.plan)
+  }
   let number = 0
-  for (const shot of enabled) {
-    const definition = shotDefinition(shot.type)
-    const ready = input.images
-      .filter((image) => image.shotId === shot.id && image.status === 'ready')
-      .sort((a, b) => a.createdAt - b.createdAt || a.seq - b.seq)
-    const chosen = (shot.selectedImageId ? ready.find((image) => image.id === shot.selectedImageId) : undefined) ?? ready.at(-1)
-    if (!chosen) continue
+  for (const entry of entries) {
     number += 1
     const file = await ensureUniquePath(
       folder,
-      `${String(number).padStart(2, '0')}-${definition.fileLabel}-${preset.id}`,
+      `${String(number).padStart(2, '0')}-${entry.fileLabel}-${preset.id}`,
       preset.format === 'jpeg' ? 'jpg' : preset.format,
       taken
     )
-    const encoded = await encode(imageFile(input.libraryPath, chosen), preset)
+    const encoded = await encode(imageFile(input.libraryPath, entry.image), preset)
     await fs.writeFile(file, encoded.bytes)
     if (encoded.warning) warnings.push(encoded.warning)
     written.push({
       file: path.basename(file),
-      shot: definition.label,
-      direction: shot.direction.trim() || definition.defaultDirection,
-      altText: altText(input.plan.productName || input.project.name, shot, preset.altTextMax),
+      shot: entry.label,
+      direction: entry.direction,
+      altText: altText(productName, entry.label, entry.direction, preset.altTextMax),
       width: encoded.width,
       height: encoded.height,
       bytes: encoded.bytes.length
@@ -166,7 +230,7 @@ export async function exportKit(input: {
 
   const listing = input.listing ?? null
   const manifest = {
-    product: input.plan.productName || input.project.name,
+    product: productName,
     project: input.project.name,
     platform: preset.label,
     platformId: preset.id,

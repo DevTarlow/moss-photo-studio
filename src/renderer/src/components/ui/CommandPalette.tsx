@@ -98,6 +98,13 @@ export function CommandPalette(): React.JSX.Element {
         }
       },
       {
+        id: 'listing-kit',
+        group: 'Actions',
+        label: 'Open Listing Kit',
+        hint: 'Pack a product, set, or image',
+        run: () => go('/listing-kit')
+      },
+      {
         id: 'export-current',
         group: 'Actions',
         label: 'Export current project',

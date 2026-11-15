@@ -30,7 +30,7 @@ Generated images can be saved as a product, a person, or a set photo. A generate
 
 The Listing Writer writes titles, descriptions, features, and tags from the product photo, the set plan, and the optional business profile. Etsy, Shopify, and own-site limits are applied to the copy, and every version is editable and saved.
 
-The Listing Kit builds a local package from the latest set: marketplace presets for Etsy, Shopify, Instagram, TikTok Shop, eBay, and your own site, platform-sized JPEGs, an untouched original, an alt-text line per shot, a `listing.md` when listing copy exists, a `listing.csv`, a `kit.json`, and an AI disclosure.
+The Listing Kit is its own tool in the rail. Start from a product, a finished set in All work, or one ready image. It builds a local package with marketplace presets for Etsy, Shopify, Instagram, TikTok Shop, eBay, and your own site, platform-sized JPEGs, an untouched original, an alt-text line per image, a `listing.md` when listing copy exists, a `listing.csv`, a `kit.json`, and an AI disclosure. The kit is written to a folder you choose and is never uploaded. When the work is not under a saved product yet, the kit offers to save it as one so the listing copy can be written.
 
 ### Keep the costs visible
 

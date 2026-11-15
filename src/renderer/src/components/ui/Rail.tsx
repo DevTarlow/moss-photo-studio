@@ -10,6 +10,7 @@ import {
   Layers,
   Monitor,
   Package,
+  PackageCheck,
   Palette,
   RefreshCw,
   RotateCcw,
@@ -47,7 +48,8 @@ const items = [
 const tools = [
   { to: '/library?new=set', label: 'New Set', icon: <Icon icon={Layers} size="md" strokeWidth={1.75} /> },
   { to: '/library?new=photo', label: 'Image Editor', icon: <Icon icon={ImageIcon} size="md" strokeWidth={1.75} /> },
-  { to: '/library?new=image', label: 'Image Generator', icon: <Icon icon={Sparkles} size="md" strokeWidth={1.75} /> }
+  { to: '/library?new=image', label: 'Image Generator', icon: <Icon icon={Sparkles} size="md" strokeWidth={1.75} /> },
+  { to: '/listing-kit', label: 'Listing Kit', icon: <Icon icon={PackageCheck} size="md" strokeWidth={1.75} /> }
 ]
 
 export function Rail({
@@ -123,7 +125,7 @@ export function Rail({
             label={tool.label}
             icon={tool.icon}
             href={tool.to}
-            isSelected={false}
+            isSelected={location.pathname === tool.to}
           />
         ))}
       </SideNavSection>

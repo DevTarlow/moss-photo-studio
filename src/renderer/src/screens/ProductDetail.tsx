@@ -10,6 +10,7 @@ import {
   Link2,
   Loader2,
   Package,
+  PackageCheck,
   Sparkles,
   Trash2
 } from 'lucide-react'
@@ -22,7 +23,6 @@ import { ErrorState } from '../components/ui/ErrorState'
 import { Field } from '../components/ui/Field'
 import { Skeleton } from '../components/ui/Skeleton'
 import { useConfirm } from '../components/ui/ConfirmProvider'
-import { KitExportDialog } from '../components/set/KitExportDialog'
 import { ListingPanel } from '../components/listings/ListingPanel'
 import { useAppStore } from '../store/app'
 import { LISTING_COST_LABEL } from '@shared/cost'
@@ -89,7 +89,6 @@ export function ProductDetail(): React.JSX.Element {
   const [savingDetails, setSavingDetails] = useState(false)
   const [reading, setReading] = useState(false)
   const [linkOpen, setLinkOpen] = useState(false)
-  const [kitOpen, setKitOpen] = useState(false)
   const [unfiled, setUnfiled] = useState<Project[]>([])
 
   const load = async (): Promise<void> => {
@@ -342,7 +341,12 @@ export function ProductDetail(): React.JSX.Element {
               <div className="card mt-5 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="section-label">Listing kit</p>
-                  <Button variant="ghost" size="sm" onClick={() => void openLink()}><Icon icon={Link2} size="sm" /> Link existing work</Button>
+                  <div className="flex flex-wrap items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => void openLink()}><Icon icon={Link2} size="sm" /> Link existing work</Button>
+                    <Button variant="secondary" size="sm" onClick={() => navigate(`/listing-kit?product=${product.id}`)}>
+                      <Icon icon={PackageCheck} size="sm" /> Open Listing Kit
+                    </Button>
+                  </div>
                 </div>
                 <div className="mt-3 grid gap-2">
                   <div className="flex items-center gap-2 text-[12px]">
@@ -358,11 +362,10 @@ export function ProductDetail(): React.JSX.Element {
                     <span className="flex h-5 w-5 items-center justify-center rounded-full" style={{ background: 'var(--surface-2)', color: 'var(--text-faint)' }}>
                       {latest ? '→' : '3'}
                     </span>
-                    <span>{latest ? 'Open the latest set to review and export' : 'Export comes after the first set'}</span>
+                    <span>{latest ? 'Review the latest set, then pack it in Listing Kit' : 'Export comes after the first set'}</span>
                     {latest && (
                       <div className="ml-auto flex items-center gap-1">
                         <Button variant="ghost" size="sm" onClick={() => navigate(`/project/${latest.id}`)}>Open set</Button>
-                        <Button variant="secondary" size="sm" onClick={() => setKitOpen(true)}>Export Kit</Button>
                       </div>
                     )}
                   </div>
@@ -441,16 +444,6 @@ export function ProductDetail(): React.JSX.Element {
           </section>
         </div>
       </div>
-
-      {latest && (
-        <KitExportDialog
-          open={kitOpen}
-          onOpenChange={setKitOpen}
-          project={latest}
-          productName={product.name}
-          imageCount={latest.imageCount}
-        />
-      )}
 
       <Dialog
         open={renaming}

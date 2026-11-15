@@ -473,16 +473,26 @@ export function registerIpcHandlers(context: AppContext): void {
     z.object({
       projectId: idSchema,
       platform: z.enum(['etsy', 'shopify', 'instagram', 'tiktok', 'ebay', 'own']),
-      includeOriginal: z.boolean().optional()
+      includeOriginal: z.boolean().optional(),
+      imageIds: z.array(idSchema).min(1).max(20).optional()
     }),
-    async ({ projectId, platform, includeOriginal }) => {
+    async ({ projectId, platform, includeOriginal, imageIds }) => {
       const project = context.projects.get(projectId)
-      if (!project || project.type !== 'set') throw new IpcFault('not_found')
+      if (!project) throw new IpcFault('not_found')
       const plan = context.plans.getActive(projectId)
-      if (!plan) throw new IpcFault('invalid_payload', 'Plan the set first.')
       const images = context.images.list(projectId, false)
-      if (!images.some((image) => image.status === 'ready' && image.shotId)) {
-        throw new IpcFault('invalid_payload', 'Make at least one image first.')
+      if (imageIds?.length) {
+        const wanted = new Set(imageIds)
+        const found = images.filter((image) => wanted.has(image.id) && image.status === 'ready')
+        if (found.length !== wanted.size) {
+          throw new IpcFault('invalid_payload', 'Choose a ready image to pack.')
+        }
+      } else {
+        if (project.type !== 'set') throw new IpcFault('invalid_payload', 'Choose an image to pack.')
+        if (!plan) throw new IpcFault('invalid_payload', 'Plan the set first.')
+        if (!images.some((image) => image.status === 'ready' && image.shotId)) {
+          throw new IpcFault('invalid_payload', 'Make at least one image first.')
+        }
       }
       const pick = await openFolderDialog(context, {
         title: 'Choose where to save the listing kit',
@@ -497,12 +507,15 @@ export function registerIpcHandlers(context: AppContext): void {
       const listing = project.productId && listingPlatform
         ? context.listings.latest(project.productId, listingPlatform)?.copy ?? null
         : null
+      const linkedProduct = project.productId ? context.products.get(project.productId) : null
       const result = await exportKit({
         libraryPath: context.libraryPath(),
         folder,
         project,
-        plan: plan.json,
+        plan: plan?.json ?? null,
         images,
+        imageIds,
+        productName: linkedProduct?.name,
         platform,
         includeOriginal,
         listing

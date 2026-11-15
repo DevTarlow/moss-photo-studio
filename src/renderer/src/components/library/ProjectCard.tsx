@@ -22,6 +22,7 @@ export interface ProjectCardProps {
   onRename: () => void
   onDuplicate: () => void
   onExport: () => void
+  onListingKit?: () => void
   onDelete: () => void
 }
 
@@ -35,6 +36,7 @@ export function ProjectCard({
   onRename,
   onDuplicate,
   onExport,
+  onListingKit,
   onDelete
 }: ProjectCardProps): React.JSX.Element {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -72,7 +74,7 @@ export function ProjectCard({
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <ProjectMenuContent onRename={onRename} onDuplicate={onDuplicate} onExport={onExport} onDelete={onDelete} />
+        <ProjectMenuContent onRename={onRename} onDuplicate={onDuplicate} onExport={onExport} onListingKit={onListingKit} onDelete={onDelete} />
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
   )

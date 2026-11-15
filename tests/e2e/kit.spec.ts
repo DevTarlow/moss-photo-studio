@@ -58,7 +58,7 @@ test('a product exports a marketplace kit with the original and a manifest', asy
 
     await page.evaluate((id) => { window.location.hash = `#/product/${id}` }, ids.productId)
     await expect(page.getByRole('heading', { name: 'Kit candle', exact: true })).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByText('Listing kit')).toBeVisible()
+    await expect(page.getByText('Listing kit', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: /Read the photo/ }).click()
     await expect(page.getByText('What we see')).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('Speckled glaze')).toBeVisible()
@@ -73,6 +73,10 @@ test('a product exports a marketplace kit with the original and a manifest', asy
     await app.evaluate(({ dialog }, folder) => {
       dialog.showOpenDialog = (async () => ({ canceled: false, filePaths: [folder] })) as typeof dialog.showOpenDialog
     }, exportFolder)
+
+    await page.getByRole('button', { name: 'Open Listing Kit', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Listing Kit', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Export Kit', exact: true })).toBeEnabled({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Export Kit', exact: true }).click()
     const dialog = page.getByRole('dialog')
     await expect(dialog.getByRole('heading', { name: 'Export Listing Kit' })).toBeVisible()
@@ -101,6 +105,37 @@ test('a product exports a marketplace kit with the original and a manifest', asy
     expect(manifest.images[0]?.altText).toContain('Kit candle')
     const listingCopy = fs.readFileSync(path.join(folder, 'listing.md'), 'utf8')
     expect(listingCopy).toContain('Kit candle - hand poured in small batches')
+
+    // A single ready image packs one platform-sized JPEG for the same listing copy.
+    await page.getByRole('link', { name: 'Listing Kit', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Images', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Images', exact: true }).click()
+    const imageCard = page.getByRole('button', { name: /^Choose image / }).first()
+    await expect(imageCard).toBeVisible({ timeout: 20_000 })
+    await imageCard.click()
+    await expect(page.getByRole('button', { name: 'Export Kit', exact: true })).toBeEnabled({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Export Kit', exact: true }).click()
+    const imageDialog = page.getByRole('dialog')
+    await expect(imageDialog.getByRole('heading', { name: 'Export Listing Kit' })).toBeVisible()
+    await imageDialog.getByRole('button', { name: 'Export Kit', exact: true }).click()
+
+    await expect.poll(() => {
+      const folders = fs.readdirSync(exportFolder).filter((name) => fs.statSync(path.join(exportFolder, name)).isDirectory())
+      return folders.filter((name) => name !== folderName && fs.existsSync(path.join(exportFolder, name, 'kit.json'))).length
+    }, { timeout: 20_000 }).toBe(1)
+    const imageFolderName = fs.readdirSync(exportFolder).find(
+      (name) => name !== folderName && fs.existsSync(path.join(exportFolder, name, 'kit.json'))
+    )!
+    const imageFolder = path.join(exportFolder, imageFolderName)
+    const imageFiles = fs.readdirSync(imageFolder)
+    expect(imageFiles.filter((file) => file.endsWith('.jpg'))).toHaveLength(1)
+    expect(imageFiles).toContain('listing.csv')
+    expect(imageFiles).toContain('listing.md')
+    const imageManifest = JSON.parse(fs.readFileSync(path.join(imageFolder, 'kit.json'), 'utf8')) as {
+      images: Array<{ shot: string; altText: string }>
+    }
+    expect(imageManifest.images).toHaveLength(1)
+    expect(imageManifest.images[0]?.altText).toContain('Kit candle')
   } finally {
     await app.close().catch(() => undefined)
     fs.rmSync(userData, { recursive: true, force: true })

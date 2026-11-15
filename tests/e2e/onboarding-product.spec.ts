@@ -67,7 +67,7 @@ test('onboarding saves the first photo as a Product without creating a set', asy
     await expect(page.getByRole('button', { name: 'Open Library' })).toBeHidden()
     await page.getByRole('button', { name: 'Finish Setup' }).click()
     await expect(page.getByRole('heading', { name: 'product', exact: true })).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByText('Listing kit')).toBeVisible()
+    await expect(page.getByText('Listing kit', { exact: true })).toBeVisible()
     await expect(page.getByText('No work yet')).toBeVisible()
 
     const afterSave = await page.evaluate(async () => {

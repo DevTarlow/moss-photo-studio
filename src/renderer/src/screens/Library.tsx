@@ -342,20 +342,31 @@ export function Library(): React.JSX.Element {
   const showNoKey = Boolean(settings?.onboardingDone && secrets?.hasKey === false && license?.status !== 'expired')
   const showBanners = license?.status === 'grace' || license?.status === 'expired' || showSetup || showNoKey
 
-  const renderProject = (project: Project, view: 'grid' | 'list'): React.ReactNode => (
-    <ProjectCard
-      project={project}
-      view={view}
-      job={jobFor(project.id)}
-      selected={selected.has(project.id)}
-      selecting={selectMode || selected.size > 0}
-      onSelect={(next) => toggleSelect(project.id, next)}
-      onRename={() => { setRenameProject(project); setRenameValue(project.name) }}
-      onDuplicate={() => void duplicate(project)}
-      onExport={() => void exportProject(project)}
-      onDelete={() => void remove(project)}
-    />
-  )
+  const listingKitPath = (project: Project): string | null =>
+    project.type === 'set'
+      ? `/listing-kit?project=${project.id}`
+      : project.coverImageId
+        ? `/listing-kit?image=${project.coverImageId}`
+        : null
+
+  const renderProject = (project: Project, view: 'grid' | 'list'): React.ReactNode => {
+    const kitPath = listingKitPath(project)
+    return (
+      <ProjectCard
+        project={project}
+        view={view}
+        job={jobFor(project.id)}
+        selected={selected.has(project.id)}
+        selecting={selectMode || selected.size > 0}
+        onSelect={(next) => toggleSelect(project.id, next)}
+        onRename={() => { setRenameProject(project); setRenameValue(project.name) }}
+        onDuplicate={() => void duplicate(project)}
+        onExport={() => void exportProject(project)}
+        onListingKit={kitPath ? () => navigate(kitPath) : undefined}
+        onDelete={() => void remove(project)}
+      />
+    )
+  }
 
   return (
     <AppFrame>

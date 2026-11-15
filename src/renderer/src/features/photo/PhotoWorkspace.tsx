@@ -602,6 +602,7 @@ export function PhotoWorkspace(): React.JSX.Element {
       onFormatChange={(format) => { void useWorkspaceStore.getState().updateProject({ format }).catch(() => toast.error('The format could not be saved.')) }}
       onSaveProduct={selected ? () => setSaveProductImageId(selected.id) : undefined}
       onSavePerson={selected ? () => setSavePersonImageId(selected.id) : undefined}
+      onListingKit={(image) => navigate(`/listing-kit?image=${image.id}`)}
     />
   )
 

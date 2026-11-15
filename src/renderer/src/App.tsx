@@ -29,6 +29,7 @@ function titleForPath(pathname: string): string {
   const labels: Record<string, string> = {
     library: 'Library',
     products: 'Products',
+    'listing-kit': 'Listing Kit',
     people: 'People',
     usage: 'Usage',
     settings: 'Settings',

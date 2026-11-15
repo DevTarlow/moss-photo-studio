@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { Icon } from '@astryxdesign/core'
+import type { Product } from '@shared/types'
 import { Dialog } from '../ui/Dialog'
 import { Field } from '../ui/Field'
 import { Button } from '../ui/Button'
@@ -12,12 +13,15 @@ export function SaveProductDialog({
   open,
   onOpenChange,
   imageId,
-  defaultName
+  defaultName,
+  onSaved
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   imageId: string | null
   defaultName: string
+  /** Called after the product is saved and the store is refreshed. */
+  onSaved?: (product: Product) => void
 }): React.JSX.Element {
   const refreshProducts = useAppStore((state) => state.refreshProducts)
   const [name, setName] = useState(defaultName)
@@ -36,10 +40,11 @@ export function SaveProductDialog({
     if (!imageId) return
     setBusy(true)
     try {
-      await unwrap(window.moss.products.createFromImage({ imageId, name: value }))
+      const product = await unwrap(window.moss.products.createFromImage({ imageId, name: value }))
       await refreshProducts()
       toast.status('Saved to Products.')
       onOpenChange(false)
+      onSaved?.(product)
     } catch (caught) {
       toast.error(messageOf(caught))
     } finally {

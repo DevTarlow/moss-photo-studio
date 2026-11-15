@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DropdownMenu } from 'radix-ui'
-import { Image as ImageIcon, Layers, Loader2, Package, Plus, Search, Sparkles } from 'lucide-react'
+import { Image as ImageIcon, Layers, Loader2, Package, PackageCheck, Plus, Search, Sparkles } from 'lucide-react'
 import type { Product, Project, ProjectType } from '@shared/types'
 import { bundledProductCards } from '@shared/products'
 import { AppFrame } from '../components/ui/AppFrame'
@@ -24,11 +24,13 @@ function ProductCard({
   product,
   onOpen,
   onRename,
+  onListingKit,
   onDelete
 }: {
   product: Product
   onOpen: () => void
   onRename?: () => void
+  onListingKit?: () => void
   onDelete?: () => void
 }): React.JSX.Element {
   return (
@@ -61,6 +63,11 @@ function ProductCard({
             <DropdownMenu.Portal>
               <DropdownMenu.Content className="menu-content" align="end" sideOffset={4}>
                 <DropdownMenu.Item className="menu-item" onSelect={onRename}>Rename</DropdownMenu.Item>
+                {onListingKit && (
+                  <DropdownMenu.Item className="menu-item" onSelect={onListingKit}>
+                    <Icon icon={PackageCheck} size="sm" /> Listing Kit
+                  </DropdownMenu.Item>
+                )}
                 <DropdownMenu.Item className="menu-item" data-danger="true" onSelect={onDelete}>Delete</DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
@@ -338,6 +345,7 @@ export function Products(): React.JSX.Element {
                           product={product}
                           onOpen={() => navigate(`/product/${product.id}`)}
                           onRename={() => openRename(product)}
+                          onListingKit={() => navigate(`/listing-kit?product=${product.id}`)}
                           onDelete={() => void remove(product)}
                         />
                       ))}
