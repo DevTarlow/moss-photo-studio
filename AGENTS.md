@@ -150,39 +150,39 @@ Notes that save time:
 
 ## 🛠️ Testing & Execution Policy [CRITICAL]
 
-You must strictly manage test execution efficiency. Treat test runs as a scarce resource to minimize latency and token overhead.
+Testing is the final confirmation step, not the development loop. Every Electron launch costs seconds and every broad run costs minutes, so spend runs deliberately.
 
-### 1. Execution Triggers (WHEN to run tests)
-- **NEVER run tests during:** Code exploration, initial scaffolding, file creation, or while writing incomplete logic.
-- **ONLY execute a test command when:**
-  - A discrete code file, feature branch, or refactor step is 100% written and syntactically valid.
-  - You are actively diagnosing a specific stack trace from the immediate prior run.
-  - You are confirming a final fix before declaring a task complete.
+### 1. Test budget (hard limits)
+- **One change, one verification pass.** Do not run the same scope twice unless the first run failed and you changed code.
+- **Never run a bare `npx playwright test`, `npm test`, or `npm run test:e2e` for a copy, layout, single-screen, or single-component change.** These are release checks, not the default loop.
+- **At most one focused E2E spec per change.** If two specs genuinely cover the change, run them in one command.
+- **Full suite only when:** preparing a release, changing shared main-process, IPC, or schema behavior that has no focused coverage, or the owner explicitly asks.
+- **No tests for docs-only edits.** README, AGENTS.md, and docs changes need a link/spelling check, not an app run.
 
 ### 2. Scope Isolation (WHAT to run)
-- **Default to the smallest unit:** Always isolate your test command to the exact file, class, or individual test case matching your edits (e.g., `npx vitest run tests/unit/prompts.test.ts -t "test name"`).
-- **Change-size ladder (default):**
-  - Copy-only change: run `typecheck` when TS/TSX changed and lint the touched files. Do not run unit, integration, or E2E tests.
-  - CSS-only or visual-only change: do the same checks and inspect the screen. If a tracked screenshot baseline changes, run the narrowest E2E capture once to regenerate it, then inspect it.
+- **Default to the smallest unit:** one matching Vitest file or one `-g "<test title>"` case.
+- **Change-size ladder:**
+  - Copy-only: `typecheck` when TS/TSX changed, plus lint on touched files. Do not run unit, integration, or E2E tests.
+  - CSS or layout-only: same checks, then inspect the affected screen. Refresh only screenshots whose surface changed.
   - Isolated logic with unit coverage: run only the matching Vitest file or test.
-  - Renderer behavior observable only in E2E: build once, then run the narrowest `-g "<test title>"` case.
-  - Cross-state or late serial-journey behavior: run one full serial journey for the change, after batching known fixes.
-- **Escalation Path:** You may only expand the scope to a directory or full suite if:
-  1. The isolated unit test passes.
-  2. The code change affects shared utilities, global state, or public interfaces.
-- **Screenshot baselines are expected output, not failures to chase.** When a UI change intentionally changes a tracked baseline, regenerate that baseline, inspect it, and commit it. Do not re-run the full journey just to re-compare a baseline you already accepted.
+  - Renderer behavior only visible in E2E: build once, then run the narrowest `-g "<test title>"` case or one focused spec file.
+  - Cross-state or late serial-journey behavior: run one serial journey after batching fixes. Do not repeat it per one-line change.
+- **Escalation:** widen to a directory or full suite only after a targeted test passes and the change touches shared utilities, global state, or a public interface. A green focused test is enough to stop otherwise.
 
-### 3. Error Recovery Loops (HOW to handle failure)
-- If a test fails, do not blindly modify code and re-run the same command instantly. You must:
-  1. Read and parse the exact failure line/assertion.
-  2. Apply a targeted fix.
-  3. Re-run *only* the failing test case.
-- **Serial E2E exception:** When the failing case cannot run without earlier serial tests, fix all known issues in one pass and re-run the journey once. Do not re-run the full journey after each one-line fix.
-- **Hard Stop:** If a test fails 3 times consecutively with the same error, **STOP** execution immediately, do not run any further commands, and present your findings to the user for guidance.
+### 3. Screenshot Baselines
+- Refresh only the affected images. Do not regenerate the whole screenshot set for one surface change.
+- When `MOSS_UPDATE_SCREENS=1` is unavoidable, run the narrowest serial journey **once**, inspect the changed images, and revert incidental captures before committing.
+- A screenshot you have inspected and accepted is finished. Do not run another full pass just to re-compare it.
+- Never commit unrelated screenshot churn caused by timestamps, toasts, or test-run order.
 
-### 4. Output Summary Format
-Keep terminal output processing minimal. Do not print full success logs to the chat. If successful, provide a concise summary:
-`✅ [X] Tests Passed in [Y]s. Scope: [Targeted File/Function]`
+### 4. Error Recovery Loops (HOW to handle failure)
+- If a test fails, read the exact assertion first, then apply a targeted fix and re-run **only** the failing case.
+- **Serial E2E exception:** when the failing case cannot run without earlier serial steps, fix all known issues in one pass and re-run the journey once.
+- **Hard stop:** after 3 consecutive failures with the same error, stop all commands and present the findings to the owner.
+
+### 5. Output Summary Format
+Keep terminal output minimal. On success, summarize scope and result:
+`✅ [X] tests passed in [Y]s. Scope: [spec/test/file]`
 
 ## 7. Environment note (current Linux build host)
 
