@@ -223,7 +223,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await assertNoSeriousA11y('onboarding-ready')
     await page.getByRole('button', { name: 'Finish Setup' }).click()
     await expect(page.getByRole('heading', { name: 'product', exact: true })).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByRole('button', { name: 'Change a Photo' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Edit this Photo' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'New Image from Reference' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Add to Set' })).toBeVisible()
     await expect(page.getByText('Listing Kit', { exact: true })).toHaveCount(0)
@@ -239,7 +239,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
   })
 
   test('the editor makes a version, compares, and applies a free local adjust', async () => {
-    await page.getByRole('button', { name: 'Change a Photo' }).click()
+    await page.getByRole('button', { name: 'Edit this Photo' }).click()
     await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 20_000 })
     await expect(page.getByRole('button', { name: 'Listing Kit', exact: true })).toHaveCount(0)
     await expect.poll(() => menuEnabled('menu-copy-image')).toBe(true)

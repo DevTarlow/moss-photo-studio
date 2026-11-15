@@ -275,7 +275,7 @@ export function ProductDetail(): React.JSX.Element {
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button variant="primary" disabled={busy} onClick={() => void start('photo')}>
-                  {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={ImageIcon} size="sm" />} Change a Photo
+                  {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={ImageIcon} size="sm" />} Edit this Photo
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void start('image')}>
                   <Icon icon={Sparkles} size="sm" /> New Image from Reference
