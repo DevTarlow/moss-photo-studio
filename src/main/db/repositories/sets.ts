@@ -25,10 +25,17 @@ function mapSet(row: SetRow): SetSummary {
 const summarySelect = `
   SELECT s.id, s.name, s.created_at, s.updated_at,
     (SELECT COUNT(*) FROM images i
-      WHERE i.set_id = s.id AND i.deleted_at IS NULL AND i.status = 'ready') AS image_count,
-    (SELECT COALESCE(i.thumb, i.file) FROM images i
-      WHERE i.set_id = s.id AND i.deleted_at IS NULL AND i.status = 'ready'
-      ORDER BY i.created_at DESC, i.seq DESC LIMIT 1) AS cover_file
+      WHERE i.set_id = s.id AND i.deleted_at IS NULL AND i.status = 'ready')
+      + (SELECT COUNT(*) FROM products p WHERE p.set_id = s.id) AS image_count,
+    (SELECT x.file FROM (
+      SELECT COALESCE(i.thumb, i.file) AS file, i.created_at AS at
+        FROM images i
+        WHERE i.set_id = s.id AND i.deleted_at IS NULL AND i.status = 'ready'
+      UNION ALL
+      SELECT COALESCE(p.thumb, p.file) AS file, p.created_at AS at
+        FROM products p
+        WHERE p.set_id = s.id
+    ) x ORDER BY x.at DESC LIMIT 1) AS cover_file
   FROM sets s
 `
 
@@ -64,6 +71,7 @@ export class SetRepository {
   delete(id: string): boolean {
     const result = this.db.transaction(() => {
       this.db.prepare('UPDATE images SET set_id = NULL WHERE set_id = ?').run(id)
+      this.db.prepare('UPDATE products SET set_id = NULL WHERE set_id = ?').run(id)
       return this.db.prepare('DELETE FROM sets WHERE id = ?').run(id).changes > 0
     })()
     return result

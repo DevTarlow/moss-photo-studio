@@ -22,15 +22,15 @@ Generated images can be saved to a Set, as a product, or as a person. A generate
 
 ### Keep images in Sets
 
-A Set is a simple collection of images, made for keeping related work together. Open any generated image or edited version and choose **Save to Set**; pick an existing Set or name a new one. An image belongs to one Set at a time, and removing it from the Set never deletes the image or its project.
+A Set is a simple collection of images, made for keeping related work together. Open any generated image or edited version and choose **Save to Set**—or open a saved product and choose **Add to Set**. Pick an existing Set or name a new one. An image or product source belongs to one Set at a time, and removing it from the Set never deletes the image or its project.
 
-The **Sets** page shows every image in one place. From any image there, choose **Edit Photo** or **New Image** to start a new project with that photo as the source. The imported source and the images made from it stay in the Set automatically, so the Set grows with the work. You can still move individual images or remove them later.
+The **Sets** page shows every image and product source in one place. From any item there, choose **Edit Photo** or **New Image** to start a new project with that photo as the source. The imported source and the images made from it stay in the Set automatically, so the Set grows with the work. You can still move individual images or remove them later.
 
-**Export Set** writes all of the Set's ready images into one folder with numbered filenames. Sets are free organization: they do not change how the editor or generator works, and they are not tied to a marketplace.
+**Export Set** writes all of the Set's ready images and product sources into one folder with numbered filenames. Sets are free organization: they do not change how the editor or generator works, and they are not tied to a marketplace.
 
 ### Keep products handy
 
-Save a product photo as a Product, or start from one of the 20 clean, unbranded starter products. A Product opens in the Image Editor or the Image Generator as a reusable reference. Categories, linked work, archive, and delete keep the collection tidy.
+Save a product photo as a Product, or start from one of the 20 clean, unbranded starter products. A Product opens in the Image Editor or the Image Generator as a reusable reference, and can be added to a Set. Categories, linked work, archive, and delete keep the collection tidy.
 
 ### Keep the costs visible
 

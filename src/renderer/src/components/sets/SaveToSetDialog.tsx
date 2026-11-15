@@ -10,16 +10,17 @@ import { unwrap, messageOf } from '../../lib/ipc'
 import { toast } from '../../lib/toast'
 
 export function SaveToSetDialog(): React.JSX.Element {
-  const image = useSetPickerStore((state) => state.image)
+  const target = useSetPickerStore((state) => state.target)
   const close = useSetPickerStore((state) => state.close)
   const [sets, setSets] = useState<SetSummary[]>([])
+  const currentSetId = target?.kind === 'image' ? target.image.setId : target?.product.setId ?? null
   const [loading, setLoading] = useState(false)
   const [busy, setBusy] = useState(false)
   const [newName, setNewName] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!image) return
+    if (!target) return
     setNewName('')
     setError(null)
     setLoading(true)
@@ -27,16 +28,21 @@ export function SaveToSetDialog(): React.JSX.Element {
       .then(setSets)
       .catch((caught) => setError(messageOf(caught)))
       .finally(() => setLoading(false))
-  }, [image])
+  }, [target])
 
   const assign = async (setId: string | null, label: string): Promise<void> => {
-    if (!image) return
+    if (!target) return
     setBusy(true)
     setError(null)
     try {
-      await unwrap(window.moss.images.assignSet({ imageId: image.id, setId }))
-      const workspace = useWorkspaceStore.getState()
-      if (workspace.project?.id === image.projectId) void workspace.refresh()
+      if (target.kind === 'image') {
+        await unwrap(window.moss.images.assignSet({ imageId: target.image.id, setId }))
+        const workspace = useWorkspaceStore.getState()
+        if (workspace.project?.id === target.image.projectId) void workspace.refresh()
+      } else {
+        await unwrap(window.moss.products.assignSet({ productId: target.product.id, setId }))
+      }
+      target.onSaved?.(setId)
       toast.status(label)
       close()
     } catch (caught) {
@@ -65,10 +71,10 @@ export function SaveToSetDialog(): React.JSX.Element {
 
   return (
     <Dialog
-      open={Boolean(image)}
+      open={Boolean(target)}
       onOpenChange={(open) => { if (!open) close() }}
-      title="Save to Set"
-      description="Sets keep related images together. An image can be in one Set at a time."
+      title={target?.kind === 'product' ? 'Add to Set' : 'Save to Set'}
+      description="Sets keep related images together. An image or product can be in one Set at a time."
       width={480}
       footer={<Button variant="ghost" onClick={close}>Cancel</Button>}
     >
@@ -81,7 +87,7 @@ export function SaveToSetDialog(): React.JSX.Element {
           <div className="max-h-[280px] space-y-1 overflow-y-auto">
             {sets.length === 0 && <p className="hint py-2">No Sets yet. Create one below.</p>}
             {sets.map((set) => {
-              const selected = image?.setId === set.id
+              const selected = currentSetId === set.id
               return (
                 <button
                   key={set.id}
@@ -131,7 +137,7 @@ export function SaveToSetDialog(): React.JSX.Element {
             </div>
           </div>
 
-          {image?.setId && (
+          {currentSetId && (
             <Button
               variant="ghost"
               className="mt-3"

@@ -5,6 +5,7 @@ import {
   CheckSquare,
   Grid2X2,
   Image as ImageIcon,
+  Layers,
   List,
   Package,
   Search,
@@ -685,18 +686,19 @@ export function Library(): React.JSX.Element {
                 />
               ) : (
                 <div>
-                  <Text type="supporting" color="secondary" className="text-center">Start with a photo of something you sell.</Text>
+                  <Text type="supporting" color="secondary" className="text-center">Start with a photo, an idea, or a Set.</Text>
                   <Grid columns={{ minWidth: 220, max: 3 }} gap={4} className="mx-auto mt-4 max-w-[900px]">
                     {[
                       { type: 'photo' as const, icon: ImageIcon, title: 'Image Editor', line: 'New scene, new light, same product.' },
-                      { type: 'image' as const, icon: Sparkles, title: 'Image Generator', line: 'Describe it, and Meta makes it.' }
+                      { type: 'image' as const, icon: Sparkles, title: 'Image Generator', line: 'Describe it, and Meta makes it.' },
+                      { type: 'sets' as const, icon: Layers, title: 'Sets & Offline Library', line: 'Keep related images together, all on this computer.' }
                     ].map((card) => {
                       const Icon = card.icon
                       return (
                         <ClickableCard
                           key={card.type}
                           label={card.title}
-                          onClick={() => openNew(card.type)}
+                          onClick={card.type === 'sets' ? () => navigate('/sets') : () => openNew(card.type)}
                           padding={5}
                           elevation="low"
                         >

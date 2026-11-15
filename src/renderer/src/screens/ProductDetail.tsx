@@ -5,6 +5,7 @@ import {
   Archive,
   ArrowLeft,
   ArrowUpRight,
+  FolderPlus,
   Image as ImageIcon,
   Link2,
   Loader2,
@@ -25,6 +26,7 @@ import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
 import { formatDateTime, relativeTime } from '../lib/format'
 import { toast } from '../lib/toast'
+import { openProductSetPicker } from '../store/setPicker'
 import { Heading, Icon, Text } from '@astryxdesign/core'
 
 const typeLabel: Record<ProjectType, string> = {
@@ -270,7 +272,10 @@ export function ProductDetail(): React.JSX.Element {
                   {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={ImageIcon} size="sm" />} Change a Photo
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void start('image')}>
-                  <Icon icon={Sparkles} size="sm" /> New Image
+                  <Icon icon={Sparkles} size="sm" /> New Image from Reference
+                </Button>
+                <Button variant="secondary" disabled={busy} onClick={() => openProductSetPicker(detail.product, () => void load())}>
+                  <Icon icon={FolderPlus} size="sm" /> Add to Set
                 </Button>
               </div>
 

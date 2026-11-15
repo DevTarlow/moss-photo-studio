@@ -183,7 +183,8 @@ export class ProductService {
       const imported = await this.deps.media.importSource({
         projectId: project.id,
         bytes,
-        label: product.name
+        label: product.name,
+        setId: product.setId
       })
       if (!imported.imageId) throw new ImageImportError('unreadable', 'That product could not be used.')
       return { projectId: project.id, imageId: imported.imageId }
@@ -200,7 +201,8 @@ export class ProductService {
     return this.deps.media.importSource({
       projectId: input.projectId,
       bytes,
-      label: input.label ?? product.name
+      label: input.label ?? product.name,
+      setId: product.setId
     })
   }
 }

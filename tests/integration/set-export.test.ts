@@ -9,6 +9,7 @@ import { Logger } from '@main/logger'
 import { ProjectRepository } from '@main/db/repositories/projects'
 import { ImageRepository } from '@main/db/repositories/images'
 import { SetRepository } from '@main/db/repositories/sets'
+import { ProductRepository } from '@main/db/repositories/products'
 import { exportSetImages } from '@main/media/setExport'
 
 let dir = ''
@@ -16,6 +17,7 @@ let db: Db
 let projects: ProjectRepository
 let images: ImageRepository
 let sets: SetRepository
+let products: ProductRepository
 
 beforeEach(() => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-set-export-'))
@@ -23,6 +25,7 @@ beforeEach(() => {
   projects = new ProjectRepository(db)
   images = new ImageRepository(db)
   sets = new SetRepository(db)
+  products = new ProductRepository(db)
 })
 
 afterEach(() => {
@@ -31,6 +34,27 @@ afterEach(() => {
 })
 
 describe('Set export', () => {
+  it('writes product sources into the Set folder', async () => {
+    const set = sets.create('Product export')
+    const file = 'products/mug.webp'
+    const absolute = path.join(dir, 'library', file)
+    await fs.promises.mkdir(path.dirname(absolute), { recursive: true })
+    await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 100, g: 120, b: 90 } } }).webp().toFile(absolute)
+    const product = products.create({ id: 'mug-product', name: 'Mug product', file, thumb: file, width: 640, height: 640 })
+    products.setSet(product.id, set.id)
+    const result = await exportSetImages({
+      libraryPath: path.join(dir, 'library'),
+      name: set.name,
+      images: [],
+      products: products.listBySet(set.id),
+      options: { format: 'webp', quality: 90, maxDimension: null },
+      parentFolder: path.join(dir, 'exports'),
+      workingPathFor: () => ''
+    })
+    expect(result.count).toBe(1)
+    expect(fs.readdirSync(result.folder)[0]).toMatch(/^01-Mug-product\.webp$/)
+  })
+
   it('writes a dedicated folder with numbered images in Set order', async () => {
     const set = sets.create('Spring collection')
     const project = projects.create({ type: 'image', name: 'Spring shoot' })

@@ -8,12 +8,14 @@ import { Logger } from '@main/logger'
 import { ProjectRepository } from '@main/db/repositories/projects'
 import { ImageRepository } from '@main/db/repositories/images'
 import { SetRepository } from '@main/db/repositories/sets'
+import { ProductRepository } from '@main/db/repositories/products'
 
 let dir = ''
 let db: Db
 let projects: ProjectRepository
 let images: ImageRepository
 let sets: SetRepository
+let products: ProductRepository
 
 beforeEach(() => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-sets-'))
@@ -21,6 +23,7 @@ beforeEach(() => {
   projects = new ProjectRepository(db)
   images = new ImageRepository(db)
   sets = new SetRepository(db)
+  products = new ProductRepository(db)
 })
 
 afterEach(() => {
@@ -94,4 +97,24 @@ describe('sets', () => {
     expect(sets.get(set.id)?.imageCount).toBe(0)
     expect(sets.get(set.id)).toBeTruthy()
   })
+
+  it('supports product sources alongside images', () => {
+    const set = sets.create('Product set')
+    const product = products.create({
+      id: 'product-1',
+      name: 'Mug',
+      file: 'products/mug.webp',
+      thumb: 'products/mug-thumb.webp',
+      width: 640,
+      height: 640,
+      now: 1000
+    })
+    expect(products.setSet(product.id, set.id)?.setId).toBe(set.id)
+    expect(sets.get(set.id)?.imageCount).toBe(1)
+    expect(sets.get(set.id)?.coverUrl).toContain('mug-thumb.webp')
+    expect(products.listBySet(set.id).map((item) => item.id)).toEqual([product.id])
+    expect(sets.delete(set.id)).toBe(true)
+    expect(products.get(product.id)?.setId).toBeNull()
+  })
+
 })

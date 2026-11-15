@@ -617,6 +617,16 @@ const migrations: Migration[] = [
       `)
     }
   },
+  {
+    version: 13,
+    up(db) {
+      db.exec(`
+        ALTER TABLE products ADD COLUMN set_id TEXT REFERENCES sets(id) ON DELETE SET NULL;
+        CREATE INDEX IF NOT EXISTS idx_products_set ON products(set_id);
+        INSERT OR REPLACE INTO meta (key, value) VALUES ('schemaVersion', '13');
+      `)
+    }
+  },
 ]
 
 export const SCHEMA_VERSION = migrations[migrations.length - 1]!.version

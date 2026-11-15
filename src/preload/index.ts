@@ -84,6 +84,7 @@ const api: MossApi = {
     update: invoke('products:update'),
     archive: invoke('products:archive'),
     unarchive: invoke('products:unarchive'),
+    assignSet: invoke('products:assignSet'),
     linkProject: invoke('products:linkProject'),
     unlinkProject: invoke('products:unlinkProject'),
     delete: invoke('products:delete'),

@@ -126,6 +126,7 @@ export interface IpcChannels {
   'products:linkProject': { request: { productId: string; projectId: string }; response: { ok: true } }
   'products:unlinkProject': { request: { projectId: string }; response: { ok: true } }
   'products:delete': { request: { id: string }; response: { ok: true } }
+  'products:assignSet': { request: { productId: string; setId: string | null }; response: Product }
   'products:createProject': {
     request: { productId: string; type: 'photo' | 'image'; name?: string }
     response: ProjectDetail
@@ -322,6 +323,7 @@ export interface MossApi {
     update: Call<'products:update'>
     archive: Call<'products:archive'>
     unarchive: Call<'products:unarchive'>
+    assignSet: Call<'products:assignSet'>
     linkProject: Call<'products:linkProject'>
     unlinkProject: Call<'products:unlinkProject'>
     delete: Call<'products:delete'>

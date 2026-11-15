@@ -11,6 +11,7 @@ import { ImageRepository } from '@main/db/repositories/images'
 import { BrandRepository } from '@main/db/repositories/brand'
 import { PeopleRepository } from '@main/db/repositories/people'
 import { ProductRepository } from '@main/db/repositories/products'
+import { SetRepository } from '@main/db/repositories/sets'
 import { MediaService } from '@main/media/service'
 import { ProductService } from '@main/products/service'
 
@@ -19,6 +20,7 @@ let db: Db
 let projects: ProjectRepository
 let images: ImageRepository
 let products: ProductRepository
+let sets: SetRepository
 let media: MediaService
 let productService: ProductService
 
@@ -33,6 +35,7 @@ beforeEach(() => {
   const brand = new BrandRepository(db)
   const people = new PeopleRepository(db)
   products = new ProductRepository(db)
+  sets = new SetRepository(db)
   media = new MediaService({ projects, images, people, brand, libraryPath, logger })
   productService = new ProductService({
     products,
@@ -149,6 +152,25 @@ describe('products', () => {
 
     const fromFirst = images.listLibrary({ search: 'Mug' })
     expect(fromFirst.items.some((image) => image.projectId === first.projectId)).toBe(true)
+  })
+})
+
+describe('product Sets', () => {
+  it('inherits the product Set when starting new work', async () => {
+    const source = await imageProject()
+    const product = await productService.saveFromImage({ imageId: source.imageId, name: 'Set product' })
+    const set = sets.create('Product set')
+    products.setSet(product.id, set.id)
+    const created = await productService.createProject({
+      productId: product.id,
+      type: 'image',
+      shape: 'square',
+      format: 'webp'
+    })
+    expect(images.get(created.imageId)?.setId).toBe(set.id)
+    const target = projects.create({ type: 'photo', name: 'Product import target' })
+    const imported = await productService.importIntoProject({ productId: product.id, projectId: target.id })
+    expect(images.get(imported.imageId!)?.setId).toBe(set.id)
   })
 })
 

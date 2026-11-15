@@ -108,7 +108,7 @@ describe('pack cleanup', () => {
     v11.close()
 
     const db = openDatabase({ file, libraryPath: path.join(dir, 'library'), logger: logger() })
-    expect(db.pragma('user_version', { simple: true })).toBe(12)
+    expect(db.pragma('user_version', { simple: true })).toBe(SCHEMA_VERSION)
     expect(db.prepare('SELECT type FROM projects WHERE id = ?').get('pack-project')).toEqual({ type: 'image' })
     expect(db.prepare('SELECT COUNT(*) AS count FROM images WHERE id = ?').get('ready-shot')).toEqual({ count: 1 })
     expect(db.prepare('SELECT COUNT(*) AS count FROM images WHERE id = ?').get('pending-shot')).toEqual({ count: 0 })
@@ -120,6 +120,8 @@ describe('pack cleanup', () => {
     const imageColumns = db.pragma('table_info(images)') as Array<{ name: string }>
     expect(imageColumns.map((row) => row.name)).not.toContain('shot_id')
     expect(imageColumns.map((row) => row.name)).toContain('set_id')
+    const productColumns = db.pragma('table_info(products)') as Array<{ name: string }>
+    expect(productColumns.map((row) => row.name)).toContain('set_id')
     db.close()
   })
 })

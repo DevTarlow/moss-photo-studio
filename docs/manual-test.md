@@ -50,22 +50,22 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 - Products shows “20 included · N yours,” search, sort, and pagination.
 - Included products open with Edit This Photo and New Image from Reference, without Rename or Delete.
 - Create a Product opens the Image Generator with the product prompt; Save as Product adds it under Yours.
-- A product hub shows the source photo, linked work, Link existing work, archive, and delete.
+- A product hub shows the source photo, Add to Set, New Image from Reference, linked work, Link existing work, archive, and delete.
 - **This build intentionally has no Listing Kit, listing copy, or Business profile.** Sets exist only as image organization; no rail item, menu item, or settings section should offer the retired tools.
 
 ## Sets
 
-- Save any ready generated image or edited version to a Set from its Lightbox, result More menu, or version panel. Create a new Set from the same dialog.
-- Sets lists each Set with its cover and count. Set detail shows all member images; removing an image leaves the image in its project.
-- From a Set image, Edit Photo opens a new photo project and New Image opens a new generator project. The imported source and all resulting images stay in the Set automatically.
-- Export Set creates a unique folder with numbered ready images and no manifest. Open Folder opens the remembered Set export folder.
+- Save any ready generated image or edited version with Save to Set, or a saved product with Add to Set. Create a new Set from the same dialog.
+- Sets lists each Set with its cover and count. Set detail shows member images and product sources; removing one leaves the image or product in place.
+- From a Set image or product source, Edit Photo opens a new photo project and New Image / New Image from Reference opens a new generator project. The imported source and all resulting images stay in the Set automatically.
+- Export Set creates a unique folder with numbered ready images and product sources, with no manifest. Open Folder opens the remembered Set export folder.
 - Delete a Set only removes the organization; images and projects remain.
 - An existing v11 pack library upgrades to v12 with its ready images preserved as ordinary image projects; old pack plans, pending rows, and pack jobs are removed.
 
 ## All work
 
 - The rail has All work, Products, Sets, People, Usage, Image Editor, Image Generator, and Settings.
-- Filters are All, Edited, Generated, and Products. Sets are a separate page, not an All work filter.
+- Filters are All, Edited, Generated, and Products. Sets are a separate page, not an All work filter. An empty library offers three cards: Image Editor, Image Generator, and Sets & Offline Library.
 - Drop a photo on All work to open it in the Image Editor. Sets are filled from image actions; there is no drag-to-Set behavior.
 - Rename, duplicate, export, select, bulk delete, search, sort, pagination, and product sections work.
 - A library over 500 projects paginates at 20 cards and keeps selection scoped to loaded cards.

@@ -160,7 +160,8 @@ export function bundledProductCard(product: BundledProduct): Product {
     updatedAt: 0,
     source: 'bundled',
     blurb: product.blurb,
-    category: product.category
+    category: product.category,
+    setId: null
   }
 }
 

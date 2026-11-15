@@ -19,7 +19,7 @@ async function sourceForImage(libraryPath: string, image: Image, workingPath: st
   return absoluteInLibrary(libraryPath, relative)
 }
 
-async function encode(
+export async function encodeImageFile(
   input: string,
   output: string,
   options: { format: Format; quality: number; maxDimension: number | null }
@@ -75,7 +75,7 @@ export async function exportOneImage(input: {
   const safe = safeBaseName(input.baseName, input.image.label || 'image')
   const output = await ensureUniquePath(input.destinationFolder, safe, extension, taken)
   const source = await sourceForImage(input.libraryPath, input.image, input.workingPath)
-  await encode(source, output, {
+  await encodeImageFile(source, output, {
     format: input.options.format,
     quality: Math.max(60, Math.min(100, input.options.quality || 90)),
     maxDimension: input.options.maxDimension
@@ -99,7 +99,7 @@ export async function exportImageToPath(input: {
   destinationPath: string
 }): Promise<string> {
   const source = await sourceForImage(input.libraryPath, input.image, input.workingPath)
-  await encode(source, input.destinationPath, {
+  await encodeImageFile(source, input.destinationPath, {
     format: input.options.format,
     quality: Math.max(60, Math.min(100, input.options.quality || 90)),
     maxDimension: input.options.maxDimension

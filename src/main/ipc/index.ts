@@ -795,6 +795,20 @@ export function registerIpcHandlers(context: AppContext): void {
 
   registerIpc(
     context,
+    'products:assignSet',
+    z.object({ productId: idSchema, setId: idSchema.nullable() }),
+    ({ productId, setId }) => {
+      const product = context.products.get(productId)
+      if (!product) throw new IpcFault('not_found')
+      if (setId && !context.sets.get(setId)) throw new IpcFault('not_found', 'That Set is not here anymore.')
+      const updated = context.products.setSet(productId, setId)
+      if (!updated) throw new IpcFault('not_found')
+      return updated
+    }
+  )
+
+  registerIpc(
+    context,
     'products:createProject',
     z.object({ productId: idSchema, type: projectTypeSchema, name: z.string().max(140).optional() }),
     async ({ productId, type, name }) => {
@@ -966,7 +980,8 @@ export function registerIpcHandlers(context: AppContext): void {
     const set = context.sets.get(id)
     if (!set) throw new IpcFault('not_found')
     const items = context.images.listBySet(id)
-    return { set, images: items, total: items.length }
+    const products = context.products.listBySet(id)
+    return { set, images: items, products, total: items.length + products.length }
   })
 
   registerIpc(
@@ -980,7 +995,8 @@ export function registerIpcHandlers(context: AppContext): void {
         .listBySet(id)
         .map((item) => context.images.get(item.id))
         .filter((image): image is Image => image?.status === 'ready')
-      if (!images.length) throw new IpcFault('invalid_payload', 'This Set has no ready images yet.')
+      const products = context.products.listBySet(id)
+      if (!images.length && !products.length) throw new IpcFault('invalid_payload', 'This Set has no images yet.')
       const key = `set:${id}`
       const pick = await openFolderDialog(context, {
         title: 'Choose where to export the Set',
@@ -992,6 +1008,7 @@ export function registerIpcHandlers(context: AppContext): void {
         libraryPath: context.libraryPath(),
         name: set.name,
         images,
+        products,
         options,
         parentFolder: pick.filePaths[0],
         workingPathFor: (image) => workingFor(context.libraryPath(), image.projectId, image.id)

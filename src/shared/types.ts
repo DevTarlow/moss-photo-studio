@@ -182,6 +182,8 @@ export interface Product {
   source: 'bundled' | 'user'
   blurb: string | null
   category: string | null
+  /** The Set this product source belongs to, or null when unfiled. */
+  setId: string | null
   status?: 'active' | 'archived'
   archivedAt?: number | null
   projectCount?: number
@@ -221,6 +223,7 @@ export interface SetSummary {
 export interface SetDetail {
   set: SetSummary
   images: LibraryImage[]
+  products: Product[]
   total: number
 }
 

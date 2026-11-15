@@ -12,6 +12,7 @@ interface ProductRow {
   created_at: number
   updated_at: number
   category: string | null
+  set_id: string | null
   status: string
   archived_at: number | null
   project_count?: number
@@ -31,6 +32,7 @@ function mapProduct(row: ProductRow): Product {
     source: 'user',
     blurb: null,
     category: row.category,
+    setId: row.set_id,
     status: row.status === 'archived' ? 'archived' : 'active',
     archivedAt: row.archived_at,
     projectCount: Number(row.project_count ?? 0),
@@ -134,6 +136,28 @@ export class ProductRepository {
 
   unarchive(id: string): Product | null {
     return this.update(id, { status: 'active' })
+  }
+
+  listBySet(setId: string): Product[] {
+    const rows = this.db
+      .prepare(`${this.baseSelect()} WHERE p.set_id = ? ORDER BY p.created_at DESC, p.name ASC`)
+      .all(setId) as ProductRow[]
+    return rows.map(mapProduct)
+  }
+
+  setSet(id: string, setId: string | null): Product | null {
+    const row = this.getRow(id)
+    if (!row) return null
+    this.db.transaction(() => {
+      this.db.prepare('UPDATE products SET set_id = ?, updated_at = ? WHERE id = ?').run(setId, Date.now(), id)
+      if (row.set_id) this.touchSet(row.set_id)
+      if (setId) this.touchSet(setId)
+    })()
+    return this.get(id)
+  }
+
+  private touchSet(setId: string): void {
+    this.db.prepare('UPDATE sets SET updated_at = ? WHERE id = ?').run(Date.now(), setId)
   }
 
   delete(id: string): { files: string[] } | null {

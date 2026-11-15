@@ -70,6 +70,31 @@ export function SetDetail(): React.JSX.Element {
     }
   }
 
+  const createFromProduct = async (productId: string, type: 'photo' | 'image'): Promise<void> => {
+    setBusy(`product:${productId}:${type}`)
+    try {
+      const project = await unwrap(window.moss.products.createProject({ productId, type }))
+      navigate(`/project/${project.project.id}`)
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const removeProduct = async (productId: string): Promise<void> => {
+    setBusy(`product:${productId}:remove`)
+    try {
+      await unwrap(window.moss.products.assignSet({ productId, setId: null }))
+      toast.status('Removed from Set. The product stays in Products.')
+      await load()
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    } finally {
+      setBusy(null)
+    }
+  }
+
   const rename = async (name: string): Promise<void> => {
     if (!id) return
     const updated = await unwrap(window.moss.sets.rename({ id, name }))
@@ -139,7 +164,7 @@ export function SetDetail(): React.JSX.Element {
                     <span className="badge">{detail.total} {detail.total === 1 ? 'image' : 'images'}</span>
                   </div>
                   <Text type="supporting" color="secondary" className="block">
-                    Images saved here stay together. Start new work from any one of them.
+                    Images and product references saved here stay together. Start new work from any one of them.
                   </Text>
                 </div>
                 <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
@@ -170,43 +195,78 @@ export function SetDetail(): React.JSX.Element {
                 <EmptyState
                   icon={<Icon icon={Layers} size="lg" />}
                   title="This Set is empty"
-                  line="Open an image in the editor or generator and choose Save to Set."
+                  line="Open an image or product and choose Add to Set."
                 />
               ) : (
-                <div className="mt-6 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
-                  {detail.images.map((image) => (
-                    <article key={image.id} className="card overflow-hidden">
-                      <div className="aspect-[4/3] overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                        {image.thumbUrl ? (
-                          <img src={image.thumbUrl} alt="" className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="grid h-full place-items-center" style={{ color: 'var(--text-faint)' }}>
-                            <Icon icon={ImageIcon} size="lg" />
+                <>
+                  {detail.products.length > 0 && (
+                    <div className="mt-6 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
+                      {detail.products.map((product) => (
+                        <article key={product.id} className="card overflow-hidden">
+                          <div className="relative aspect-[4/3] overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                            <img src={product.thumbUrl} alt="" className="h-full w-full object-cover" />
+                            <span className="badge absolute left-2 top-2">Product</span>
                           </div>
-                        )}
-                      </div>
-                      <div className="p-3">
-                        <div className="flex items-start gap-2">
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-[13px] font-semibold">{image.label}</p>
-                            <p className="meta mt-0.5 truncate">From {image.projectName}</p>
+                          <div className="p-3">
+                            <div className="flex items-start gap-2">
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-[13px] font-semibold">{product.name}</p>
+                                <p className="meta mt-0.5">Product source</p>
+                              </div>
+                              <button type="button" className="icon-btn shrink-0" aria-label={`Remove product ${product.name} from ${detail.set.name}`} disabled={busy !== null} onClick={() => void removeProduct(product.id)}>
+                                <Icon icon={X} size="sm" />
+                              </button>
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                              <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromProduct(product.id, 'photo')}>
+                                {busy === `product:${product.id}:photo` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Pencil} size="sm" />} Edit Photo
+                              </Button>
+                              <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromProduct(product.id, 'image')}>
+                                {busy === `product:${product.id}:image` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} New Image from Reference
+                              </Button>
+                            </div>
                           </div>
-                          <button type="button" className="icon-btn shrink-0" aria-label={`Remove ${image.label} from ${detail.set.name}`} disabled={busy !== null} onClick={() => void removeImage(image)}>
-                            <Icon icon={X} size="sm" />
-                          </button>
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-1.5">
-                          <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromImage(image, 'photo')}>
-                            {busy === `${image.id}:photo` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Pencil} size="sm" />} Edit Photo
-                          </Button>
-                          <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromImage(image, 'image')}>
-                            {busy === `${image.id}:image` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} New Image
-                          </Button>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                  {detail.images.length > 0 && (
+                    <div className="mt-6 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
+                      {detail.images.map((image) => (
+                        <article key={image.id} className="card overflow-hidden">
+                          <div className="aspect-[4/3] overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                            {image.thumbUrl ? (
+                              <img src={image.thumbUrl} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="grid h-full place-items-center" style={{ color: 'var(--text-faint)' }}>
+                                <Icon icon={ImageIcon} size="lg" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-3">
+                            <div className="flex items-start gap-2">
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-[13px] font-semibold">{image.label}</p>
+                                <p className="meta mt-0.5 truncate">From {image.projectName}</p>
+                              </div>
+                              <button type="button" className="icon-btn shrink-0" aria-label={`Remove ${image.label} from ${detail.set.name}`} disabled={busy !== null} onClick={() => void removeImage(image)}>
+                                <Icon icon={X} size="sm" />
+                              </button>
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                              <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromImage(image, 'photo')}>
+                                {busy === `${image.id}:photo` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Pencil} size="sm" />} Edit Photo
+                              </Button>
+                              <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromImage(image, 'image')}>
+                                {busy === `${image.id}:image` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} New Image
+                              </Button>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
