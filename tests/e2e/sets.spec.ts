@@ -96,6 +96,8 @@ test('a Set keeps images together and starts new work from them', async () => {
     await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Sets', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: /Spring collection/ }).first()).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible()
+    await screenshot(page, 'all-work-sections')
     const setsFilter = page.getByRole('button', { name: 'Sets', exact: true })
     await expect(setsFilter.locator('svg')).toHaveCount(0)
     await setsFilter.click()

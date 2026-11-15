@@ -687,7 +687,7 @@ export function Library(): React.JSX.Element {
             <section className="mt-5" aria-labelledby="all-products-heading">
               <div className="flex items-baseline gap-2">
                 <h2 id="all-products-heading" className="section-label">Products</h2>
-                <span className="meta-faint">{filteredProducts.length}</span>
+                <span className="badge">{filteredProducts.length}</span>
               </div>
               <div
                 className="mt-3 grid gap-4"
@@ -708,7 +708,7 @@ export function Library(): React.JSX.Element {
             <section className="mt-5" aria-labelledby="all-sets-heading">
               <div className="flex items-baseline gap-2">
                 <h2 id="all-sets-heading" className="section-label">Sets</h2>
-                <span className="meta-faint">{filteredSets.length}</span>
+                <span className="badge">{filteredSets.length}</span>
               </div>
               <div
                 className="mt-3 grid gap-4"
@@ -722,6 +722,12 @@ export function Library(): React.JSX.Element {
           )}
 
           <div className="mt-5">
+            {!productsTab && !setsTab && store.filter === 'all' && !store.loading && !store.error && store.items.length > 0 && (
+              <div className="mb-3 flex items-baseline gap-2">
+                <h2 id="all-projects-heading" className="section-label">Projects</h2>
+                <span className="badge">{store.total}</span>
+              </div>
+            )}
             {setsTab ? (
               setsLoading ? (
                 <LibrarySkeleton />
