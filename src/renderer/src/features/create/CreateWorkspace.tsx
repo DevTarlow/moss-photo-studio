@@ -564,7 +564,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                 <DropdownMenu.Trigger asChild>
                   <button
                     type="button"
-                    className="field flex h-8 min-w-0 flex-1 items-center justify-between gap-2 text-[11px]"
+                    className="field field-trigger min-w-0 flex-1"
                     aria-label={selectedPerson ? `Person reference: ${selectedPerson.name}` : 'Choose a Person'}
                   >
                     <span className="truncate">
