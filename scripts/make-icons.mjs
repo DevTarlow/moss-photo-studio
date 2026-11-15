@@ -31,6 +31,19 @@ await sharp(icon).resize(512, 512).png({ compressionLevel: 9, adaptiveFiltering:
 await sharp(icon).resize(256, 256).png({ compressionLevel: 9, adaptiveFiltering: true }).toFile(path.join(brand, 'icon-256.png'))
 await writeFile(path.join(brand, 'icon.icns'), png2icons.createICNS(icon, png2icons.BICUBIC, 0))
 await writeFile(path.join(brand, 'icon.ico'), png2icons.createICO(icon, png2icons.BICUBIC, 0, true))
+
+// The in-app header mark uses the same plate, trimmed to its edges so it stays
+// legible at 24-40px.
+const mark = await sharp(source)
+  .trim({ threshold: 1 })
+  .resize(512, 512, {
+    fit: 'contain',
+    background: { r: 0, g: 0, b: 0, alpha: 0 }
+  })
+  .png({ compressionLevel: 9, adaptiveFiltering: true })
+  .toBuffer()
+await writeFile(path.join(brand, 'mark.png'), mark)
+
 console.log(
-  `icons written from ${sourceMeta.width}x${sourceMeta.height} icon: icon.png, 512x512.png, icon.icns, icon.ico`
+  `icons written from ${sourceMeta.width}x${sourceMeta.height} icon: icon.png, 512x512.png, icon.icns, icon.ico, mark.png`
 )

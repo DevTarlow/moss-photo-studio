@@ -5,7 +5,7 @@
  * The reference project is optional. When it is absent this script draws
  * honest stand-in cards rather than leaving any image path broken.
  */
-import { access, copyFile, mkdir, readdir, stat } from 'node:fs/promises'
+import { access, mkdir, readdir, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
@@ -129,11 +129,6 @@ for (const [source, dest] of [
   ['candle/gift.webp', 'resources/tiles/examples/gift.webp']
 ]) {
   await tile(path.join(extraSources, source), path.join(root, dest), 640)
-}
-
-const mark = path.join(reference, 'moss_ball_logo.png')
-if (await exists(mark)) {
-  await copyFile(mark, path.join(root, 'resources/brand/mark.png'))
 }
 
 async function folderSize(dir) {
