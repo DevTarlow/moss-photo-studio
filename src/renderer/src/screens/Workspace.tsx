@@ -7,6 +7,7 @@ import { ProjectNameEditor } from '../components/workspace/ProjectNameEditor'
 import { useWorkspaceStore } from '../store/workspace'
 import { PhotoWorkspace } from '../features/photo/PhotoWorkspace'
 import { CreateWorkspace } from '../features/create/CreateWorkspace'
+import { PackWorkspace } from '../features/pack/PackWorkspace'
 
 export function Workspace(): React.JSX.Element {
   const { id } = useParams()
@@ -33,7 +34,7 @@ export function Workspace(): React.JSX.Element {
   }, [imageParam, selectImage])
 
   const titleContent = project ? <ProjectNameEditor /> : undefined
-  const backTo = project?.productId ? `/product/${project.productId}` : '/library'
+  const backTo = project && photoView && project.type === 'pack' ? `/project/${project.id}` : project?.productId ? `/product/${project.productId}` : '/library'
   if (!id) {
     return (
       <AppFrame backTo="/products">
@@ -66,11 +67,15 @@ export function Workspace(): React.JSX.Element {
       </AppFrame>
     )
   }
-  const content = project.type === 'photo'
-    ? <PhotoWorkspace key="photo" />
-    : photoView
-      ? <PhotoWorkspace key="image-photo" />
-      : <CreateWorkspace key="image" preferredPersonLook={preferredPersonLook} />
+  const content = project.type === 'pack'
+    ? photoView
+      ? <PhotoWorkspace key="pack-photo" />
+      : <PackWorkspace key="pack" />
+    : project.type === 'photo'
+      ? <PhotoWorkspace key="photo" />
+      : photoView
+        ? <PhotoWorkspace key="image-photo" />
+        : <CreateWorkspace key="image" preferredPersonLook={preferredPersonLook} />
 
   return (
     <AppFrame backTo={backTo} titleContent={titleContent}>

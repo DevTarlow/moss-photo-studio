@@ -13,6 +13,7 @@ import { ImageRepository } from '@main/db/repositories/images'
 import { JobRepository } from '@main/db/repositories/jobs'
 import { UsageRepository } from '@main/db/repositories/usage'
 import { BrandRepository } from '@main/db/repositories/brand'
+import { PackRepository } from '@main/db/repositories/packs'
 import { PeopleRepository } from '@main/db/repositories/people'
 import { ProductRepository } from '@main/db/repositories/products'
 import { ProductService } from '@main/products/service'
@@ -35,6 +36,7 @@ let images: ImageRepository
 let jobs: JobRepository
 let usage: UsageRepository
 let brand: BrandRepository
+let packs: PackRepository
 let people: PeopleRepository
 let products: ProductRepository
 let productService: ProductService
@@ -64,9 +66,10 @@ beforeEach(async () => {
   jobs = new JobRepository(db)
   usage = new UsageRepository(db)
   brand = new BrandRepository(db)
+  packs = new PackRepository(db)
   people = new PeopleRepository(db)
   products = new ProductRepository(db)
-  media = new MediaService({ projects, images, people, brand, libraryPath, logger })
+  media = new MediaService({ projects, images, people, brand, packs, libraryPath, logger })
   productService = new ProductService({
     products,
     images,
@@ -92,6 +95,7 @@ beforeEach(async () => {
     brand,
     people,
     products,
+    packs,
     settings,
     secrets: {
       hasKey: () => keyPresent,

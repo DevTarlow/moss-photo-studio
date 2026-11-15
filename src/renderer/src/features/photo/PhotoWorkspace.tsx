@@ -614,7 +614,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const canPreview = Boolean(displayImage?.url) && !compare && !crop && !isRunning
   const lightboxIndex = Math.max(0, ready.findIndex((image) => image.id === selected?.id))
 
-  const backLabel = project.type === 'image' ? 'Back to Image Generator' : null
+  const backLabel = project.type === 'image' ? 'Back to Image Generator' : project.type === 'pack' ? 'Back to Image Pack' : null
   const goBackToProject = (): void => {
     void navigate(`/project/${project.id}`)
   }

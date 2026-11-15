@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Image as ImageIcon, MoreHorizontal, Sparkles } from 'lucide-react'
+import { Image as ImageIcon, Layers, MoreHorizontal, Sparkles } from 'lucide-react'
 import { Icon } from '@astryxdesign/core'
 import type { Project } from '@shared/types'
 import type { JobState } from '@shared/types'
@@ -9,8 +9,8 @@ import { Progress } from '../ui/Progress'
 import { DropdownMenu } from 'radix-ui'
 import { ProjectMenuContent } from './ProjectMenu'
 
-const typeLabel = { photo: 'Image Editor', image: 'Image Generator' } as const
-const TypeIcon = { photo: ImageIcon, image: Sparkles } as const
+const typeLabel = { photo: 'Image Editor', image: 'Image Generator', pack: 'Image Pack' } as const
+const TypeIcon = { photo: ImageIcon, image: Sparkles, pack: Layers } as const
 
 export interface ProjectCardProps {
   project: Project

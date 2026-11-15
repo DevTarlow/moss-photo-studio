@@ -19,6 +19,8 @@ export const STUDIO_URL = 'https://mossaistudio.com/'
 
 export const MAX_PROMPT = 2000
 export const MAX_CREATE_VARIANTS = 4
+export const PACK_SHOT_MAX = 8
+export const PACK_DIRECTION_MAX = 400
 export const MAX_REFERENCE_IMAGES = 3
 export const DEFAULT_IMPORT_LONG_EDGE = 2048
 export const MAX_IMPORT_BYTES = 40 * 1024 * 1024

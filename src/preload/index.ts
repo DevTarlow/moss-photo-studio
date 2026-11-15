@@ -117,9 +117,13 @@ const api: MossApi = {
     setCover: invoke('images:setCover'),
     setSource: invoke('images:setSource')
   },
+  packs: {
+    save: invoke('packs:save')
+  },
   jobs: {
     startCreate: invoke('jobs:startCreate'),
     startEdit: invoke('jobs:startEdit'),
+    startPack: invoke('jobs:startPack'),
     cancel: invoke('jobs:cancel'),
     state: invoke('jobs:state'),
     active: invokeVoid('jobs:active'),
@@ -147,7 +151,8 @@ const api: MossApi = {
     deleteAll: invokeVoid('usage:deleteAll')
   },
   exports: {
-    images: invoke('export:images')
+    images: invoke('export:images'),
+    pack: invoke('export:pack')
   },
   backup: {
     create: invokeVoid('backup:create'),

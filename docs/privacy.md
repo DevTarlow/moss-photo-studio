@@ -2,7 +2,7 @@
 
 Moss Photo Studio sends data to the following places, and only when it is needed:
 
-1. **To Meta Muse**, when you press a button that makes or changes an image: your Muse key, the product and person and scene references you chose, the composed description, the requested shape, format, and count, and a random installation id in the API's `user` field. Meta also sees your IP address, as any service does.
+1. **To Meta Muse**, when you press a button that makes or changes an image or one shot in an Image Pack: your Muse key, the product and person and scene references you chose, the composed description, the requested shape, format, and count, and a random installation id in the API's `user` field. Meta also sees your IP address, as any service does.
 2. **To the Moss license center (`license.mossaistudio.com`)**, when you activate, validate, or deactivate a license: the license key, an instance id, and a short computer label. The license center is a separate website that stores the buyer account and purchase email; the desktop app never signs in to it.
 3. **To the Moss license center (`license.mossaistudio.com`)**, when a build without automatic updates uses **Check for Updates** in Settings: the app slug, platform, architecture, update channel, and current version. It sends no install id, license key, email, or library data.
 4. **To GitHub Releases (`github.com/DevTarlow/moss-photo-studio`)**, when the Linux AppImage checks for updates on launch, every four hours, or when you press **Check for Updates**: the app version, platform, architecture, and channel. GitHub also sees your IP address. It sends no install id, license key, email, library data, or usage history. The app downloads a newer build in the background and installs it only when you choose Restart.
@@ -44,7 +44,7 @@ The license validation request happens no more than once per 24 hours automatica
 
 The application data folder contains:
 
-- `library.sqlite` and its WAL and backup files: projects, images, jobs, usage, products, people, brand, settings, and license metadata.
+- `library.sqlite` and its WAL and backup files: projects, images, pack plans, jobs, usage, products, people, brand, settings, and license metadata.
 - `library/`: all original and working images, saved Products, and exports made inside the library.
 - `secrets.bin`: the Muse key, encrypted with the system keyring, or with the documented AES-256-GCM fallback if no keyring is available.
 - `license.json`: the license key and instance id, encrypted.

@@ -7,6 +7,7 @@ import {
   Images,
   Info,
   KeyRound,
+  Layers,
   Monitor,
   Package,
   Palette,
@@ -43,7 +44,8 @@ const items = [
 
 const tools = [
   { to: '/library?new=photo', label: 'Image Editor', icon: <Icon icon={ImageIcon} size="md" strokeWidth={1.75} /> },
-  { to: '/library?new=image', label: 'Image Generator', icon: <Icon icon={Sparkles} size="md" strokeWidth={1.75} /> }
+  { to: '/library?new=image', label: 'Image Generator', icon: <Icon icon={Sparkles} size="md" strokeWidth={1.75} /> },
+  { to: '/library?new=pack', label: 'Image Pack', icon: <Icon icon={Layers} size="md" strokeWidth={1.75} /> }
 ]
 
 export function Rail({

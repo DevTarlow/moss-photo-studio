@@ -1,8 +1,8 @@
 export type StarterCategory =
-  | 'Main listing image'
+  | 'Main product image'
   | 'With a person'
-  | 'Etsy & handmade'
-  | 'eBay & resale'
+  | 'Handmade & craft'
+  | 'Resale & vintage'
   | 'Home & lifestyle'
   | 'Food & drink'
   | 'Jewelry & accessories'
@@ -16,10 +16,10 @@ export interface Starter {
 }
 
 export const STARTER_CATEGORIES: readonly StarterCategory[] = [
-  'Main listing image',
+  'Main product image',
   'With a person',
-  'Etsy & handmade',
-  'eBay & resale',
+  'Handmade & craft',
+  'Resale & vintage',
   'Home & lifestyle',
   'Food & drink',
   'Jewelry & accessories',
@@ -29,17 +29,17 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
 
 export const STARTERS: readonly Starter[] = [
   {
-    category: 'Main listing image',
+    category: 'Main product image',
     label: 'Mug on pure white',
     text: 'A ceramic mug alone on a pure white background, centred and filling most of the frame, no props or text, soft even lighting, product photo.'
   },
   {
-    category: 'Main listing image',
+    category: 'Main product image',
     label: 'Bottle on pure white',
     text: 'A glass bottle alone on a pure white background, centred and filling most of the frame, no props or text, soft even lighting, product photo.'
   },
   {
-    category: 'Main listing image',
+    category: 'Main product image',
     label: 'Four items on white',
     text: 'A set of four small items evenly spaced on a pure white background, filling most of the frame, no props or text, soft even lighting, product photo.'
   },
@@ -74,32 +74,32 @@ export const STARTERS: readonly Starter[] = [
     text: 'The person is walking toward the camera in a bright, uncluttered space, carrying the product so it is clearly visible, in natural daylight.'
   },
   {
-    category: 'Etsy & handmade',
+    category: 'Handmade & craft',
     label: 'Candle on a bedside table',
     text: 'A scented candle on a wooden bedside table beside a book and dried flowers, warm evening light, cosy handmade style.'
   },
   {
-    category: 'Etsy & handmade',
+    category: 'Handmade & craft',
     label: 'Vase on linen',
     text: 'A small clay vase on a natural linen cloth, soft window light, a few dried stems beside it, handmade product photo.'
   },
   {
-    category: 'Etsy & handmade',
+    category: 'Handmade & craft',
     label: 'Scarf on a chair',
     text: 'A chunky knitted scarf draped over a wooden chair in a bright room, soft daylight, cosy handmade style.'
   },
   {
-    category: 'eBay & resale',
+    category: 'Resale & vintage',
     label: 'Jacket on a hanger',
     text: 'A denim jacket on a wooden hanger against a plain white wall, even lighting, the whole item in frame, honest product photo.'
   },
   {
-    category: 'eBay & resale',
+    category: 'Resale & vintage',
     label: 'Sneakers side by side',
     text: 'A pair of sneakers side by side on a plain grey floor, even lighting, both shoes fully in frame, product photo.'
   },
   {
-    category: 'eBay & resale',
+    category: 'Resale & vintage',
     label: 'Vintage radio on a table',
     text: 'A vintage portable radio on a plain wooden table, soft daylight, the whole item in frame, clear detail of its condition.'
   },

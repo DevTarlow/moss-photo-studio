@@ -11,6 +11,7 @@ import { ImageRepository } from '@main/db/repositories/images'
 import { JobRepository } from '@main/db/repositories/jobs'
 import { reconcileOnStartup } from '@main/jobs/queue'
 import { runPendingRemovedDataCleanup } from '@main/removedData'
+import { PackRepository } from '@main/db/repositories/packs'
 
 let dir = ''
 beforeEach(() => {
@@ -38,7 +39,7 @@ describe('migrations', () => {
     const custom = db.prepare('SELECT value FROM meta WHERE key = ?').get('custom') as { value: string }
     expect(custom.value).toBe('kept')
     const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as Array<{ name: string }>
-    expect(tables.map((row) => row.name)).toEqual(expect.arrayContaining(['projects', 'images', 'products', 'usage_events', 'license']))
+    expect(tables.map((row) => row.name)).toEqual(expect.arrayContaining(['projects', 'images', 'products', 'packs', 'usage_events', 'license']))
     expect(tables.map((row) => row.name)).not.toEqual(expect.arrayContaining(['plans', 'listings']))
     db.close()
   })
@@ -82,6 +83,39 @@ describe('retired feature cleanup', () => {
     await runPendingRemovedDataCleanup({ db, libraryPath: path.join(dir, 'library'), logger: logger() })
     expect(fs.existsSync(path.join(dir, 'library', 'projects', 'legacy-set'))).toBe(false)
     expect(fs.existsSync(path.join(dir, 'library', 'products', 'legacy-product-cutout.png'))).toBe(false)
+    db.close()
+  })
+})
+
+
+describe('pack migration', () => {
+  it('adds pack support without losing v10 work or legacy usage history', async () => {
+    const file = path.join(dir, 'library.sqlite')
+    const v10 = openDatabase({ file, libraryPath: path.join(dir, 'library'), logger: logger(), targetVersion: 10 })
+    const now = Date.now()
+    v10.prepare("INSERT INTO projects (id, type, name, created_at, updated_at, shape, format) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .run('kept-photo', 'photo', 'Kept photo', now, now, 'square', 'webp')
+    v10.prepare("INSERT INTO images (id, project_id, kind, status, file, label, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .run('kept-image', 'kept-photo', 'upload', 'ready', 'projects/kept-photo/source.webp', 'Original photo', now)
+    v10.prepare("INSERT INTO usage_events (id, at, project_id, project_name, action, requested_n, returned_n, cost_cents, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      .run('legacy-usage', now, 'kept-photo', 'Kept photo', 'set', 1, 1, 1, 'ok')
+    v10.close()
+
+    const db = openDatabase({ file, libraryPath: path.join(dir, 'library'), logger: logger() })
+    expect(db.pragma('user_version', { simple: true })).toBe(SCHEMA_VERSION)
+    expect(db.prepare("SELECT COUNT(*) AS count FROM projects WHERE id = 'kept-photo'").get()).toEqual({ count: 1 })
+    expect(db.prepare("SELECT action FROM usage_events WHERE id = 'legacy-usage'").get()).toEqual({ action: 'set' })
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as Array<{ name: string }>
+    expect(tables.map((row) => row.name)).toContain('packs')
+    const columns = db.pragma('table_info(images)') as Array<{ name: string }>
+    expect(columns.map((row) => row.name)).toContain('shot_id')
+
+    const projects = new ProjectRepository(db)
+    const packs = new PackRepository(db)
+    const project = projects.create({ type: 'pack', name: 'New pack' })
+    packs.save(project.id, { version: 1, presetId: 'custom', stylePreset: null, direction: '', personId: null, personLook: null, sceneImageId: null, shots: [] })
+    expect(projects.get(project.id)?.type).toBe('pack')
+    expect(packs.get(project.id)?.presetId).toBe('custom')
     db.close()
   })
 })

@@ -1,8 +1,8 @@
 # Moss Photo Studio
 
-Moss Photo Studio is a desktop app for people who sell physical things. Edit a photo you already have, or describe a new image and make it. Everything you make stays in a library on your computer, and saved product photos stay together with the work made from them.
+Moss Photo Studio is a desktop app for people who sell physical things. Edit a photo you already have, describe a new image and make it, or build a consistent pack of shots from one brief. Everything you make stays in a library on your computer, and saved product photos stay together with the work made from them.
 
-I built it for the part of selling that eats an afternoon: getting a bottle, a candle, or a pair of earrings to look right. The app handles the local edits, the image generation, and the reusable product references. You still decide what the product is and what the picture should say.
+I built it for the part of selling that eats an afternoon: getting a bottle, a candle, or a pair of earrings to look right. The app handles the local edits, the image generation, the prompt presets, and the reusable product references. You still decide what the product is and what the picture should say.
 
 The desktop app has no account. A license key is required. The separate license portal handles the buyer account, machine resets, and downloads.
 
@@ -20,9 +20,19 @@ The Image Generator has 30 starters, including person ideas for holding, wearing
 
 Generated images can be saved as a product or a person. A generated project appears in All work after its first image.
 
+### Build an image pack
+
+An Image Pack makes a small, consistent set of images from one shared brief. Choose a preset such as Studio Essentials, Lifestyle Story, On Person, Packaging & Gift, Editorial, or Food & Serve, or start a Custom pack and add shots yourself.
+
+Every shot is a reusable prompt template. You can change its direction, turn it off, reorder it, or add another shot. The pack also carries one shared direction, a look, shape, format, and any product, person, and scene references. Every shot uses those shared choices, so the pack feels related without assuming a marketplace or a listing.
+
+A pack can start from a product or library photo, or run prompt-only. The workspace shows the exact composed prompt for each shot before anything is sent. Each shot costs one cent when it comes back, with the price on the button first. Missing or failed shots can be retried without paying again for the ones already made.
+
+Export Pack writes a self-contained folder with numbered images, a `pack.json` manifest, and a short README. There are no marketplace sizes, listing files, or listing copy.
+
 ### Keep products handy
 
-Save a product photo as a Product, or start from one of the 20 clean, unbranded starter products. A Product opens in the Image Editor or the Image Generator as a reusable reference. Categories, linked work, archive, and delete keep the collection tidy.
+Save a product photo as a Product, or start from one of the 20 clean, unbranded starter products. A Product opens in the Image Editor, the Image Generator, or an Image Pack as a reusable reference. Categories, linked work, archive, and delete keep the collection tidy.
 
 ### Keep the costs visible
 
@@ -91,7 +101,7 @@ The library lives under the application data folder shown in **Settings, Storage
 
 The Meta key is stored in `secrets.bin`, encrypted with Electron's `safeStorage` when a system keyring is available. The fallback is AES-256-GCM with a local key protected by file mode `0600`. The license key is stored encrypted. No key is returned to the renderer, logged, or placed in a URL. Settings shows the last four characters only.
 
-The app sends prompts and the images you choose to Meta when you run a paid image action. Local Adjust and the local photo check stay on your computer. No telemetry is sent. The automatic update check goes to GitHub Releases and sends the app version, platform, architecture, and channel. It sends no key, email, or library data.
+The app sends the prompts, references, and images you choose to Meta when you run a paid image action. Packs use the same image requests, one per shot. Local Adjust and the local photo check stay on your computer. No telemetry is sent. The automatic update check goes to GitHub Releases and sends the app version, platform, architecture, and channel. It sends no key, email, or library data.
 
 See [docs/privacy.md](docs/privacy.md).
 

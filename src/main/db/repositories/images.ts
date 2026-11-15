@@ -17,6 +17,7 @@ interface ImageRow {
   revised_prompt: string | null
   template_id: string | null
   person_id: string | null
+  shot_id: string | null
   label: string | null
   seq: number
   parent_id: string | null
@@ -48,6 +49,7 @@ export interface NewImageInput {
   revisedPrompt?: string | null
   templateId?: string | null
   personId?: string | null
+  shotId?: string | null
   label: string
   parentId?: string | null
   rootId?: string | null
@@ -77,6 +79,7 @@ function mapImage(row: ImageRow): Image {
     revisedPrompt: row.revised_prompt,
     templateId: row.template_id,
     personId: row.person_id,
+    shotId: row.shot_id,
     label: row.label ?? 'Image',
     seq: Number(row.seq),
     parentId: row.parent_id,
@@ -120,9 +123,9 @@ export class ImageRepository {
         .prepare(
           `INSERT INTO images
             (id, project_id, kind, status, file, thumb, width, height, format, mime, prompt, user_text,
-             revised_prompt, template_id, person_id, label, seq, parent_id, root_id, size, adjust,
+             revised_prompt, template_id, person_id, shot_id, label, seq, parent_id, root_id, size, adjust,
              badge, is_original, cost_cents, duration_ms, job_id, error_code, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(
           id,
@@ -140,6 +143,7 @@ export class ImageRepository {
           input.revisedPrompt ?? null,
           input.templateId ?? null,
           input.personId ?? null,
+          input.shotId ?? null,
           input.label,
           seq,
           input.parentId ?? null,
@@ -352,6 +356,26 @@ export class ImageRepository {
       .prepare("SELECT COUNT(*) AS count FROM images WHERE project_id = ? AND status = 'ready' AND deleted_at IS NULL")
       .get(projectId) as { count: number }
     return Number(row.count)
+  }
+
+  latestReadyForShot(projectId: string, shotId: string): Image | null {
+    const row = this.db
+      .prepare(
+        `SELECT * FROM images WHERE project_id = ? AND shot_id = ? AND status = 'ready' AND deleted_at IS NULL
+         ORDER BY created_at DESC, seq DESC LIMIT 1`
+      )
+      .get(projectId, shotId) as ImageRow | undefined
+    return row ? mapImage(row) : null
+  }
+
+  readyForShot(projectId: string, shotId: string): Image[] {
+    const rows = this.db
+      .prepare(
+        `SELECT * FROM images WHERE project_id = ? AND shot_id = ? AND status = 'ready' AND deleted_at IS NULL
+         ORDER BY created_at ASC, seq ASC`
+      )
+      .all(projectId, shotId) as ImageRow[]
+    return rows.map(mapImage)
   }
 
   setCover(projectId: string, imageId: string): void {

@@ -94,6 +94,7 @@ The installed AppImage checks on launch and every four hours, downloads in the b
 - Create a fresh library with a **real Meta key** and make one image in the Image Generator. Confirm the exact amount on the Meta bill and in Usage; the app records one cent per returned image.
 - Run one Image Editor change and one local adjust. Confirm the editor version and the free adjust appear correctly.
 - Buy through the real product-site Stripe checkout. Confirm the key email, the portal account, activation on two computers, the third refusal, a portal reset, and re-activation. Test an offline launch inside the 14-day grace period.
+- Make a six-shot Image Pack from a real product. Confirm the price, per-shot progress, one selected version per shot, and the exported folder with `pack.json`. Confirm no marketplace or text-model request is made.
 - Export an image and open it; confirm the format, dimensions, and filename.
 - Run the manual checklist in [manual-test.md](manual-test.md), including a packaged build launched with `MOSS_DEV_UNLOCK=1`, `MOSS_MUSE_FAKE=1`, and `MOSS_E2E=1` to prove the packaged gate ignores test overrides.
 

@@ -6,7 +6,7 @@ The short version: **implement → verify narrowly → commit when the task is d
 
 ## 1. What this repo is
 
-A local-first Electron desktop app for editing product photos and generating new ones. React 19, TypeScript (strict), electron-vite, SQLite (`better-sqlite3`), and `sharp`. Node 22+ and npm 10+.
+A local-first Electron desktop app for editing product photos, generating new ones, and making consistent Image Packs. React 19, TypeScript (strict), electron-vite, SQLite (`better-sqlite3`), and `sharp`. Node 22+ and npm 10+.
 
 ```text
 src/
@@ -127,7 +127,7 @@ npx vitest run tests/unit/prompts.test.ts     # smallest test scope
 npx vitest run tests/unit/prompts.test.ts -t "name of test"
 npm test                                      # all unit + integration tests
 npm run build:test                            # typecheck + test build for E2E
-npx playwright test tests/e2e/studio.spec.ts -g "create makes four images"
+npx playwright test tests/e2e/pack.spec.ts
 npm run test:e2e                              # builds, then the serial journey + focused specs
 MOSS_UPDATE_SCREENS=1 npx playwright test -g "..."  # rewrite baselines after an intentional visual change
 npm run audit:tokens                          # color-token contrast audit

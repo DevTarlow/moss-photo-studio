@@ -13,6 +13,9 @@ import type {
   AutoUpdateState,
   UpdateStateListener,
   Person,
+  PackExportResult,
+  PackJobInput,
+  PackJson,
   Product,
   ProductDetail,
   LibraryImage,
@@ -97,11 +100,11 @@ export interface IpcChannels {
   }
   'projects:get': { request: { id: string }; response: ProjectDetail }
   'projects:create': {
-    request: { type: 'photo' | 'image'; name?: string; productId?: string; draft?: boolean }
+    request: { type: 'photo' | 'image' | 'pack'; name?: string; productId?: string; draft?: boolean }
     response: ProjectDetail
   }
   'projects:createFromImage': {
-    request: { sourceImageId: string; name?: string; type?: 'photo' | 'image' }
+    request: { sourceImageId: string; name?: string; type?: 'photo' | 'image' | 'pack' }
     response: ProjectDetail
   }
   'products:list': { request: undefined; response: Product[] }
@@ -125,7 +128,7 @@ export interface IpcChannels {
   'products:unlinkProject': { request: { projectId: string }; response: { ok: true } }
   'products:delete': { request: { id: string }; response: { ok: true } }
   'products:createProject': {
-    request: { productId: string; type: 'photo' | 'image'; name?: string }
+    request: { productId: string; type: 'photo' | 'image' | 'pack'; name?: string }
     response: ProjectDetail
   }
   'products:importIntoProject': {
@@ -160,6 +163,7 @@ export interface IpcChannels {
         name?: string
         shape?: Shape
         format?: Format
+        productId?: string | null
         sourceImageId?: string | null
         coverImageId?: string | null
       }
@@ -169,6 +173,8 @@ export interface IpcChannels {
   'projects:duplicate': { request: { id: string }; response: Project }
   'projects:delete': { request: { id: string }; response: { ok: true } }
   'projects:recent': { request: { limit: number }; response: Project[] }
+  'packs:save': { request: { projectId: string; pack: PackJson }; response: PackJson }
+  'jobs:startPack': { request: PackJobInput; response: { jobId: string } }
   'images:list': {
     request: { projectId: string; includeFailed?: boolean }
     response: Image[]
@@ -222,6 +228,10 @@ export interface IpcChannels {
   'export:images': {
     request: { projectId: string; imageIds: string[]; options: ExportOptions }
     response: { count: number; folderName: string }
+  }
+  'export:pack': {
+    request: { projectId: string; options: ExportOptions }
+    response: PackExportResult
   }
 }
 
@@ -325,9 +335,13 @@ export interface MossApi {
     setCover: Call<'images:setCover'>
     setSource: Call<'images:setSource'>
   }
+  packs: {
+    save: Call<'packs:save'>
+  }
   jobs: {
     startCreate: Call<'jobs:startCreate'>
     startEdit: Call<'jobs:startEdit'>
+    startPack: Call<'jobs:startPack'>
     cancel: Call<'jobs:cancel'>
     state: Call<'jobs:state'>
     active: CallVoid<'jobs:active'>
@@ -356,6 +370,7 @@ export interface MossApi {
   }
   exports: {
     images: Call<'export:images'>
+    pack: Call<'export:pack'>
   }
   backup: {
     create: CallVoid<'backup:create'>

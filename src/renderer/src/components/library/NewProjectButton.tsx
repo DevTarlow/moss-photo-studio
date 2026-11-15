@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Image as ImageIcon, Plus, Sparkles } from 'lucide-react'
+import { Image as ImageIcon, Layers, Plus, Sparkles } from 'lucide-react'
 import { DropdownMenu, Icon } from '@astryxdesign/core'
 
 export function NewProjectButton({ size = 'sm' }: { size?: 'sm' | 'md' | 'lg' }): React.JSX.Element {
@@ -28,6 +28,13 @@ export function NewProjectButton({ size = 'sm' }: { size?: 'sm' | 'md' | 'lg' })
           description: 'Describe a picture and make it.',
           icon: <Icon icon={Sparkles} size="sm" />,
           onClick: () => navigate('/library?new=image')
+        },
+        {
+          id: 'pack',
+          label: 'Image Pack',
+          description: 'A consistent set of shots from one idea.',
+          icon: <Icon icon={Layers} size="sm" />,
+          onClick: () => navigate('/library?new=pack')
         }
       ]}
     />

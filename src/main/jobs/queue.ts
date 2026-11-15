@@ -9,6 +9,7 @@ import type {
   JobItemState,
   JobKind,
   JobState,
+  PackJobInput,
   Project,
   Shape
 } from '@shared/types'
@@ -17,6 +18,8 @@ import { MAX_CREATE_VARIANTS, MAX_PROMPT } from '@shared/constants'
 import { usedBrandColors } from '@shared/brandColors'
 import { appendWithinCap, composeChange, composeCreatePrompt, PROMPT_MAX } from '@shared/prompts/guards'
 import { styleClause } from '@shared/stylePresets'
+import { composePackPrompt, enabledPackShots, nextShotLabel, personRequiredShots, promptFits } from '@shared/prompts/packPrompt'
+import { packTemplateById } from '@shared/prompts/packTemplates'
 import { nextCountedLabel } from '@shared/labels'
 import { templateById, templateWord } from '@shared/prompts/templates'
 import { safeBaseName } from '@shared/files'
@@ -30,6 +33,7 @@ import type { UsageRepository } from '../db/repositories/usage'
 import type { BrandRepository } from '../db/repositories/brand'
 import type { PeopleRepository } from '../db/repositories/people'
 import type { ProductRepository } from '../db/repositories/products'
+import type { PackRepository } from '../db/repositories/packs'
 import type { SettingsStore } from '../settings'
 import type { SecretStore } from '../secrets'
 import type { LicenseController } from '../license/controller'
@@ -49,7 +53,7 @@ export class JobStartError extends Error {
   }
 }
 
-type Action = 'create' | 'edit'
+type Action = 'create' | 'edit' | 'pack'
 
 interface WorkItemSpec {
   key: string
@@ -65,6 +69,8 @@ interface WorkItemSpec {
   format: Format
   userText: string
   templateId: string | null
+  shotId?: string | null
+  stylePreset?: string | null
   action: Action
   labelWord: 'Scene' | 'Model' | 'Edit' | 'Created' | null
   pendingImageId?: string
@@ -107,6 +113,7 @@ interface QueueDeps {
   brand: BrandRepository
   people: PeopleRepository
   products: ProductRepository
+  packs: PackRepository
   settings: SettingsStore
   secrets: SecretStore
   license: LicenseController
@@ -319,6 +326,7 @@ export class JobQueue {
           format: project.format,
           userText: text,
           templateId: input.templateId ?? (input.kind === 'model' ? 'model-free' : null),
+          shotId: source.shotId,
           action: 'edit',
           labelWord: word,
           parentId: source.id,
@@ -329,6 +337,105 @@ export class JobQueue {
     }
     try {
       return await this.createJob(work, 'edit', reservation)
+    } catch (error) {
+      this.releaseReservation(reservation)
+      throw error
+    }
+  }
+
+  async startPack(input: PackJobInput): Promise<{ jobId: string }> {
+    const project = this.requireProject(input.projectId, 'pack')
+    await this.requireLicensed()
+    await this.requireKey()
+    this.requireNoRunningProject(project.id)
+    const pack = this.deps.packs.get(project.id)
+    if (!pack) throw new JobStartError('invalid_payload', 'Set up the pack first.')
+    const source = project.sourceImageId ? this.deps.images.get(project.sourceImageId) : null
+    if (project.sourceImageId && (!source || source.status !== 'ready')) {
+      throw new JobStartError('invalid_payload', 'The pack source photo is not here anymore.')
+    }
+    const hasProduct = Boolean(source) || Boolean(project.productId)
+    const hasScene = Boolean(pack.sceneImageId)
+    if (hasScene) {
+      const scene = this.deps.images.get(pack.sceneImageId!)
+      if (!scene || scene.status !== 'ready') {
+        throw new JobStartError('invalid_payload', 'That scene reference is not here anymore.')
+      }
+      if (!hasProduct) throw new JobStartError('invalid_payload', 'Add a source photo before using a scene reference.')
+    }
+    if (pack.personId && !this.deps.people.exists(pack.personId)) {
+      throw new JobStartError('invalid_payload', 'Choose a person for this pack.')
+    }
+    let shots = enabledPackShots(pack)
+    if (input.shotIds?.length) {
+      const wanted = new Set(input.shotIds)
+      shots = shots.filter((shot) => wanted.has(shot.id))
+    }
+    if (input.mode === 'missing') {
+      shots = shots.filter((shot) => !this.deps.images.latestReadyForShot(project.id, shot.id))
+    }
+    if (!shots.length) throw new JobStartError('invalid_payload', 'There are no missing shots to make.')
+    if (shots.some((shot) => personRequiredShots({ ...pack, shots: [shot] }).length > 0) && !pack.personId) {
+      throw new JobStartError('invalid_payload', 'Choose a person for the On person shots first.')
+    }
+    const brand = this.deps.brand.get()
+    const stylePreset = pack.stylePreset ?? brand.stylePreset ?? null
+    const palette = brand.colorsEnabled ? usedBrandColors(brand.colors) : []
+    const items = shots.map((shot) => {
+      const template = packTemplateById(shot.templateId)
+      const hasPerson = Boolean(template?.needsPerson && pack.personId)
+      const prompt = composePackPrompt({
+        shot,
+        pack,
+        hasProduct,
+        hasPerson,
+        hasScene,
+        stylePreset,
+        palette
+      })
+      if (!promptFits(prompt)) {
+        throw new JobStartError(
+          'invalid_payload',
+          `The ${shot.label} prompt is ${prompt.length - PROMPT_MAX} characters over the limit. Shorten its direction.`
+        )
+      }
+      return {
+        key: shot.id,
+        label: shot.label,
+        prompt,
+        requested: 1,
+        sourceImageId: source?.id ?? null,
+        productId: project.productId ?? null,
+        personId: hasPerson ? pack.personId : null,
+        personLook: hasPerson ? pack.personLook : null,
+        sceneImageId: hasScene ? pack.sceneImageId : null,
+        shape: project.shape,
+        format: project.format,
+        userText: shot.direction,
+        templateId: null,
+        shotId: shot.id,
+        // The pack prompt already includes the resolved style, so the queue
+        // must not append the brand look a second time.
+        stylePreset: 'none',
+        action: 'pack' as const,
+        labelWord: null,
+        parentId: source?.id ?? null,
+        rootId: source?.rootId ?? source?.id ?? null,
+        createMode: false
+      }
+    })
+    const estimate = estimateCents(items.length)
+    await this.requireDiskRoom(items.length)
+    const reservation = this.requireBudget(estimate)
+    const work: JobWork = {
+      kind: 'pack',
+      projectId: project.id,
+      projectName: project.name,
+      sourceImageId: source?.id ?? null,
+      items
+    }
+    try {
+      return await this.createJob(work, 'pack', reservation)
     } catch (error) {
       this.releaseReservation(reservation)
       throw error
@@ -409,7 +516,7 @@ export class JobQueue {
     if (run.activeCount === 0) this.finalise(run)
   }
 
-  private requireProject(projectId: string, expected: 'photo' | 'image' | null): Project {
+  private requireProject(projectId: string, expected: 'photo' | 'image' | 'pack' | null): Project {
     const project = this.deps.projects.get(projectId)
     if (!project) throw new JobStartError('not_found', 'That project is not here anymore.')
     if (expected && project.type !== expected) {
@@ -483,7 +590,27 @@ export class JobQueue {
       for (const spec of work.items) {
         let pendingRowId: string | null = null
         let label = spec.label
-        if (!spec.createMode) {
+        if (spec.action === 'pack') {
+          label = nextShotLabel(spec.label, labels)
+          labels = [...labels, label]
+          const row = this.deps.images.create({
+            projectId: work.projectId,
+            kind: 'render',
+            status: 'pending',
+            label,
+            prompt: spec.prompt,
+            userText: spec.userText,
+            shotId: spec.shotId ?? null,
+            personId: spec.personId,
+            parentId: spec.parentId,
+            rootId: spec.rootId,
+            size: `${spec.shape}`,
+            format: spec.format,
+            jobId,
+            costCents: 0
+          })
+          pendingRowId = row.id
+        } else if (!spec.createMode) {
           const word = spec.labelWord ?? 'Edit'
           label = word === 'Created' ? nextCountedLabel('Created', labels) : nextCountedLabel(word, labels)
           labels = [...labels, label]
@@ -496,6 +623,7 @@ export class JobQueue {
             userText: spec.userText,
             templateId: spec.templateId,
             personId: spec.personId,
+            shotId: spec.shotId ?? null,
             parentId: spec.parentId,
             rootId: spec.rootId,
             size: `${spec.shape}`,
@@ -605,7 +733,7 @@ export class JobQueue {
       return
     }
     try {
-      const style = styleClause(this.deps.brand.get().stylePreset)
+      const style = styleClause(item.spec.stylePreset ?? this.deps.brand.get().stylePreset)
       if (style) item.spec.prompt = appendWithinCap(item.spec.prompt, style)
       const sourceImage = item.spec.sourceImageId ? this.deps.images.get(item.spec.sourceImageId) : null
       const productRow = item.spec.productId ? this.deps.products.getRow(item.spec.productId) : null
@@ -633,7 +761,7 @@ export class JobQueue {
         this.persist(run)
         this.deps.onUpdate(this.snapshotState(run))
       }
-      const result = item.spec.createMode && !item.spec.sourceImageId && !item.spec.productId && !item.spec.personId && !item.spec.sceneImageId
+      const result = images.length === 0
         ? await this.deps.provider.generate({
             prompt: item.spec.prompt,
             count: item.spec.requested,
@@ -938,10 +1066,25 @@ export class JobQueue {
     this.persist(run)
     this.runs.delete(run.state.id)
     this.deps.onUpdate(this.snapshotState(run))
+    if (run.work.kind === 'pack') this.refreshPackCover(run.work.projectId)
     this.deps.logger.info('jobs', 'job_finished', {
       count: run.state.done,
       errorCode: status
     })
+  }
+
+  private refreshPackCover(projectId: string): void {
+    const project = this.deps.projects.get(projectId)
+    if (!project || project.coverImageId) return
+    const pack = this.deps.packs.get(projectId)
+    if (!pack) return
+    for (const shot of enabledPackShots(pack)) {
+      const image = this.deps.images.latestReadyForShot(projectId, shot.id)
+      if (image) {
+        this.deps.images.setCover(projectId, image.id)
+        return
+      }
+    }
   }
 
   private recordUsage(

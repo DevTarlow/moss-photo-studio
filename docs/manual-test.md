@@ -45,6 +45,17 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 - Edit opens the result in the Image Editor. Download saves the image.
 - A policy refusal, a timeout, a short count, and a 429 each show the approved copy and do not overbill in Usage.
 
+## Image Packs
+
+- Start a pack from a Product, a library image, or the New menu with no source. The workspace shows Pack setup and a six-shot Studio Essentials plan.
+- Change the preset, pack brief, look, shape, format, person/look, and scene. Every shot's prompt preview must match the shared brief and show the product/person/scene guards exactly as the queue will send them.
+- Add, remove, reorder, disable, and rename shots. A pack holds up to eight shots. A prompt-only pack has no source guard; an On Person shot requires a person.
+- Make missing shots; confirm the exact price on the first paid run. Successful shots stay when another fails. Retry missing shots and choose a version per shot.
+- Edit a pack image in the Image Editor; its edited and adjusted versions stay attached to the same shot.
+- Export Pack writes a self-contained folder with one selected/latest image per enabled shot, `pack.json`, and `README.txt`. No marketplace resizing, listing files, or alt-text files are written.
+- Library Packs filter, product work counts, duplicate/delete, dark mode, 1024×700, 150% zoom, and axe checks pass.
+- A reference pack calls image edits; a prompt-only pack calls image generations. There must be no text/chat/SAM request.
+
 ## Products
 
 - Products shows “20 included · N yours,” search, sort, and pagination.

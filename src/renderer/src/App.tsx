@@ -68,9 +68,11 @@ function useJobCompletionToast(): void {
       if (window.location.hash.includes('/onboarding')) return
       if (job.status === 'cancelled') return
       if (job.done > 0) {
-        const message = job.kind === 'create'
-          ? `${job.done} ${job.done === 1 ? 'image is' : 'images are'} ready.`
-          : 'Your change is ready.'
+        const message = job.kind === 'pack'
+          ? `Your pack finished with ${job.done} ${job.done === 1 ? 'image' : 'images'}.`
+          : job.kind === 'create'
+            ? `${job.done} ${job.done === 1 ? 'image is' : 'images are'} ready.`
+            : 'Your change is ready.'
         toast.status(message, { label: 'Open project', onClick: () => navigate(`/project/${job.projectId}`) })
       } else {
         toast.error('That run finished without an image. Nothing is lost. Open the project to try again.')
@@ -319,13 +321,11 @@ export function RootLayout(): React.JSX.Element {
         navigate('/library?new=photo')
         return
       }
-      if ((event.metaKey || event.ctrlKey) && (event.key === '1' || event.key === '2')) {
+      if ((event.metaKey || event.ctrlKey) && ['1', '2', '3'].includes(event.key)) {
         event.preventDefault()
-        if (event.key === '1') {
-          navigate('/library?new=photo')
-        } else {
-          void unwrap(window.moss.projects.create({ type: 'image', draft: true })).then((detail) => navigate(`/project/${detail.project.id}`)).catch(() => toast.error('A new project could not be opened.'))
-        }
+        if (event.key === '1') navigate('/library?new=photo')
+        else if (event.key === '2') navigate('/library?new=image')
+        else navigate('/library?new=pack')
         return
       }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'e') {
@@ -393,7 +393,10 @@ export function RootLayout(): React.JSX.Element {
           navigate('/library?new=photo')
           break
         case 'new-image':
-          void unwrap(window.moss.projects.create({ type: 'image', draft: true })).then((detail) => navigate(`/project/${detail.project.id}`)).catch(() => toast.error('A new project could not be opened.'))
+          navigate('/library?new=image')
+          break
+        case 'new-pack':
+          navigate('/library?new=pack')
           break
         case 'open-project':
           if (event.projectId) navigate(`/project/${event.projectId}`)

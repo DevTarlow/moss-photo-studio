@@ -1,4 +1,4 @@
-export type SceneCategory = 'Listing basics' | 'Home & lifestyle' | 'Premium studio' | 'Seasonal'
+export type SceneCategory = 'Studio basics' | 'Home & lifestyle' | 'Premium studio' | 'Seasonal'
 
 export interface Scene {
   id: string
@@ -10,7 +10,7 @@ export interface Scene {
 }
 
 export const SCENE_CATEGORIES: readonly SceneCategory[] = [
-  'Listing basics',
+  'Studio basics',
   'Home & lifestyle',
   'Premium studio',
   'Seasonal'
@@ -20,8 +20,8 @@ export const SCENES: readonly Scene[] = [
   {
     id: 'studio-white',
     label: 'Clean white studio',
-    blurb: 'The safe listing photo. Works for anything.',
-    category: 'Listing basics',
+    blurb: 'The safe studio photo. Works for anything.',
+    category: 'Studio basics',
     prompt:
       'a seamless bright white studio background with soft, even lighting and a gentle shadow under the product',
     tile: 'tiles/scenes/studio-white.webp'
@@ -30,7 +30,7 @@ export const SCENES: readonly Scene[] = [
     id: 'soft-gradient',
     label: 'Soft color backdrop',
     blurb: 'A calm color behind the product, no props.',
-    category: 'Listing basics',
+    category: 'Studio basics',
     prompt:
       'a smooth seamless backdrop in a soft neutral colour that gently contrasts the product, with even studio lighting',
     tile: 'tiles/scenes/soft-gradient.webp'

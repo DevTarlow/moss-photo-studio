@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Image as ImageIcon, Loader2, Package, Plus, Search, Sparkles } from 'lucide-react'
+import { Image as ImageIcon, Layers, Loader2, Package, Plus, Search, Sparkles } from 'lucide-react'
 import type { Product, Project, ProjectType } from '@shared/types'
 import { bundledProductCards } from '@shared/products'
 import { AppFrame } from '../components/ui/AppFrame'
@@ -401,6 +401,9 @@ export function Products(): React.JSX.Element {
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'image')}>
                   <Icon icon={Sparkles} size="sm" /> New Image from Reference
+                </Button>
+                <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'pack')}>
+                  <Icon icon={Layers} size="sm" /> New Image Pack
                 </Button>
               </div>
             </div>

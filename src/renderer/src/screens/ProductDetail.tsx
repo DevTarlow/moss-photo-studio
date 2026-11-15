@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { DropdownMenu } from 'radix-ui'
 import {
   Archive,
+  Layers,
   ArrowLeft,
   ArrowUpRight,
   Image as ImageIcon,
@@ -29,12 +30,14 @@ import { Heading, Icon, Text, TextInput } from '@astryxdesign/core'
 
 const typeLabel: Record<ProjectType, string> = {
   photo: 'Photo edit',
-  image: 'Image'
+  image: 'Image',
+  pack: 'Image pack'
 }
 
 const typeIcon: Record<ProjectType, React.JSX.Element> = {
   photo: <Icon icon={ImageIcon} size="sm" />,
-  image: <Icon icon={Sparkles} size="sm" />
+  image: <Icon icon={Sparkles} size="sm" />,
+  pack: <Icon icon={Layers} size="sm" />
 }
 
 function ProjectRow({
@@ -296,6 +299,9 @@ export function ProductDetail(): React.JSX.Element {
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void start('image')}>
                   <Icon icon={Sparkles} size="sm" /> New Image
+                </Button>
+                <Button variant="secondary" disabled={busy} onClick={() => void start('pack')}>
+                  <Icon icon={Layers} size="sm" /> New Image Pack
                 </Button>
               </div>
 

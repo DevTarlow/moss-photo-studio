@@ -251,7 +251,7 @@ export const TEMPLATE_GROUPS: readonly TemplateGroup[] = [
   { id: 'background', title: 'Background', intro: 'Clean up what is behind the product.', templates: backgroundTemplates },
   { id: 'lighting', title: 'Lighting', intro: 'Change the light, not the product.', templates: lightingTemplates },
   { id: 'color', title: 'Color', intro: 'Warm it, cool it, give it a look.', templates: colorTemplates },
-  { id: 'finish', title: 'Finish', intro: 'Frame it for a listing, or finish it off.', templates: finishTemplates }
+  { id: 'finish', title: 'Finish', intro: 'Frame it for the final use, or finish it off.', templates: finishTemplates }
 ]
 
 export const ALL_TEMPLATES: readonly Template[] = TEMPLATE_GROUPS.flatMap((group) => group.templates)
