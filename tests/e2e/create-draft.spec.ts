@@ -3,6 +3,8 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
+const productPhoto = path.resolve(__dirname, '../../resources/tiles/examples/product.webp')
+
 test('an untouched Image Generator leaves no project behind', async () => {
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-create-draft-'))
   const app = await electron.launch({
@@ -30,6 +32,20 @@ test('an untouched Image Generator leaves no project behind', async () => {
     await expect(page.getByRole('heading', { name: 'Sets', exact: true })).toBeVisible()
     await page.getByRole('link', { name: 'All work', exact: true }).first().click()
     await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible({ timeout: 20_000 })
+
+    await page.getByText('Image Editor', { exact: true }).last().click()
+    await page.getByRole('button', { name: 'Choose a Saved Photo' }).click()
+    const picker = page.getByRole('dialog', { name: 'Choose a Photo to Edit' })
+    await expect(picker.getByRole('button', { name: 'Add a Product' })).toBeVisible()
+    await app.evaluate(({ dialog }, file) => {
+      dialog.showOpenDialog = (async () => ({ canceled: false, filePaths: [file] })) as typeof dialog.showOpenDialog
+    }, productPhoto)
+    await picker.getByRole('button', { name: 'Add a Product' }).click()
+    await expect(picker.getByRole('button', { name: 'Use product' })).toBeVisible({ timeout: 20_000 })
+    await picker.getByRole('button', { name: 'Library' }).click()
+    await expect(picker.getByLabel('Search library images')).toHaveCSS('padding-left', '34px')
+    await picker.getByRole('button', { name: 'Cancel' }).click()
+    await page.getByRole('dialog', { name: 'Image Editor' }).getByRole('button', { name: 'Cancel' }).click()
 
     // Opening the tool and leaving again must not add an Images card.
     await page.getByRole('link', { name: 'Image Generator', exact: true }).click()

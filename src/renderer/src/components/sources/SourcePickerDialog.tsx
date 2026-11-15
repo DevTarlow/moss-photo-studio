@@ -8,6 +8,7 @@ import { Pagination } from '../ui/Pagination'
 import { Segmented } from '../ui/Segmented'
 import { useAppStore } from '../../store/app'
 import { unwrap, messageOf } from '../../lib/ipc'
+import { toast } from '../../lib/toast'
 import { cn } from '../../lib/cn'
 import { COLLECTION_PAGE_SIZE } from '@shared/constants'
 
@@ -33,6 +34,7 @@ export function SourcePickerDialog({
   libraryOnly?: boolean
 }): React.JSX.Element {
   const products = useAppStore((state) => state.products)
+  const refreshProducts = useAppStore((state) => state.refreshProducts)
   const [tab, setTab] = useState<'products' | 'library'>(libraryOnly ? 'library' : 'products')
   const [search, setSearch] = useState('')
   const [items, setItems] = useState<LibraryImage[]>([])
@@ -41,6 +43,7 @@ export function SourcePickerDialog({
   const [error, setError] = useState<string | null>(null)
   const [libraryPage, setLibraryPage] = useState(1)
   const [productPage, setProductPage] = useState(1)
+  const [addingProduct, setAddingProduct] = useState(false)
 
   const loadLibrary = async (query: string, requestedPage: number): Promise<void> => {
     setLoading(true)
@@ -94,6 +97,22 @@ export function SourcePickerDialog({
     productPage * COLLECTION_PAGE_SIZE
   )
 
+  const addProduct = async (): Promise<void> => {
+    setAddingProduct(true)
+    try {
+      const product = await unwrap(window.moss.dialogs.pickProduct())
+      if (product) {
+        await refreshProducts()
+        setProductPage(1)
+        toast.status('Product added.')
+      }
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    } finally {
+      setAddingProduct(false)
+    }
+  }
+
   const choose = (choice: SourceChoice): void => {
     onChoose(choice)
     onOpenChange(false)
@@ -133,7 +152,7 @@ export function SourcePickerDialog({
           <div className="relative min-w-[200px] flex-1">
             <Icon icon={Search} size="sm" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-faint)' }} aria-hidden />
             <input
-              className="field h-8 pl-8 text-[12px]"
+              className="field search-field h-8 text-[12px]"
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -151,6 +170,9 @@ export function SourcePickerDialog({
               <Icon icon={Package} size="lg" style={{ color: 'var(--text-faint)' }} />
               <p className="mt-2 text-[13px] font-semibold">No saved products yet</p>
               <p className="meta mt-1 max-w-[320px]">Save a product photo from an image, or add one from a file.</p>
+              <Button variant="secondary" size="sm" className="mt-3" disabled={addingProduct} onClick={() => void addProduct()}>
+                {addingProduct ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Plus} size="sm" />} Add a Product
+              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
