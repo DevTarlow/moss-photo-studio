@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Mountain, Sparkles, Wand2, X } from 'lucide-react'
+import { Mountain, Sparkles, X } from 'lucide-react'
 import { Icon } from '@astryxdesign/core'
 import type { Person } from '@shared/types'
 import type { Template as TemplateType } from '@shared/prompts/templates'
-import { TEMPLATE_GROUPS, QUICK_FIX, templateAsset, templateById } from '@shared/prompts/templates'
+import { TEMPLATE_GROUPS, templateAsset, templateById } from '@shared/prompts/templates'
 import { bundledUrl } from '../../lib/assets'
 import { isBundledPerson } from '@shared/people'
 import { PROMPT_MAX } from '@shared/prompts/guards'
@@ -11,7 +11,6 @@ import type { ChangeKind } from '@shared/prompts/guards'
 import { Button } from '../../components/ui/Button'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { TextareaCounter } from '../../components/ui/TextareaCounter'
-import { cn } from '../../lib/cn'
 
 type TextSource = 'user' | 'tile'
 
@@ -108,22 +107,6 @@ export function ChangePanel({
           </button>
         )}
       </div>
-
-      <button
-        type="button"
-        className={cn('card mt-3 flex w-full items-center gap-3 p-3 text-left')}
-        style={{ borderColor: templateId === QUICK_FIX.id ? 'var(--accent)' : 'var(--border)' }}
-        disabled={disabled}
-        onClick={() => chooseTile({ id: QUICK_FIX.id, label: QUICK_FIX.label, prompt: QUICK_FIX.prompt, kind: 'edit' })}
-      >
-        <span className="grid h-8 w-8 place-items-center rounded-full" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
-          <Icon icon={Wand2} size="sm" />
-        </span>
-        <span className="min-w-0">
-          <span className="block text-[12px] font-semibold">Quick fix</span>
-          <span className="block text-[11px]" style={{ color: 'var(--text-faint)' }}>{QUICK_FIX.description}</span>
-        </span>
-      </button>
 
       {pending && (
         <div className="mt-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border-strong)', background: 'var(--surface-2)' }} role="alert">
@@ -231,11 +214,6 @@ export function ChangePanel({
       {textSource === 'tile' && selectedTemplate && (
         <p className="mt-4 flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--text-faint)' }}>
           <Icon icon={Sparkles} size="xsm" /> Studio words from {selectedTemplate.label}.
-        </p>
-      )}
-      {textSource === 'tile' && templateId === QUICK_FIX.id && (
-        <p className="mt-4 flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--text-faint)' }}>
-          <Icon icon={Sparkles} size="xsm" /> Studio words from Quick fix.
         </p>
       )}
     </div>

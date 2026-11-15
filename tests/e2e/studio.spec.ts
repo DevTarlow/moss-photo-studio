@@ -507,7 +507,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await openFirstProject('photo')
     await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 20_000 })
     const before = await spendCents()
-    await page.getByRole('button', { name: /Quick fix/ }).click()
+    await page.getByLabel('Describe the change').fill('Straighten the photo and clean up the background.')
     await page.getByRole('button', { name: /Make This Change/ }).click()
     await expect(page.getByText(/The request timed out\./)).toBeVisible({ timeout: 20_000 })
     expect(await spendCents()).toBe(before)
