@@ -330,6 +330,15 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await screenshot('library-products')
     await assertNoSeriousA11y('library-products')
     await page.getByRole('button', { name: 'All', exact: true }).click()
+    await page.getByRole('button', { name: 'Edited', exact: true }).click()
+    await expect(
+      page.getByText('Projects you started from a photo you already had in the Image Editor.', { exact: true })
+    ).toBeVisible()
+    await page.getByRole('button', { name: 'Generated', exact: true }).click()
+    await expect(
+      page.getByText('Projects you started from a prompt in the Image Generator.', { exact: true })
+    ).toBeVisible()
+    await page.getByRole('button', { name: 'All', exact: true }).click()
     await expect(page.getByRole('link', { name: /Open product/ })).toBeVisible()
     await page.getByRole('link', { name: /Open product/ }).first().click()
     await expect(page.getByText('Your set is ready. 6 images.')).toBeVisible({ timeout: 20_000 })

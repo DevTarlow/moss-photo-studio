@@ -54,8 +54,8 @@ type LibraryFilter = ProjectFilter | 'products'
 const filters: Array<{ id: LibraryFilter; label: string }> = [
   { id: 'all', label: 'All' },
   { id: 'sets', label: 'Sets' },
-  { id: 'photos', label: 'Photos' },
-  { id: 'images', label: 'Images' },
+  { id: 'photos', label: 'Edited' },
+  { id: 'images', label: 'Generated' },
   { id: 'products', label: 'Products' }
 ]
 const sorts: Array<{ id: ProjectSort; label: string }> = [
@@ -588,6 +588,18 @@ export function Library(): React.JSX.Element {
               )}
             </div>
           </div>
+
+          <Text type="supporting" color="secondary" className="mt-2 block">
+            {productsTab
+              ? 'Saved products. Open one to see its work and listing kit.'
+              : store.filter === 'sets'
+                ? 'Projects you planned as listing sets.'
+                : store.filter === 'photos'
+                  ? 'Projects you started from a photo you already had in the Image Editor.'
+                  : store.filter === 'images'
+                    ? 'Projects you started from a prompt in the Image Generator.'
+                    : 'Your sets, edited photos, and generated images.'}
+          </Text>
 
           {!productsTab && selectedProjects.length > 0 && (
             <div
