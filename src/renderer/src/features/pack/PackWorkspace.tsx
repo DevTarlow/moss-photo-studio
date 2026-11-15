@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { DropdownMenu } from 'radix-ui'
 import {
   ArrowDown,
   ArrowUp,
+  Check,
+  ChevronDown,
   Image as ImageIcon,
   Loader2,
   Pencil,
   Sparkles,
-  Trash2
+  Trash2,
+  UserRound
 } from 'lucide-react'
 import { Icon } from '@astryxdesign/core'
 import type { Image, JobState, PackJson, PackShot, Project } from '@shared/types'
@@ -29,6 +33,7 @@ import { useJobsStore } from '../../store/jobs'
 import { useWorkspaceStore } from '../../store/workspace'
 import { useViewportTier } from '../../lib/viewport'
 import { Button } from '../../components/ui/Button'
+import { Dialog } from '../../components/ui/Dialog'
 import { FirstRunConfirm } from '../../components/ui/FirstRunConfirm'
 import { BudgetWarning } from '../../components/ui/BudgetWarning'
 import { Sheet } from '../../components/ui/Sheet'
@@ -83,10 +88,11 @@ export function PackWorkspace(): React.JSX.Element {
   const leftHidden = tier === 'tiny'
 
   const [draft, setDraft] = useState<PackJson | null>(pack)
-  const [activeShotId, setActiveShotId] = useState<string | null>(pack?.shots[0]?.id ?? null)
+  const [activeShotId, setActiveShotId] = useState<string | null>(null)
   const [leftSheet, setLeftSheet] = useState(false)
   const [sourceOpen, setSourceOpen] = useState(false)
   const [sceneOpen, setSceneOpen] = useState(false)
+  const [personPreviewOpen, setPersonPreviewOpen] = useState(false)
   const [sourceBusy, setSourceBusy] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -107,9 +113,9 @@ export function PackWorkspace(): React.JSX.Element {
   const running = Object.values(jobs).some((job) => job.projectId === project.id && job.status === 'running')
   const source = project.sourceImageId ? images.find((image) => image.id === project.sourceImageId) ?? null : null
   const person = draft?.personId ? people.find((entry) => entry.id === draft.personId) ?? null : null
+  const selectedLook = person?.looks.find((look) => look.key === draft?.personLook) ?? null
+  const personLabel = person ? `${person.name}${person.ageBand ? ` · ${person.ageBand}` : ''}` : 'No person'
   const preset = draft ? packPresetById(draft.presetId) : undefined
-  const activeShot = draft && activeShotId ? draft.shots.find((shot) => shot.id === activeShotId) ?? null : null
-  const activeTemplate = activeShot ? packTemplateById(activeShot.templateId) : undefined
   const enabled = draft ? enabledPackShots(draft) : []
   const readyShots = enabled.filter((shot) => Boolean(shotImage(images, shot)))
   const missingShots = enabled.filter((shot) => !shotImage(images, shot))
@@ -131,7 +137,7 @@ export function PackWorkspace(): React.JSX.Element {
     if (!project || !pack || loadedProject.current === project.id) return
     loadedProject.current = project.id
     setDraft(pack)
-    setActiveShotId(pack.shots[0]?.id ?? null)
+    setActiveShotId(null)
   }, [pack, project])
 
   useEffect(() => {
@@ -210,9 +216,8 @@ export function PackWorkspace(): React.JSX.Element {
     })
   }
 
-  const selectShot = (shotId: string): void => {
-    setActiveShotId(shotId)
-    if (leftHidden) setLeftSheet(true)
+  const toggleShotSettings = (shotId: string): void => {
+    setActiveShotId((current) => (current === shotId ? null : shotId))
   }
 
   const changePreset = async (presetId: string): Promise<void> => {
@@ -231,7 +236,7 @@ export function PackWorkspace(): React.JSX.Element {
     next.sceneImageId = draft.sceneImageId
     next.direction = draft.direction
     updateDraft(next)
-    setActiveShotId(next.shots[0]?.id ?? null)
+    setActiveShotId(null)
   }
 
   const addShot = (templateId: string): void => {
@@ -500,31 +505,87 @@ export function PackWorkspace(): React.JSX.Element {
       </div>
 
       <div className="mt-4">
-        <label className="field-label" htmlFor="pack-person">Person <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></label>
-        <select
-          id="pack-person"
-          className="field mt-1"
-          value={draft.personId ?? ''}
-          disabled={running}
-          onChange={(event) => {
-            const next = event.target.value || null
-            updateDraft({ ...draft, personId: next, personLook: null })
-          }}
-        >
-          <option value="">No person</option>
-          {people.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
-        </select>
+        <p className="field-label">Person <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+        <div className="mt-1 flex items-start gap-2">
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button
+                type="button"
+                className="field min-w-0 flex-1 items-center gap-2 text-left"
+                style={{ display: 'flex', height: 36, fontSize: 12 }}
+                aria-label={`Person: ${personLabel}`}
+                disabled={running}
+              >
+                {person ? (
+                  <img src={selectedLook?.url ?? person.portraitUrl} alt="" className="h-5 w-5 shrink-0 rounded-full object-cover" />
+                ) : (
+                  <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border" style={{ borderColor: 'var(--border)', color: 'var(--text-faint)' }} aria-hidden>
+                    <Icon icon={UserRound} size="xsm" />
+                  </span>
+                )}
+                <span className="min-w-0 flex-1 truncate">{personLabel}</span>
+                <Icon icon={ChevronDown} size="xsm" className="shrink-0" />
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content className="menu-content min-w-[250px]" sideOffset={4}>
+                <DropdownMenu.Item
+                  className="menu-item"
+                  onSelect={() => updateDraft({ ...draft, personId: null, personLook: null })}
+                >
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border" style={{ borderColor: 'var(--border)', color: 'var(--text-faint)' }} aria-hidden>
+                    <Icon icon={UserRound} size="sm" />
+                  </span>
+                  <span className="min-w-0 flex-1 truncate">No person</span>
+                  {!person && <Icon icon={Check} size="sm" className="ml-auto shrink-0" />}
+                </DropdownMenu.Item>
+                {people.map((entry) => (
+                  <DropdownMenu.Item
+                    key={entry.id}
+                    className="menu-item"
+                    onSelect={() => updateDraft({ ...draft, personId: entry.id, personLook: null })}
+                  >
+                    <img src={entry.portraitUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
+                    <span className="min-w-0 flex-1 truncate">{entry.name}{entry.ageBand ? ` · ${entry.ageBand}` : ''}</span>
+                    {entry.id === person?.id && <Icon icon={Check} size="sm" className="ml-auto shrink-0" />}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+          {person ? (
+            <button
+              type="button"
+              className="shrink-0 cursor-pointer rounded-full border-0 bg-transparent p-0 hover:opacity-80"
+              aria-label={`See ${person.name} larger`}
+              onClick={() => setPersonPreviewOpen(true)}
+            >
+              <img
+                src={selectedLook?.url ?? person.portraitUrl}
+                alt={`${person.name}${selectedLook ? ` ${selectedLook.label}` : ''} portrait`}
+                className="h-11 w-11 rounded-full object-cover"
+              />
+            </button>
+          ) : (
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full border" style={{ borderColor: 'var(--border)', color: 'var(--text-faint)' }} aria-hidden>
+              <Icon icon={UserRound} size="md" />
+            </span>
+          )}
+        </div>
         {person && person.looks.length > 0 && (
-          <select
-            className="field mt-2"
-            aria-label={`Look for ${person.name}`}
-            value={draft.personLook ?? ''}
-            disabled={running}
-            onChange={(event) => updateDraft({ ...draft, personLook: event.target.value || null })}
-          >
-            <option value="">Original look</option>
-            {person.looks.map((look) => <option key={look.key} value={look.key}>{look.label}</option>)}
-          </select>
+          <>
+            <label className="field-label mt-2 block" htmlFor="pack-person-look">Look</label>
+            <select
+              id="pack-person-look"
+              className="field mt-1"
+              value={draft.personLook ?? ''}
+              disabled={running}
+              onChange={(event) => updateDraft({ ...draft, personLook: event.target.value || null })}
+            >
+              <option value="">Original look</option>
+              {person.looks.map((look) => <option key={look.key} value={look.key}>{look.label}</option>)}
+            </select>
+          </>
         )}
         {personMissing && <p className="hint mt-1" style={{ color: 'var(--danger)' }}>This pack has On person shots. Choose a person before making it.</p>}
       </div>
@@ -550,6 +611,7 @@ export function PackWorkspace(): React.JSX.Element {
         <p className="section-label">Shots</p>
         <span className="meta">{draft.shots.length} / {PACK_SHOT_MAX}</span>
       </div>
+      <p className="hint mt-1">Click a shot to edit its label and direction.</p>
       <div className="mt-2 space-y-1">
         {draft.shots.map((shot, index) => {
           const template = packTemplateById(shot.templateId)
@@ -564,16 +626,59 @@ export function PackWorkspace(): React.JSX.Element {
             >
               <div className="flex items-center gap-2">
                 <Switch checked={shot.enabled} onCheckedChange={(next) => toggleShot(shot.id, next)} label={`Turn ${shot.label} ${shot.enabled ? 'off' : 'on'}`} disabled={running} />
-                <button type="button" className="min-w-0 flex-1 truncate text-left text-[12px] font-medium" onClick={() => selectShot(shot.id)}>
-                  {shot.label}
+                <button
+                  type="button"
+                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                  aria-expanded={activeShotId === shot.id}
+                  aria-controls={`shot-settings-${shot.id}`}
+                  onClick={() => toggleShotSettings(shot.id)}
+                >
+                  <span className="min-w-0 flex-1 truncate text-[12px] font-medium">{shot.label}</span>
+                  <span className="meta shrink-0" aria-hidden="true">{template?.label ?? 'Custom'}</span>
+                  <Icon
+                    icon={ChevronDown}
+                    size="xsm"
+                    className="shrink-0 transition-transform"
+                    style={{ transform: activeShotId === shot.id ? 'rotate(180deg)' : undefined, color: 'var(--text-faint)' }}
+                  />
                 </button>
-                <span className="meta">{template?.label ?? 'Custom'}</span>
               </div>
               <div className="mt-1 flex justify-end gap-0.5">
                 <button type="button" className="icon-btn" aria-label={`Move ${shot.label} up`} disabled={running || index === 0} onClick={() => moveShot(shot.id, -1)}><Icon icon={ArrowUp} size="xsm" /></button>
                 <button type="button" className="icon-btn" aria-label={`Move ${shot.label} down`} disabled={running || index === draft.shots.length - 1} onClick={() => moveShot(shot.id, 1)}><Icon icon={ArrowDown} size="xsm" /></button>
                 <button type="button" className="icon-btn" aria-label={`Remove ${shot.label}`} disabled={running} onClick={() => removeShot(shot.id)}><Icon icon={Trash2} size="xsm" /></button>
               </div>
+              {activeShotId === shot.id && (
+                <div id={`shot-settings-${shot.id}`} className="mt-2 border-t pt-2" style={{ borderColor: 'var(--border)' }}>
+                  <p className="section-label">Shot settings</p>
+                  <label className="field-label mt-2 block" htmlFor={`shot-label-${shot.id}`}>Label</label>
+                  <input
+                    id={`shot-label-${shot.id}`}
+                    className="field mt-1"
+                    value={shot.label}
+                    maxLength={80}
+                    disabled={running}
+                    onChange={(event) => patchShot(shot.id, { label: event.target.value })}
+                  />
+                  <label className="field-label mt-2 block" htmlFor={`shot-direction-${shot.id}`}>Direction</label>
+                  <textarea
+                    id={`shot-direction-${shot.id}`}
+                    className="field mt-1 min-h-[90px]"
+                    value={shot.direction}
+                    maxLength={PACK_DIRECTION_MAX}
+                    disabled={running}
+                    placeholder={template?.defaultDirection || 'Describe this shot.'}
+                    onChange={(event) => patchShot(shot.id, { direction: event.target.value })}
+                  />
+                  <details className="mt-2">
+                    <summary className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>Prompt preview</summary>
+                    <pre className="mt-1 whitespace-pre-wrap rounded-[6px] p-2 text-[11px] leading-4" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+                      {previewFor(shot)}
+                    </pre>
+                    {!promptFits(previewFor(shot)) && <p className="error-text mt-1">This prompt is over the 2,000 character limit. Shorten the direction.</p>}
+                  </details>
+                </div>
+              )}
             </div>
           )
         })}
@@ -593,37 +698,6 @@ export function PackWorkspace(): React.JSX.Element {
         ))}
       </select>
 
-      {activeShot && activeTemplate && (
-        <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
-          <p className="section-label">Shot settings</p>
-          <label className="field-label mt-3 block" htmlFor="shot-label">Label</label>
-          <input
-            id="shot-label"
-            className="field mt-1"
-            value={activeShot.label}
-            maxLength={80}
-            disabled={running}
-            onChange={(event) => patchShot(activeShot.id, { label: event.target.value })}
-          />
-          <label className="field-label mt-3 block" htmlFor="shot-direction">Direction</label>
-          <textarea
-            id="shot-direction"
-            className="field mt-1 min-h-[90px]"
-            value={activeShot.direction}
-            maxLength={PACK_DIRECTION_MAX}
-            disabled={running}
-            placeholder={activeTemplate.defaultDirection || 'Describe this shot.'}
-            onChange={(event) => patchShot(activeShot.id, { direction: event.target.value })}
-          />
-          <details className="mt-2">
-            <summary className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>Prompt preview</summary>
-            <pre className="mt-1 whitespace-pre-wrap rounded-[6px] p-2 text-[11px] leading-4" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
-              {previewFor(activeShot)}
-            </pre>
-            {!promptFits(previewFor(activeShot)) && <p className="error-text mt-1">This prompt is over the 2,000 character limit. Shorten the direction.</p>}
-          </details>
-        </div>
-      )}
     </div>
   )
 
@@ -745,6 +819,23 @@ export function PackWorkspace(): React.JSX.Element {
         description="The pack uses its setting, light and props without copying its subject."
         libraryOnly
       />
+
+      {person && (
+        <Dialog
+          open={personPreviewOpen}
+          onOpenChange={setPersonPreviewOpen}
+          title={person.name}
+          description={person.ageBand ?? undefined}
+          width={460}
+          footer={<Button variant="secondary" onClick={() => setPersonPreviewOpen(false)}>Close</Button>}
+        >
+          <img
+            src={selectedLook?.url ?? person.portraitUrl}
+            alt={`${person.name}${selectedLook ? ` ${selectedLook.label}` : ''} portrait`}
+            className="mx-auto max-h-[60vh] w-full rounded-[12px] object-contain"
+          />
+        </Dialog>
+      )}
 
       <FirstRunConfirm
         open={firstOpen}

@@ -49,7 +49,8 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 - Start a pack from a Product, a library image, or the New menu with no source. The workspace shows Pack setup and a six-shot Studio Essentials plan.
 - Change the preset, pack brief, look, shape, format, person/look, and scene. Every shot's prompt preview must match the shared brief and show the product/person/scene guards exactly as the queue will send them.
-- Add, remove, reorder, disable, and rename shots. A pack holds up to eight shots. A prompt-only pack has no source guard; an On Person shot requires a person.
+- Add, remove, reorder, disable, and rename shots. Clicking a shot expands its label and direction below that row; opening another shot closes the first. A pack holds up to eight shots. A prompt-only pack has no source guard; an On Person shot requires a person.
+- The Person picker shows circular portraits, and the selected person has a larger thumbnail that changes when the look changes and opens a larger preview.
 - Make missing shots; confirm the exact price on the first paid run. Successful shots stay when another fails. Retry missing shots and choose a version per shot.
 - Edit a pack image in the Image Editor; its edited and adjusted versions stay attached to the same shot.
 - Export Pack writes a self-contained folder with one selected/latest image per enabled shot, `pack.json`, and `README.txt`. No marketplace resizing, listing files, or alt-text files are written.

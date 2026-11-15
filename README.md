@@ -24,7 +24,7 @@ Generated images can be saved as a product or a person. A generated project appe
 
 An Image Pack makes a small, consistent set of images from one shared brief. Choose a preset such as Studio Essentials, Lifestyle Story, On Person, Packaging & Gift, Editorial, or Food & Serve, or start a Custom pack and add shots yourself.
 
-Every shot is a reusable prompt template. You can change its direction, turn it off, reorder it, or add another shot. The pack also carries one shared direction, a look, shape, format, and any product, person, and scene references. Every shot uses those shared choices, so the pack feels related without assuming a marketplace or a listing.
+Every shot is a reusable prompt template. Click a shot to open its label and direction in place, turn it off, reorder it, or add another shot. The pack also carries one shared direction, a look, shape, format, and any product, person, and scene references. Every shot uses those shared choices, so the pack feels related without assuming a marketplace or a listing.
 
 A pack can start from a product or library photo, or run prompt-only. The workspace shows the exact composed prompt for each shot before anything is sent. Each shot costs one cent when it comes back, with the price on the button first. Missing or failed shots can be retried without paying again for the ones already made.
 
