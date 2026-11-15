@@ -297,7 +297,7 @@ export function Onboarding(): React.JSX.Element {
 
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
         <main className="mx-auto flex w-full max-w-[1120px] flex-col gap-5 px-6 pb-24">
-          <div className="grid gap-6 xl:grid-cols-[250px_minmax(0,1fr)]">
+          <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
             <aside className="hidden xl:block">
               <Card padding={4} className="h-fit">
                 <Stack gap={4}>
