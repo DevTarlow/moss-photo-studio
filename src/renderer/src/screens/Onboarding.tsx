@@ -340,7 +340,7 @@ export function Onboarding(): React.JSX.Element {
                       <Grid columns={{ minWidth: 180 }} gap={3}>
                         <ToolCard icon={<Icon icon={ImageIcon} size="md" />} title="Image Editor" body="Change a photo you already have." />
                         <ToolCard icon={<Icon icon={Sparkles} size="md" />} title="Image Generator" body="Describe a picture and make it." />
-                        <ToolCard icon={<Icon icon={Layers} size="md" />} title="Sets" body="Keep related images together and export them at once." />
+                        <ToolCard icon={<Icon icon={Layers} size="md" />} title="Sets & Offline Library" body="Keep related images together, all on this computer." />
                       </Grid>
                     </>
                   )}
@@ -502,7 +502,7 @@ export function Onboarding(): React.JSX.Element {
                         <Grid columns={{ minWidth: 180 }} gap={3}>
                           <ToolCard icon={<Icon icon={ImageIcon} size="md" />} title="Image Editor" body="Change a photo you already have." />
                           <ToolCard icon={<Icon icon={Sparkles} size="md" />} title="Image Generator" body="Describe a picture and make it." />
-                          <ToolCard icon={<Icon icon={Layers} size="md" />} title="Sets" body="Keep related images together and export them at once." />
+                          <ToolCard icon={<Icon icon={Layers} size="md" />} title="Sets & Offline Library" body="Keep related images together, all on this computer." />
                         </Grid>
                       </Stack>
                     </>
