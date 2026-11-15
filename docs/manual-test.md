@@ -50,7 +50,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 - Products shows “20 included · N yours,” search, sort, and pagination.
 - Included products open with Edit This Photo and New Image from Reference, without Rename or Delete.
 - Create a Product opens the Image Generator with the product prompt; Save as Product adds it under Yours.
-- A product hub shows the source photo, category, linked work, Link existing work, archive, and delete.
+- A product hub shows the source photo, linked work, Link existing work, archive, and delete.
 - **This build intentionally has no Listing Kit, listing copy, or Business profile.** Sets exist only as image organization; no rail item, menu item, or settings section should offer the retired tools.
 
 ## Sets

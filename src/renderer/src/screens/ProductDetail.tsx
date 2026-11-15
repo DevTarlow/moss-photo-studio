@@ -25,7 +25,7 @@ import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
 import { formatDateTime, relativeTime } from '../lib/format'
 import { toast } from '../lib/toast'
-import { Heading, Icon, Text, TextInput } from '@astryxdesign/core'
+import { Heading, Icon, Text } from '@astryxdesign/core'
 
 const typeLabel: Record<ProjectType, string> = {
   photo: 'Photo edit',
@@ -78,8 +78,6 @@ export function ProductDetail(): React.JSX.Element {
   const [busy, setBusy] = useState(false)
   const [renaming, setRenaming] = useState(false)
   const [renameValue, setRenameValue] = useState('')
-  const [form, setForm] = useState({ category: '' })
-  const [savingDetails, setSavingDetails] = useState(false)
   const [linkOpen, setLinkOpen] = useState(false)
   const [unfiled, setUnfiled] = useState<Project[]>([])
 
@@ -91,7 +89,6 @@ export function ProductDetail(): React.JSX.Element {
       const next = await unwrap(window.moss.products.detail({ id }))
       setDetail(next)
       setRenameValue(next.product.name)
-      setForm({ category: next.product.category ?? '' })
     } catch (caught) {
       setError(messageOf(caught))
     } finally {
@@ -126,28 +123,6 @@ export function ProductDetail(): React.JSX.Element {
       toast.status('Product renamed.')
     } catch (caught) {
       toast.error(messageOf(caught))
-    }
-  }
-
-  const saveDetails = async (): Promise<void> => {
-    if (!detail) return
-    setSavingDetails(true)
-    try {
-      const updated = await unwrap(
-        window.moss.products.update({
-          id: detail.product.id,
-          patch: {
-            category: form.category.trim() || null
-          }
-        })
-      )
-      setDetail({ ...detail, product: { ...detail.product, ...updated } })
-      await refreshProducts()
-      toast.status('Product details saved.')
-    } catch (caught) {
-      toast.error(messageOf(caught))
-    } finally {
-      setSavingDetails(false)
     }
   }
 
@@ -273,7 +248,7 @@ export function ProductDetail(): React.JSX.Element {
                 <div className="min-w-0 flex-1">
                   <Heading level={1}>{product.name}</Heading>
                   <Text type="supporting" color="secondary" className="mt-1 block">
-                    {product.category || 'No category yet'} · saved {formatDateTime(product.createdAt)}
+                    Saved {formatDateTime(product.createdAt)}
                   </Text>
                 </div>
                 <DropdownMenu.Root>
@@ -299,19 +274,6 @@ export function ProductDetail(): React.JSX.Element {
                 </Button>
               </div>
 
-              <div className="card mt-4 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="section-label">Product details</p>
-                </div>
-                <div className="mt-3">
-                  <TextInput label="Category" value={form.category} onChange={(value) => setForm({ ...form, category: value })} placeholder="Ceramics and pottery" width="100%" />
-                </div>
-                <div className="mt-3 flex justify-end">
-                  <Button variant="secondary" disabled={savingDetails} onClick={() => void saveDetails()}>
-                    {savingDetails ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Save Details
-                  </Button>
-                </div>
-              </div>
             </div>
           </div>
 
