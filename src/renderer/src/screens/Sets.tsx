@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Skeleton } from '../components/ui/Skeleton'
+import { SetCard } from '../components/sets/SetCard'
 import { SetNameDialog } from '../components/sets/SetNameDialog'
 import { unwrap, messageOf } from '../lib/ipc'
 import { toast } from '../lib/toast'
@@ -75,28 +76,7 @@ export function Sets(): React.JSX.Element {
           ) : (
             <div className="mt-8 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
               {sets.map((set) => (
-                <article key={set.id} className="card card-hover overflow-hidden">
-                  <button
-                    type="button"
-                    className="block w-full cursor-pointer bg-transparent p-0 text-left"
-                    onClick={() => navigate(`/sets/${set.id}`)}
-                  >
-                    <div className="relative aspect-[4/3] overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                      {set.coverUrl ? (
-                        <img src={set.coverUrl} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="grid h-full place-items-center" style={{ color: 'var(--text-faint)' }}>
-                          <Icon icon={Layers} size="lg" />
-                        </div>
-                      )}
-                      <span className="badge absolute right-2 top-2">{set.imageCount}</span>
-                    </div>
-                    <div className="p-3">
-                      <p className="truncate text-[13px] font-semibold">{set.name}</p>
-                      <p className="meta mt-0.5">{set.imageCount} {set.imageCount === 1 ? 'image' : 'images'}</p>
-                    </div>
-                  </button>
-                </article>
+                <SetCard key={set.id} set={set} onOpen={() => navigate(`/sets/${set.id}`)} />
               ))}
             </div>
           )}

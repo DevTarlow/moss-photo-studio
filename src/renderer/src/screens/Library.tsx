@@ -12,7 +12,7 @@ import {
   Sparkles,
   Trash2
 } from 'lucide-react'
-import type { Project, ProjectFilter, ProjectSort } from '@shared/types'
+import type { Project, ProjectFilter, ProjectSort, SetSummary } from '@shared/types'
 import { COLLECTION_PAGE_SIZE } from '@shared/constants'
 import { useLibraryStore } from '../store/library'
 import { useAppStore } from '../store/app'
@@ -25,6 +25,7 @@ import { ErrorState } from '../components/ui/ErrorState'
 import { LibrarySkeleton } from '../components/ui/Skeleton'
 import { ProjectCard } from '../components/library/ProjectCard'
 import { ProductCard } from '../components/products/ProductCard'
+import { SetCard } from '../components/sets/SetCard'
 import { NewProjectDialog } from '../components/library/NewProjectDialog'
 import { useConfirm } from '../components/ui/ConfirmProvider'
 import { unwrap, messageOf } from '../lib/ipc'
@@ -49,13 +50,14 @@ import {
   ToggleButtonGroup
 } from '@astryxdesign/core'
 
-type LibraryFilter = ProjectFilter | 'products'
+type LibraryFilter = ProjectFilter | 'products' | 'sets'
 
 const filters: Array<{ id: LibraryFilter; label: string }> = [
   { id: 'all', label: 'All' },
   { id: 'photos', label: 'Edited' },
   { id: 'images', label: 'Generated' },
-  { id: 'products', label: 'Products' }
+  { id: 'products', label: 'Products' },
+  { id: 'sets', label: 'Sets' }
 ]
 const sorts: Array<{ id: ProjectSort; label: string }> = [
   { id: 'recent', label: 'Recent' },
@@ -86,6 +88,11 @@ export function Library(): React.JSX.Element {
   const [dragOver, setDragOver] = useState(false)
   const dragDepth = useRef(0)
   const [productsTab, setProductsTab] = useState(false)
+  const [setsTab, setSetsTab] = useState(false)
+  const [sets, setSets] = useState<SetSummary[]>([])
+  const [setsLoading, setSetsLoading] = useState(false)
+  const [setsError, setSetsError] = useState<string | null>(null)
+  const [setPage, setSetPage] = useState(1)
   const [productPage, setProductPage] = useState(1)
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
   const [selectMode, setSelectMode] = useState(false)
@@ -105,6 +112,7 @@ export function Library(): React.JSX.Element {
 
   useEffect(() => {
     setProductPage(1)
+    setSetPage(1)
   }, [search])
 
   useEffect(() => {
@@ -120,13 +128,30 @@ export function Library(): React.JSX.Element {
   useEffect(() => {
     // The input starts from the store value. Skip the initial effect so the
     // mount load is not raced by a second debounced load.
-    if (search === store.search) return
+    if (setsTab || search === store.search) return
     const timer = window.setTimeout(() => {
       store.setSearch(search)
       void store.load()
     }, 150)
     return () => window.clearTimeout(timer)
-  }, [search, store.search])
+  }, [search, store.search, setsTab])
+
+  const loadSets = async (): Promise<void> => {
+    setSetsLoading(true)
+    setSetsError(null)
+    try {
+      setSets(await unwrap(window.moss.sets.list()))
+    } catch (caught) {
+      setSetsError(messageOf(caught))
+    } finally {
+      setSetsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (setsTab) void loadSets()
+    // Re-read whenever the tab is opened; Set membership may have changed.
+  }, [setsTab])
 
   const runningCount = Object.values(jobs).filter((job) => job.status === 'running').length
   const previousRunning = useRef(runningCount)
@@ -361,6 +386,16 @@ export function Library(): React.JSX.Element {
       if (store.sort === 'oldest') return a.createdAt - b.createdAt
       return b.createdAt - a.createdAt
     })
+  const setNeedle = search.trim().toLowerCase()
+  const filteredSets = sets
+    .filter((set) => !setNeedle || set.name.toLowerCase().includes(setNeedle))
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+  const setPages = Math.max(1, Math.ceil(filteredSets.length / COLLECTION_PAGE_SIZE))
+  const visibleSetPage = Math.min(setPage, setPages)
+  const pagedSets = filteredSets.slice(
+    (visibleSetPage - 1) * COLLECTION_PAGE_SIZE,
+    visibleSetPage * COLLECTION_PAGE_SIZE
+  )
   const productPages = Math.max(1, Math.ceil(filteredProducts.length / COLLECTION_PAGE_SIZE))
   const visibleProductPage = Math.min(productPage, productPages)
   const pagedProducts = filteredProducts.slice(
@@ -374,6 +409,10 @@ export function Library(): React.JSX.Element {
   useEffect(() => {
     if (productPage > productPages) setProductPage(productPages)
   }, [productPage, productPages])
+
+  useEffect(() => {
+    if (setPage > setPages) setSetPage(setPages)
+  }, [setPage, setPages])
 
   const renderProject = (project: Project, view: 'grid' | 'list'): React.ReactNode => {
     return (
@@ -420,7 +459,11 @@ export function Library(): React.JSX.Element {
             <div>
               <Heading level={1}>All work</Heading>
               <Text type="supporting" color="secondary">
-                {productsTab ? (
+                {setsTab ? (
+                  setNeedle
+                    ? `Showing ${filteredSets.length} of ${sets.length}`
+                    : `${sets.length} ${sets.length === 1 ? 'set' : 'sets'}`
+                ) : productsTab ? (
                   productNeedle
                     ? `Showing ${filteredProducts.length} of ${userProducts.length}`
                     : `${userProducts.length} ${userProducts.length === 1 ? 'product' : 'products'}`
@@ -449,7 +492,7 @@ export function Library(): React.JSX.Element {
                 size="sm"
                 onClick={() => navigate('/usage')}
               />
-              {!productsTab && (
+              {!productsTab && !setsTab && (
                 <Button
                   label={selectMode ? 'Done selecting' : 'Select'}
                   variant={selectMode ? 'secondary' : 'ghost'}
@@ -523,11 +566,11 @@ export function Library(): React.JSX.Element {
             <div className="min-w-[220px] flex-1 md:max-w-[340px]">
               <TextInput
                 ref={searchRef}
-                label={productsTab ? 'Search products' : 'Search projects'}
+                label={setsTab ? 'Search Sets' : productsTab ? 'Search products' : 'Search projects'}
                 isLabelHidden
                 value={search}
                 onChange={setSearch}
-                placeholder={productsTab ? 'Search products' : 'Search projects'}
+                placeholder={setsTab ? 'Search Sets' : productsTab ? 'Search products' : 'Search projects'}
                 startIcon={<Icon icon={Search} size="sm" />}
                 hasClear
                 width="100%"
@@ -537,8 +580,17 @@ export function Library(): React.JSX.Element {
               type="single"
               className="shrink-0"
               label="Filter all work"
-              value={productsTab ? 'products' : store.filter}
+              value={setsTab ? 'sets' : productsTab ? 'products' : store.filter}
               onChange={(value) => {
+                if (value === 'sets') {
+                  setSetsTab(true)
+                  setSetsLoading(true)
+                  setProductsTab(false)
+                  setSelected(new Set())
+                  setSelectMode(false)
+                  return
+                }
+                setSetsTab(false)
                 if (value === 'products') {
                   setProductsTab(true)
                   setSelected(new Set())
@@ -550,41 +602,51 @@ export function Library(): React.JSX.Element {
               }}
             >
               {filters.map((filter) => (
-                <ToggleButton key={filter.id} value={filter.id} label={filter.label} size="sm" />
+                <ToggleButton
+                  key={filter.id}
+                  value={filter.id}
+                  label={filter.label}
+                  icon={filter.id === 'sets' ? <Icon icon={Layers} size="sm" /> : undefined}
+                  size="sm"
+                />
               ))}
             </ToggleButtonGroup>
-            <div className="ml-auto flex shrink-0 items-center gap-2">
-              <Selector
-                label={productsTab ? 'Sort products' : 'Sort projects'}
-                isLabelHidden
-                value={store.sort}
-                onChange={(value) => {
-                  if (value) {
-                    store.setSort(value as ProjectSort)
-                    setProductPage(1)
-                  }
-                }}
-                options={sorts.map((sort) => ({ value: sort.id, label: sort.label }))}
-                width={140}
-              />
-              {!productsTab && (
-                <ToggleButtonGroup
-                  type="single"
-                  label="View as"
-                  value={store.view}
+            {!setsTab && (
+              <div className="ml-auto flex shrink-0 items-center gap-2">
+                <Selector
+                  label={productsTab ? 'Sort products' : 'Sort projects'}
+                  isLabelHidden
+                  value={store.sort}
                   onChange={(value) => {
-                    if (value === 'grid' || value === 'list') store.setView(value)
+                    if (value) {
+                      store.setSort(value as ProjectSort)
+                      setProductPage(1)
+                    }
                   }}
-                >
-                  <ToggleButton value="grid" label="Grid view" isIconOnly icon={<Icon icon={Grid2X2} size="sm" />} size="sm" />
-                  <ToggleButton value="list" label="List view" isIconOnly icon={<Icon icon={List} size="sm" />} size="sm" />
-                </ToggleButtonGroup>
-              )}
-            </div>
+                  options={sorts.map((sort) => ({ value: sort.id, label: sort.label }))}
+                  width={140}
+                />
+                {!productsTab && (
+                  <ToggleButtonGroup
+                    type="single"
+                    label="View as"
+                    value={store.view}
+                    onChange={(value) => {
+                      if (value === 'grid' || value === 'list') store.setView(value)
+                    }}
+                  >
+                    <ToggleButton value="grid" label="Grid view" isIconOnly icon={<Icon icon={Grid2X2} size="sm" />} size="sm" />
+                    <ToggleButton value="list" label="List view" isIconOnly icon={<Icon icon={List} size="sm" />} size="sm" />
+                  </ToggleButtonGroup>
+                )}
+              </div>
+            )}
           </div>
 
           <Text type="supporting" color="secondary" className="mt-2 block">
-            {productsTab
+            {setsTab
+              ? 'Sets keep related images and products together, ready to revisit or export all at once.'
+              : productsTab
               ? 'Saved products. Open one to see its photo work.'
               : store.filter === 'photos'
                 ? 'Projects you started from a photo you already had in the Image Editor.'
@@ -618,7 +680,7 @@ export function Library(): React.JSX.Element {
             </div>
           )}
 
-          {!productsTab && store.filter === 'all' && !selectMode && selected.size === 0 && filteredProducts.length > 0 && (
+          {!productsTab && !setsTab && store.filter === 'all' && !selectMode && selected.size === 0 && filteredProducts.length > 0 && (
             <section className="mt-5" aria-labelledby="all-products-heading">
               <div className="flex items-baseline gap-2">
                 <h2 id="all-products-heading" className="section-label">Products</h2>
@@ -640,7 +702,43 @@ export function Library(): React.JSX.Element {
           )}
 
           <div className="mt-5">
-            {productsTab ? (
+            {setsTab ? (
+              setsLoading ? (
+                <LibrarySkeleton />
+              ) : setsError ? (
+                <ErrorState message={setsError} onRetry={() => void loadSets()} />
+              ) : filteredSets.length === 0 ? (
+                sets.length === 0 ? (
+                  <EmptyState
+                    icon={<Icon icon={Layers} size="lg" />}
+                    title="No Sets yet"
+                    line="Open any image or product and choose Add to Set, or open Sets to create one."
+                    action={<Button label="Open Sets" variant="secondary" onClick={() => navigate('/sets')} />}
+                  />
+                ) : (
+                  <EmptyState
+                    icon={<Icon icon={Search} size="lg" />}
+                    title={`No Sets match "${search.trim()}".`}
+                    line="Try a different word."
+                    action={<Button label="Clear Search" variant="secondary" onClick={() => setSearch('')} />}
+                  />
+                )
+              ) : (
+                <>
+                  <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+                    {pagedSets.map((set) => (
+                      <SetCard key={set.id} set={set} onOpen={() => navigate(`/sets/${set.id}`)} />
+                    ))}
+                  </div>
+                  <Pagination
+                    page={visibleSetPage}
+                    total={filteredSets.length}
+                    onPage={setSetPage}
+                    label="Set pages"
+                  />
+                </>
+              )
+            ) : productsTab ? (
               filteredProducts.length === 0 ? (
                 productNeedle ? (
                   <EmptyState
@@ -731,7 +829,7 @@ export function Library(): React.JSX.Element {
             )}
           </div>
 
-          {!productsTab && !empty && (
+          {!productsTab && !setsTab && !empty && (
             <Pagination
               page={store.page}
               total={store.total}

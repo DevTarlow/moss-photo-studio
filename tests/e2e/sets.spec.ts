@@ -92,6 +92,15 @@ test('a Set keeps images together and starts new work from them', async () => {
     await expect(page.getByRole('dialog', { name: 'Save to Set' })).toHaveCount(0)
     await page.keyboard.press('Escape')
 
+    await page.getByRole('link', { name: 'All work', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Sets', exact: true }).click()
+    const filteredSet = page.getByRole('button', { name: /Spring collection/ }).first()
+    await expect(filteredSet).toContainText('1 image')
+    await screenshot(page, 'all-work-sets')
+    await filteredSet.click()
+    await expect(page.getByRole('heading', { name: 'Spring collection', exact: true })).toBeVisible()
+
     await page.getByRole('link', { name: 'Sets', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Sets', exact: true })).toBeVisible()
     const setCard = page.getByRole('button', { name: /Spring collection/ }).first()
