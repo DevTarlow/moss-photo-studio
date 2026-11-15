@@ -26,7 +26,7 @@ A Set is a simple collection of images, made for keeping related work together. 
 
 The **Sets** page shows every image and product source in one place. From any item there, choose **Edit Photo** or **New Image** to start a new project with that photo as the source. The imported source and the images made from it stay in the Set automatically, so the Set grows with the work. You can still move individual images or remove them later.
 
-Sets also appear in **All work** under their own section. Choose the **Sets** filter to see only Sets.
+Sets also appear in **All work** under their own section. Choose the **Sets** filter to see only Sets. When a product belongs to a Set, its page shows the Set name and links back to it.
 
 **Export Set** writes all of the Set's ready images and product sources into one folder with numbered filenames. Sets are free organization: they do not change how the editor or generator works, and they are not tied to a marketplace.
 

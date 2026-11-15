@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { DropdownMenu } from 'radix-ui'
 import {
   Archive,
@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   FolderPlus,
   Image as ImageIcon,
+  Layers,
   Link2,
   Loader2,
   Package,
@@ -252,6 +253,11 @@ export function ProductDetail(): React.JSX.Element {
                   <Text type="supporting" color="secondary" className="mt-1 block">
                     Saved {formatDateTime(product.createdAt)}
                   </Text>
+                  {product.setId && product.setName && (
+                    <Link to={`/sets/${product.setId}`} className="mt-1 inline-flex items-center gap-1.5 text-[12px] font-medium">
+                      <Icon icon={Layers} size="xsm" /> Set: {product.setName}
+                    </Link>
+                  )}
                 </div>
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>

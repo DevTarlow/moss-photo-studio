@@ -179,6 +179,7 @@ test('a Set keeps images together and starts new work from them', async () => {
     await page.locator('#save-to-new-set').fill('Product picks')
     await page.getByRole('button', { name: 'Create & Save', exact: true }).click()
     await expect(page.getByRole('dialog', { name: 'Add to Set' })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Set: Product picks', exact: true })).toBeVisible()
     await page.getByRole('link', { name: 'Sets', exact: true }).click()
     const productSetCard = page.getByRole('button', { name: /Product picks/ }).first()
     await expect(productSetCard).toContainText('1 image')

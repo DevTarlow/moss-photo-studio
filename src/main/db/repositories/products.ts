@@ -13,6 +13,7 @@ interface ProductRow {
   updated_at: number
   category: string | null
   set_id: string | null
+  set_name: string | null
   status: string
   archived_at: number | null
   project_count?: number
@@ -33,6 +34,7 @@ function mapProduct(row: ProductRow): Product {
     blurb: null,
     category: row.category,
     setId: row.set_id,
+    setName: row.set_name,
     status: row.status === 'archived' ? 'archived' : 'active',
     archivedAt: row.archived_at,
     projectCount: Number(row.project_count ?? 0),
@@ -45,11 +47,12 @@ export class ProductRepository {
 
   private baseSelect(): string {
     return `
-      SELECT p.*,
+      SELECT p.*, s.name AS set_name,
         (SELECT COUNT(*) FROM projects pr WHERE pr.product_id = p.id AND pr.archived_at IS NULL AND pr.draft = 0) AS project_count,
         (SELECT COUNT(*) FROM images i JOIN projects pr ON pr.id = i.project_id
           WHERE pr.product_id = p.id AND i.deleted_at IS NULL AND i.status = 'ready') AS image_count
       FROM products p
+      LEFT JOIN sets s ON s.id = p.set_id
     `
   }
 

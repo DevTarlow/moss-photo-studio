@@ -110,11 +110,13 @@ describe('sets', () => {
       now: 1000
     })
     expect(products.setSet(product.id, set.id)?.setId).toBe(set.id)
+    expect(products.get(product.id)?.setName).toBe('Product set')
     expect(sets.get(set.id)?.imageCount).toBe(1)
     expect(sets.get(set.id)?.coverUrl).toContain('mug-thumb.webp')
     expect(products.listBySet(set.id).map((item) => item.id)).toEqual([product.id])
     expect(sets.delete(set.id)).toBe(true)
     expect(products.get(product.id)?.setId).toBeNull()
+    expect(products.get(product.id)?.setName).toBeNull()
   })
 
 })

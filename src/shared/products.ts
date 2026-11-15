@@ -161,7 +161,8 @@ export function bundledProductCard(product: BundledProduct): Product {
     source: 'bundled',
     blurb: product.blurb,
     category: product.category,
-    setId: null
+    setId: null,
+    setName: null
   }
 }
 

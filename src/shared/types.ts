@@ -184,6 +184,8 @@ export interface Product {
   category: string | null
   /** The Set this product source belongs to, or null when unfiled. */
   setId: string | null
+  /** Set name for display, or null when the product is unfiled. */
+  setName: string | null
   status?: 'active' | 'archived'
   archivedAt?: number | null
   projectCount?: number
