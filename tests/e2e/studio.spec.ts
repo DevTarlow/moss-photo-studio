@@ -309,6 +309,8 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.getByRole('button', { name: /^Choose product / }).first().click()
     await expect(page.getByText('Listing copy', { exact: true })).toBeVisible()
     await expect(page.getByText('Checking for a saved listing...')).toBeHidden()
+    await expect(page.getByRole('checkbox', { name: 'Use my Business profile' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Edit Business Profile/ })).toBeVisible()
     await screenshot('listing-kit-source')
     await assertNoSeriousA11y('listing-kit-source')
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1024, 700))

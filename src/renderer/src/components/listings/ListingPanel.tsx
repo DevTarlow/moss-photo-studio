@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Copy, Loader2, RefreshCw, Sparkles } from 'lucide-react'
+import { Copy, ExternalLink, Loader2, RefreshCw, Sparkles } from 'lucide-react'
 import type { ListingCopy, ListingPlatform } from '@shared/listings'
 import { LISTING_PLATFORMS, limitsFor } from '@shared/listings'
 import { LISTING_COST_LABEL } from '@shared/cost'
 import { Button } from '../ui/Button'
 import { Icon, TextArea, TextInput } from '@astryxdesign/core'
+import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../store/app'
 import { unwrap, messageOf } from '../../lib/ipc'
 import { formatDateTime } from '../../lib/format'
@@ -24,8 +25,17 @@ export function ListingPanel({
   productName: string
   projectId: string | null
 }): React.JSX.Element {
+  const navigate = useNavigate()
   const brand = useAppStore((state) => state.brand)
   const secrets = useAppStore((state) => state.secrets)
+  const hasProfile = Boolean(
+    brand?.businessName?.trim() ||
+      brand?.sells?.trim() ||
+      brand?.audience?.trim() ||
+      brand?.voice?.trim() ||
+      brand?.policies?.trim() ||
+      brand?.marketplaces?.length
+  )
   const defaultPlatform: ListingPlatform =
     brand?.defaultPlatform === 'shopify' ? 'shopify' : brand?.defaultPlatform === 'own' || brand?.defaultPlatform === 'other' ? 'own' : 'etsy'
   const [platform, setPlatform] = useState<ListingPlatform>(defaultPlatform)
@@ -156,6 +166,22 @@ export function ListingPanel({
         </select>
       </div>
 
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[8px] border px-3 py-2" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
+        <label className="flex items-center gap-1.5 text-[12px]">
+          <input
+            type="checkbox"
+            checked={useProfile}
+            disabled={generating}
+            onChange={(event) => setUseProfile(event.target.checked)}
+          />{' '}
+          Use my Business profile
+        </label>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/settings/business')}>
+          Edit Business Profile <Icon icon={ExternalLink} size="xsm" />
+        </Button>
+        {brand && !hasProfile && <span className="hint">No profile saved yet. Add one so the copy sounds like your shop.</span>}
+      </div>
+
       {loading ? (
         <p className="mt-4 flex items-center gap-2 text-[12px]" style={{ color: 'var(--text-muted)' }}>
           <Icon icon={Loader2} size="sm" className="animate-spin" /> Checking for a saved listing...
@@ -176,9 +202,6 @@ export function ListingPanel({
             <span className="badge">Version {version}</span>
             <span className="meta">Saved {formatDateTime(listing.createdAt)}</span>
             <span className="meta">· {microsLabel(listing.costMicros)} of text</span>
-            <label className="ml-auto flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--text-muted)' }}>
-              <input type="checkbox" checked={useProfile} onChange={(event) => setUseProfile(event.target.checked)} /> Use my Business profile
-            </label>
           </div>
 
           <div className="mt-4 grid gap-3">

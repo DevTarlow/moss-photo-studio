@@ -722,6 +722,8 @@ export function ListingKit(): React.JSX.Element {
       : source.kind === 'set'
         ? source.project.name
         : source.image.label
+  const sourcePillLabel =
+    source.kind === 'product' ? 'Product' : source.kind === 'set' ? 'Set' : 'Image'
   const sourceMeta =
     source.kind === 'product'
       ? `Product · ${source.detail.counts.sets} ${source.detail.counts.sets === 1 ? 'set' : 'sets'} · ${source.detail.counts.images} images`
@@ -778,7 +780,14 @@ export function ListingKit(): React.JSX.Element {
       : []
 
   return (
-    <AppFrame>
+    <AppFrame
+      titleContent={
+        <div className="no-drag flex min-w-0 items-center gap-2">
+          <span className="min-w-0 max-w-[340px] truncate text-[13px] font-semibold">{sourceName}</span>
+          <span className="badge">{sourcePillLabel}</span>
+        </div>
+      }
+    >
       <div className="page-scroll">
         <div className="page-pad page-max">
           <button
