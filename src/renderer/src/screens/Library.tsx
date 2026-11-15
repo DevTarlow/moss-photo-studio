@@ -439,13 +439,26 @@ export function Library(): React.JSX.Element {
             <div>
               <Heading level={1}>All work</Heading>
               <Text type="supporting" color="secondary">
-                {productsTab
-                  ? productNeedle
+                {productsTab ? (
+                  productNeedle
                     ? `Showing ${filteredProducts.length} of ${userProducts.length}`
                     : `${userProducts.length} ${userProducts.length === 1 ? 'product' : 'products'}`
-                  : filtering
-                    ? `Showing ${store.total} of ${allTotal || store.total}`
-                    : `${allTotal || store.total} ${(allTotal || store.total) === 1 ? 'project' : 'projects'}`}
+                ) : store.filter === 'all' && !filtering ? (
+                  <>
+                    <span>
+                      {`${allTotal || store.total} ${(allTotal || store.total) === 1 ? 'project' : 'projects'}`}
+                    </span>
+                    {userProducts.length > 0 && (
+                      <span>
+                        {` · ${userProducts.length} ${userProducts.length === 1 ? 'product' : 'products'}`}
+                      </span>
+                    )}
+                  </>
+                ) : filtering ? (
+                  `Showing ${store.total} of ${allTotal || store.total}`
+                ) : (
+                  `${allTotal || store.total} ${(allTotal || store.total) === 1 ? 'project' : 'projects'}`
+                )}
               </Text>
             </div>
             <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -598,7 +611,7 @@ export function Library(): React.JSX.Element {
                   ? 'Projects you started from a photo you already had in the Image Editor.'
                   : store.filter === 'images'
                     ? 'Projects you started from a prompt in the Image Generator.'
-                    : 'Your sets, edited photos, and generated images.'}
+                    : 'Your products, sets, edited photos, and generated images.'}
           </Text>
 
           {!productsTab && selectedProjects.length > 0 && (
@@ -624,6 +637,27 @@ export function Library(): React.JSX.Element {
                 />
               </div>
             </div>
+          )}
+
+          {!productsTab && store.filter === 'all' && !selectMode && selected.size === 0 && filteredProducts.length > 0 && (
+            <section className="mt-5" aria-labelledby="all-products-heading">
+              <div className="flex items-baseline gap-2">
+                <h2 id="all-products-heading" className="section-label">Products</h2>
+                <span className="meta-faint">{filteredProducts.length}</span>
+              </div>
+              <div
+                className="mt-3 grid gap-4"
+                style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}
+              >
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onOpen={() => navigate(`/product/${product.id}`)}
+                  />
+                ))}
+              </div>
+            </section>
           )}
 
           <div className="mt-5">

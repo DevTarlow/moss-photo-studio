@@ -283,3 +283,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## All work labels
 
 120. **All work names project collections by origin; the card badges keep the tool names.** The filters are All, Sets, Edited, Generated, and Products. Edited means a project the seller started from a photo they already had in the Image Editor; Generated means a project started from a prompt in the Image Generator. The card badges still say Image Editor and Image Generator so the tool connection stays visible, and a one-line hint under the filters explains the selected collection. Photos and Images were rejected because both read as "pictures" and neither explained that the distinction is how the project started. The internal `ProjectFilter` ids stay `photos` and `images` because they map to the stored project types, not the user-facing labels.
+
+## All work includes products
+
+121. **The All view shows saved products as a section above the project list.** The Products filter stays the focused, paginated product grid. All shows every saved product (filtered by the current search and sorted by the selected sort) rather than merging products into the project pagination, because products and projects are different entities with different server-side queries; the dedicated Products tab handles large product collections. The All header count reads "N projects · M products," the All hint names products first, and the product section is hidden while project selection mode is active because products are not part of the project bulk delete.

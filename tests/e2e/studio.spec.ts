@@ -324,6 +324,8 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await expect(page.getByRole('link', { name: 'Image Editor', exact: true })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Image Generator', exact: true })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Listing Kit', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Open product', exact: true })).toBeVisible()
     await screenshot('library-light')
     await page.getByRole('button', { name: 'Products', exact: true }).click()
     await expect(page.getByRole('button', { name: /^Open product$/ })).toBeVisible()
