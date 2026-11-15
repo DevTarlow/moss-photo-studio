@@ -8,19 +8,16 @@ import type { Db } from '@main/db/connection'
 import { Logger } from '@main/logger'
 import { ProjectRepository } from '@main/db/repositories/projects'
 import { ImageRepository } from '@main/db/repositories/images'
-import { PlanRepository } from '@main/db/repositories/plans'
 import { BrandRepository } from '@main/db/repositories/brand'
 import { PeopleRepository } from '@main/db/repositories/people'
 import { ProductRepository } from '@main/db/repositories/products'
 import { MediaService } from '@main/media/service'
 import { ProductService } from '@main/products/service'
-import { createDefaultPlan } from '@shared/plans'
 
 let dir = ''
 let db: Db
 let projects: ProjectRepository
 let images: ImageRepository
-let plans: PlanRepository
 let products: ProductRepository
 let media: MediaService
 let productService: ProductService
@@ -33,16 +30,14 @@ beforeEach(() => {
   db = openDatabase({ file: path.join(dir, 'library.sqlite'), libraryPath: libraryPath(), logger })
   projects = new ProjectRepository(db)
   images = new ImageRepository(db)
-  plans = new PlanRepository(db)
   const brand = new BrandRepository(db)
   const people = new PeopleRepository(db)
   products = new ProductRepository(db)
-  media = new MediaService({ projects, images, plans, people, brand, libraryPath, logger })
+  media = new MediaService({ projects, images, people, brand, libraryPath, logger })
   productService = new ProductService({
     products,
     images,
     projects,
-    plans,
     media,
     libraryPath,
     resourceRoot: () => path.resolve(__dirname, '../../resources')
@@ -102,27 +97,12 @@ describe('products', () => {
     expect(fs.existsSync(path.join(libraryPath(), 'products', `${product.id}.webp`))).toBe(false)
   })
 
-  it('creates set, photo, and image projects from a product', async () => {
+  it('creates photo and image projects from a product', async () => {
     const product = await productService.addFromBytes({ bytes: await jpeg(), name: 'Mug' })
-    const set = await productService.createProject({ productId: product.id, type: 'set', shape: 'square', format: 'webp' })
-    expect(projects.get(set.projectId)?.type).toBe('set')
-    expect(projects.get(set.projectId)?.productId).toBe(product.id)
-    // The set asks what the seller sells before it gets a plan.
-    expect(plans.getActive(set.projectId)).toBeNull()
-    expect(projects.get(set.projectId)?.category).toBeNull()
-    expect(images.get(set.imageId)?.status).toBe('ready')
-
-    const plan = createDefaultPlan({
-      category: 'clothing',
-      productName: 'Mug',
-      shape: 'square',
-      format: 'webp'
-    })
-    plans.save(set.projectId, plan)
-    expect(plans.getActive(set.projectId)?.json.category).toBe('clothing')
-    expect(projects.get(set.projectId)?.category).toBe('clothing')
-
     const photo = await productService.createProject({ productId: product.id, type: 'photo', shape: 'square', format: 'webp' })
+    expect(projects.get(photo.projectId)?.type).toBe('photo')
+    expect(projects.get(photo.projectId)?.productId).toBe(product.id)
+    expect(images.get(photo.imageId)?.status).toBe('ready')
     expect(projects.get(photo.projectId)?.sourceImageId).toBe(photo.imageId)
 
     const image = await productService.createProject({ productId: product.id, type: 'image', shape: 'square', format: 'webp' })
@@ -131,14 +111,13 @@ describe('products', () => {
 
   it('groups work into a product, links unfiled work, and archives without deleting it', async () => {
     const product = await productService.addFromBytes({ bytes: await jpeg(), name: 'Candle' })
-    const set = await productService.createProject({ productId: product.id, type: 'set', shape: 'square', format: 'webp' })
+    const photo = await productService.createProject({ productId: product.id, type: 'photo', shape: 'square', format: 'webp' })
     const loose = await imageProject('Loose edit')
     expect(productService.detail(product.id).counts.projects).toBe(1)
     productService.linkProject(product.id, loose.projectId)
     const detail = productService.detail(product.id)
     expect(detail.counts.projects).toBe(2)
-    expect(detail.counts.sets).toBe(1)
-    expect(detail.projects.some((project) => project.id === set.projectId)).toBe(true)
+    expect(detail.projects.some((project) => project.id === photo.projectId)).toBe(true)
     productService.unlinkProject(loose.projectId)
     expect(projects.get(loose.projectId)?.productId).toBeNull()
 
@@ -146,7 +125,7 @@ describe('products', () => {
     expect(archived?.status).toBe('archived')
     expect(products.list()).toHaveLength(0)
     expect(products.list({ includeArchived: true })).toHaveLength(1)
-    expect(projects.get(set.projectId)?.productId).toBe(product.id)
+    expect(projects.get(photo.projectId)?.productId).toBe(product.id)
   })
 
   it('creates a product from an existing project and links it', async () => {
@@ -175,18 +154,18 @@ describe('products', () => {
 
 describe('bundled products', () => {
   it('uses the resource asset as a starting point without a saved row', async () => {
-    const set = await productService.createProject({
+    const created = await productService.createProject({
       productId: 'dropper-bottle',
-      type: 'set',
+      type: 'image',
       shape: 'square',
       format: 'webp'
     })
-    const source = images.get(set.imageId)
+    const source = images.get(created.imageId)
     expect(source?.label).toBe('Amber dropper bottle')
     expect(source?.width).toBe(1024)
     expect(products.list()).toHaveLength(0)
-    expect(projects.get(set.projectId)?.sourceImageId).toBe(set.imageId)
-    expect(projects.get(set.projectId)?.productId).toBeNull()
+    expect(projects.get(created.projectId)?.sourceImageId).toBe(created.imageId)
+    expect(projects.get(created.projectId)?.productId).toBeNull()
 
     const target = projects.create({ type: 'photo', name: 'Bundled target' })
     const imported = await productService.importIntoProject({

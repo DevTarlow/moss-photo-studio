@@ -44,7 +44,7 @@ test('an untouched Image Generator leaves no project behind', async () => {
 
     // The first image turns the draft into a real Library project, whether the
     // generator is opened from the rail or the Ctrl+3 shortcut.
-    await page.keyboard.press('Control+3')
+    await page.keyboard.press('Control+2')
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
     await page.locator('textarea').first().fill('A ceramic mug on a pure white background, product photo.')
     await page.getByRole('button', { name: /Create 1 Image/ }).click()

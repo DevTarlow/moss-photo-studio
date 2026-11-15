@@ -1,3 +1,5 @@
+> Current scope note: the set plan, listing writer/kit, Business profile, and text-model paths described below were removed in the photo-studio refactor. This file remains as the historical delivery record.
+
 # Milestones
 
 The application work is complete across the M0 through M7 scope. The repository history was consolidated into four logical commits at the end of the run rather than one commit per milestone. This file maps the milestone deliverables to the code and the verification that covers them.

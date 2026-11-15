@@ -27,7 +27,7 @@ const SOURCES = path.join(LAB, 'sources')
 const PEOPLE_DIR = path.join(LAB, 'people')
 const LOOKS_DIR = path.join(LAB, 'looks')
 const PRODUCTS_DIR = path.join(LAB, 'products')
-const COMMANDS = new Set(['plan', 'set', 'edit', 'create', 'sources', 'people', 'looks', 'products', 'sweep', 'resume', 'help'])
+const COMMANDS = new Set(['edit', 'create', 'sources', 'people', 'looks', 'products', 'help'])
 
 class LabError extends Error {}
 
@@ -80,16 +80,12 @@ function usage() {
   console.log(`Moss prompt lab — a real-Muse calibration tool, never run by the test suite.
 
 Usage:
-  npm run lab -- plan   --category clothing [--source shirt.jpg] [--all]
-  npm run lab -- set    --category clothing --source shirt.jpg [--limit 3] [--shots hero,onmodel] --yes
   npm run lab -- edit   --template kitchen-table --source shirt.jpg [--person maya] --yes
   npm run lab -- create --text "..." [--source shirt.jpg] [--person maya] [--count 1] --yes
   npm run lab -- sources [--force] --yes
   npm run lab -- people  [--ids maya,omar] [--force] --yes
   npm run lab -- looks   [--ids maya,omar] [--looks front,seated] [--force] --yes
   npm run lab -- products [--ids dropper-bottle,speckled-mug] [--force] --yes
-  npm run lab -- sweep  [--categories clothing,ceramics] --yes
-  npm run lab -- resume <run-dir> --yes
 
 Common options:
   --shape square|portrait|landscape   default: from the source photo
@@ -97,8 +93,6 @@ Common options:
   --palette "#112233,#445566"          optional brand colors
   --person maya                        bundled person for an on-person run
   --look front|angle|full|seated       alternate studio look for that person
-  --directions-file <file.json>        lab-only direction overrides, keyed by shot type
-  --gift-clause-file <file.txt>        lab-only gift clause override
   --max-cents 300                      hard stop for this and earlier lab runs
   --concurrency 2                      in-flight requests per run (1-4)
   --base-url <url>                     default: MOSS_LAB_BASE_URL or the Muse API
@@ -115,7 +109,6 @@ Output:
   lab/products/         reviewed unbranded starter products and thumbs
   lab/runs/<stamp>-...  images, thumbs, manifest.json, index.html, sheet.webp, review.md
   lab/spend.json        cumulative actual returned-image cost
-  lab/plans/<stamp>-... free prompt plans
 `)
 }
 
@@ -195,11 +188,7 @@ async function loadModules() {
   const load = (id) => loader.load(id)
   const modules = {
     loader,
-    recipes: await load('/src/shared/prompts/recipes.ts'),
-    shots: await load('/src/shared/prompts/shots.ts'),
     guards: await load('/src/shared/prompts/guards.ts'),
-    setPlan: await load('/src/shared/prompts/setPlan.ts'),
-    plans: await load('/src/shared/plans.ts'),
     templates: await load('/src/shared/prompts/templates.ts'),
     shapes: await load('/src/shared/shapes.ts'),
     cost: await load('/src/shared/cost.ts'),
@@ -1293,22 +1282,15 @@ async function main() {
   new URL(baseUrl)
   const S = await loadModules()
   try {
-    if (command === 'plan') {
-      await planCommand({ S, opts })
-      return
-    }
     const { client, key } = createClient(S, baseUrl)
     await validateKey(client, key)
     const budget = await readBudget(opts)
-    if (command === 'set') await setCommand({ S, client, baseUrl, opts, budget })
-    else if (command === 'edit') await editCommand({ S, client, baseUrl, opts, budget })
+    if (command === 'edit') await editCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'create') await createCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'sources') await sourcesCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'people') await peopleCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'looks') await looksCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'products') await productsCommand({ S, client, baseUrl, opts, budget })
-    else if (command === 'sweep') await sweepCommand({ S, client, baseUrl, opts, budget })
-    else if (command === 'resume') await resumeCommand({ S, client, baseUrl, opts, budget })
   } finally {
     await S.loader.close()
   }

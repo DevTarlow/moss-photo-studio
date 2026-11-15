@@ -420,15 +420,6 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
     }
   }
 
-  const useAsSet = async (image: Image): Promise<void> => {
-    try {
-      const detail = await unwrap(window.moss.projects.createFromImage({ sourceImageId: image.id, name: project.name }))
-      navigate(`/project/${detail.project.id}`)
-    } catch (caught) {
-      toast.error(messageOf(caught))
-    }
-  }
-
   const chooseProductRef = (choice: SourceChoice): void => {
     setProductRef(choice)
     setExampleUsesProduct(true)
@@ -852,8 +843,6 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                           label={`More actions for ${image.label}`}
                           size="sm"
                           items={[
-                            { label: 'Make a Listing Kit', onClick: () => navigate(`/listing-kit?image=${image.id}`) },
-                            { label: "Use as a Set's Photo", onClick: () => void useAsSet(image) },
                             { label: 'Delete', onClick: () => void remove(image) }
                           ]}
                         />

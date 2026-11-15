@@ -279,6 +279,161 @@ const migrations: Migration[] = [
       `)
     }
   },
+  {
+    version: 10,
+    up(db) {
+      const setRows = db.prepare("SELECT id FROM projects WHERE type = 'set'").all() as Array<{ id: string }>
+      const cutoutRows = db.prepare('SELECT cutout_file FROM products WHERE cutout_file IS NOT NULL').all() as Array<{ cutout_file: string }>
+      const cleanup = {
+        projects: setRows.map((row) => row.id),
+        files: cutoutRows.map((row) => row.cutout_file)
+      }
+      db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('removedFeatureCleanup', ?)").run(JSON.stringify(cleanup))
+
+      db.exec(`
+        DELETE FROM jobs WHERE kind = 'set' OR project_id IN (SELECT id FROM projects WHERE type = 'set');
+        DELETE FROM images WHERE project_id IN (SELECT id FROM projects WHERE type = 'set');
+        DELETE FROM plans;
+        DELETE FROM projects WHERE type = 'set';
+        DROP TABLE plans;
+        DROP TABLE listings;
+
+        CREATE TABLE projects_v10 (
+          id TEXT PRIMARY KEY,
+          type TEXT NOT NULL CHECK (type IN ('photo','image')),
+          name TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          last_opened_at INTEGER,
+          archived_at INTEGER,
+          cover_image_id TEXT,
+          source_image_id TEXT,
+          product_id TEXT REFERENCES products(id) ON DELETE SET NULL,
+          draft INTEGER NOT NULL DEFAULT 0,
+          shape TEXT NOT NULL DEFAULT 'square',
+          format TEXT NOT NULL DEFAULT 'webp',
+          person_look TEXT
+        );
+        INSERT INTO projects_v10
+          (id, type, name, created_at, updated_at, last_opened_at, archived_at, cover_image_id, source_image_id, product_id, draft, shape, format, person_look)
+        SELECT id, type, name, created_at, updated_at, last_opened_at, archived_at, cover_image_id, source_image_id, product_id, draft, shape, format, person_look
+        FROM projects;
+        DROP TABLE projects;
+        ALTER TABLE projects_v10 RENAME TO projects;
+        CREATE INDEX IF NOT EXISTS idx_projects_product ON projects(product_id);
+
+        CREATE TABLE jobs_v10 (
+          id TEXT PRIMARY KEY,
+          project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+          kind TEXT NOT NULL CHECK (kind IN ('create','edit')),
+          total INTEGER NOT NULL,
+          done INTEGER NOT NULL DEFAULT 0,
+          failed INTEGER NOT NULL DEFAULT 0,
+          status TEXT NOT NULL CHECK (status IN ('running','done','failed','interrupted','cancelled')),
+          started_at INTEGER NOT NULL,
+          finished_at INTEGER,
+          snapshot TEXT
+        );
+        INSERT INTO jobs_v10
+          (id, project_id, kind, total, done, failed, status, started_at, finished_at, snapshot)
+        SELECT id, project_id, kind, total, done, failed, status, started_at, finished_at, snapshot
+        FROM jobs;
+        DROP TABLE jobs;
+        ALTER TABLE jobs_v10 RENAME TO jobs;
+
+        CREATE TABLE images_v10 (
+          id TEXT PRIMARY KEY,
+          project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+          kind TEXT NOT NULL CHECK (kind IN ('upload','render','edit','adjust')),
+          status TEXT NOT NULL DEFAULT 'ready' CHECK (status IN ('pending','ready','failed')),
+          file TEXT,
+          thumb TEXT,
+          width INTEGER,
+          height INTEGER,
+          bytes INTEGER,
+          format TEXT NOT NULL DEFAULT 'webp',
+          mime TEXT NOT NULL DEFAULT 'image/webp',
+          prompt TEXT,
+          user_text TEXT,
+          revised_prompt TEXT,
+          template_id TEXT,
+          person_id TEXT,
+          label TEXT,
+          seq INTEGER NOT NULL DEFAULT 1,
+          parent_id TEXT,
+          root_id TEXT,
+          size TEXT,
+          adjust TEXT,
+          badge INTEGER NOT NULL DEFAULT 0,
+          is_original INTEGER NOT NULL DEFAULT 0,
+          cost_cents INTEGER NOT NULL DEFAULT 0,
+          duration_ms INTEGER,
+          job_id TEXT,
+          error_code TEXT,
+          created_at INTEGER NOT NULL,
+          deleted_at INTEGER,
+          origin TEXT NOT NULL DEFAULT 'upload'
+        );
+        INSERT INTO images_v10
+          (id, project_id, kind, status, file, thumb, width, height, bytes, format, mime, prompt, user_text,
+           revised_prompt, template_id, person_id, label, seq, parent_id, root_id, size, adjust, badge,
+           is_original, cost_cents, duration_ms, job_id, error_code, created_at, deleted_at, origin)
+        SELECT id, project_id, kind, status, file, thumb, width, height, bytes, format, mime, prompt, user_text,
+               revised_prompt, template_id, person_id, label, seq, parent_id, root_id, size, adjust, badge,
+               is_original, cost_cents, duration_ms, job_id, error_code, created_at, deleted_at, origin
+        FROM images;
+        DROP TABLE images;
+        ALTER TABLE images_v10 RENAME TO images;
+        CREATE INDEX IF NOT EXISTS idx_images_project ON images(project_id, deleted_at, created_at);
+        CREATE INDEX IF NOT EXISTS idx_images_parent ON images(parent_id);
+        CREATE INDEX IF NOT EXISTS idx_images_root ON images(root_id);
+        CREATE INDEX IF NOT EXISTS idx_images_job ON images(job_id);
+        CREATE INDEX IF NOT EXISTS idx_images_library ON images(deleted_at, status, created_at);
+
+        CREATE TABLE products_v10 (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          file TEXT NOT NULL,
+          thumb TEXT,
+          width INTEGER,
+          height INTEGER,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          category TEXT,
+          status TEXT NOT NULL DEFAULT 'active',
+          archived_at INTEGER
+        );
+        INSERT INTO products_v10
+          (id, name, file, thumb, width, height, created_at, updated_at, category, status, archived_at)
+        SELECT id, name, file, thumb, width, height, created_at, updated_at, category, status, archived_at
+        FROM products;
+        DROP TABLE products;
+        ALTER TABLE products_v10 RENAME TO products;
+
+        CREATE TABLE brand_v10 (
+          id TEXT PRIMARY KEY,
+          colors TEXT,
+          colors_enabled INTEGER NOT NULL DEFAULT 1,
+          logo_file TEXT,
+          badge_enabled INTEGER NOT NULL DEFAULT 0,
+          badge_corner TEXT NOT NULL DEFAULT 'br',
+          badge_scale TEXT NOT NULL DEFAULT 'm',
+          badge_opacity INTEGER NOT NULL DEFAULT 100,
+          style_preset TEXT,
+          updated_at INTEGER NOT NULL
+        );
+        INSERT INTO brand_v10
+          (id, colors, colors_enabled, logo_file, badge_enabled, badge_corner, badge_scale, badge_opacity, style_preset, updated_at)
+        SELECT id, colors, colors_enabled, logo_file, badge_enabled, badge_corner, badge_scale, badge_opacity, style_preset, updated_at
+        FROM brand;
+        DROP TABLE brand;
+        ALTER TABLE brand_v10 RENAME TO brand;
+
+        DELETE FROM settings WHERE key = 'onboardingCategory';
+        INSERT OR REPLACE INTO meta (key, value) VALUES ('schemaVersion', '10');
+      `)
+    }
+  },
 ]
 
 export const SCHEMA_VERSION = migrations[migrations.length - 1]!.version
@@ -327,22 +482,26 @@ export interface OpenDatabaseOptions {
   file: string
   libraryPath: string
   logger: Logger
+  /** Test hook: stop after this schema version. Production always uses the latest. */
+  targetVersion?: number
 }
 
-function recoverDatabase({ file, libraryPath, logger }: OpenDatabaseOptions): Db | null {
+function recoverDatabase(options: OpenDatabaseOptions): Db | null {
+  const { file, logger } = options
   const backup = latestBackup(file)
   if (!backup) return null
   logger.warn('db', 'integrity_failed', { count: 1 })
   for (const suffix of ['', '-wal', '-shm']) fs.rmSync(`${file}${suffix}`, { force: true })
   fs.copyFileSync(backup, file)
-  return openDatabaseAttempt({ file, libraryPath, logger }, false)
+  return openDatabaseAttempt(options, false)
 }
 
 export function openDatabase(options: OpenDatabaseOptions): Db {
   return openDatabaseAttempt(options, true)
 }
 
-function openDatabaseAttempt({ file, libraryPath, logger }: OpenDatabaseOptions, allowRecovery: boolean): Db {
+function openDatabaseAttempt(options: OpenDatabaseOptions, allowRecovery: boolean): Db {
+  const { file, libraryPath, logger } = options
   fs.mkdirSync(path.dirname(file), { recursive: true })
   const existed = fs.existsSync(file) && fs.statSync(file).size > 0
   let db: Db | null = null
@@ -369,8 +528,8 @@ function openDatabaseAttempt({ file, libraryPath, logger }: OpenDatabaseOptions,
   if (!db) throw new Error('db_corrupt')
 
   const current = Number(db.pragma('user_version', { simple: true }) ?? 0)
-  const target = SCHEMA_VERSION
-  if (current > target) {
+  const target = options.targetVersion ?? SCHEMA_VERSION
+  if (current > target || target > SCHEMA_VERSION) {
     db.close()
     throw new Error('db_newer_than_app')
   }
@@ -378,14 +537,21 @@ function openDatabaseAttempt({ file, libraryPath, logger }: OpenDatabaseOptions,
     let backup: string | null = null
     try {
       if (existed || current > 0) backup = backupDatabase(db, file, target)
-      for (const migration of migrations) {
-        if (migration.version <= current) continue
-        const run = db.transaction(() => {
-          migration.up(db)
-          db.pragma(`user_version = ${migration.version}`)
-        })
-        run()
-        logger.info('db', 'migration_applied', { count: migration.version })
+      db.pragma('foreign_keys = OFF')
+      try {
+        for (const migration of migrations) {
+          if (migration.version <= current || migration.version > target) continue
+          const run = db.transaction(() => {
+            migration.up(db)
+            db.pragma(`user_version = ${migration.version}`)
+          })
+          run()
+          logger.info('db', 'migration_applied', { count: migration.version })
+        }
+        const violations = db.pragma('foreign_key_check') as unknown[]
+        if (violations.length) throw new Error('foreign_key_check_failed')
+      } finally {
+        db.pragma('foreign_keys = ON')
       }
     } catch (error) {
       db.close()

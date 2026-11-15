@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Image as ImageIcon, Layers, Loader2, Package, Plus, Search, Sparkles } from 'lucide-react'
+import { Image as ImageIcon, Loader2, Package, Plus, Search, Sparkles } from 'lucide-react'
 import type { Product, Project, ProjectType } from '@shared/types'
 import { bundledProductCards } from '@shared/products'
 import { AppFrame } from '../components/ui/AppFrame'
@@ -207,7 +207,7 @@ export function Products(): React.JSX.Element {
                   ? `Showing ${matchingCount} of ${included.length + products.length}`
                   : `${included.length} included · ${products.length} yours`}
               </Text>
-              <Text type="supporting" color="secondary" className="block">A product holds its source photo, its sets and edits, and the listing kit you make from them.</Text>
+              <Text type="supporting" color="secondary" className="block">A product holds its source photo and the images and edits made from it.</Text>
             </div>
             <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
               <Button variant="secondary" disabled={creatingProduct} onClick={() => void createProduct()}>
@@ -287,7 +287,6 @@ export function Products(): React.JSX.Element {
                           product={product}
                           onOpen={() => navigate(`/product/${product.id}`)}
                           onRename={() => openRename(product)}
-                          onListingKit={() => navigate(`/listing-kit?product=${product.id}`)}
                           onDelete={() => void remove(product)}
                         />
                       ))}
@@ -310,13 +309,13 @@ export function Products(): React.JSX.Element {
                     <h2 id="unfiled-work-heading" className="section-label">Unfiled work</h2>
                     <span className="meta-faint">{unfiled.length}</span>
                   </div>
-                  <p className="hint mt-1">Sets and edits that are not under a product yet. Make a product from one to keep its listing kit together.</p>
+                  <p className="hint mt-1">Edits and generated images that are not under a product yet. Make a product from one to keep them together.</p>
                   <div className="mt-3 grid gap-2">
                     {unfiled.map((project) => (
                       <div key={project.id} className="card flex flex-wrap items-center gap-2 p-3">
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-[13px] font-semibold">{project.name}</p>
-                          <p className="meta">{project.type === 'set' ? 'Set' : project.type === 'photo' ? 'Photo edit' : 'Image'} · {project.imageCount} {project.imageCount === 1 ? 'image' : 'images'}</p>
+                          <p className="meta">{project.type === 'photo' ? 'Photo edit' : 'Image'} · {project.imageCount} {project.imageCount === 1 ? 'image' : 'images'}</p>
                         </div>
                         <Button variant="ghost" size="sm" onClick={() => navigate(`/project/${project.id}`)}>Open</Button>
                         <Button variant="secondary" size="sm" disabled={busy} onClick={() => void makeProductFromProject(project)}>Make a Product</Button>
@@ -358,7 +357,7 @@ export function Products(): React.JSX.Element {
                       <ProductCard key={product.id} product={product} onOpen={() => setPreview(product)} />
                     ))}
                   </div>
-                  <p className="hint mt-3">Clean, unbranded starter products. Use one as a starting point for your own listing photos.</p>
+                  <p className="hint mt-3">Clean, unbranded starter products. Use one as a starting point for your own product photos.</p>
                 </section>
               )}
             </>
@@ -397,9 +396,6 @@ export function Products(): React.JSX.Element {
             <div className="mt-4">
               <p className="section-label">Start with this product</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <Button variant="primary" disabled={busy} onClick={() => void startProject(preview, 'set')}>
-                  <Icon icon={Layers} size="sm" /> Use in a Set
-                </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'photo')}>
                   <Icon icon={ImageIcon} size="sm" /> Edit This Photo
                 </Button>

@@ -6,18 +6,16 @@ import { runtimeEnv, appResourceRoot, defaultLibraryPath, isReleaseBuild } from 
 import { Logger } from './logger'
 import { closeDatabase, openDatabase } from './db/connection'
 import { applyPendingRestore } from './backup'
+import { runPendingRemovedDataCleanup } from './removedData'
 import { SettingsStore } from './settings'
 import { ProjectRepository } from './db/repositories/projects'
-import { PlanRepository } from './db/repositories/plans'
 import { ImageRepository } from './db/repositories/images'
 import { JobRepository } from './db/repositories/jobs'
 import { UsageRepository } from './db/repositories/usage'
 import { BrandRepository } from './db/repositories/brand'
 import { PeopleRepository } from './db/repositories/people'
 import { ProductRepository } from './db/repositories/products'
-import { ListingRepository } from './db/repositories/listings'
 import { ProductService } from './products/service'
-import { ListingsService } from './listings/service'
 import { LicenseRepository } from './db/repositories/license'
 import { SecretStore } from './secrets'
 import { SafeTextCipher } from './secretCipher'
@@ -25,8 +23,6 @@ import { MediaService } from './media/service'
 import { JobQueue, reconcileOnStartup } from './jobs/queue'
 import { MuseClient } from './muse/client'
 import { FakeMuseClient } from './muse/fake'
-import { FakeTextProvider, MuseTextClient } from './muse/text'
-import { FakeSamProvider, MuseSamClient } from './muse/sam'
 import { LicenseController } from './license/controller'
 import { MossLicenseProvider } from './license/moss'
 import { UpdateService } from './updates'
@@ -171,14 +167,12 @@ async function boot(): Promise<void> {
   const settings = new SettingsStore(db)
   const libraryPath = (): string => settings.libraryPath(defaultLibraryPath())
   const projects = new ProjectRepository(db)
-  const plans = new PlanRepository(db)
   const images = new ImageRepository(db)
   const jobs = new JobRepository(db)
   const usage = new UsageRepository(db)
   const brand = new BrandRepository(db)
   const people = new PeopleRepository(db)
   const products = new ProductRepository(db)
-  const listings = new ListingRepository(db)
   const licenseRepo = new LicenseRepository(db)
   const cipher = new SafeTextCipher(userDataDir)
   const secrets = new SecretStore({ userDataDir, db, logger, cipher })
@@ -222,26 +216,9 @@ async function boot(): Promise<void> {
         logger
       })
 
-  const textProvider = runtimeEnv.fakeMode
-    ? new FakeTextProvider()
-    : new MuseTextClient({
-        apiKey: () => secrets.read(),
-        baseUrl: runtimeEnv.museBaseUrl,
-        logger
-      })
-
-  const samProvider = runtimeEnv.fakeMode
-    ? new FakeSamProvider()
-    : new MuseSamClient({
-        apiKey: () => secrets.read(),
-        baseUrl: runtimeEnv.museBaseUrl,
-        logger
-      })
-
   const media = new MediaService({
     projects,
     images,
-    plans,
     people,
     brand,
     libraryPath,
@@ -252,32 +229,14 @@ async function boot(): Promise<void> {
     products,
     images,
     projects,
-    plans,
     media,
     libraryPath,
-    resourceRoot: () => resourceRoot,
-    provider: textProvider,
-    usage,
-    sam: samProvider
-  })
-
-  const listingsService = new ListingsService({
-    products,
-    projects,
-    plans,
-    images,
-    brand,
-    listings,
-    usage,
-    provider: textProvider,
-    libraryPath,
-    logger
+    resourceRoot: () => resourceRoot
   })
 
   const queue = new JobQueue({
     projects,
     images,
-    plans,
     jobs,
     usage,
     brand,
@@ -301,7 +260,6 @@ async function boot(): Promise<void> {
     settings,
     secrets,
     projects,
-    plans,
     images,
     jobs,
     usage,
@@ -309,8 +267,6 @@ async function boot(): Promise<void> {
     people,
     products,
     productService,
-    listings,
-    listingsService,
     media,
     queue,
     license,
@@ -400,6 +356,13 @@ async function boot(): Promise<void> {
     return window
   }
   mainWindow = openMainWindow()
+  void runPendingRemovedDataCleanup({
+    db,
+    libraryPath: settings.libraryPath(defaultLibraryPath()),
+    logger
+  }).catch(() => {
+    logger.warn('db', 'removed_data_cleanup_failed', { errorCode: 'unknown' })
+  })
   if (autoUpdates.state().supported) {
     // Check immediately. The renderer asks for the current state on mount, so
     // an update found before the first paint still shows the banner.

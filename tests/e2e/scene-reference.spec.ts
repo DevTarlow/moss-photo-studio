@@ -5,7 +5,7 @@ import path from 'node:path'
 import { startFakeMuse } from '../fake-muse/server'
 
 const productPhoto = path.resolve(__dirname, '../../resources/tiles/examples/product.webp')
-const scenePhoto = path.resolve(__dirname, '../../resources/tiles/examples/main.webp')
+const scenePhoto = path.resolve(__dirname, '../../resources/tiles/examples/home.webp')
 
 test('a scene reference is sent as the second image and never as the product', async () => {
   const muse = await startFakeMuse({ delayMs: 10 })

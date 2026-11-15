@@ -52,7 +52,7 @@ export function SavePersonDialog({
       open={open}
       onOpenChange={onOpenChange}
       title="Save as Person"
-      description="Saved people can be reused in sets, the editor, and the generator. Use an image with one person and a clear face."
+      description="Saved people can be reused in the editor and generator. Use an image with one person and a clear face."
       footer={
         <>
           <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={busy}>Cancel</Button>

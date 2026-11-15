@@ -5,14 +5,13 @@ import { BUNDLED_PEOPLE } from '@shared/people'
 
 interface ProjectRow {
   id: string
-  type: 'set' | 'photo' | 'image'
+  type: 'photo' | 'image'
   name: string
   created_at: number
   updated_at: number
   last_opened_at: number | null
   cover_image_id: string | null
   source_image_id: string | null
-  category: string | null
   product_id: string | null
   shape: 'square' | 'portrait' | 'landscape'
   format: 'webp' | 'jpeg' | 'png'
@@ -23,9 +22,8 @@ interface ProjectRow {
 }
 
 export interface CreateProjectInput {
-  type: 'set' | 'photo' | 'image'
+  type: 'photo' | 'image'
   name: string
-  category?: string | null
   productId?: string | null
   shape?: 'square' | 'portrait' | 'landscape'
   format?: 'webp' | 'jpeg' | 'png'
@@ -62,7 +60,6 @@ export class ProjectRepository {
       coverImageId: row.cover_image_id,
       coverUrl: row.cover_file ? libraryUrl(row.cover_file) : null,
       sourceImageId: row.source_image_id,
-      category: row.category,
       productId: row.product_id,
       shape: row.shape,
       format: row.format,
@@ -77,8 +74,8 @@ export class ProjectRepository {
     const id = crypto.randomUUID()
     this.db
       .prepare(
-        `INSERT INTO projects (id, type, name, created_at, updated_at, category, product_id, shape, format, person_look, draft)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO projects (id, type, name, created_at, updated_at, product_id, shape, format, person_look, draft)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         id,
@@ -86,7 +83,6 @@ export class ProjectRepository {
         input.name,
         timestamp,
         timestamp,
-        input.category ?? null,
         input.productId ?? null,
         input.shape ?? 'square',
         input.format ?? 'webp',
@@ -119,7 +115,6 @@ export class ProjectRepository {
         params.push(options.productId)
       }
     }
-    if (filter === 'sets') clauses.push("p.type = 'set'")
     if (filter === 'photos') clauses.push("p.type = 'photo'")
     if (filter === 'images') clauses.push("p.type = 'image'")
     const search = options.search?.trim()
@@ -133,12 +128,11 @@ export class ProjectRepository {
         : ''
       clauses.push(`(
         p.name LIKE ? ESCAPE '\\'
-        OR EXISTS (SELECT 1 FROM plans pl WHERE pl.project_id = p.id AND pl.json LIKE ? ESCAPE '\\')
         OR EXISTS (SELECT 1 FROM images si WHERE si.project_id = p.id AND si.deleted_at IS NULL AND (si.prompt LIKE ? ESCAPE '\\' OR si.user_text LIKE ? ESCAPE '\\' OR si.label LIKE ? ESCAPE '\\'))
         OR EXISTS (SELECT 1 FROM images pp JOIN people pe ON pe.id = pp.person_id WHERE pp.project_id = p.id AND pp.deleted_at IS NULL AND pe.name LIKE ? ESCAPE '\\')
         ${bundledClause}
       )`)
-      params.push(like, like, like, like, like, like, ...bundledIds)
+      params.push(like, like, like, like, like, ...bundledIds)
     }
     const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''
     const sort = options.sort ?? 'recent'
@@ -175,7 +169,6 @@ export class ProjectRepository {
     name?: string
     shape?: string
     format?: string
-    category?: string | null
     productId?: string | null
     sourceImageId?: string | null
     coverImageId?: string | null
@@ -197,10 +190,6 @@ export class ProjectRepository {
     if (patch.format !== undefined) {
       fields.push('format = ?')
       values.push(patch.format)
-    }
-    if (patch.category !== undefined) {
-      fields.push('category = ?')
-      values.push(patch.category)
     }
     if (patch.productId !== undefined) {
       fields.push('product_id = ?')
@@ -238,21 +227,8 @@ export class ProjectRepository {
          ORDER BY is_original DESC, created_at ASC LIMIT 1`
       )
       .get(id) as { id: string } | undefined
-    const project = this.db.prepare('SELECT type FROM projects WHERE id = ?').get(id) as
-      | { type: string }
-      | undefined
-    let cover = first?.id
-    if (project?.type === 'set') {
-      const hero = this.db
-        .prepare(
-          `SELECT id FROM images WHERE project_id = ? AND status = 'ready' AND deleted_at IS NULL AND shot_id IS NOT NULL
-           ORDER BY created_at ASC LIMIT 1`
-        )
-        .get(id) as { id: string } | undefined
-      if (hero?.id) cover = hero.id
-    }
-    if (cover) {
-      this.db.prepare('UPDATE projects SET cover_image_id = ? WHERE id = ?').run(cover, id)
+    if (first?.id) {
+      this.db.prepare('UPDATE projects SET cover_image_id = ? WHERE id = ?').run(first.id, id)
     }
   }
 
@@ -293,10 +269,6 @@ export class ProjectRepository {
 
   coverFirstImage(id: string): void {
     this.setCoverFromProject(id)
-  }
-
-  setActivePlanId(projectId: string, planId: string | null): void {
-    this.db.prepare('UPDATE projects SET active_plan_id = ? WHERE id = ?').run(planId, projectId)
   }
 
   row(id: string): Record<string, unknown> | null {

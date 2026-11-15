@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { CREATE_PRODUCT_PROMPT } from '../../src/shared/starters'
 
-test('included products start a set and a generator project, and Create a Product seeds the generator', async () => {
+test('included products start an editor and generator project, and Create a Product seeds the generator', async () => {
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-included-products-e2e-'))
   const app = await electron.launch({
     args: ['.', '--no-sandbox'],
@@ -26,11 +26,9 @@ test('included products start a set and a generator project, and Create a Produc
     const preview = page.getByRole('dialog')
     await expect(preview.getByRole('heading', { name: 'Amber dropper bottle' })).toBeVisible()
     await expect(preview.getByRole('button', { name: 'Rename' })).toHaveCount(0)
-    await preview.getByRole('button', { name: 'Use in a Set' }).click()
-    await page.getByRole('heading', { name: 'What do you sell?' }).waitFor({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Skincare and beauty' }).click()
-    await expect(page.getByRole('button', { name: /Make \d+ Images/ })).toBeVisible({ timeout: 10_000 })
-    const setSource = await page.evaluate(async () => {
+    await preview.getByRole('button', { name: 'Edit This Photo' }).click()
+    await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 20_000 })
+    const photoSource = await page.evaluate(async () => {
       const id = window.location.hash.split('/project/')[1]?.split(/[?#]/)[0]
       if (!id) return null
       const result = await window.moss.projects.get({ id })
@@ -38,7 +36,7 @@ test('included products start a set and a generator project, and Create a Produc
       const source = result.data.images.find((image) => image.id === result.data.project.sourceImageId)
       return { type: result.data.project.type, label: source?.label }
     })
-    expect(setSource).toEqual({ type: 'set', label: 'Amber dropper bottle' })
+    expect(photoSource).toEqual({ type: 'photo', label: 'Amber dropper bottle' })
 
     await page.getByRole('link', { name: 'Products', exact: true }).click()
     await page.getByRole('button', { name: 'Open Amber dropper bottle' }).click()

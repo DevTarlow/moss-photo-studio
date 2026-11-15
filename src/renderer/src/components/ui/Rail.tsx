@@ -7,17 +7,14 @@ import {
   Images,
   Info,
   KeyRound,
-  Layers,
   Monitor,
   Package,
-  PackageCheck,
   Palette,
   RefreshCw,
   RotateCcw,
   Settings,
   ShieldCheck,
   Sparkles,
-  Store,
   Users
 } from 'lucide-react'
 import { Icon, SideNav, SideNavItem, SideNavSection } from '@astryxdesign/core'
@@ -29,7 +26,6 @@ import { useConfirm } from './ConfirmProvider'
 const settingsIcons = {
   studio: <Icon icon={KeyRound} size="md" strokeWidth={1.75} />,
   brand: <Icon icon={Palette} size="md" strokeWidth={1.75} />,
-  business: <Icon icon={Store} size="md" strokeWidth={1.75} />,
   library: <Icon icon={FolderOpen} size="md" strokeWidth={1.75} />,
   appearance: <Icon icon={Monitor} size="md" strokeWidth={1.75} />,
   license: <Icon icon={ShieldCheck} size="md" strokeWidth={1.75} />,
@@ -46,10 +42,8 @@ const items = [
 ]
 
 const tools = [
-  { to: '/library?new=set', label: 'New Set', icon: <Icon icon={Layers} size="md" strokeWidth={1.75} /> },
   { to: '/library?new=photo', label: 'Image Editor', icon: <Icon icon={ImageIcon} size="md" strokeWidth={1.75} /> },
-  { to: '/library?new=image', label: 'Image Generator', icon: <Icon icon={Sparkles} size="md" strokeWidth={1.75} /> },
-  { to: '/listing-kit', label: 'Listing Kit', icon: <Icon icon={PackageCheck} size="md" strokeWidth={1.75} /> }
+  { to: '/library?new=image', label: 'Image Generator', icon: <Icon icon={Sparkles} size="md" strokeWidth={1.75} /> }
 ]
 
 export function Rail({

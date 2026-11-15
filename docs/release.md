@@ -23,7 +23,7 @@ These cannot be invented by the app:
 4. **Windows signing certificate**: an Authenticode/EV certificate and its password. electron-builder reads `CSC_LINK` (path or base64) and `CSC_KEY_PASSWORD`.
 5. **macOS Developer ID Application certificate**, plus notarization credentials. electron-builder reads `CSC_LINK`/`CSC_KEY_PASSWORD`; notarization reads `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID` (or an Apple API key).
 6. **Update decision**: the Linux AppImage uses `electron-updater` with GitHub Releases, background downloads, and install on restart. The deb and non-AppImage builds use the portal download page. Windows and macOS still need signing before auto-install can ship.
-7. **Website/legal review**: `mossphotostudio.com` landing page, privacy policy that mentions Meta (including SAM and text), and the Etsy/AI disclosure wording. `docs/privacy.md` is the source of truth for what leaves the computer.
+7. **Website/legal review**: `mossphotostudio.com` landing page, privacy policy that mentions Meta image generation, and the AI disclosure wording. `docs/privacy.md` is the source of truth for what leaves the computer.
 
 ## Update options
 
@@ -91,10 +91,10 @@ The installed AppImage checks on launch and every four hours, downloads in the b
 
 ## Real-account acceptance
 
-- Create a fresh library with a **real Meta key** and make one three-shot or six-shot set. Confirm the exact amount on the Meta bill and in Usage; the app records one cent per returned image.
-- Run **Read the photo** and **Write listing** once with the real key. Confirm the text rows appear in Usage.
+- Create a fresh library with a **real Meta key** and make one image in the Image Generator. Confirm the exact amount on the Meta bill and in Usage; the app records one cent per returned image.
+- Run one Image Editor change and one local adjust. Confirm the editor version and the free adjust appear correctly.
 - Buy through the real product-site Stripe checkout. Confirm the key email, the portal account, activation on two computers, the third refusal, a portal reset, and re-activation. Test an offline launch inside the 14-day grace period.
-- Export an Etsy kit and inspect `listing.md`, `listing.csv`, `kit.json`, the JPEG dimensions, and the untouched original.
+- Export an image and open it; confirm the format, dimensions, and filename.
 - Run the manual checklist in [manual-test.md](manual-test.md), including a packaged build launched with `MOSS_DEV_UNLOCK=1`, `MOSS_MUSE_FAKE=1`, and `MOSS_E2E=1` to prove the packaged gate ignores test overrides.
 
 ## Known v1 limits
@@ -102,4 +102,3 @@ The installed AppImage checks on launch and every four hours, downloads in the b
 - No cloud sync or hosted library. Automatic updates are Linux AppImage only; the deb and Windows/macOS builds remain manual. There is no real Meta billing reconciliation. The license center is a separate web account; the desktop app stays account-free.
 - Batch color grading and a local size-label overlay are included; batch crop/rotate and other batch edits are not. No upscaling, object eraser, or video. The Image Generator has a scene reference.
 - HEIC is detected with a clear iPhone export message; it is not decoded.
-- Marketplace presets are dated. Amazon is deliberately not offered. Verify the current Etsy/Shopify/TikTok/eBay requirements before making public claims.

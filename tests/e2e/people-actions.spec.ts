@@ -3,9 +3,8 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
-const productPhoto = path.resolve(__dirname, '../../resources/tiles/examples/product.webp')
 
-test('a person opens larger, seeds a set, and seeds the image generator', async () => {
+test('a person opens larger, keeps a studio look, and seeds the image generator', async () => {
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-people-e2e-'))
   const app = await electron.launch({
     args: ['.', '--no-sandbox'],
@@ -44,25 +43,8 @@ test('a person opens larger, seeds a set, and seeds the image generator', async 
     await expect(preview.locator('img').first()).toHaveAttribute('src', /\/omar\.webp$/)
     await preview.getByRole('button', { name: 'Use Studio angle for Omar' }).click()
     await expect(preview.locator('img').first()).toHaveAttribute('src', /omar-angle\.webp/)
-
-    await preview.getByRole('button', { name: 'Create a Set' }).click()
-    await page.locator('input[type=file]').setInputFiles(productPhoto)
-    await page.getByRole('heading', { name: 'What do you sell?' }).waitFor({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Clothing and accessories' }).click()
-    const setPerson = page.getByRole('button', { name: 'Person for On a person' })
-    await expect(setPerson).toContainText('Omar · 20s')
-    await expect(setPerson).toContainText('Studio angle')
-    await expect
-      .poll(async () =>
-        page.evaluate(async () => {
-          const id = window.location.hash.split('/project/')[1]?.split(/[?#]/)[0]
-          if (!id) return null
-          const result = await window.moss.projects.get({ id })
-          if (!result.ok) return null
-          return result.data.plan?.json.shots.find((shot) => shot.type === 'onmodel')?.personLook ?? null
-        })
-      )
-      .toBe('angle')
+    await preview.getByRole('button', { name: 'Close' }).last().click()
+    await expect(preview).toBeHidden()
 
     await page.getByRole('link', { name: 'People', exact: true }).click()
     await page.getByRole('button', { name: 'Open Mei larger' }).click()

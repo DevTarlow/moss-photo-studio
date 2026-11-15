@@ -35,7 +35,6 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   unreadable: 'That photo could not be read. Try another one.',
   cancelled: 'That was stopped.',
   export_failed: 'Those images could not be exported. Nothing is lost. Try again.',
-  no_match: 'No product was found in that photo. Try a photo where the product is clear and alone.',
   unknown: 'Something went wrong. Try again.'
 }
 

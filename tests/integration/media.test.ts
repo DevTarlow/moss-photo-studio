@@ -9,20 +9,15 @@ import type { Db } from '@main/db/connection'
 import { Logger } from '@main/logger'
 import { ProjectRepository } from '@main/db/repositories/projects'
 import { ImageRepository } from '@main/db/repositories/images'
-import { PlanRepository } from '@main/db/repositories/plans'
 import { BrandRepository } from '@main/db/repositories/brand'
 import { PeopleRepository } from '@main/db/repositories/people'
 import { MediaService } from '@main/media/service'
 import { ImageImportError, assertImportable, normaliseToWorking } from '@main/media/import'
-import { exportSetProject } from '@main/media/export'
-import { createDefaultPlan } from '@shared/plans'
-import { shotDefinition } from '@shared/prompts/shots'
 
 let dir = ''
 let db: Db
 let projects: ProjectRepository
 let images: ImageRepository
-let plans: PlanRepository
 let media: MediaService
 
 beforeEach(() => {
@@ -31,13 +26,11 @@ beforeEach(() => {
   db = openDatabase({ file: path.join(dir, 'library.sqlite'), libraryPath: path.join(dir, 'library'), logger })
   projects = new ProjectRepository(db)
   images = new ImageRepository(db)
-  plans = new PlanRepository(db)
   const brand = new BrandRepository(db)
   const people = new PeopleRepository(db)
   media = new MediaService({
     projects,
     images,
-    plans,
     people,
     brand,
     libraryPath: () => path.join(dir, 'library'),
@@ -143,127 +136,6 @@ describe('import pipeline', () => {
       const relative = decodeURI(row.url!.replace('moss-media://library/', ''))
       expect(Buffer.compare(fs.readFileSync(path.join(dir, 'library', relative)), bytes)).toBe(0)
     }
-  })
-})
-
-describe('set export', () => {
-  it('names files in shot order, adds versions, writes set.txt, and never overwrites', async () => {
-    const project = projects.create({ type: 'set', name: 'Candle set', category: 'ceramics' })
-    const sourceBytes = await jpeg(640, 640)
-    await media.importSource({ projectId: project.id, bytes: sourceBytes, name: 'candle.jpg' })
-    const plan = createDefaultPlan({ category: 'ceramics', productName: 'Candle', shape: 'square', format: 'webp' })
-    const shotOne = plan.shots[0]!
-    const shotTwo = plan.shots[1]!
-    plan.shots = [shotOne, shotTwo]
-    plan.shots[0] = { ...shotOne, direction: 'a warm table' }
-    plans.save(project.id, plan)
-    const folder = path.join(dir, 'exports')
-    const writeImage = async (id: string, resultColor: { r: number; g: number; b: number }, workingColor: { r: number; g: number; b: number }) => {
-      const imagesDir = path.join(dir, 'library', 'projects', project.id, 'images')
-      const workingDir = path.join(dir, 'library', 'projects', project.id, 'working')
-      fs.mkdirSync(imagesDir, { recursive: true })
-      fs.mkdirSync(workingDir, { recursive: true })
-      const write = async (target: string, color: { r: number; g: number; b: number }) => {
-        const buffer = await sharp({ create: { width: 500, height: 500, channels: 3, background: color } }).webp().toBuffer()
-        fs.writeFileSync(target, buffer)
-      }
-      await write(path.join(imagesDir, `${id}.webp`), resultColor)
-      await write(path.join(workingDir, `${id}.webp`), workingColor)
-    }
-    const oldId = crypto.randomUUID()
-    const newId = crypto.randomUUID()
-    const otherId = crypto.randomUUID()
-    await writeImage(oldId, { r: 200, g: 100, b: 100 }, { r: 20, g: 20, b: 40 })
-    await writeImage(newId, { r: 100, g: 200, b: 100 }, { r: 40, g: 20, b: 20 })
-    await writeImage(otherId, { r: 100, g: 100, b: 200 }, { r: 20, g: 40, b: 20 })
-    const now = Date.now()
-    images.create({ id: oldId, projectId: project.id, kind: 'render', status: 'ready', label: 'Main shot', shotId: shotOne.id, file: `projects/${project.id}/images/${oldId}.webp`, format: 'webp', costCents: 1, now: now - 2000 })
-    images.create({ id: newId, projectId: project.id, kind: 'render', status: 'ready', label: 'Main shot 2', shotId: shotOne.id, file: `projects/${project.id}/images/${newId}.webp`, format: 'webp', costCents: 1, now: now - 1000 })
-    images.create({ id: otherId, projectId: project.id, kind: 'render', status: 'ready', label: 'In use', shotId: shotTwo.id, file: `projects/${project.id}/images/${otherId}.webp`, format: 'webp', costCents: 1, now })
-    const ready = images.list(project.id, false)
-    const workingPathFor = (image: (typeof ready)[number]): string =>
-      path.join(dir, 'library', 'projects', project.id, 'working', `${image.id}.webp`)
-    const centerPixel = async (file: string): Promise<{ r: number; g: number; b: number }> => {
-      const { data, info } = await sharp(file).raw().toBuffer({ resolveWithObject: true })
-      const offset = (Math.floor(info.height / 2) * info.width + Math.floor(info.width / 2)) * info.channels
-      return { r: data[offset]!, g: data[offset + 1]!, b: data[offset + 2]! }
-    }
-    const result = await exportSetProject({
-      libraryPath: path.join(dir, 'library'),
-      projectName: project.name,
-      plan: plans.getActive(project.id)!.json,
-      images: ready,
-      options: { format: 'webp', quality: 90, maxDimension: null, includeVersions: true },
-      folder,
-      workingPathFor
-    })
-    // The stored result (which carries the badge) must win over the
-    // pre-badge working copy used for model requests.
-    const newestPixel = await centerPixel(path.join(folder, '01-main-shot.webp'))
-    expect(newestPixel.g).toBeGreaterThan(newestPixel.r)
-    expect(newestPixel.g).toBeGreaterThan(newestPixel.b)
-    const olderPixel = await centerPixel(path.join(folder, '01-main-shot-v1.webp'))
-    expect(olderPixel.r).toBeGreaterThan(olderPixel.g)
-    expect(olderPixel.r).toBeGreaterThan(olderPixel.b)
-    expect(result.paths.map((file) => path.basename(file)).sort()).toEqual([
-      '01-main-shot-v1.webp',
-      '01-main-shot.webp',
-      '02-in-use.webp'
-    ])
-    // Assert content names separately; the manifest is not in paths.
-    const written = fs.readdirSync(folder).sort()
-    expect(written).toContain('01-main-shot.webp')
-    expect(written).toContain('01-main-shot-v1.webp')
-    expect(written).toContain('02-in-use.webp')
-    expect(written).toContain('set.txt')
-    expect(written).not.toContain('source.jpg')
-    const manifest = fs.readFileSync(path.join(folder, 'set.txt'), 'utf8')
-    expect(manifest).toContain('Candle set')
-    expect(manifest).toContain('Main shot')
-    expect(manifest).toContain('Shot: Main shot')
-    expect(manifest).toContain('Direction: a warm table')
-    expect(manifest).toContain(shotDefinition('lifestyle').defaultDirection)
-
-    // A pinned older version becomes the unsuffixed main image; the newer
-    // version is exported beside it.
-    const pinnedPlan = {
-      ...plans.getActive(project.id)!.json,
-      shots: plans.getActive(project.id)!.json.shots.map((shot) =>
-        shot.id === shotOne.id ? { ...shot, selectedImageId: oldId } : shot
-      )
-    }
-    plans.save(project.id, pinnedPlan)
-    const pinnedFolder = path.join(dir, 'pinned-exports')
-    const pinned = await exportSetProject({
-      libraryPath: path.join(dir, 'library'),
-      projectName: project.name,
-      plan: pinnedPlan,
-      images: ready,
-      options: { format: 'webp', quality: 90, maxDimension: null, includeVersions: true },
-      folder: pinnedFolder,
-      workingPathFor
-    })
-    const pinnedMain = await centerPixel(path.join(pinnedFolder, '01-main-shot.webp'))
-    expect(pinnedMain.r).toBeGreaterThan(pinnedMain.g)
-    expect(pinnedMain.r).toBeGreaterThan(pinnedMain.b)
-    const other = pinned.paths.find((file) => path.basename(file).startsWith('01-main-shot-'))!
-    const otherPixel = await centerPixel(other)
-    expect(otherPixel.g).toBeGreaterThan(otherPixel.r)
-    expect(otherPixel.g).toBeGreaterThan(otherPixel.b)
-
-    const second = await exportSetProject({
-      libraryPath: path.join(dir, 'library'),
-      projectName: project.name,
-      plan: pinnedPlan,
-      images: ready,
-      options: { format: 'webp', quality: 90, maxDimension: null, includeVersions: false },
-      folder,
-      workingPathFor
-    })
-    const after = fs.readdirSync(folder)
-    expect(after).toContain('01-main-shot-2.webp')
-    expect(after).toContain('set-2.txt')
-    expect(second.paths.length).toBe(2)
   })
 })
 

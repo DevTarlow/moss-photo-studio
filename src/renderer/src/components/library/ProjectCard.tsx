@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Image as ImageIcon, Layers, MoreHorizontal, Sparkles } from 'lucide-react'
+import { Image as ImageIcon, MoreHorizontal, Sparkles } from 'lucide-react'
 import { Icon } from '@astryxdesign/core'
 import type { Project } from '@shared/types'
 import type { JobState } from '@shared/types'
@@ -9,8 +9,8 @@ import { Progress } from '../ui/Progress'
 import { DropdownMenu } from 'radix-ui'
 import { ProjectMenuContent } from './ProjectMenu'
 
-const typeLabel = { set: 'Set', photo: 'Image Editor', image: 'Image Generator' } as const
-const TypeIcon = { set: Layers, photo: ImageIcon, image: Sparkles } as const
+const typeLabel = { photo: 'Image Editor', image: 'Image Generator' } as const
+const TypeIcon = { photo: ImageIcon, image: Sparkles } as const
 
 export interface ProjectCardProps {
   project: Project
@@ -22,7 +22,6 @@ export interface ProjectCardProps {
   onRename: () => void
   onDuplicate: () => void
   onExport: () => void
-  onListingKit?: () => void
   onDelete: () => void
 }
 
@@ -36,7 +35,6 @@ export function ProjectCard({
   onRename,
   onDuplicate,
   onExport,
-  onListingKit,
   onDelete
 }: ProjectCardProps): React.JSX.Element {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -74,7 +72,7 @@ export function ProjectCard({
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <ProjectMenuContent onRename={onRename} onDuplicate={onDuplicate} onExport={onExport} onListingKit={onListingKit} onDelete={onDelete} />
+        <ProjectMenuContent onRename={onRename} onDuplicate={onDuplicate} onExport={onExport} onDelete={onDelete} />
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
   )

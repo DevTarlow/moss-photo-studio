@@ -67,18 +67,11 @@ export function CommandPalette(): React.JSX.Element {
         id: `project-${project.id}`,
         group: 'Projects',
         label: project.name,
-        hint: project.type === 'set' ? 'Set' : project.type === 'photo' ? 'Image Editor' : 'Image Generator',
+        hint: project.type === 'photo' ? 'Image Editor' : 'Image Generator',
         run: () => go(`/project/${project.id}`)
       })
     }
     list.push(
-      {
-        id: 'new-set',
-        group: 'Actions',
-        label: 'New Set',
-        hint: 'One photo in, a full set out',
-        run: () => go('/library?new=set')
-      },
       {
         id: 'new-photo',
         group: 'Actions',
@@ -96,13 +89,6 @@ export function CommandPalette(): React.JSX.Element {
           setOpen(false)
           navigate(`/project/${detail.project.id}`)
         }
-      },
-      {
-        id: 'listing-kit',
-        group: 'Actions',
-        label: 'Open Listing Kit',
-        hint: 'Pack a product, set, or image',
-        run: () => go('/listing-kit')
       },
       {
         id: 'export-current',

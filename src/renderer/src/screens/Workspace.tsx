@@ -5,7 +5,6 @@ import { ErrorState } from '../components/ui/ErrorState'
 import { Skeleton } from '../components/ui/Skeleton'
 import { ProjectNameEditor } from '../components/workspace/ProjectNameEditor'
 import { useWorkspaceStore } from '../store/workspace'
-import { SetWorkspace } from '../features/set/SetWorkspace'
 import { PhotoWorkspace } from '../features/photo/PhotoWorkspace'
 import { CreateWorkspace } from '../features/create/CreateWorkspace'
 
@@ -21,7 +20,6 @@ export function Workspace(): React.JSX.Element {
   const imageParam = params.get('image')
   const view = params.get('view')
   const photoView = view === 'photo'
-  const preferredPersonId = params.get('person')
   const preferredPersonLook = params.get('look') ?? project?.personLook ?? null
 
   useEffect(() => {
@@ -68,15 +66,11 @@ export function Workspace(): React.JSX.Element {
       </AppFrame>
     )
   }
-  const content = project.type === 'set'
-    ? photoView
-      ? <PhotoWorkspace key="set-photo" />
-      : <SetWorkspace key="set" preferredPersonId={preferredPersonId} preferredPersonLook={preferredPersonLook} />
-    : project.type === 'photo'
-      ? <PhotoWorkspace key="photo" />
-      : photoView
-        ? <PhotoWorkspace key="image-photo" />
-        : <CreateWorkspace key="image" preferredPersonLook={preferredPersonLook} />
+  const content = project.type === 'photo'
+    ? <PhotoWorkspace key="photo" />
+    : photoView
+      ? <PhotoWorkspace key="image-photo" />
+      : <CreateWorkspace key="image" preferredPersonLook={preferredPersonLook} />
 
   return (
     <AppFrame backTo={backTo} titleContent={titleContent}>

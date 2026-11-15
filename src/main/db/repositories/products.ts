@@ -1,5 +1,5 @@
 import type { Db } from '../connection'
-import type { Product, ProductAnalysis } from '@shared/types'
+import type { Product } from '@shared/types'
 import { libraryUrl } from '@shared/files'
 
 interface ProductRow {
@@ -12,35 +12,10 @@ interface ProductRow {
   created_at: number
   updated_at: number
   category: string | null
-  audience: string | null
-  notes: string | null
   status: string
   archived_at: number | null
-  analysis: string | null
-  cutout_file: string | null
-  cutout_source_id: string | null
-  cutout_confidence: number | null
-  cutout_at: number | null
   project_count?: number
   image_count?: number
-}
-
-function parseAnalysis(raw: string | null): ProductAnalysis | null {
-  if (!raw) return null
-  try {
-    const value = JSON.parse(raw) as Partial<ProductAnalysis>
-    if (!value || typeof value !== 'object' || !Array.isArray(value.points)) return null
-    return {
-      product: String(value.product ?? '').slice(0, 100),
-      category: String(value.category ?? '').slice(0, 60),
-      audience: String(value.audience ?? '').slice(0, 200),
-      points: value.points.map((point) => String(point).slice(0, 120)).filter(Boolean).slice(0, 6),
-      createdAt: Number(value.createdAt) || 0,
-      costMicros: Number(value.costMicros) || 0
-    }
-  } catch {
-    return null
-  }
 }
 
 function mapProduct(row: ProductRow): Product {
@@ -56,15 +31,10 @@ function mapProduct(row: ProductRow): Product {
     source: 'user',
     blurb: null,
     category: row.category,
-    audience: row.audience,
-    notes: row.notes,
     status: row.status === 'archived' ? 'archived' : 'active',
     archivedAt: row.archived_at,
     projectCount: Number(row.project_count ?? 0),
     imageCount: Number(row.image_count ?? 0),
-    analysis: parseAnalysis(row.analysis),
-    cutoutUrl: row.cutout_file ? libraryUrl(row.cutout_file) : null,
-    cutoutConfidence: row.cutout_confidence === null ? null : Number(row.cutout_confidence)
   }
 }
 
@@ -133,8 +103,6 @@ export class ProductRepository {
   update(id: string, patch: {
     name?: string
     category?: string | null
-    audience?: string | null
-    notes?: string | null
     status?: 'active' | 'archived'
   }): Product | null {
     if (!this.getRow(id)) return null
@@ -148,14 +116,6 @@ export class ProductRepository {
       fields.push('category = ?')
       values.push(patch.category)
     }
-    if (patch.audience !== undefined) {
-      fields.push('audience = ?')
-      values.push(patch.audience)
-    }
-    if (patch.notes !== undefined) {
-      fields.push('notes = ?')
-      values.push(patch.notes)
-    }
     if (patch.status !== undefined) {
       fields.push('status = ?', 'archived_at = ?')
       values.push(patch.status, patch.status === 'archived' ? Date.now() : null)
@@ -165,22 +125,6 @@ export class ProductRepository {
       values.push(Date.now(), id)
       this.db.prepare(`UPDATE products SET ${fields.join(', ')} WHERE id = ?`).run(...values)
     }
-    return this.get(id)
-  }
-
-  setCutout(id: string, input: { file: string; sourceId: string; confidence: number }): Product | null {
-    if (!this.getRow(id)) return null
-    this.db
-      .prepare('UPDATE products SET cutout_file = ?, cutout_source_id = ?, cutout_confidence = ?, cutout_at = ?, updated_at = ? WHERE id = ?')
-      .run(input.file, input.sourceId, input.confidence, Date.now(), Date.now(), id)
-    return this.get(id)
-  }
-
-  setAnalysis(id: string, analysis: ProductAnalysis | null): Product | null {
-    if (!this.getRow(id)) return null
-    this.db
-      .prepare('UPDATE products SET analysis = ?, updated_at = ? WHERE id = ?')
-      .run(analysis ? JSON.stringify(analysis) : null, Date.now(), id)
     return this.get(id)
   }
 

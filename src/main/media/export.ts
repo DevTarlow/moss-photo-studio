@@ -1,10 +1,9 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import sharp from 'sharp'
-import type { ExportOptions, Format, Image, PlanJson } from '@shared/types'
+import type { ExportOptions, Format, Image } from '@shared/types'
 import { extensionForFormat, mimeForFormat } from '@shared/shapes'
-import { safeBaseName, uniqueFileName, versionSuffix } from '@shared/files'
-import { shotDefinition } from '@shared/prompts/shots'
+import { safeBaseName, uniqueFileName } from '@shared/files'
 import { pathToFileURL } from 'node:url'
 import { absoluteInLibrary } from './paths'
 
@@ -82,93 +81,6 @@ export async function exportOneImage(input: {
     maxDimension: input.options.maxDimension
   })
   return output
-}
-
-export interface SetExportFile {
-  path: string
-  shotType: string
-  direction: string
-  imageLabel: string
-}
-
-export async function exportSetProject(input: {
-  libraryPath: string
-  projectName: string
-  plan: PlanJson
-  images: Image[]
-  options: ExportOptions
-  folder: string
-  workingPathFor: (image: Image) => string
-  shouldCancel?: () => boolean
-}): Promise<{ paths: string[]; files: SetExportFile[]; cancelled: boolean }> {
-  await fs.mkdir(input.folder, { recursive: true })
-  const includedShots = input.plan.shots.filter((shot) => shot.enabled)
-  const taken = new Set<string>()
-  const files: SetExportFile[] = []
-  const extension = extensionForFormat(input.options.format)
-  let number = 0
-  let cancelled = false
-  for (const shot of includedShots) {
-    if (input.shouldCancel?.()) {
-      cancelled = true
-      break
-    }
-    number += 1
-    const definition = shotDefinition(shot.type)
-    const ready = input.images
-      .filter((image) => image.shotId === shot.id && image.status === 'ready')
-      .sort((a, b) => a.createdAt - b.createdAt || a.seq - b.seq)
-    if (!ready.length) continue
-    const pinned = shot.selectedImageId ? ready.find((image) => image.id === shot.selectedImageId) : undefined
-    const latest = pinned ?? ready[ready.length - 1]!
-    const prefix = String(number).padStart(2, '0')
-    const baseLabel = definition.fileLabel
-    const latestPath = await ensureUniquePath(
-      input.folder,
-      `${prefix}-${baseLabel}`,
-      extension,
-      taken
-    )
-    // Export the stored result, not the pre-badge working copy: the badge is
-    // composited onto the result file, and single-image exports use that file.
-    await encode(await sourceForImage(input.libraryPath, latest, input.workingPathFor(latest)), latestPath, input.options)
-    files.push({
-      path: latestPath,
-      shotType: definition.label,
-      direction: shot.direction.trim() || definition.defaultDirection,
-      imageLabel: latest.label
-    })
-    if (input.options.includeVersions) {
-      for (const older of ready.filter((image) => image.id !== latest.id)) {
-        const suffix = versionSuffix(older.label, definition.label) || '-v1'
-        const olderPath = await ensureUniquePath(
-          input.folder,
-          `${prefix}-${baseLabel}${suffix}`,
-          extension,
-          taken
-        )
-        await encode(await sourceForImage(input.libraryPath, older, input.workingPathFor(older)), olderPath, input.options)
-        files.push({
-          path: olderPath,
-          shotType: definition.label,
-          direction: shot.direction.trim() || definition.defaultDirection,
-          imageLabel: older.label
-        })
-      }
-    }
-  }
-  const manifestLines = [
-    input.projectName,
-    new Date().toISOString(),
-    '',
-    ...files.map(
-      (file) =>
-        `${path.basename(file.path)}\nShot: ${file.shotType}\nDirection: ${file.direction}\nVersion: ${file.imageLabel}`
-    )
-  ]
-  const manifestName = path.basename(await ensureUniquePath(input.folder, 'set', 'txt', taken))
-  await fs.writeFile(path.join(input.folder, manifestName), `${manifestLines.join('\n\n')}\n`, 'utf8')
-  return { paths: files.map((file) => file.path), files, cancelled }
 }
 
 export function outputPathPreview(folder: string, base: string, format: Format): string {

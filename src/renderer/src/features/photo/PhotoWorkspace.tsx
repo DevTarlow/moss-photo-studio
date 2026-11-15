@@ -602,7 +602,6 @@ export function PhotoWorkspace(): React.JSX.Element {
       onFormatChange={(format) => { void useWorkspaceStore.getState().updateProject({ format }).catch(() => toast.error('The format could not be saved.')) }}
       onSaveProduct={selected ? () => setSaveProductImageId(selected.id) : undefined}
       onSavePerson={selected ? () => setSavePersonImageId(selected.id) : undefined}
-      onListingKit={(image) => navigate(`/listing-kit?image=${image.id}`)}
     />
   )
 
@@ -615,7 +614,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const canPreview = Boolean(displayImage?.url) && !compare && !crop && !isRunning
   const lightboxIndex = Math.max(0, ready.findIndex((image) => image.id === selected?.id))
 
-  const backLabel = project.type === 'set' ? 'Back to Set' : project.type === 'image' ? 'Back to Image Generator' : null
+  const backLabel = project.type === 'image' ? 'Back to Image Generator' : null
   const goBackToProject = (): void => {
     void navigate(`/project/${project.id}`)
   }

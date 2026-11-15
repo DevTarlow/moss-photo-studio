@@ -1,12 +1,10 @@
 import { create } from 'zustand'
-import type { Image, PlanJson, PlanRecord, Project, ProjectDetail } from '@shared/types'
+import type { Image, Project, ProjectDetail } from '@shared/types'
 import { unwrap } from '../lib/ipc'
 
 interface WorkspaceStore {
   project: Project | null
   images: Image[]
-  plan: PlanRecord | null
-  planDraft: PlanJson | null
   usageCents: number
   activeJob: ProjectDetail['activeJob']
   selectedImageId: string | null
@@ -16,26 +14,13 @@ interface WorkspaceStore {
   refresh: (selectImageId?: string) => Promise<void>
   refreshImages: () => Promise<void>
   selectImage: (id: string | null) => void
-  setPlanDraft: (plan: PlanJson) => void
-  savePlan: () => Promise<PlanRecord | null>
-  updateProject: (patch: { name?: string; shape?: Project['shape']; format?: Project['format']; category?: string }) => Promise<void>
+  updateProject: (patch: { name?: string; shape?: Project['shape']; format?: Project['format'] }) => Promise<void>
   deleteImage: (imageId: string) => Promise<void>
-}
-
-function planChanged(a: PlanJson | null, b: PlanRecord | null): boolean {
-  if (!a) return false
-  if (!b) return true
-  return JSON.stringify(a.shots) !== JSON.stringify(b.json.shots) ||
-    a.category !== b.json.category ||
-    a.shape !== b.json.shape ||
-    a.format !== b.json.format
 }
 
 export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   project: null,
   images: [],
-  plan: null,
-  planDraft: null,
   usageCents: 0,
   activeJob: null,
   selectedImageId: null,
@@ -55,8 +40,6 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       set({
         project: detail.project,
         images: detail.images,
-        plan: detail.plan,
-        planDraft: detail.plan?.json ?? null,
         usageCents: detail.usageCents,
         activeJob: detail.activeJob,
         selectedImageId: selected,
@@ -83,8 +66,6 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       set({
         project: detail.project,
         images: detail.images,
-        plan: detail.plan,
-        planDraft: detail.plan?.json ?? state.planDraft,
         usageCents: detail.usageCents,
         activeJob: detail.activeJob,
         selectedImageId: selected
@@ -104,21 +85,6 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
     }
   },
   selectImage: (id) => set({ selectedImageId: id }),
-  setPlanDraft: (plan) => set({ planDraft: plan }),
-  savePlan: async () => {
-    const { project, planDraft, plan } = get()
-    if (!project || !planDraft) return null
-    if (!planChanged(planDraft, plan)) return plan
-    try {
-      const saved = await unwrap(window.moss.plans.save({ projectId: project.id, plan: planDraft }))
-      set({ plan: saved, planDraft: saved.json })
-      const updatedProject = await unwrap(window.moss.projects.get({ id: project.id }))
-      set({ project: updatedProject.project })
-      return saved
-    } catch {
-      return null
-    }
-  },
   updateProject: async (patch) => {
     const project = get().project
     if (!project) return

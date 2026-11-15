@@ -1,26 +1,19 @@
 import type { Format, Shape } from './shapes'
 export type { Format, Shape } from './shapes'
 
-export type ProjectType = 'set' | 'photo' | 'image'
+export type ProjectType = 'photo' | 'image'
 export type ImageKind = 'upload' | 'render' | 'edit' | 'adjust'
 export type ImageStatus = 'pending' | 'ready' | 'failed'
-export type ShotType =
-  | 'hero'
-  | 'lifestyle'
-  | 'detail'
-  | 'scale'
-  | 'flatlay'
-  | 'gift'
-  | 'feature'
-  | 'onmodel'
-export type JobKind = 'set' | 'create' | 'edit'
+export type JobKind = 'create' | 'edit'
 export type JobStatus = 'running' | 'done' | 'failed' | 'interrupted' | 'cancelled'
 export type JobItemStatus = 'queued' | 'running' | 'done' | 'partial' | 'failed' | 'cancelled'
-export type UsageAction = 'create' | 'set' | 'edit' | 'adjust' | 'listing' | 'analyze' | 'cutout'
+// The first three are the only actions new runs write. The rest are kept so
+// historical usage rows remain readable after those tools were removed.
+export type UsageAction = 'create' | 'edit' | 'adjust' | 'set' | 'listing' | 'analyze' | 'cutout'
 export type UsageResult = 'ok' | 'failed'
 export type BadgeCorner = 'br' | 'bl' | 'tr' | 'tl'
 export type BadgeScale = 's' | 'm' | 'l'
-export type ProjectFilter = 'all' | 'sets' | 'photos' | 'images'
+export type ProjectFilter = 'all' | 'photos' | 'images'
 export type ProjectSort = 'recent' | 'oldest' | 'name'
 export type ThemeSetting = 'system' | 'light' | 'dark'
 export type DensitySetting = 'comfortable' | 'compact'
@@ -35,7 +28,6 @@ export interface Project {
   coverImageId: string | null
   coverUrl: string | null
   sourceImageId: string | null
-  category: string | null
   /** The product this work belongs to, or null for unfiled work. */
   productId: string | null
   shape: Shape
@@ -72,7 +64,6 @@ export interface Image {
   prompt: string | null
   revisedPrompt: string | null
   templateId: string | null
-  shotId: string | null
   personId: string | null
   label: string
   seq: number
@@ -88,38 +79,6 @@ export interface Image {
   badge: boolean
   durationMs: number | null
   jobId: string | null
-}
-
-export interface PlanShot {
-  id: string
-  type: ShotType
-  enabled: boolean
-  direction: string
-  personId: string | null
-  /** A bundled person's alternate studio look, or null for their default. */
-  personLook: string | null
-  label: string
-  featureText?: string
-  /** The version the seller pinned as this shot's main image for export. */
-  selectedImageId?: string | null
-}
-
-export interface PlanJson {
-  version: number
-  category: string
-  productName: string
-  shape: Shape
-  format: Format
-  createdAt: number
-  shots: PlanShot[]
-}
-
-export interface PlanRecord {
-  id: string
-  projectId: string
-  version: number
-  json: PlanJson
-  createdAt: number
 }
 
 export interface JobItemState {
@@ -168,7 +127,6 @@ export interface ActiveJobSummary {
 export interface ProjectDetail {
   project: Project
   images: Image[]
-  plan: PlanRecord | null
   activeJob: JobState | null
   usageCents: number
 }
@@ -210,15 +168,6 @@ export interface PhotoCheck {
   warnings: PhotoWarning[]
 }
 
-export interface ProductAnalysis {
-  product: string
-  category: string
-  audience: string
-  points: string[]
-  createdAt: number
-  costMicros: number
-}
-
 export interface Product {
   id: string
   name: string
@@ -231,22 +180,16 @@ export interface Product {
   source: 'bundled' | 'user'
   blurb: string | null
   category: string | null
-  audience?: string | null
-  notes?: string | null
   status?: 'active' | 'archived'
   archivedAt?: number | null
   projectCount?: number
   imageCount?: number
-  analysis?: ProductAnalysis | null
-  cutoutUrl?: string | null
-  cutoutConfidence?: number | null
 }
 
 export interface ProductDetail {
   product: Product
   projects: Project[]
-  counts: { projects: number; sets: number; images: number }
-  latestSet: Project | null
+  counts: { projects: number; images: number }
 }
 
 export interface LibraryImage {
@@ -272,14 +215,6 @@ export interface Brand {
   badgeCorner: BadgeCorner
   badgeScale: BadgeScale
   badgeOpacity: number
-  /** The seller profile that the Listing Writer will read. All optional. */
-  businessName?: string
-  sells?: string
-  audience?: string
-  voice?: string
-  policies?: string
-  marketplaces?: string[]
-  defaultPlatform?: string
   /** A consistent setting/light treatment appended to runs. */
   stylePreset?: string
 }
@@ -304,7 +239,6 @@ export interface UsageSummary {
   month: string
   images: number
   spendCents: number
-  textMicros: number
   budgetCents: number | null
   projects: Array<{ projectId: string; name: string; images: number; spendCents: number }>
 }
@@ -418,7 +352,6 @@ export type ErrorCode =
   | 'unreadable'
   | 'cancelled'
   | 'export_failed'
-  | 'no_match'
 
 export type IpcResult<T> =
   | { ok: true; data: T }
@@ -440,7 +373,6 @@ export interface SettingsAll {
   onboardingStep: number
   onboardingDone: boolean
   onboardingDismissed: boolean
-  onboardingCategory: string
   setupDismissed: boolean
   firstRunConfirmShown: boolean
   concurrency: number
@@ -475,15 +407,7 @@ export interface BackupStatus {
   lastBackupAt: number | null
 }
 
-export interface KitExportResult {
-  count: number
-  folderName: string
-  warnings: string[]
-  includesOriginal: boolean
-}
-
 export type MenuAction =
-  | 'new-set'
   | 'new-photo'
   | 'new-image'
   | 'export'
@@ -567,10 +491,4 @@ export interface EditJobInput {
   sceneImageId?: string
   palette?: string[]
   isGiftShot?: boolean
-}
-
-export interface SetJobInput {
-  projectId: string
-  mode: 'make' | 'remake'
-  shotIds?: string[]
 }

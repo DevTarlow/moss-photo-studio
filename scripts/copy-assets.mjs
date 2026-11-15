@@ -126,8 +126,7 @@ for (const [source, dest] of [
   ['mug/source.webp', 'resources/tiles/examples/product.webp'],
   ['candle/lifestyle.webp', 'resources/tiles/examples/lifestyle.webp'],
   ['mug/flat-lay.webp', 'resources/tiles/examples/flatlay.webp'],
-  ['candle/gift.webp', 'resources/tiles/examples/gift.webp'],
-  ['mug/main-shot.webp', 'resources/tiles/examples/main.webp']
+  ['candle/gift.webp', 'resources/tiles/examples/gift.webp']
 ]) {
   await tile(path.join(extraSources, source), path.join(root, dest), 640)
 }

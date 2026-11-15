@@ -18,7 +18,7 @@ export function NewProjectDialog({
   onOpenChange
 }: {
   open: boolean
-  type: 'set' | 'photo' | null
+  type: 'photo' | null
   personId?: string | null
   personLook?: string | null
   onOpenChange: (open: boolean) => void
@@ -96,14 +96,14 @@ export function NewProjectDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title={type === 'set' ? 'New Set' : 'Image Editor'}
-      description={type === 'set' ? 'One clear photo of the product. The better the light, the better the set.' : 'Open a photo to start changing it.'}
+      title="Image Editor"
+      description="Open a photo to start changing it."
       width={540}
       footer={<Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>}
     >
       <Dropzone
         line={busy ? 'Opening...' : 'One clear photo of the product.'}
-        hint={type === 'set' ? 'JPEG, PNG or WebP. Up to 40 MB.' : 'JPEG, PNG or WebP. Up to 40 MB. The original stays untouched.'}
+        hint="JPEG, PNG or WebP. Up to 40 MB. The original stays untouched."
         onFiles={(files) => void importFiles(files)}
         onClick={() => void openPicker()}
         label="Choose a photo"
@@ -114,14 +114,11 @@ export function NewProjectDialog({
         </Button>
       </div>
       {error && <p className="error-text mt-2" role="alert">{error}</p>}
-      {type === 'set' && (
-        <p className="hint mt-3">Next you'll pick what you sell. The studio plans six images and tells you the cost before it starts.</p>
-      )}
       <SourcePickerDialog
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         onChoose={(choice) => void chooseSaved(choice)}
-        title={type === 'set' ? 'Choose a Set Photo' : 'Choose a Photo to Edit'}
+        title="Choose a Photo to Edit"
       />
     </Dialog>
   )

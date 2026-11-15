@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { BrowserWindow, ipcMain, nativeTheme, screen } from 'electron'
+import { BrowserWindow, nativeTheme, screen } from 'electron'
 import type { WindowState } from '@shared/types'
 import type { SettingsStore } from './settings'
 import { appResourceRoot } from './env'
@@ -109,38 +109,23 @@ export function createMainWindow(settings: SettingsStore, logger?: Logger, canCl
       isMaximized: false
     })
   }
-  let flushed = false
-  let waitingForFlush = false
+  let closing = false
   window.on('close', (event) => {
     saveState()
-    if (flushed) return
+    if (closing) return
     event.preventDefault()
-    if (waitingForFlush) return
-    waitingForFlush = true
-    const continueClose = (): void => {
-      const finish = (): void => {
-        if (flushed) return
-        flushed = true
-        waitingForFlush = false
-        ipcMain.removeListener('moss:flush-complete', finish)
-        if (!window.isDestroyed()) window.close()
-      }
-      ipcMain.once('moss:flush-complete', finish)
-      if (!window.webContents.isDestroyed()) window.webContents.send('moss:flush-before-close')
-      setTimeout(finish, 450)
-    }
     if (!canClose) {
-      continueClose()
+      closing = true
+      window.close()
       return
     }
     void canClose()
       .then((allowed) => {
-        if (allowed) continueClose()
-        else waitingForFlush = false
+        if (!allowed) return
+        closing = true
+        if (!window.isDestroyed()) window.close()
       })
-      .catch(() => {
-        waitingForFlush = false
-      })
+      .catch(() => undefined)
   })
   let saveTimer: NodeJS.Timeout | null = setInterval(saveState, 30_000)
   saveTimer.unref?.()

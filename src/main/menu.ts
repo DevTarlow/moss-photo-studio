@@ -53,9 +53,8 @@ export function buildAppMenu(options: {
     {
       label: 'File',
       submenu: [
-        action('New Set', 'new-set', 'CmdOrCtrl+1'),
-        action('New Image Editor', 'new-photo', 'CmdOrCtrl+2'),
-        action('New Image Generator', 'new-image', 'CmdOrCtrl+3'),
+        action('New Image Editor', 'new-photo', 'CmdOrCtrl+1'),
+        action('New Image Generator', 'new-image', 'CmdOrCtrl+2'),
         { type: 'separator' },
         { label: 'Open Recent', submenu: recentItems },
         { type: 'separator' },

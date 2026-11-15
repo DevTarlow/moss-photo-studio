@@ -57,7 +57,7 @@ export function SaveProductDialog({
       open={open}
       onOpenChange={onOpenChange}
       title="Save as Product"
-      description="Saved products can be reused in sets, the editor, and the generator."
+      description="Saved products can be reused in the editor and generator."
       footer={
         <>
           <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={busy}>Cancel</Button>

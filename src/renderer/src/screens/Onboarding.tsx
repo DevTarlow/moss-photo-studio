@@ -1,54 +1,43 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check, Image as ImageIcon, Layers, Sparkles } from 'lucide-react'
-import type { Brand, Image, JobState, PlanJson, Product } from '@shared/types'
-import { CATEGORY_CHIPS, recipeById, recipeShotLabels } from '@shared/prompts/recipes'
-import { createDefaultPlan } from '@shared/plans'
-import { shapeForImage } from '@shared/shapes'
-import { estimateCents, usd } from '@shared/cost'
+import { ArrowLeft, Check, Image as ImageIcon, Sparkles } from 'lucide-react'
+import type { Brand, Product } from '@shared/types'
 import {
   Badge,
   Banner,
   Button,
   Card,
-  ClickableCard,
   FileInput,
   Grid,
   Heading,
-  ProgressBar,
+  Icon,
   Selector,
   Stack,
   Step,
   Stepper,
   Text,
-  TextInput, Icon } from '@astryxdesign/core'
+  TextInput
+} from '@astryxdesign/core'
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
 import { fileToBytes } from '../lib/files'
 import { markUrl } from '../lib/assets'
 import { toast } from '../lib/toast'
 import { warnIfSmallPhoto } from '../lib/photoWarnings'
-import { FirstSetPicker } from '../features/onboarding/FirstSetPicker'
 import { BrandFields } from '../components/brand/BrandFields'
 import { Skeleton } from '../components/ui/Skeleton'
-import { FirstRunConfirm } from '../components/ui/FirstRunConfirm'
 import { MuseKeyGuideDialog } from '../components/ui/MuseKeyGuideDialog'
-import { Lightbox } from '../components/ui/Lightbox'
 
 const STEPS = [
   { label: 'Welcome', optional: false },
   { label: 'Connect Meta', optional: true },
   { label: 'Add product', optional: true },
-  { label: 'Customize', optional: true },
-  { label: 'Make a set', optional: true },
+  { label: 'Make it your own', optional: true },
   { label: 'Ready', optional: false }
 ] as const
 
 function normaliseStep(value: number): number {
-  const saved = Math.max(0, Math.min(5, Math.floor(value)))
-  // Later steps depend on this session's product and plan state, so only the
-  // welcome, key, and optional product steps resume directly.
-  return saved <= 1 ? saved : 2
+  return Math.max(0, Math.min(4, Math.floor(value)))
 }
 
 function productNameFromFile(name: string): string {
@@ -56,15 +45,7 @@ function productNameFromFile(name: string): string {
   return base || 'Product'
 }
 
-function ToolCard({
-  icon,
-  title,
-  body
-}: {
-  icon: React.JSX.Element
-  title: string
-  body: string
-}): React.JSX.Element {
+function ToolCard({ icon, title, body }: { icon: React.JSX.Element; title: string; body: string }): React.JSX.Element {
   return (
     <Card padding={4} variant="muted">
       <Stack gap={2}>
@@ -75,9 +56,7 @@ function ToolCard({
           {icon}
         </span>
         <Text weight="bold">{title}</Text>
-        <Text type="supporting" color="secondary">
-          {body}
-        </Text>
+        <Text type="supporting" color="secondary">{body}</Text>
       </Stack>
     </Card>
   )
@@ -95,41 +74,25 @@ export function Onboarding(): React.JSX.Element {
   const refreshBrand = useAppStore((state) => state.refreshBrand)
   const setOnboardingBypass = useAppStore((state) => state.setOnboardingBypass)
 
-  const savedStep = normaliseStep(settings?.onboardingStep ?? 0)
-  const [step, setStep] = useState(() => savedStep)
-  const [category, setCategory] = useState(() => {
-    const saved = settings?.onboardingCategory ?? 'other'
-    return CATEGORY_CHIPS.some((chip) => chip.id === saved) ? saved : 'other'
-  })
+  const [step, setStep] = useState(() => normaliseStep(settings?.onboardingStep ?? 0))
   const [product, setProduct] = useState<Product | null>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoBusy, setPhotoBusy] = useState(false)
   const [photoError, setPhotoError] = useState<string | null>(null)
   const [savedProductId, setSavedProductId] = useState('')
-  const [planDraft, setPlanDraft] = useState<PlanJson | null>(null)
-  const [setProjectId, setSetProjectId] = useState<string | null>(null)
   const [keyValue, setKeyValue] = useState('')
-  const [keyReturn, setKeyReturn] = useState<number | null>(null)
   const [revealKey, setRevealKey] = useState(false)
   const [keyError, setKeyError] = useState<string | null>(null)
   const [keyBusy, setKeyBusy] = useState(false)
   const [keyGuideOpen, setKeyGuideOpen] = useState(false)
-  const [job, setJob] = useState<JobState | null>(null)
-  const [setImages, setSetImages] = useState<Image[]>([])
-  const [previewIndex, setPreviewIndex] = useState<number | null>(null)
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [runError, setRunError] = useState<string | null>(null)
-  const [starting, setStarting] = useState(false)
   const [finishing, setFinishing] = useState(false)
   const [brandDraft, setBrandDraft] = useState<Brand | null>(brand)
   const [brandBusy, setBrandBusy] = useState(false)
-  const pollRef = useRef<number | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
     if (secrets) void refreshSecrets()
-    // Key status is refreshed once when onboarding opens.
   }, [])
 
   useEffect(() => {
@@ -137,22 +100,21 @@ export function Onboarding(): React.JSX.Element {
   }, [brand])
 
   useEffect(() => {
-    return () => {
-      if (pollRef.current) window.clearInterval(pollRef.current)
-    }
-  }, [])
-
-  useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 })
     const timer = window.setTimeout(() => headingRef.current?.focus(), 0)
     return () => window.clearTimeout(timer)
   }, [step])
 
+  useEffect(() => {
+    if (step !== 4 || settings?.onboardingDone) return
+    void unwrap(window.moss.settings.set({ key: 'onboardingDone', value: true }))
+      .then(() => refreshSettings())
+      .catch(() => undefined)
+  }, [step, settings?.onboardingDone, refreshSettings])
+
   const goTo = async (next: number): Promise<void> => {
     setStep(next)
     setKeyError(null)
-    setRunError(null)
-    if (next === 4) ensurePlan()
     try {
       await unwrap(window.moss.settings.set({ key: 'onboardingStep', value: next }))
       await refreshSettings()
@@ -171,37 +133,10 @@ export function Onboarding(): React.JSX.Element {
     navigate('/products', { replace: true })
   }
 
-  const buildPlan = (categoryId: string): PlanJson | null => {
-    if (!product) return null
-    return createDefaultPlan({
-      category: categoryId,
-      productName: product.name,
-      shape: shapeForImage(product.width, product.height),
-      format: settings?.defaultFormat ?? 'webp'
-    })
-  }
-
-  const ensurePlan = (categoryId = category): void => {
-    if (!product) return
-    setPlanDraft((current) => (current && current.category === categoryId ? current : buildPlan(categoryId)))
-  }
-
-  const changeCategory = (next: string): void => {
-    setCategory(next)
-    setPlanDraft(buildPlan(next))
-    setRunError(null)
-    void unwrap(window.moss.settings.set({ key: 'onboardingCategory', value: next }))
-      .then(() => refreshSettings())
-      .catch(() => undefined)
-  }
-
   const addProduct = (next: Product): void => {
     setProduct(next)
     setSavedProductId(next.id)
-    setSetProjectId(null)
-    setPlanDraft(null)
     setPhotoError(null)
-    setRunError(null)
     warnIfSmallPhoto(next)
     void refreshProducts().catch(() => undefined)
   }
@@ -272,129 +207,12 @@ export function Onboarding(): React.JSX.Element {
       await unwrap(window.moss.secrets.setMuseKey({ key: keyValue.trim() }))
       await refreshSecrets()
       setKeyValue('')
-      const next = keyReturn ?? 2
-      setKeyReturn(null)
-      await goTo(next)
+      await goTo(2)
     } catch (caught) {
       setKeyError(messageOf(caught))
     } finally {
       setKeyBusy(false)
     }
-  }
-
-  useEffect(() => {
-    if (step !== 5 || !setProjectId) {
-      setSetImages([])
-      return
-    }
-    let alive = true
-    void unwrap(window.moss.images.list({ projectId: setProjectId }))
-      .then((images) => {
-        if (!alive) return
-        setSetImages(images.filter((image) => image.status === 'ready' && Boolean(image.thumbUrl || image.url)))
-      })
-      .catch(() => undefined)
-    return () => {
-      alive = false
-    }
-  }, [step, setProjectId])
-
-  const imageCount = planDraft?.shots.filter((shot) => shot.enabled).length ?? 0
-  const running = job?.status === 'running'
-  const hasKey = Boolean(secrets?.hasKey)
-  const runLabel =
-    imageCount === 0
-      ? 'Choose at least one image'
-      : `Make ${imageCount} ${imageCount === 1 ? 'Image' : 'Images'} · ${usd(estimateCents(imageCount))}`
-
-  const beginRun = async (): Promise<void> => {
-    if (!product || !planDraft || imageCount === 0) return
-    setRunError(null)
-    setStarting(true)
-    try {
-      let projectId = setProjectId
-      if (!projectId) {
-        const detail = await unwrap(
-          window.moss.products.createProject({ productId: product.id, type: 'set', name: product.name })
-        )
-        projectId = detail.project.id
-        setSetProjectId(projectId)
-      }
-      await unwrap(window.moss.plans.save({ projectId, plan: planDraft }))
-      const started = await unwrap(window.moss.jobs.startSet({ projectId, mode: 'make' }))
-      const initial = await unwrap(window.moss.jobs.state({ jobId: started.jobId }))
-      setJob(initial)
-      if (pollRef.current) window.clearInterval(pollRef.current)
-      pollRef.current = window.setInterval(() => {
-        void unwrap(window.moss.jobs.state({ jobId: started.jobId }))
-          .then(async (state) => {
-            setJob(state)
-            if (state.status !== 'running') {
-              if (pollRef.current) window.clearInterval(pollRef.current)
-              pollRef.current = null
-              if (state.status === 'done' && state.done > 0) {
-                await finishToReady()
-              } else if (state.status === 'cancelled') {
-                setRunError('That run was stopped.')
-              } else {
-                setRunError('No images came through. A refusal costs nothing. A timeout may still show on your Meta bill.')
-              }
-            }
-          })
-          .catch(() => {
-            if (pollRef.current) window.clearInterval(pollRef.current)
-            pollRef.current = null
-            setRunError('The run could not be followed. Try again.')
-          })
-      }, 600)
-    } catch (caught) {
-      setRunError(messageOf(caught))
-    } finally {
-      setStarting(false)
-    }
-  }
-
-  const onMainRun = async (): Promise<void> => {
-    if (!product || !planDraft || imageCount === 0) return
-    if (!hasKey) {
-      setRunError('Add your Muse key in Settings to make images.')
-      return
-    }
-    if (!settings?.firstRunConfirmShown) {
-      setConfirmOpen(true)
-      return
-    }
-    await beginRun()
-  }
-
-  const confirmRun = async (): Promise<void> => {
-    try {
-      await unwrap(window.moss.settings.set({ key: 'firstRunConfirmShown', value: true }))
-      await refreshSettings()
-    } catch {
-      // The confirmation still counts this session.
-    }
-    setConfirmOpen(false)
-    await beginRun()
-  }
-
-  const finishToReady = async (): Promise<void> => {
-    setFinishing(true)
-    try {
-      await unwrap(window.moss.settings.set({ key: 'onboardingDone', value: true }))
-      await refreshSettings()
-      await goTo(5)
-    } catch {
-      toast.error('The setup could not be saved.')
-    } finally {
-      setFinishing(false)
-    }
-  }
-
-  const saveProductOnly = async (): Promise<void> => {
-    if (!product) return
-    await finishToReady()
-    toast.status('Product saved.')
   }
 
   const saveBrandAndContinue = async (): Promise<void> => {
@@ -414,6 +232,20 @@ export function Onboarding(): React.JSX.Element {
     }
   }
 
+  const finish = async (): Promise<void> => {
+    setFinishing(true)
+    try {
+      await unwrap(window.moss.settings.set({ key: 'onboardingDone', value: true }))
+      await refreshSettings()
+      navigate(product ? `/product/${product.id}` : '/products', { replace: true })
+    } catch {
+      toast.error('The setup could not be saved.')
+    } finally {
+      setFinishing(false)
+    }
+  }
+
+  const hasKey = Boolean(secrets?.hasKey)
   const primaryLabel =
     step === 0
       ? 'Set up the studio'
@@ -425,65 +257,31 @@ export function Onboarding(): React.JSX.Element {
           ? 'Continue'
           : step === 3
             ? 'Continue'
-            : step === 4
-              ? !product
-                ? 'Skip for now'
-                : hasKey
-                  ? runLabel
-                  : 'Add your Meta key'
-              : 'Finish Setup'
+            : 'Finish Setup'
 
   const primaryDisabled =
     finishing ||
-    starting ||
-    running ||
     brandBusy ||
     (step === 1 && keyBusy) ||
-    (step === 2 && photoBusy) ||
-    (step === 4 && Boolean(product) && hasKey && (!planDraft || imageCount === 0))
+    (step === 2 && photoBusy)
 
   const onPrimary = (): void => {
-    if (step === 0) void goTo(2)
+    if (step === 0) void goTo(1)
     else if (step === 1) void saveKey()
     else if (step === 2) void goTo(3)
     else if (step === 3) void saveBrandAndContinue()
-    else if (step === 4) {
-      if (!product) void finishToReady()
-      else if (!hasKey) { setKeyReturn(4); void goTo(1) }
-      else void onMainRun()
-    } else {
-      // Product-first: finish on the product the setup just created, so its
-      // set, edits, and next steps are in one place. With nothing saved,
-      // Products is still the right home and its empty state points at Add.
-      navigate(product ? `/product/${product.id}` : '/products', { replace: true })
-    }
+    else void finish()
   }
 
   const secondaryActions =
     step === 0 ? (
       <Button label="Look around first" variant="ghost" onClick={skip} />
     ) : step === 1 ? (
-      <Button label="Add key later" variant="ghost" onClick={() => { const next = keyReturn ?? 2; setKeyReturn(null); void goTo(next) }} />
+      <Button label="Add key later" variant="ghost" onClick={() => void goTo(2)} />
     ) : step === 2 ? (
-      <>
-        {product && (
-          <Button
-            label="Choose a different photo"
-            variant="ghost"
-            onClick={() => {
-              setProduct(null)
-              setPhotoFile(null)
-              setPlanDraft(null)
-              setSetProjectId(null)
-            }}
-          />
-        )}
-        <Button label="Skip for now" variant="ghost" isDisabled={photoBusy} onClick={() => void goTo(3)} />
-      </>
+      <Button label="Skip for now" variant="ghost" isDisabled={photoBusy} onClick={() => void goTo(3)} />
     ) : step === 3 ? (
       <Button label="Skip for now" variant="ghost" isDisabled={brandBusy} onClick={() => void goTo(4)} />
-    ) : step === 4 && product ? (
-      <Button label="Save product only" variant="secondary" isDisabled={starting || finishing || running} onClick={() => void saveProductOnly()} />
     ) : null
 
   return (
@@ -503,22 +301,10 @@ export function Onboarding(): React.JSX.Element {
             <aside className="hidden xl:block">
               <Card padding={4} className="h-fit">
                 <Stack gap={4}>
-                  <Text type="label" color="secondary">
-                    Your setup
-                  </Text>
-                  <Stepper
-                    activeStep={step}
-                    orientation="vertical"
-                    label="Setup steps"
-                  >
+                  <Text type="label" color="secondary">Your setup</Text>
+                  <Stepper activeStep={step} orientation="vertical" label="Setup steps">
                     {STEPS.map((entry, index) => (
-                      <Step
-                        key={entry.label}
-                        step={index}
-                        label={entry.label}
-                        isOptional={entry.optional}
-                        isDisabled={index > step}
-                      />
+                      <Step key={entry.label} step={index} label={entry.label} isOptional={entry.optional} isDisabled={index > step} />
                     ))}
                   </Stepper>
                 </Stack>
@@ -543,18 +329,15 @@ export function Onboarding(): React.JSX.Element {
                   {step === 0 && (
                     <>
                       <Stack gap={2}>
-                        <Text type="label" color="secondary">
-                          Welcome to
-                        </Text>
+                        <Text type="label" color="secondary">Welcome to</Text>
                         <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
                           Your personal photo studio.
                         </Heading>
                         <Text type="body" color="secondary">
-                          One photo in, a full set out. Change any photo. Or make a new photo using text.
+                          Edit a photo you already have, or describe a new image and make it. Everything you make stays on this computer.
                         </Text>
                       </Stack>
                       <Grid columns={{ minWidth: 180 }} gap={3}>
-                        <ToolCard icon={<Icon icon={Layers} size="md" />} title="Set" body="One photo in, a full set out." />
                         <ToolCard icon={<Icon icon={ImageIcon} size="md" />} title="Image Editor" body="Change a photo you already have." />
                         <ToolCard icon={<Icon icon={Sparkles} size="md" />} title="Image Generator" body="Describe a picture and make it." />
                       </Grid>
@@ -564,9 +347,7 @@ export function Onboarding(): React.JSX.Element {
                   {step === 1 && (
                     <>
                       <Stack gap={2}>
-                        <Text type="label" color="secondary">
-                          Step 2 of 6
-                        </Text>
+                        <Text type="label" color="secondary">Step 2 of 5 · optional</Text>
                         <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
                           Connect Meta Muse
                         </Heading>
@@ -579,13 +360,13 @@ export function Onboarding(): React.JSX.Element {
                         title={hasKey ? `Meta connected ending ${secrets?.last4 ?? '••••'}` : 'What you need'}
                         description={
                           hasKey
-                            ? 'The saved key is ready to use. Continue to add your first product.'
+                            ? 'The saved key is ready to use. Continue to add a product.'
                             : 'A Meta account, a payment method, and about two minutes. The key is stored on this computer.'
                         }
                         collapsible={false}
                       />
                       <TextInput
-                        label="Muse key"
+                        label="Meta Muse key"
                         type={revealKey ? 'text' : 'password'}
                         value={keyValue}
                         onChange={setKeyValue}
@@ -597,18 +378,8 @@ export function Onboarding(): React.JSX.Element {
                         hasAutoFocus
                       />
                       <Stack direction="horizontal" gap={2} align="center" wrap="wrap">
-                        <Button
-                          label={revealKey ? 'Hide key' : 'Show key'}
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setRevealKey((value) => !value)}
-                        />
-                        <Button
-                          label="Where do I get a key?"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setKeyGuideOpen(true)}
-                        />
+                        <Button label={revealKey ? 'Hide key' : 'Show key'} variant="ghost" size="sm" onClick={() => setRevealKey((value) => !value)} />
+                        <Button label="Where do I get a key?" variant="ghost" size="sm" onClick={() => setKeyGuideOpen(true)} />
                       </Stack>
                     </>
                   )}
@@ -616,25 +387,18 @@ export function Onboarding(): React.JSX.Element {
                   {step === 2 && (
                     <>
                       <Stack gap={2}>
-                        <Text type="label" color="secondary">
-                          Step 3 of 6 · optional
-                        </Text>
+                        <Text type="label" color="secondary">Step 3 of 5 · optional</Text>
                         <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
                           Add your first product
                         </Heading>
                         <Text type="body" color="secondary">
-                          Add one photo now, or add a product later. It becomes a Product you can reuse in a set, the editor, or the generator.
+                          Add one photo now, or add a product later. It becomes a Product you can reuse in the editor or generator.
                         </Text>
                       </Stack>
                       {product ? (
                         <Card padding={4}>
                           <Stack direction="horizontal" gap={4} align="start" wrap="wrap">
-                            <img
-                              src={product.imageUrl}
-                              alt="The product photo"
-                              className="h-36 w-44 rounded-lg object-contain"
-                              style={{ background: 'var(--color-background-muted)' }}
-                            />
+                            <img src={product.imageUrl} alt="The product photo" className="h-36 w-44 rounded-lg object-contain" style={{ background: 'var(--color-background-muted)' }} />
                             <Stack gap={2} className="min-w-[180px] flex-1">
                               <Stack direction="horizontal" gap={2} align="center" wrap="wrap">
                                 <Text weight="bold">{product.name}</Text>
@@ -643,17 +407,7 @@ export function Onboarding(): React.JSX.Element {
                               <Text type="supporting" color="secondary">
                                 {product.width} × {product.height} · Rename it later on Products.
                               </Text>
-                              <Button
-                                label="Choose another photo"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setProduct(null)
-                                  setPhotoFile(null)
-                                  setPlanDraft(null)
-                                  setSetProjectId(null)
-                                }}
-                              />
+                              <Button label="Choose another photo" variant="ghost" size="sm" onClick={() => { setProduct(null); setPhotoFile(null) }} />
                             </Stack>
                           </Stack>
                         </Card>
@@ -694,107 +448,10 @@ export function Onboarding(): React.JSX.Element {
                     </>
                   )}
 
-                  {step === 4 && (
-                    <>
-                      <Stack gap={2}>
-                        <Text type="label" color="secondary">
-                          Step 5 of 6 · optional
-                        </Text>
-                        <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
-                          Make your first photo set
-                        </Heading>
-                        <Text type="body" color="secondary">
-                          {product
-                            ? 'Your product is saved. Choose the images to make now, or keep the photo as a Product and make the set later.'
-                            : 'Optional. Add a product when you are ready, then make the set from Products.'}
-                        </Text>
-                      </Stack>
-                      {product ? (
-                        <Card padding={4}>
-                          <Stack direction="horizontal" gap={3} align="center" wrap="wrap">
-                            <img src={product.imageUrl} alt="" className="h-14 w-14 rounded-md object-cover" />
-                            <Stack gap={0.5} className="flex-1">
-                              <Text weight="bold">{product.name}</Text>
-                              <Text type="supporting" color="secondary">
-                                Saved as a Product
-                              </Text>
-                            </Stack>
-                            <Badge label={recipeById(category).label} variant="neutral" />
-                          </Stack>
-                        </Card>
-                      ) : (
-                        <Banner
-                          status="warning"
-                          title="Add a product first"
-                          description="Your product photo becomes the source for every image in the set."
-                          endContent={<Button label="Go back" variant="ghost" size="sm" onClick={() => void goTo(2)} />}
-                          collapsible={false}
-                        />
-                      )}
-                      {product && (
-                        <Selector
-                          label="What do you sell?"
-                          value={category}
-                          onChange={changeCategory}
-                          options={CATEGORY_CHIPS.map((chip) => ({ value: chip.id, label: chip.label }))}
-                          description={`Recipe: ${recipeShotLabels(category).join(', ')}. You can change every shot later in the set.`}
-                          width="100%"
-                        />
-                      )}
-                      {!hasKey && (
-                        <Banner
-                          status="warning"
-                          title="Add your Meta key to make images"
-                          description="You can add the key later, when you are ready to make a set."
-                          endContent={<Button label="Add key" variant="ghost" size="sm" onClick={() => { setKeyReturn(4); void goTo(1) }} />}
-                          collapsible={false}
-                        />
-                      )}
-                      {planDraft && (
-                        <FirstSetPicker
-                          plan={planDraft}
-                          disabled={running || finishing || starting}
-                          saving={starting}
-                          onChange={setPlanDraft}
-                        />
-                      )}
-                      {running && job && (
-                        <Card padding={4}>
-                          <Stack gap={2}>
-                            <Stack direction="horizontal" gap={2} align="center" justify="between">
-                              <Text weight="bold">
-                                Making {job.done + job.failed + 1 <= job.total ? job.done + job.failed + 1 : job.total} of {job.total}
-                              </Text>
-                              <Text type="supporting" color="secondary">
-                                {usd(job.costCents)} so far
-                              </Text>
-                            </Stack>
-                            <ProgressBar
-                              value={job.done + job.failed}
-                              max={job.total}
-                              label={`${job.done} of ${job.total} images made`}
-                              hasValueLabel
-                            />
-                            <Text type="supporting" color="secondary" aria-live="polite">
-                              {job.currentLabel ? `Making ${job.currentLabel}.` : 'Working.'} {job.done} made, {job.failed} failed.
-                            </Text>
-                          </Stack>
-                        </Card>
-                      )}
-                      {runError && (
-                        <Text role="alert" style={{ color: 'var(--color-text-error)' }}>
-                          {runError}
-                        </Text>
-                      )}
-                    </>
-                  )}
-
                   {step === 3 && (
                     <>
                       <Stack gap={2}>
-                        <Text type="label" color="secondary">
-                          Step 4 of 6 · optional
-                        </Text>
+                        <Text type="label" color="secondary">Step 4 of 5 · optional</Text>
                         <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
                           Make it your own
                         </Heading>
@@ -802,89 +459,46 @@ export function Onboarding(): React.JSX.Element {
                           Optional. Add a logo and colors, and choose where the badge sits.
                         </Text>
                       </Stack>
-                      {brandDraft ? (
-                        <BrandFields value={brandDraft} onChange={setBrandDraft} />
-                      ) : (
-                        <Skeleton className="h-96" />
-                      )}
+                      {brandDraft ? <BrandFields value={brandDraft} onChange={setBrandDraft} /> : <Skeleton className="h-96" />}
                     </>
                   )}
 
-                  {step === 5 && (
+                  {step === 4 && (
                     <>
                       <Stack gap={2}>
                         <Stack direction="horizontal" gap={2} align="center">
-                          <Text type="label" color="secondary">
-                            Step 6 of 6
-                          </Text>
+                          <Text type="label" color="secondary">Step 5 of 5</Text>
                           <Badge label="Setup complete" variant="success" />
                         </Stack>
                         <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
-                          You're set up.
+                          You're ready to make photos.
                         </Heading>
                         <Text type="body" color="secondary">
-                          Your setup is saved. Finish setup whenever you're ready.
+                          Start with a photo you already have, or describe a new image. Everything stays in your local library.
                         </Text>
                       </Stack>
                       <Card padding={4}>
                         <Stack direction="horizontal" gap={4} align="center" wrap="wrap">
-                          <span
-                            className="grid h-10 w-10 place-items-center rounded-full"
-                            style={{ background: 'var(--color-accent-muted)', color: 'var(--color-text-accent)' }}
-                          >
+                          <span className="grid h-10 w-10 place-items-center rounded-full" style={{ background: 'var(--color-accent-muted)', color: 'var(--color-text-accent)' }}>
                             <Icon icon={Check} size="md" />
                           </span>
                           <Stack gap={0.5} className="flex-1">
                             <Text weight="bold">
                               {hasKey ? 'Meta connected' : 'Meta key later'} · {product ? 'Product saved' : 'No product yet'}
-                              {job?.done ? ` · ${job.done} images made` : ''}
                             </Text>
                             <Text type="supporting" color="secondary">
-                              {product
-                                ? `${product.name} is ready to reuse.`
-                                : 'Add a product from Products whenever you are ready.'}
+                              {product ? `${product.name} is ready to reuse.` : 'Add a product from Products whenever you are ready.'}
                             </Text>
                           </Stack>
                           <Badge label="Ready" variant="success" />
                         </Stack>
                       </Card>
-                      {setImages.length > 0 && (
-                        <Stack gap={2}>
-                          <Stack gap={0.5}>
-                            <Text weight="bold">Your set</Text>
-                            <Text type="supporting" color="secondary">
-                              Select a photo to see it bigger.
-                            </Text>
-                          </Stack>
-                          <Grid columns={{ minWidth: 140 }} gap={2}>
-                            {setImages.map((image, index) => (
-                              <ClickableCard
-                                key={image.id}
-                                label={`Preview ${image.label}`}
-                                padding={1}
-                                elevation="low"
-                                onClick={() => setPreviewIndex(index)}
-                              >
-                                <img
-                                  src={image.thumbUrl ?? image.url ?? ''}
-                                  alt=""
-                                  className="aspect-[4/3] w-full rounded-[6px] object-cover"
-                                  style={{ background: 'var(--color-background-muted)' }}
-                                />
-                              </ClickableCard>
-                            ))}
-                          </Grid>
-                        </Stack>
-                      )}
                       <Stack gap={2}>
                         <Stack gap={0.5}>
                           <Text weight="bold">What's next</Text>
-                          <Text type="supporting" color="secondary">
-                            Find these in the studio rail whenever you need them.
-                          </Text>
+                          <Text type="supporting" color="secondary">Find these in the studio rail whenever you need them.</Text>
                         </Stack>
                         <Grid columns={{ minWidth: 180 }} gap={3}>
-                          <ToolCard icon={<Icon icon={Layers} size="md" />} title="Set" body="Open your set or start another." />
                           <ToolCard icon={<Icon icon={ImageIcon} size="md" />} title="Image Editor" body="Change a photo you already have." />
                           <ToolCard icon={<Icon icon={Sparkles} size="md" />} title="Image Generator" body="Describe a picture and make it." />
                         </Grid>
@@ -894,29 +508,13 @@ export function Onboarding(): React.JSX.Element {
                 </Stack>
               </Card>
 
-              <div
-                className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 border-t px-1 py-3"
-                style={{ borderColor: 'var(--color-border)', background: 'var(--color-background-body)' }}
-              >
+              <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 border-t px-1 py-3" style={{ borderColor: 'var(--color-border)', background: 'var(--color-background-body)' }}>
                 {step > 0 && (
-                  <Button
-                    label="Back"
-                    variant="ghost"
-                    size="sm"
-                    icon={<Icon icon={ArrowLeft} size="sm" />}
-                    isDisabled={brandBusy}
-                    onClick={() => void goTo(step - 1)}
-                  />
+                  <Button label="Back" variant="ghost" size="sm" icon={<Icon icon={ArrowLeft} size="sm" />} isDisabled={brandBusy} onClick={() => void goTo(step - 1)} />
                 )}
                 <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
                   {secondaryActions}
-                  <Button
-                    label={primaryLabel}
-                    variant="primary"
-                    isLoading={starting || keyBusy || finishing || brandBusy}
-                    isDisabled={primaryDisabled}
-                    onClick={onPrimary}
-                  />
+                  <Button label={primaryLabel} variant="primary" isLoading={keyBusy || finishing || brandBusy} isDisabled={primaryDisabled} onClick={onPrimary} />
                 </div>
               </div>
             </div>
@@ -924,32 +522,7 @@ export function Onboarding(): React.JSX.Element {
         </main>
       </div>
 
-      <Lightbox
-        open={previewIndex !== null}
-        onOpenChange={(open) => {
-          if (!open) setPreviewIndex(null)
-        }}
-        images={setImages}
-        index={previewIndex ?? 0}
-        onIndex={setPreviewIndex}
-      />
-
       <MuseKeyGuideDialog open={keyGuideOpen} onOpenChange={setKeyGuideOpen} />
-
-      <FirstRunConfirm
-        open={confirmOpen}
-        runLabel={runLabel}
-        imageCount={imageCount}
-        onOpenChange={setConfirmOpen}
-        onGotIt={() => {
-          setConfirmOpen(false)
-          void window.moss.settings
-            .set({ key: 'firstRunConfirmShown', value: true })
-            .then(() => refreshSettings())
-            .catch(() => undefined)
-        }}
-        onConfirm={() => void confirmRun()}
-      />
     </div>
   )
 }

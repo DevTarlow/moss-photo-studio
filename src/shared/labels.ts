@@ -1,6 +1,3 @@
-import type { ShotType } from './types'
-import { shotDefinition } from './prompts/shots'
-
 export type LabelWord = 'Scene' | 'Model' | 'Edit' | 'Created' | 'Adjust' | 'Size'
 
 type CountedWord = LabelWord
@@ -20,22 +17,6 @@ function countForWord(word: CountedWord, labels: readonly string[]): number {
 export function nextCountedLabel(word: CountedWord, labels: readonly string[]): string {
   const count = countForWord(word, labels)
   return `${word} ${String(count).padStart(2, '0')}`
-}
-
-export function setImageLabel(type: ShotType, labels: readonly string[]): string {
-  const base = shotDefinition(type).label
-  const same = labels.filter((label) => label === base || label.startsWith(`${base} `))
-  if (!same.length) return base
-  let highest = 0
-  for (const label of same) {
-    if (label === base) {
-      highest = Math.max(highest, 1)
-      continue
-    }
-    const suffix = Number(label.slice(base.length + 1))
-    if (Number.isFinite(suffix)) highest = Math.max(highest, suffix)
-  }
-  return `${base} ${highest + 1}`
 }
 
 export function uploadLabel(labels: readonly string[]): string {

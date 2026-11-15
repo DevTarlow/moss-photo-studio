@@ -6,11 +6,9 @@ import {
   ArrowLeft,
   ArrowUpRight,
   Image as ImageIcon,
-  Layers,
   Link2,
   Loader2,
   Package,
-  PackageCheck,
   Sparkles,
   Trash2
 } from 'lucide-react'
@@ -23,22 +21,18 @@ import { ErrorState } from '../components/ui/ErrorState'
 import { Field } from '../components/ui/Field'
 import { Skeleton } from '../components/ui/Skeleton'
 import { useConfirm } from '../components/ui/ConfirmProvider'
-import { ListingPanel } from '../components/listings/ListingPanel'
 import { useAppStore } from '../store/app'
-import { LISTING_COST_LABEL } from '@shared/cost'
 import { unwrap, messageOf } from '../lib/ipc'
 import { formatDateTime, relativeTime } from '../lib/format'
 import { toast } from '../lib/toast'
-import { Heading, Icon, Text, TextArea, TextInput } from '@astryxdesign/core'
+import { Heading, Icon, Text, TextInput } from '@astryxdesign/core'
 
 const typeLabel: Record<ProjectType, string> = {
-  set: 'Set',
   photo: 'Photo edit',
   image: 'Image'
 }
 
 const typeIcon: Record<ProjectType, React.JSX.Element> = {
-  set: <Icon icon={Layers} size="sm" />,
   photo: <Icon icon={ImageIcon} size="sm" />,
   image: <Icon icon={Sparkles} size="sm" />
 }
@@ -77,7 +71,6 @@ export function ProductDetail(): React.JSX.Element {
   const { id } = useParams()
   const navigate = useNavigate()
   const refreshProducts = useAppStore((state) => state.refreshProducts)
-  const secrets = useAppStore((state) => state.secrets)
   const confirm = useConfirm()
   const [detail, setDetail] = useState<ProductDetailData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -85,9 +78,8 @@ export function ProductDetail(): React.JSX.Element {
   const [busy, setBusy] = useState(false)
   const [renaming, setRenaming] = useState(false)
   const [renameValue, setRenameValue] = useState('')
-  const [form, setForm] = useState({ category: '', audience: '', notes: '' })
+  const [form, setForm] = useState({ category: '' })
   const [savingDetails, setSavingDetails] = useState(false)
-  const [reading, setReading] = useState(false)
   const [linkOpen, setLinkOpen] = useState(false)
   const [unfiled, setUnfiled] = useState<Project[]>([])
 
@@ -99,11 +91,7 @@ export function ProductDetail(): React.JSX.Element {
       const next = await unwrap(window.moss.products.detail({ id }))
       setDetail(next)
       setRenameValue(next.product.name)
-      setForm({
-        category: next.product.category ?? '',
-        audience: next.product.audience ?? '',
-        notes: next.product.notes ?? ''
-      })
+      setForm({ category: next.product.category ?? '' })
     } catch (caught) {
       setError(messageOf(caught))
     } finally {
@@ -149,9 +137,7 @@ export function ProductDetail(): React.JSX.Element {
         window.moss.products.update({
           id: detail.product.id,
           patch: {
-            category: form.category.trim() || null,
-            audience: form.audience.trim() || null,
-            notes: form.notes.trim() || null
+            category: form.category.trim() || null
           }
         })
       )
@@ -165,31 +151,11 @@ export function ProductDetail(): React.JSX.Element {
     }
   }
 
-  const readPhoto = async (): Promise<void> => {
-    if (!detail) return
-    setReading(true)
-    try {
-      const next = await unwrap(window.moss.products.analyze({ id: detail.product.id }))
-      setDetail(next)
-      setForm({
-        category: next.product.category ?? '',
-        audience: next.product.audience ?? '',
-        notes: next.product.notes ?? ''
-      })
-      await refreshProducts()
-      toast.status('Photo read. Check what we saw.')
-    } catch (caught) {
-      toast.error(messageOf(caught))
-    } finally {
-      setReading(false)
-    }
-  }
-
   const archive = async (): Promise<void> => {
     if (!detail) return
     const ok = await confirm({
       title: `Archive "${detail.product.name}"?`,
-      body: 'Its sets and images stay linked. You can bring it back later from the archived products.',
+      body: 'Its images stay linked. You can bring it back later from the archived products.',
       confirmLabel: 'Archive Product'
     })
     if (!ok) return
@@ -207,7 +173,7 @@ export function ProductDetail(): React.JSX.Element {
     if (!detail) return
     const ok = await confirm({
       title: `Delete "${detail.product.name}"?`,
-      body: 'Its sets and images stay, but they become unfiled work. This cannot be undone.',
+      body: 'Its images stay, but they become unfiled work. This cannot be undone.',
       confirmLabel: 'Delete Product',
       danger: true
     })
@@ -281,8 +247,7 @@ export function ProductDetail(): React.JSX.Element {
     )
   }
 
-  const { product, projects, counts, latestSet } = detail
-  const latest = latestSet ?? null
+  const { product, projects, counts } = detail
 
   return (
     <AppFrame backTo="/products">
@@ -297,9 +262,8 @@ export function ProductDetail(): React.JSX.Element {
               <div className="overflow-hidden rounded-[14px] border" style={{ borderColor: 'var(--border)', background: 'var(--canvas)' }}>
                 <img src={product.imageUrl} alt={product.name} className="aspect-square w-full object-contain" />
               </div>
-              <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-2">
                 <div className="card p-2 text-center"><p className="text-[16px] font-semibold tabular">{counts.projects}</p><p className="meta">work</p></div>
-                <div className="card p-2 text-center"><p className="text-[16px] font-semibold tabular">{counts.sets}</p><p className="meta">sets</p></div>
                 <div className="card p-2 text-center"><p className="text-[16px] font-semibold tabular">{counts.images}</p><p className="meta">images</p></div>
               </div>
             </div>
@@ -327,83 +291,20 @@ export function ProductDetail(): React.JSX.Element {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <Button variant="primary" disabled={busy} onClick={() => void start('set')}>
-                  {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Layers} size="sm" />} Make a Set
-                </Button>
-                <Button variant="secondary" disabled={busy} onClick={() => void start('photo')}>
-                  <Icon icon={ImageIcon} size="sm" /> Change a Photo
+                <Button variant="primary" disabled={busy} onClick={() => void start('photo')}>
+                  {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={ImageIcon} size="sm" />} Change a Photo
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void start('image')}>
                   <Icon icon={Sparkles} size="sm" /> New Image
                 </Button>
               </div>
 
-              <div className="card mt-5 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="section-label">Listing kit</p>
-                  <div className="flex flex-wrap items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => void openLink()}><Icon icon={Link2} size="sm" /> Link existing work</Button>
-                    <Button variant="secondary" size="sm" onClick={() => navigate(`/listing-kit?product=${product.id}`)}>
-                      <Icon icon={PackageCheck} size="sm" /> Open Listing Kit
-                    </Button>
-                  </div>
-                </div>
-                <div className="mt-3 grid gap-2">
-                  <div className="flex items-center gap-2 text-[12px]">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>✓</span>
-                    <span>Source photo ready</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[12px]">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full" style={{ background: counts.images ? 'var(--accent-soft)' : 'var(--surface-2)', color: counts.images ? 'var(--accent)' : 'var(--text-faint)' }}>{counts.images ? '✓' : '2'}</span>
-                    <span>{counts.images ? `${counts.images} listing ${counts.images === 1 ? 'image' : 'images'} made` : 'No listing images yet'}</span>
-                    {!counts.images && <Button variant="ghost" size="sm" className="ml-auto" onClick={() => void start('set')}>Make a set</Button>}
-                  </div>
-                  <div className="flex items-center gap-2 text-[12px]">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full" style={{ background: 'var(--surface-2)', color: 'var(--text-faint)' }}>
-                      {latest ? '→' : '3'}
-                    </span>
-                    <span>{latest ? 'Review the latest set, then pack it in Listing Kit' : 'Export comes after the first set'}</span>
-                    {latest && (
-                      <div className="ml-auto flex items-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => navigate(`/project/${latest.id}`)}>Open set</Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <p className="hint mt-3">A kit writes marketplace-sized images, alt text, a manifest, and the untouched original when the shop needs it.</p>
-              </div>
-
-              <ListingPanel productId={product.id} productName={product.name} projectId={latest?.id ?? null} />
-
               <div className="card mt-4 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="section-label">Product details</p>
-                  <div className="flex items-center gap-2">
-                    {!secrets?.hasKey && <span className="hint">Add your key first</span>}
-                    <Button variant="secondary" size="sm" disabled={reading || !secrets?.hasKey} onClick={() => void readPhoto()}>
-                      {reading ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Read the photo · {LISTING_COST_LABEL}
-                    </Button>
-                  </div>
-                </div>
-                {product.analysis && (
-                  <div className="mt-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
-                    <p className="field-label">What we see</p>
-                    <p className="mt-1 text-[12px] font-semibold">{product.analysis.product || product.name}</p>
-                    {product.analysis.category && <p className="meta">{product.analysis.category}</p>}
-                    {product.analysis.audience && <p className="mt-1 text-[11px]" style={{ color: 'var(--text-muted)' }}>{product.analysis.audience}</p>}
-                    {product.analysis.points.length > 0 && (
-                      <ul className="mt-2 grid gap-1 text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                        {product.analysis.points.map((point, index) => <li key={index}>- {point}</li>)}
-                      </ul>
-                    )}
-                  </div>
-                )}
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <TextInput label="Category" value={form.category} onChange={(value) => setForm({ ...form, category: value })} placeholder="Ceramics and pottery" width="100%" />
-                  <TextInput label="Who buys it" value={form.audience} onChange={(value) => setForm({ ...form, audience: value })} placeholder="People setting up a calm home office" width="100%" />
                 </div>
                 <div className="mt-3">
-                  <TextArea label="Notes" value={form.notes} onChange={(value) => setForm({ ...form, notes: value })} placeholder="Materials, sizes, or anything the listing should remember." rows={3} width="100%" />
+                  <TextInput label="Category" value={form.category} onChange={(value) => setForm({ ...form, category: value })} placeholder="Ceramics and pottery" width="100%" />
                 </div>
                 <div className="mt-3 flex justify-end">
                   <Button variant="secondary" disabled={savingDetails} onClick={() => void saveDetails()}>
@@ -415,17 +316,18 @@ export function ProductDetail(): React.JSX.Element {
           </div>
 
           <section className="mt-8" aria-labelledby="product-work-heading">
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-center gap-2">
               <h2 id="product-work-heading" className="section-label">Work for this product</h2>
               <span className="meta-faint">{projects.length}</span>
+              <Button variant="ghost" size="sm" className="ml-auto" onClick={() => void openLink()}><Icon icon={Link2} size="sm" /> Link existing work</Button>
             </div>
             {projects.length === 0 ? (
               <div className="mt-3">
                 <EmptyState
                   icon={<Icon icon={Package} size="lg" />}
                   title="No work yet"
-                  line="Make a set from the source photo, or link an existing set or edit."
-                  action={<Button variant="secondary" onClick={() => void start('set')}>Make a Set</Button>}
+                  line="Make an image from the source photo, or link existing work."
+                  action={<Button variant="secondary" onClick={() => void start('image')}>Make an Image</Button>}
                   compact
                 />
               </div>
@@ -463,7 +365,7 @@ export function ProductDetail(): React.JSX.Element {
         open={linkOpen}
         onOpenChange={setLinkOpen}
         title="Link existing work"
-        description="Unfiled sets, edits, and images move under this product. Their files stay where they are."
+        description="Unfiled edits and generated images move under this product. Their files stay where they are."
         width={620}
         footer={<Button variant="secondary" onClick={() => setLinkOpen(false)}>Close</Button>}
       >

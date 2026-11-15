@@ -13,8 +13,6 @@ import type {
   AutoUpdateState,
   UpdateStateListener,
   Person,
-  PlanJson,
-  PlanRecord,
   Product,
   ProductDetail,
   LibraryImage,
@@ -22,7 +20,6 @@ import type {
   ProjectDetail,
   ProjectFilter,
   ProjectSort,
-  SetJobInput,
   SettingsAll,
   Shape,
   LibraryStats,
@@ -37,10 +34,8 @@ import type {
   IpcResult,
   AdjustTransform,
   Format,
-  JobUpdateListener,
-  KitExportResult
+  JobUpdateListener
 } from './types'
-import type { ListingCopy } from './listings'
 import type { PhotoCheck } from './types'
 
 export interface IpcChannels {
@@ -62,33 +57,6 @@ export interface IpcChannels {
   'backup:openLast': { request: undefined; response: { ok: true } }
   'backup:status': { request: undefined; response: BackupStatus }
   'diagnostics:create': { request: undefined; response: { folderName: string } }
-  'kit:export': {
-    request: { projectId: string; platform: string; includeOriginal?: boolean; imageIds?: string[] }
-    response: KitExportResult
-  }
-  'listings:get': {
-    request: { productId: string; platform: string }
-    response: { id: string; version: number; copy: ListingCopy } | null
-  }
-  'listings:generate': {
-    request: { productId: string; platform: string; projectId?: string | null; useProfile?: boolean }
-    response: { id: string; version: number; copy: ListingCopy }
-  }
-  'listings:save': {
-    request: {
-      productId: string
-      platform: string
-      copy: {
-        titles: string[]
-        description: string
-        features: string[]
-        tags: string[]
-        altTexts?: string[]
-        costMicros?: number
-      }
-    }
-    response: { id: string; version: number; copy: ListingCopy }
-  }
   'dialog:pickLogo': { request: undefined; response: Brand | null }
   'settings:get': { request: { key: string }; response: { value: unknown } }
   'settings:set': { request: { key: string; value: unknown }; response: { ok: true } }
@@ -129,19 +97,17 @@ export interface IpcChannels {
   }
   'projects:get': { request: { id: string }; response: ProjectDetail }
   'projects:create': {
-    request: { type: 'set' | 'photo' | 'image'; name?: string; category?: string; productId?: string; draft?: boolean }
+    request: { type: 'photo' | 'image'; name?: string; productId?: string; draft?: boolean }
     response: ProjectDetail
   }
   'projects:createFromImage': {
-    request: { sourceImageId: string; name?: string; type?: 'set' | 'photo' | 'image' }
+    request: { sourceImageId: string; name?: string; type?: 'photo' | 'image' }
     response: ProjectDetail
   }
   'products:list': { request: undefined; response: Product[] }
   'products:listArchived': { request: undefined; response: Product[] }
   'products:detail': { request: { id: string }; response: ProductDetail }
   'products:createFromImage': { request: { imageId: string; name: string }; response: Product }
-  'products:analyze': { request: { id: string }; response: ProductDetail }
-  'products:cleanShot': { request: { id: string }; response: { projectId: string; detail: ProductDetail } }
   'products:createFromBytes': { request: { bytes: Uint8Array; name: string }; response: Product }
   'products:createFromProject': { request: { projectId: string; name?: string }; response: Product }
   'dialog:pickProduct': { request: undefined; response: Product | null }
@@ -149,7 +115,7 @@ export interface IpcChannels {
   'products:update': {
     request: {
       id: string
-      patch: { name?: string; category?: string | null; audience?: string | null; notes?: string | null; status?: 'active' | 'archived' }
+      patch: { name?: string; category?: string | null; status?: 'active' | 'archived' }
     }
     response: Product
   }
@@ -159,7 +125,7 @@ export interface IpcChannels {
   'products:unlinkProject': { request: { projectId: string }; response: { ok: true } }
   'products:delete': { request: { id: string }; response: { ok: true } }
   'products:createProject': {
-    request: { productId: string; type: 'set' | 'photo' | 'image'; name?: string }
+    request: { productId: string; type: 'photo' | 'image'; name?: string }
     response: ProjectDetail
   }
   'products:importIntoProject': {
@@ -173,14 +139,14 @@ export interface IpcChannels {
   'media:importFromImage': { request: { projectId: string; imageId: string }; response: ImportResult }
   'media:inspect': { request: { imageId: string }; response: PhotoCheck | null }
   'dialog:importImage': {
-    request: { projectId?: string; kind: 'source' | 'person'; type?: 'set' | 'photo'; name?: string }
+    request: { projectId?: string; kind: 'source' | 'person'; type?: 'photo'; name?: string }
     response: ImportResult | null
   }
   'media:importBytes': {
     request: {
       projectId?: string
       kind: 'source' | 'person'
-      type?: 'set' | 'photo'
+      type?: 'photo'
       bytes: Uint8Array
       name?: string
       mime: string
@@ -194,7 +160,6 @@ export interface IpcChannels {
         name?: string
         shape?: Shape
         format?: Format
-        category?: string
         sourceImageId?: string | null
         coverImageId?: string | null
       }
@@ -204,8 +169,6 @@ export interface IpcChannels {
   'projects:duplicate': { request: { id: string }; response: Project }
   'projects:delete': { request: { id: string }; response: { ok: true } }
   'projects:recent': { request: { limit: number }; response: Project[] }
-  'plans:get': { request: { projectId: string }; response: PlanRecord | null }
-  'plans:save': { request: { projectId: string; plan: PlanJson }; response: PlanRecord }
   'images:list': {
     request: { projectId: string; includeFailed?: boolean }
     response: Image[]
@@ -214,7 +177,6 @@ export interface IpcChannels {
   'images:delete': { request: { id: string }; response: { ok: true } }
   'images:setCover': { request: { projectId: string; imageId: string }; response: { ok: true } }
   'images:setSource': { request: { projectId: string; imageId: string }; response: { ok: true } }
-  'jobs:startSet': { request: SetJobInput; response: { jobId: string } }
   'jobs:startCreate': { request: CreateJobInput; response: { jobId: string } }
   'jobs:startEdit': { request: EditJobInput; response: { jobId: string } }
   'jobs:cancel': { request: { jobId: string }; response: { ok: true } }
@@ -261,11 +223,6 @@ export interface IpcChannels {
     request: { projectId: string; imageIds: string[]; options: ExportOptions }
     response: { count: number; folderName: string }
   }
-  'export:set': {
-    request: { projectId: string; options: ExportOptions }
-    response: { count: number; folderName: string; cancelled?: boolean }
-  }
-  'export:cancel': { request: { projectId: string }; response: { ok: true } }
 }
 
 export type IpcChannel = keyof IpcChannels
@@ -338,8 +295,6 @@ export interface MossApi {
     list: CallVoid<'products:list'>
     listArchived: CallVoid<'products:listArchived'>
     detail: Call<'products:detail'>
-    analyze: Call<'products:analyze'>
-    cleanShot: Call<'products:cleanShot'>
     createFromImage: Call<'products:createFromImage'>
     createFromBytes: Call<'products:createFromBytes'>
     createFromProject: Call<'products:createFromProject'>
@@ -362,10 +317,6 @@ export interface MossApi {
     importFromImage: Call<'media:importFromImage'>
     inspect: Call<'media:inspect'>
   }
-  plans: {
-    get: Call<'plans:get'>
-    save: Call<'plans:save'>
-  }
   images: {
     list: Call<'images:list'>
     library: Call<'images:library'>
@@ -375,7 +326,6 @@ export interface MossApi {
     setSource: Call<'images:setSource'>
   }
   jobs: {
-    startSet: Call<'jobs:startSet'>
     startCreate: Call<'jobs:startCreate'>
     startEdit: Call<'jobs:startEdit'>
     cancel: Call<'jobs:cancel'>
@@ -406,8 +356,6 @@ export interface MossApi {
   }
   exports: {
     images: Call<'export:images'>
-    set: Call<'export:set'>
-    cancel: Call<'export:cancel'>
   }
   backup: {
     create: CallVoid<'backup:create'>
@@ -418,20 +366,10 @@ export interface MossApi {
   diagnostics: {
     create: CallVoid<'diagnostics:create'>
   }
-  kit: {
-    export: Call<'kit:export'>
-  }
-  listings: {
-    get: Call<'listings:get'>
-    generate: Call<'listings:generate'>
-    save: Call<'listings:save'>
-  }
   onJobUpdate(listener: JobUpdateListener): () => void
   onUpdateState(listener: UpdateStateListener): () => void
   onLicenseChanged(listener: LicenseChangeListener): () => void
   onMenuAction(listener: (event: MenuEvent) => void): () => void
-  onFlushRequest(listener: () => void): () => void
-  flushComplete(): void
 }
 
 export interface UsageEventListCache {

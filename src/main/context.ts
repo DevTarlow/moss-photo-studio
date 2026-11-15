@@ -1,15 +1,12 @@
 import type { Db } from './db/connection'
 import type { ProjectRepository } from './db/repositories/projects'
-import type { PlanRepository } from './db/repositories/plans'
 import type { ImageRepository } from './db/repositories/images'
 import type { JobRepository } from './db/repositories/jobs'
 import type { UsageRepository } from './db/repositories/usage'
 import type { BrandRepository } from './db/repositories/brand'
 import type { PeopleRepository } from './db/repositories/people'
 import type { ProductRepository } from './db/repositories/products'
-import type { ListingRepository } from './db/repositories/listings'
 import type { ProductService } from './products/service'
-import type { ListingsService } from './listings/service'
 import type { SettingsStore } from './settings'
 import type { SecretStore } from './secrets'
 import type { Logger } from './logger'
@@ -28,7 +25,6 @@ export interface AppContext {
   settings: SettingsStore
   secrets: SecretStore
   projects: ProjectRepository
-  plans: PlanRepository
   images: ImageRepository
   jobs: JobRepository
   usage: UsageRepository
@@ -36,8 +32,6 @@ export interface AppContext {
   people: PeopleRepository
   products: ProductRepository
   productService: ProductService
-  listings: ListingRepository
-  listingsService: ListingsService
   media: MediaService
   queue: JobQueue
   license: LicenseController

@@ -1,4 +1,4 @@
-import { Package, PackageCheck, Plus, UserPlus } from 'lucide-react'
+import { Package, Plus, UserPlus } from 'lucide-react'
 import { Icon } from '@astryxdesign/core'
 import type { Image, Project } from '@shared/types'
 import { templateById } from '@shared/prompts/templates'
@@ -15,8 +15,7 @@ export function VersionDetails({
   onNewVersion,
   onFormatChange,
   onSaveProduct,
-  onSavePerson,
-  onListingKit
+  onSavePerson
 }: {
   project: Project
   selected: Image | null
@@ -27,7 +26,6 @@ export function VersionDetails({
   onFormatChange: (format: Project['format']) => void
   onSaveProduct?: () => void
   onSavePerson?: () => void
-  onListingKit?: (image: Image) => void
 }): React.JSX.Element {
   const template = selected?.templateId ? templateById(selected.templateId) : undefined
   const templateName = selected?.templateId === 'quick-fix' ? 'Quick fix' : template?.label
@@ -64,7 +62,7 @@ export function VersionDetails({
             {selected.badge && <p className="meta">Logo badge added.</p>}
             {parentLabel && <p className="meta">From {parentLabel}</p>}
           </div>
-          {(onSaveProduct || onSavePerson || onListingKit) && (
+          {(onSaveProduct || onSavePerson) && (
             <div className="mt-3 flex flex-wrap gap-2">
               {onSaveProduct && (
                 <Button variant="secondary" size="sm" onClick={onSaveProduct}>
@@ -74,11 +72,6 @@ export function VersionDetails({
               {onSavePerson && (
                 <Button variant="secondary" size="sm" onClick={onSavePerson}>
                   <Icon icon={UserPlus} size="sm" /> Save as Person
-                </Button>
-              )}
-              {onListingKit && (
-                <Button variant="secondary" size="sm" onClick={() => onListingKit(selected)}>
-                  <Icon icon={PackageCheck} size="sm" /> Listing Kit
                 </Button>
               )}
             </div>

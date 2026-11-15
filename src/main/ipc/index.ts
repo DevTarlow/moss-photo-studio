@@ -12,42 +12,37 @@ import type {
   ImportResult,
   JobState,
   LicenseState,
-  PlanJson,
   Product,
   ProductDetail,
   Project,
   ProjectDetail,
-  SettingsAll,
+  SettingsAll
 } from '@shared/types'
 import { monthBounds } from '@shared/cost'
 import { MAX_LOGO_BYTES, MAX_PERSON_BYTES, MAX_PROMPT } from '@shared/constants'
-import { shapeForImage } from '@shared/shapes'
-import { normalisePlan } from '@shared/plans'
 import { nextCountedLabel } from '@shared/labels'
 import { safeBaseName } from '@shared/files'
 import { isBundledProduct } from '@shared/products'
 import { absoluteInLibrary, workingFor } from '../media/paths'
 import { applyLocalAdjust } from '../media/transform'
 import { addSizeLabel } from '../media/label'
-import { exportImageToPath, exportOneImage, exportSetProject } from '../media/export'
+import { exportImageToPath, exportOneImage } from '../media/export'
 import { openExternalSafely } from '../security'
 import { SCHEMA_VERSION } from '../db/connection'
 import { createBackup, createDiagnostics, inspectBackup, stageRestore } from '../backup'
-import { createKitFolder, exportKit } from '../media/kit'
 import { runtimeEnv } from '../env'
 import { registerIpc, registerRaw, IpcFault } from './helpers'
 import { type SettingKey } from '../settings'
 
 const shapeSchema = z.enum(['square', 'portrait', 'landscape'])
 const formatSchema = z.enum(['webp', 'jpeg', 'png'])
-const projectTypeSchema = z.enum(['set', 'photo', 'image'])
+const projectTypeSchema = z.enum(['photo', 'image'])
 const idSchema = z.string().min(1).max(120)
 const monthSchema = z.string().regex(/^\d{4}-\d{2}$/)
 const voidSchema = z.undefined()
 const bytesSchema = z.custom<Uint8Array>((value) => value instanceof Uint8Array, {
   message: 'Expected bytes'
 })
-const shotTypeSchema = z.enum(['hero', 'lifestyle', 'detail', 'scale', 'flatlay', 'gift', 'feature', 'onmodel'])
 const adjustSchema = z.object({
   crop: z.object({ x: z.number(), y: z.number(), width: z.number(), height: z.number() }).optional(),
   rotate: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]).optional(),
@@ -59,25 +54,6 @@ const adjustSchema = z.object({
   warmth: z.number().min(-100).max(100).optional(),
   sharpen: z.number().min(0).max(100).optional(),
   vignette: z.number().min(0).max(100).optional()
-})
-const planShotSchema = z.object({
-  id: idSchema,
-  type: shotTypeSchema,
-  enabled: z.boolean(),
-  direction: z.string().max(400),
-  personId: z.string().nullable(),
-  personLook: z.string().max(40).nullable().default(null),
-  label: z.string().max(80),
-  featureText: z.string().max(60).optional()
-})
-const planSchema = z.object({
-  version: z.number().int().min(0),
-  category: z.string().min(1).max(40),
-  productName: z.string().max(160),
-  shape: shapeSchema,
-  format: formatSchema,
-  createdAt: z.number().int(),
-  shots: z.array(planShotSchema).max(8)
 })
 const exportOptionsSchema = z.object({
   format: formatSchema,
@@ -94,17 +70,10 @@ const brandPatchSchema = z.object({
   badgeCorner: z.enum(['br', 'bl', 'tr', 'tl']).optional(),
   badgeScale: z.enum(['s', 'm', 'l']).optional(),
   badgeOpacity: z.number().int().min(60).max(100).optional(),
-  businessName: z.string().max(100).optional(),
-  sells: z.string().max(100).optional(),
-  audience: z.string().max(200).optional(),
-  voice: z.string().max(500).optional(),
-  policies: z.string().max(1000).optional(),
-  marketplaces: z.array(z.string().max(40)).max(12).optional(),
-  defaultPlatform: z.string().max(40).optional()
 })
 
 const rendererSettingKeys = [
-  'theme', 'density', 'onboardingStep', 'onboardingDone', 'onboardingDismissed', 'onboardingCategory', 'setupDismissed',
+  'theme', 'density', 'onboardingStep', 'onboardingDone', 'onboardingDismissed', 'setupDismissed',
   'firstRunConfirmShown', 'licenseGraceNotified', 'concurrency', 'budgetCents',
   'defaultFormat', 'defaultShape', 'lastProjectId', 'exportDefaults', 'reduceMotion'
 ] as const
@@ -112,10 +81,9 @@ const rendererSettingKeys = [
 const settingSchemas: Partial<Record<SettingKey, z.ZodTypeAny>> = {
   theme: z.enum(['system', 'light', 'dark']),
   density: z.enum(['comfortable', 'compact']),
-  onboardingStep: z.number().int().min(0).max(10),
+  onboardingStep: z.number().int().min(0).max(4),
   onboardingDone: z.boolean(),
   onboardingDismissed: z.boolean(),
-  onboardingCategory: z.string().max(40),
   setupDismissed: z.boolean(),
   firstRunConfirmShown: z.boolean(),
   licenseGraceNotified: z.boolean(),
@@ -174,7 +142,6 @@ function buildDetail(context: AppContext, project: Project): ProjectDetail {
   return {
     project: detail,
     images: context.images.list(project.id, false),
-    plan: context.plans.getActive(project.id),
     activeJob,
     usageCents: context.usage.projectTotal(project.id)
   }
@@ -182,17 +149,16 @@ function buildDetail(context: AppContext, project: Project): ProjectDetail {
 
 async function importSourceUse(context: AppContext, input: {
   projectId?: string
-  type?: 'set' | 'photo' | 'image'
+  type?: 'photo'
   bytes: Uint8Array
   name?: string
 }): Promise<ImportResult> {
   let projectId = input.projectId
   let createdProject = false
   if (!projectId) {
-    const type = input.type === 'set' ? 'set' : 'photo'
     projectId = context.projects.create({
-      type,
-      name: type === 'set' ? 'Untitled set' : 'Untitled photo'
+      type: 'photo',
+      name: 'Untitled photo'
     }).id
     createdProject = true
   }
@@ -252,7 +218,6 @@ function csvField(value: string | number | null | undefined): string {
 export function registerIpcHandlers(context: AppContext): void {
   const { logger, settings } = context
   let lastTestedKeyHash: { hash: string; at: number } | null = null
-  const activeExports = new Map<string, { cancelled: boolean }>()
 
   registerIpc(context, 'app:info', voidSchema, (): AppInfo => ({
     version: app.getVersion(),
@@ -431,99 +396,6 @@ export function registerIpcHandlers(context: AppContext): void {
   registerIpc(context, 'backup:status', voidSchema, () => ({
     lastBackupAt: settings.get<number | null>('lastBackupAt', null)
   }))
-
-  const listingCopySchema = z.object({
-    titles: z.array(z.string().max(200)).max(5),
-    description: z.string().max(5000),
-    features: z.array(z.string().max(240)).max(10),
-    tags: z.array(z.string().max(60)).max(30),
-    altTexts: z.array(z.string().max(300)).max(30).optional(),
-    costMicros: z.number().int().min(0).optional()
-  })
-  const listingPlatformSchema = z.enum(['etsy', 'shopify', 'own'])
-
-  registerIpc(
-    context,
-    'listings:get',
-    z.object({ productId: idSchema, platform: listingPlatformSchema }),
-    ({ productId, platform }) => context.listingsService.get(productId, platform)
-  )
-  registerIpc(
-    context,
-    'listings:generate',
-    z.object({
-      productId: idSchema,
-      platform: listingPlatformSchema,
-      projectId: idSchema.nullable().optional(),
-      useProfile: z.boolean().optional()
-    }),
-    ({ productId, platform, projectId, useProfile }) =>
-      context.listingsService.generate({ productId, platform, projectId, useProfile })
-  )
-  registerIpc(
-    context,
-    'listings:save',
-    z.object({ productId: idSchema, platform: listingPlatformSchema, copy: listingCopySchema }),
-    ({ productId, platform, copy }) => context.listingsService.save({ productId, platform, copy })
-  )
-
-  registerIpc(
-    context,
-    'kit:export',
-    z.object({
-      projectId: idSchema,
-      platform: z.enum(['etsy', 'shopify', 'instagram', 'tiktok', 'ebay', 'own']),
-      includeOriginal: z.boolean().optional(),
-      imageIds: z.array(idSchema).min(1).max(20).optional()
-    }),
-    async ({ projectId, platform, includeOriginal, imageIds }) => {
-      const project = context.projects.get(projectId)
-      if (!project) throw new IpcFault('not_found')
-      const plan = context.plans.getActive(projectId)
-      const images = context.images.list(projectId, false)
-      if (imageIds?.length) {
-        const wanted = new Set(imageIds)
-        const found = images.filter((image) => wanted.has(image.id) && image.status === 'ready')
-        if (found.length !== wanted.size) {
-          throw new IpcFault('invalid_payload', 'Choose a ready image to pack.')
-        }
-      } else {
-        if (project.type !== 'set') throw new IpcFault('invalid_payload', 'Choose an image to pack.')
-        if (!plan) throw new IpcFault('invalid_payload', 'Plan the set first.')
-        if (!images.some((image) => image.status === 'ready' && image.shotId)) {
-          throw new IpcFault('invalid_payload', 'Make at least one image first.')
-        }
-      }
-      const pick = await openFolderDialog(context, {
-        title: 'Choose where to save the listing kit',
-        defaultPath: settings.exportFolderFor(projectId) ?? app.getPath('documents'),
-        properties: ['openDirectory', 'createDirectory']
-      })
-      if (pick.canceled || !pick.filePaths[0]) {
-        return { count: 0, folderName: '', warnings: [], includesOriginal: false }
-      }
-      const folder = await createKitFolder(pick.filePaths[0])
-      const listingPlatform = platform === 'etsy' ? 'etsy' : platform === 'shopify' ? 'shopify' : platform === 'own' ? 'own' : null
-      const listing = project.productId && listingPlatform
-        ? context.listings.latest(project.productId, listingPlatform)?.copy ?? null
-        : null
-      const linkedProduct = project.productId ? context.products.get(project.productId) : null
-      const result = await exportKit({
-        libraryPath: context.libraryPath(),
-        folder,
-        project,
-        plan: plan?.json ?? null,
-        images,
-        imageIds,
-        productName: linkedProduct?.name,
-        platform,
-        includeOriginal,
-        listing
-      })
-      settings.rememberExportFolder(projectId, folder)
-      return result
-    }
-  )
 
   registerIpc(context, 'diagnostics:create', voidSchema, async () => {
     let documents = app.getPath('documents')
@@ -730,7 +602,7 @@ export function registerIpcHandlers(context: AppContext): void {
     context,
     'projects:list',
     z.object({
-      filter: z.enum(['all', 'sets', 'photos', 'images']).optional(),
+      filter: z.enum(['all', 'photos', 'images']).optional(),
       sort: z.enum(['recent', 'oldest', 'name']).optional(),
       search: z.string().max(200).optional(),
       productId: z.string().nullable().optional(),
@@ -759,17 +631,15 @@ export function registerIpcHandlers(context: AppContext): void {
     z.object({
       type: projectTypeSchema,
       name: z.string().max(140).optional(),
-      category: z.string().max(40).optional(),
       productId: idSchema.optional(),
       draft: z.boolean().optional()
     }),
-    ({ type, name, category, productId, draft }): ProjectDetail => {
+    ({ type, name, productId, draft }): ProjectDetail => {
       if (productId && !context.products.exists(productId)) throw new IpcFault('not_found')
       const defaults = settings.all()
       const project = context.projects.create({
         type,
-        name: name?.trim() || (type === 'set' ? 'Untitled set' : type === 'photo' ? 'Untitled photo' : 'Untitled image'),
-        category: category ?? null,
+        name: name?.trim() || (type === 'photo' ? 'Untitled photo' : 'Untitled image'),
         productId: productId ?? null,
         shape: defaults.defaultShape,
         format: defaults.defaultFormat,
@@ -787,18 +657,14 @@ export function registerIpcHandlers(context: AppContext): void {
     if (!sourceProject) throw new IpcFault('not_found')
     const relative = decodeURI(image.url.replace('moss-media://library/', ''))
     const bytes = await fs.readFile(path.join(context.libraryPath(), relative))
-    const createdType = type ?? 'set'
+    const createdType = type ?? 'photo'
     const defaults = settings.all()
     const project = context.projects.create({
       type: createdType,
       name: name?.trim() || sourceProject.name,
       productId: sourceProject.productId,
-      // A new set asks what the seller sells before it has a plan.
-      category: null,
-      shape: createdType === 'set' && image.width && image.height
-        ? shapeForImage(image.width, image.height)
-        : defaults.defaultShape,
-      format: createdType === 'set' ? sourceProject.format : defaults.defaultFormat
+      shape: defaults.defaultShape,
+      format: defaults.defaultFormat
     })
     try {
       await context.media.importSource({
@@ -824,16 +690,6 @@ export function registerIpcHandlers(context: AppContext): void {
     return context.productService.detail(id)
   })
 
-  registerIpc(context, 'products:analyze', z.object({ id: idSchema }), async ({ id }): Promise<ProductDetail> => {
-    if (isBundledProduct(id)) throw new IpcFault('invalid_payload', 'Included products do not have a product page.')
-    return context.productService.analyze(id)
-  })
-
-  registerIpc(context, 'products:cleanShot', z.object({ id: idSchema }), async ({ id }) => {
-    if (isBundledProduct(id)) throw new IpcFault('invalid_payload', 'Included products do not have a product page.')
-    return context.productService.cleanShot(id)
-  })
-
   registerIpc(
     context,
     'products:update',
@@ -842,8 +698,6 @@ export function registerIpcHandlers(context: AppContext): void {
       patch: z.object({
         name: z.string().trim().min(1).max(80).optional(),
         category: z.string().max(40).nullable().optional(),
-        audience: z.string().max(200).nullable().optional(),
-        notes: z.string().max(2000).nullable().optional(),
         status: z.enum(['active', 'archived']).optional()
       })
     }),
@@ -966,7 +820,7 @@ export function registerIpcHandlers(context: AppContext): void {
     z.object({
       projectId: idSchema.optional(),
       kind: z.enum(['source', 'person']),
-      type: z.enum(['set', 'photo']).optional(),
+      type: z.enum(['photo']).optional(),
       name: z.string().max(80).optional()
     }),
     async (request): Promise<ImportResult | null> => {
@@ -1004,7 +858,7 @@ export function registerIpcHandlers(context: AppContext): void {
     z.object({
       projectId: idSchema.optional(),
       kind: z.enum(['source', 'person']),
-      type: z.enum(['set', 'photo']).optional(),
+      type: z.enum(['photo']).optional(),
       bytes: bytesSchema,
       mime: z.string().max(100),
       name: z.string().max(255).optional()
@@ -1036,8 +890,7 @@ export function registerIpcHandlers(context: AppContext): void {
         name: z.string().min(1).max(140).optional(),
         shape: shapeSchema.optional(),
         format: formatSchema.optional(),
-        category: z.string().max(40).optional(),
-        sourceImageId: z.string().nullable().optional(),
+          sourceImageId: z.string().nullable().optional(),
         coverImageId: z.string().nullable().optional()
       })
     }),
@@ -1094,19 +947,6 @@ export function registerIpcHandlers(context: AppContext): void {
     ({ projectId, imageId }) => context.media.importFromImage({ projectId, imageId })
   )
 
-  registerIpc(context, 'plans:get', z.object({ projectId: idSchema }), ({ projectId }) => {
-    if (!context.projects.get(projectId)) throw new IpcFault('not_found')
-    return context.plans.getActive(projectId)
-  })
-
-  registerIpc(context, 'plans:save', z.object({ projectId: idSchema, plan: planSchema }), ({ projectId, plan }) => {
-    const project = context.projects.get(projectId)
-    if (!project) throw new IpcFault('not_found')
-    if (project.type !== 'set') throw new IpcFault('invalid_payload')
-    if (plan.shots.length > 8) throw new IpcFault('invalid_payload', 'A set holds eight images. Turn one off first.')
-    return context.plans.save(projectId, normalisePlan(plan as PlanJson))
-  })
-
   registerIpc(
     context,
     'images:list',
@@ -1148,7 +988,7 @@ export function registerIpcHandlers(context: AppContext): void {
     context.images.softDelete(id)
     if (project?.coverImageId === id) {
       const ready = context.images.list(project.id, false)
-      const next = project.type === 'set' ? ready.find((entry) => entry.kind !== 'upload') : ready[0]
+      const next = ready[0]
       context.projects.update(project.id, { coverImageId: next?.id ?? null })
     }
     for (const relative of files) {
@@ -1181,7 +1021,6 @@ export function registerIpcHandlers(context: AppContext): void {
     }
   )
 
-  registerIpc(context, 'jobs:startSet', z.object({ projectId: idSchema, mode: z.enum(['make', 'remake']), shotIds: z.array(idSchema).max(8).optional() }), (request) => context.queue.startSet(request))
   registerIpc(
     context,
     'jobs:startCreate',
@@ -1306,7 +1145,6 @@ export function registerIpcHandlers(context: AppContext): void {
         format: 'webp',
         prompt: null,
         userText: 'Size label',
-        shotId: source.shotId,
         personId: source.personId,
         label,
         parentId: source.id,
@@ -1365,7 +1203,6 @@ export function registerIpcHandlers(context: AppContext): void {
         prompt: null,
         userText: 'Local adjust',
         templateId: null,
-        shotId: source.shotId,
         personId: source.personId,
         label,
         parentId: source.id,
@@ -1481,7 +1318,6 @@ export function registerIpcHandlers(context: AppContext): void {
       month: isoMonthLabel(month),
       images: totals.images,
       spendCents: totals.cents,
-      textMicros: totals.micros,
       budgetCents: settings.budgetCents(),
       projects: context.usage.byProject(bounds.start, bounds.end).map((row) => ({
         projectId: row.projectId ?? '',
@@ -1590,47 +1426,6 @@ export function registerIpcHandlers(context: AppContext): void {
       return { count: paths.length, folderName: path.basename(folder!) }
     }
   )
-
-  registerIpc(
-    context,
-    'export:set',
-    z.object({ projectId: idSchema, options: exportOptionsSchema }),
-    async ({ projectId, options }) => {
-      const project = context.projects.get(projectId)
-      if (!project) throw new IpcFault('not_found')
-      const plan = context.plans.getActive(projectId)
-      if (!plan) throw new IpcFault('invalid_payload', 'Add a photo and plan the set first.')
-      const pick = await openFolderDialog(context, {
-        title: 'Export set',
-        properties: ['openDirectory', 'createDirectory'],
-        defaultPath: settings.exportFolderFor(projectId) ?? undefined
-      })
-      if (pick.canceled || !pick.filePaths[0]) return { count: 0, folderName: '' }
-      const folder = pick.filePaths[0]
-      const images = context.images.list(projectId, false)
-      if (!images.length) throw new IpcFault('invalid_payload', 'Make an image first.')
-      const token = { cancelled: false }
-      activeExports.set(projectId, token)
-      const result = await exportSetProject({
-        libraryPath: context.libraryPath(),
-        projectName: project.name,
-        plan: plan.json,
-        images,
-        options,
-        folder: folder!,
-        workingPathFor: (image) => workingFor(context.libraryPath(), image.projectId, image.id),
-        shouldCancel: () => token.cancelled
-      }).finally(() => activeExports.delete(projectId))
-      settings.rememberExportFolder(projectId, folder!)
-      return { count: result.paths.length, folderName: path.basename(folder!), cancelled: result.cancelled }
-    }
-  )
-
-  registerIpc(context, 'export:cancel', z.object({ projectId: idSchema }), ({ projectId }) => {
-    const token = activeExports.get(projectId)
-    if (token) token.cancelled = true
-    return { ok: true as const }
-  })
 
   registerIpc(context, 'app:reset', voidSchema, async () => {
     // A development-only factory reset. Packaged builds hide the control and

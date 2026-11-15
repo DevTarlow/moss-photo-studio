@@ -9,9 +9,7 @@ import type {
   JobItemState,
   JobKind,
   JobState,
-  PlanJson,
   Project,
-  SetJobInput,
   Shape
 } from '@shared/types'
 import { estimateCents, monthBounds, monthKey } from '@shared/cost'
@@ -19,8 +17,7 @@ import { MAX_CREATE_VARIANTS, MAX_PROMPT } from '@shared/constants'
 import { usedBrandColors } from '@shared/brandColors'
 import { appendWithinCap, composeChange, composeCreatePrompt, PROMPT_MAX } from '@shared/prompts/guards'
 import { styleClause } from '@shared/stylePresets'
-import { planSetPrompts } from '@shared/prompts/setPlan'
-import { nextCountedLabel, setImageLabel } from '@shared/labels'
+import { nextCountedLabel } from '@shared/labels'
 import { templateById, templateWord } from '@shared/prompts/templates'
 import { safeBaseName } from '@shared/files'
 import { billingUncertain } from '@shared/errors'
@@ -28,7 +25,6 @@ import type { ImageProvider } from '../muse/provider'
 import type { Logger } from '../logger'
 import type { ProjectRepository } from '../db/repositories/projects'
 import type { ImageRepository } from '../db/repositories/images'
-import type { PlanRepository } from '../db/repositories/plans'
 import type { JobRepository, JobSnapshot } from '../db/repositories/jobs'
 import type { UsageRepository } from '../db/repositories/usage'
 import type { BrandRepository } from '../db/repositories/brand'
@@ -53,7 +49,7 @@ export class JobStartError extends Error {
   }
 }
 
-type Action = 'create' | 'set' | 'edit'
+type Action = 'create' | 'edit'
 
 interface WorkItemSpec {
   key: string
@@ -69,7 +65,6 @@ interface WorkItemSpec {
   format: Format
   userText: string
   templateId: string | null
-  shotId: string | null
   action: Action
   labelWord: 'Scene' | 'Model' | 'Edit' | 'Created' | null
   pendingImageId?: string
@@ -83,7 +78,6 @@ interface JobWork {
   projectId: string
   projectName: string
   items: WorkItemSpec[]
-  setPlan?: PlanJson
   sourceImageId?: string | null
 }
 
@@ -108,7 +102,6 @@ interface JobRun {
 interface QueueDeps {
   projects: ProjectRepository
   images: ImageRepository
-  plans: PlanRepository
   jobs: JobRepository
   usage: UsageRepository
   brand: BrandRepository
@@ -158,94 +151,6 @@ export class JobQueue {
 
   isRunning(projectId: string): boolean {
     return [...this.runs.values()].some((run) => run.state.projectId === projectId && !run.finished)
-  }
-
-  async startSet(input: SetJobInput): Promise<{ jobId: string }> {
-    const project = this.requireProject(input.projectId, 'set')
-    await this.requireLicensed()
-    await this.requireKey()
-    this.requireNoRunningProject(project.id)
-    const planRecord = this.deps.plans.getActive(project.id)
-    if (!planRecord) throw new JobStartError('invalid_payload', 'No plan yet. Add a photo and try again.')
-    const plan = planRecord.json
-    const sourceId = project.sourceImageId
-    if (!sourceId) throw new JobStartError('invalid_payload', 'Add a photo of the product first.')
-    let eligible = plan.shots.filter((shot) => shot.enabled)
-    if (input.shotIds?.length) {
-      eligible = eligible.filter((shot) => input.shotIds!.includes(shot.id))
-    }
-    if (input.mode === 'make') {
-      eligible = eligible.filter((shot) => !this.deps.images.latestReadyForShot(project.id, shot.id))
-    }
-    if (!eligible.length) {
-      throw new JobStartError(
-        'invalid_payload',
-        plan.shots.some((shot) => shot.enabled)
-          ? 'Those shots are already made.'
-          : 'Turn on at least one shot.'
-      )
-    }
-    const brand = this.deps.brand.get()
-    const palette = brand.colorsEnabled ? usedBrandColors(brand.colors) : []
-    const source = this.deps.images.get(sourceId)
-    if (!source || source.status !== 'ready') {
-      throw new JobStartError('invalid_payload', 'Add a photo of the product first.')
-    }
-    const specs: WorkItemSpec[] = []
-    for (const item of planSetPrompts({ plan, shots: eligible, palette })) {
-      const personId = item.personId
-      if (item.type === 'onmodel') {
-        if (!personId || !this.deps.people.exists(personId)) {
-          throw new JobStartError('invalid_payload', 'Add a person to use this shot.')
-        }
-        if (item.personLook && !this.deps.people.refFor(personId, item.personLook)) {
-          throw new JobStartError('invalid_payload', 'Choose a person photo first.')
-        }
-      }
-      const prompt = item.prompt
-      if (!prompt) throw new JobStartError('invalid_payload', 'Add a direction for every shot.')
-      if (prompt.length > MAX_PROMPT) {
-        throw new JobStartError('invalid_payload', 'That direction is too long. Shorten it and try again.')
-      }
-      specs.push({
-        key: item.shotId,
-        label: item.label,
-        prompt,
-        requested: 1,
-        sourceImageId: sourceId,
-        productId: null,
-        personId,
-        personLook: item.personLook,
-        sceneImageId: null,
-        shape: plan.shape,
-        format: plan.format,
-        userText: item.userText,
-        templateId: item.type === 'gift' ? 'set-gift' : null,
-        shotId: item.shotId,
-        action: 'set',
-        labelWord: null,
-        parentId: sourceId,
-        rootId: source.rootId ?? sourceId,
-        createMode: false
-      })
-    }
-    const estimate = estimateCents(specs.reduce((sum, item) => sum + item.requested, 0))
-    await this.requireDiskRoom(estimate)
-    const reservation = this.requireBudget(estimate)
-    const work: JobWork = {
-      kind: 'set',
-      projectId: project.id,
-      projectName: project.name,
-      items: specs,
-      setPlan: plan,
-      sourceImageId: sourceId
-    }
-    try {
-      return await this.createJob(work, 'set', reservation)
-    } catch (error) {
-      this.releaseReservation(reservation)
-      throw error
-    }
   }
 
   async startCreate(input: CreateJobInput): Promise<{ jobId: string }> {
@@ -326,7 +231,6 @@ export class JobQueue {
           format: input.format,
           userText: text,
           templateId: null,
-          shotId: null,
           action: 'create',
           labelWord: 'Created',
           parentId: null,
@@ -415,7 +319,6 @@ export class JobQueue {
           format: project.format,
           userText: text,
           templateId: input.templateId ?? (input.kind === 'model' ? 'model-free' : null),
-          shotId: null,
           action: 'edit',
           labelWord: word,
           parentId: source.id,
@@ -506,7 +409,7 @@ export class JobQueue {
     if (run.activeCount === 0) this.finalise(run)
   }
 
-  private requireProject(projectId: string, expected: 'set' | 'image' | null): Project {
+  private requireProject(projectId: string, expected: 'photo' | 'image' | null): Project {
     const project = this.deps.projects.get(projectId)
     if (!project) throw new JobStartError('not_found', 'That project is not here anymore.')
     if (expected && project.type !== expected) {
@@ -581,13 +484,8 @@ export class JobQueue {
         let pendingRowId: string | null = null
         let label = spec.label
         if (!spec.createMode) {
-          if (spec.action === 'set' && spec.shotId) {
-            const shot = work.setPlan?.shots.find((entry) => entry.id === spec.shotId)
-            if (shot) label = setImageLabel(shot.type, labels)
-          } else {
-            const word = spec.labelWord ?? 'Edit'
-            label = word === 'Created' ? nextCountedLabel('Created', labels) : nextCountedLabel(word, labels)
-          }
+          const word = spec.labelWord ?? 'Edit'
+          label = word === 'Created' ? nextCountedLabel('Created', labels) : nextCountedLabel(word, labels)
           labels = [...labels, label]
           const row = this.deps.images.create({
             projectId: work.projectId,
@@ -597,7 +495,6 @@ export class JobQueue {
             prompt: spec.prompt,
             userText: spec.userText,
             templateId: spec.templateId,
-            shotId: spec.shotId,
             personId: spec.personId,
             parentId: spec.parentId,
             rootId: spec.rootId,
@@ -905,7 +802,6 @@ export class JobQueue {
       })
       item.pendingRowId = null
       item.imageIds = [imageId]
-      this.updateCoverAfterShot(run, item)
       return { storedCount: 1, returnedCount, imageIds: [imageId], error: null }
     } catch (error) {
       const code: ErrorCode =
@@ -953,20 +849,6 @@ export class JobQueue {
       imageId,
       sourcePath
     })
-  }
-
-  private updateCoverAfterShot(run: JobRun, item: RuntimeItem): void {
-    if (!item.spec.shotId) return
-    const project = this.deps.projects.get(run.work.projectId)
-    if (!project) return
-    const cover = project.coverImageId ? this.deps.images.get(project.coverImageId) : null
-    if (cover?.shotId) return
-    const plan = this.deps.plans.getActive(run.work.projectId)
-    const heroShot = plan?.json.shots.find((shot) => shot.type === 'hero' && shot.enabled)
-    const hero = heroShot ? this.deps.images.latestReadyForShot(run.work.projectId, heroShot.id) : null
-    const firstShot = this.deps.images.readyForProject(run.work.projectId).find((image) => image.shotId)
-    const coverId = hero?.id ?? item.imageIds[0] ?? firstShot?.id
-    if (coverId) this.deps.images.setCover(run.work.projectId, coverId)
   }
 
   private updateCoverFromCreate(projectId: string, imageId: string): void {
@@ -1056,22 +938,10 @@ export class JobQueue {
     this.persist(run)
     this.runs.delete(run.state.id)
     this.deps.onUpdate(this.snapshotState(run))
-    this.refreshProjectCoverAfterJob(run)
     this.deps.logger.info('jobs', 'job_finished', {
       count: run.state.done,
       errorCode: status
     })
-  }
-
-  private refreshProjectCoverAfterJob(run: JobRun): void {
-    if (run.work.kind === 'set') {
-      const project = this.deps.projects.get(run.work.projectId)
-      if (!project) return
-      if (!project.coverImageId) {
-        const first = this.deps.images.readyForProject(run.work.projectId).find((image) => image.shotId)
-        if (first) this.deps.images.setCover(project.id, first.id)
-      }
-    }
   }
 
   private recordUsage(

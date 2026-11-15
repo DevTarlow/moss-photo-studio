@@ -16,7 +16,6 @@ export const SETTING_KEYS = [
   'onboardingStep',
   'onboardingDone',
   'onboardingDismissed',
-  'onboardingCategory',
   'setupDismissed',
   'firstRunConfirmShown',
   'concurrency',
@@ -80,7 +79,7 @@ export class SettingsStore {
 
   exportDefaults(): ExportOptions {
     return this.get<ExportOptions>('exportDefaults', {
-      // Most marketplaces accept JPEG and some (Etsy) do not accept WebP.
+      // JPEG is the broadly compatible default for shop uploads.
       format: 'jpeg',
       quality: 90,
       maxDimension: null
@@ -119,7 +118,6 @@ export class SettingsStore {
       onboardingStep: this.get<number>('onboardingStep', 0),
       onboardingDone: this.get<boolean>('onboardingDone', false),
       onboardingDismissed: this.get<boolean>('onboardingDismissed', false),
-      onboardingCategory: this.get<string>('onboardingCategory', 'other'),
       setupDismissed: this.get<boolean>('setupDismissed', false),
       firstRunConfirmShown: this.get<boolean>('firstRunConfirmShown', false),
       concurrency: Math.max(1, Math.min(4, this.get<number>('concurrency', 2))),

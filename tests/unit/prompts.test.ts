@@ -10,7 +10,6 @@ import {
   appendWithinCap,
   paletteClause,
   composeChange,
-  composeSetPrompt,
   composeCreatePrompt,
   SCENE_REF_GUARD
 } from '@shared/prompts/guards'
@@ -142,51 +141,5 @@ describe('composeChange', () => {
     expect(withGift).not.toContain('this shop')
     // The mandatory guards are still present; PROMPT_MAX is the total sent length.
     expect(withGift.length).toBeGreaterThan(PROMPT_MAX)
-  })
-})
-
-describe('composeSetPrompt', () => {
-  it('orders direction, gift clause, reference guard, palette', () => {
-    const result = composeSetPrompt({
-      type: 'gift',
-      direction: 'a tissue paper scene',
-      palette: ['#112233']
-    })
-    expect(result.indexOf('a tissue paper scene')).toBe(0)
-    expect(result.indexOf(GIFT_CLAUSE)).toBeGreaterThan(0)
-    expect(result.indexOf(REF_GUARD)).toBeGreaterThan(result.indexOf(GIFT_CLAUSE))
-    expect(result.indexOf('this shop')).toBeGreaterThan(result.indexOf(REF_GUARD))
-  })
-
-  it('uses the model wrapper for on a person and no reference guard', () => {
-    const result = composeSetPrompt({ type: 'onmodel', direction: 'Hold the mug', palette: ['#112233'] })
-    expect(result).toBe(appendWithinCap(wrapModelPrompt('Hold the mug'), paletteClause(['#112233'])))
-    expect(result).not.toContain(REF_GUARD)
-  })
-
-  it('never adds a palette to detail, scale or feature', () => {
-    for (const type of ['detail', 'scale', 'feature'] as const) {
-      expect(composeSetPrompt({ type, direction: 'a direction', palette: ['#112233'] })).not.toContain('this shop')
-    }
-  })
-
-  it('adds the reference guard even if the palette cannot fit', () => {
-    const long = 'z'.repeat(PROMPT_MAX - REF_GUARD.length)
-    const result = composeSetPrompt({ type: 'hero', direction: long, palette: ['#112233'] })
-    expect(result.endsWith(REF_GUARD)).toBe(true)
-    expect(result).not.toContain('this shop')
-  })
-
-  it('returns empty for an empty direction', () => {
-    expect(composeSetPrompt({ type: 'hero', direction: '   ' })).toBe('')
-  })
-
-  it('passes at exactly 2000 and drops only the palette past it', () => {
-    const room = PROMPT_MAX - REF_GUARD.length
-    expect(composeSetPrompt({ type: 'hero', direction: 'a'.repeat(room) }).length).toBe(PROMPT_MAX)
-    const direction = 'a'.repeat(room - 10)
-    const withPalette = composeSetPrompt({ type: 'hero', direction, palette: ['#112233'] })
-    expect(withPalette.endsWith(REF_GUARD)).toBe(true)
-    expect(withPalette).not.toContain('this shop')
   })
 })

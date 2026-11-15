@@ -1,7 +1,6 @@
 export const settingsSections = [
   { id: 'studio', label: 'Meta API key' },
   { id: 'brand', label: 'Logo & Colors' },
-  { id: 'business', label: 'Business' },
   { id: 'library', label: 'Storage' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'license', label: 'License' },

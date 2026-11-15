@@ -1,18 +1,12 @@
 # Moss Photo Studio
 
-Moss Photo Studio is a desktop app for people who sell physical things. Start with one product photo, then make a set of listing images, edit a photo you already have, or describe a new scene. Everything you make stays in a library on your computer. All work shows your saved products alongside your sets, edits, and generated projects.
+Moss Photo Studio is a desktop app for people who sell physical things. Edit a photo you already have, or describe a new image and make it. Everything you make stays in a library on your computer, and saved product photos stay together with the work made from them.
 
-I built it for the part of selling that eats an afternoon: getting a bottle, a candle, or a pair of earrings to look right on a listing page. The app handles the set plan, the local edits, the image generation, and the listing kit. But you still decide what the product is and what the shot should say.
+I built it for the part of selling that eats an afternoon: getting a bottle, a candle, or a pair of earrings to look right. The app handles the local edits, the image generation, and the reusable product references. You still decide what the product is and what the picture should say.
 
 The desktop app has no account. A license key is required. The separate license portal handles the buyer account, machine resets, and downloads.
 
 ## What it does
-
-### Make a set
-
-Choose a product photo, a saved product, or a ready library image. Pick a category and the app builds that category's shot recipe. A set holds 1 to 8 shots. And you can switch the recipe until the first image is made, turn individual shots off, rename them, write a description, assign a person, or add a feature line.
-
-The plan saves as you work. In review, a ready shot can make another version for one cent, and any ready version can be pinned as the main image for export.
 
 ### Edit a photo
 
@@ -24,21 +18,17 @@ Versions branch instead of overwrite. You can compare them, move through the fil
 
 The Image Generator has 30 starters, including person ideas for holding, wearing, and using an item. Generate 1 to 4 images in three shapes and three formats. A product reference and a person reference can go together, so a person can hold the product. An optional scene reference supplies the setting, light, and props without asking the model to copy its subject.
 
-Generated images can be saved as a product, a person, or a set photo. A generated project appears in All work after its first image.
+Generated images can be saved as a product or a person. A generated project appears in All work after its first image.
 
-### Write and pack the listing
+### Keep products handy
 
-The Listing Writer writes titles, descriptions, features, and tags from the product photo, the set plan, and the optional business profile. Etsy, Shopify, and own-site limits are applied to the copy, and every version is editable and saved.
-
-The Listing Kit is its own tool in the rail. Start from a product, a finished set in All work, or one ready image. It builds a local package with marketplace presets for Etsy, Shopify, Instagram, TikTok Shop, eBay, and your own site, platform-sized JPEGs, an untouched original, an alt-text line per image, a `listing.md` when listing copy exists, a `listing.csv`, a `kit.json`, and an AI disclosure. The kit is written to a folder you choose and is never uploaded. When the work is not under a saved product yet, the kit offers to save it as one so the listing copy can be written.
+Save a product photo as a Product, or start from one of the 20 clean, unbranded starter products. A Product opens in the Image Editor or the Image Generator as a reusable reference. Categories, linked work, archive, and delete keep the collection tidy.
 
 ### Keep the costs visible
 
-A product photo read costs under a cent.
+A returned image costs $0.01. The price is on the button before every run. A refusal costs nothing, and the app does not add a fee for any generations.
 
-A returned image costs $0.01.
-
-Listing copy has its own text cost line. The Usage ledger tracks images and text, shows the current month, supports a budget limit, and exports to CSV.
+The Usage ledger tracks returned images, shows the current month, supports a budget limit, and exports to CSV. Local Adjust and the local photo check are free.
 
 ## Get a license
 
@@ -101,7 +91,7 @@ The library lives under the application data folder shown in **Settings, Storage
 
 The Meta key is stored in `secrets.bin`, encrypted with Electron's `safeStorage` when a system keyring is available. The fallback is AES-256-GCM with a local key protected by file mode `0600`. The license key is stored encrypted. No key is returned to the renderer, logged, or placed in a URL. Settings shows the last four characters only.
 
-The app sends prompts and the images you choose to Meta when you run a paid image or text action. Local Adjust, the Listing Kit, and the local photo check stay on your computer. No telemetry is sent. The automatic update check goes to GitHub Releases and sends the app version, platform, architecture, and channel. It sends no key, email, or library data.
+The app sends prompts and the images you choose to Meta when you run a paid image action. Local Adjust and the local photo check stay on your computer. No telemetry is sent. The automatic update check goes to GitHub Releases and sends the app version, platform, architecture, and channel. It sends no key, email, or library data.
 
 See [docs/privacy.md](docs/privacy.md).
 
@@ -113,14 +103,14 @@ src/
               license, queue, secrets, menus
   preload/    frozen named window.moss API
   renderer/   React screens, no Node, no filesystem access, no network keys
-  shared/     constants, types, IPC map, guards, recipes, prompts, costs
+  shared/     constants, types, IPC map, guards, prompts, costs
 ```
 
 The renderer reaches the outside world only through named IPC methods. The main process parses every request payload with zod. External links open in the system browser and only for an allowlisted set of hosts.
 
 The app has no cloud sync or hosted library. Automatic updates are supported for the Linux AppImage; Windows and macOS packages still need signing and verification. Real Meta billing reconciliation is also open. [docs/release.md](docs/release.md) has the owner checklist.
 
-More detail lives in [docs/licensing.md](docs/licensing.md), [docs/checkout-integration.md](docs/checkout-integration.md), [docs/api-notes.md](docs/api-notes.md), [docs/category-recipes.md](docs/category-recipes.md), [DECISIONS.md](DECISIONS.md), and [MILESTONES.md](MILESTONES.md).
+More detail lives in [docs/licensing.md](docs/licensing.md), [docs/checkout-integration.md](docs/checkout-integration.md), [docs/api-notes.md](docs/api-notes.md), [DECISIONS.md](DECISIONS.md), and [MILESTONES.md](MILESTONES.md).
 
 ## License
 

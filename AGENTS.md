@@ -6,14 +6,14 @@ The short version: **implement → verify narrowly → commit when the task is d
 
 ## 1. What this repo is
 
-A local-first Electron desktop app that turns product photos into listing sets. React 19, TypeScript (strict), electron-vite, SQLite (`better-sqlite3`), and `sharp`. Node 22+ and npm 10+.
+A local-first Electron desktop app for editing product photos and generating new ones. React 19, TypeScript (strict), electron-vite, SQLite (`better-sqlite3`), and `sharp`. Node 22+ and npm 10+.
 
 ```text
 src/
   main/       Electron main: SQLite, files, sharp, Muse client, license, queue, secrets, menus
   preload/    Frozen named window.moss API
   renderer/   React screens. No Node, no filesystem, no keys
-  shared/     Constants, types, IPC map, guards, recipes, prompts, costs
+  shared/     Constants, types, IPC map, guards, prompts, costs
 tests/
   unit/           Vitest unit tests
   integration/    Vitest integration tests (real loopback fake hosts)
@@ -127,12 +127,12 @@ npx vitest run tests/unit/prompts.test.ts     # smallest test scope
 npx vitest run tests/unit/prompts.test.ts -t "name of test"
 npm test                                      # all unit + integration tests
 npm run build:test                            # typecheck + test build for E2E
-npx playwright test tests/e2e/studio.spec.ts -g "five-shot set"
+npx playwright test tests/e2e/studio.spec.ts -g "create makes four images"
 npm run test:e2e                              # builds, then the serial journey + focused specs
 MOSS_UPDATE_SCREENS=1 npx playwright test -g "..."  # rewrite baselines after an intentional visual change
 npm run audit:tokens                          # color-token contrast audit
-npm run lab -- plan --all                     # free real-prompt review; needs .env key
-npm run lab -- sweep --yes                    # real Meta, 66 images, $0.66; see docs/lab.md
+npm run lab -- edit --template kitchen-table --source photo.jpg --yes  # real Meta; needs .env key
+npm run lab -- create --text "..." --yes      # real Meta; see docs/lab.md
 npm run build                                 # typecheck + production build
 npm run build:linux                           # AppImage + deb (release gate included)
 ```

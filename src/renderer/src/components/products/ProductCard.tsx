@@ -1,19 +1,15 @@
 import { DropdownMenu } from 'radix-ui'
-import { PackageCheck } from 'lucide-react'
 import type { Product } from '@shared/types'
-import { Icon } from '@astryxdesign/core'
 
 export function ProductCard({
   product,
   onOpen,
   onRename,
-  onListingKit,
   onDelete
 }: {
   product: Product
   onOpen: () => void
   onRename?: () => void
-  onListingKit?: () => void
   onDelete?: () => void
 }): React.JSX.Element {
   return (
@@ -46,11 +42,6 @@ export function ProductCard({
             <DropdownMenu.Portal>
               <DropdownMenu.Content className="menu-content" align="end" sideOffset={4}>
                 <DropdownMenu.Item className="menu-item" onSelect={onRename}>Rename</DropdownMenu.Item>
-                {onListingKit && (
-                  <DropdownMenu.Item className="menu-item" onSelect={onListingKit}>
-                    <Icon icon={PackageCheck} size="sm" /> Listing Kit
-                  </DropdownMenu.Item>
-                )}
                 <DropdownMenu.Item className="menu-item" data-danger="true" onSelect={onDelete}>Delete</DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Portal>

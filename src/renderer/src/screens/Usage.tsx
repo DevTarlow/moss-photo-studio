@@ -181,9 +181,6 @@ export function Usage(): React.JSX.Element {
                   <Text type="label" color="secondary" className="block">Spent</Text>
                   <Text weight="bold" className="mt-2 block tabular" style={{ fontSize: 24 }}>{usd(summary?.spendCents ?? 0)}</Text>
                   <Text type="supporting" color="secondary" className="block">Images that came back</Text>
-                  {(summary?.textMicros ?? 0) > 0 && (
-                    <Text type="supporting" color="secondary" className="block">Listing text: {microsLabel(summary!.textMicros)}</Text>
-                  )}
                 </Card>
                 <Card padding={4}>
                   <Text type="label" color="secondary" className="block">Budget</Text>

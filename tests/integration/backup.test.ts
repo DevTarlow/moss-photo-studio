@@ -39,7 +39,7 @@ afterEach(() => {
 function seedLibrary(): { projectId: string; file: string } {
   const projects = new ProjectRepository(db)
   const images = new ImageRepository(db)
-  const project = projects.create({ type: 'set', name: 'Candle set' })
+  const project = projects.create({ type: 'photo', name: 'Candle photo' })
   const relative = path.posix.join('projects', project.id, 'source.jpg')
   const file = path.join(dir, 'library', relative)
   fs.mkdirSync(path.dirname(file), { recursive: true })

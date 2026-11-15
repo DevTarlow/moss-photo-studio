@@ -1,9 +1,6 @@
 // Meta Model API price, checked 2026-11-05.
 export const CENTS_PER_IMAGE = 1
 
-/** The listing writer runs far below a cent; keep the copy in one place. */
-export const LISTING_COST_LABEL = 'under a cent'
-
 export function usd(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`
 }

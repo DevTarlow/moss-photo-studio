@@ -10,7 +10,6 @@ import { Logger } from '@main/logger'
 import { SettingsStore } from '@main/settings'
 import { ProjectRepository } from '@main/db/repositories/projects'
 import { ImageRepository } from '@main/db/repositories/images'
-import { PlanRepository } from '@main/db/repositories/plans'
 import { JobRepository } from '@main/db/repositories/jobs'
 import { UsageRepository } from '@main/db/repositories/usage'
 import { BrandRepository } from '@main/db/repositories/brand'
@@ -23,10 +22,6 @@ import { JobQueue, JobStartError } from '@main/jobs/queue'
 import type { SecretStore } from '@main/secrets'
 import type { LicenseController } from '@main/license/controller'
 import type { JobState } from '@shared/types'
-import { createDefaultPlan } from '@shared/plans'
-import { GIFT_CLAUSE } from '@shared/prompts/guards'
-import { RECIPES } from '@shared/prompts/recipes'
-import { planSetPrompts } from '@shared/prompts/setPlan'
 import { monthBounds, monthKey } from '@shared/cost'
 import { MAX_PROMPT } from '@shared/constants'
 
@@ -37,7 +32,6 @@ let logger: Logger
 let settings: SettingsStore
 let projects: ProjectRepository
 let images: ImageRepository
-let plans: PlanRepository
 let jobs: JobRepository
 let usage: UsageRepository
 let brand: BrandRepository
@@ -67,18 +61,16 @@ beforeEach(async () => {
   settings = new SettingsStore(db)
   projects = new ProjectRepository(db)
   images = new ImageRepository(db)
-  plans = new PlanRepository(db)
   jobs = new JobRepository(db)
   usage = new UsageRepository(db)
   brand = new BrandRepository(db)
   people = new PeopleRepository(db)
   products = new ProductRepository(db)
-  media = new MediaService({ projects, images, plans, people, brand, libraryPath, logger })
+  media = new MediaService({ projects, images, people, brand, libraryPath, logger })
   productService = new ProductService({
     products,
     images,
     projects,
-    plans,
     media,
     libraryPath,
     resourceRoot: () => path.resolve(__dirname, '../../resources')
@@ -95,7 +87,6 @@ beforeEach(async () => {
   queue = new JobQueue({
     projects,
     images,
-    plans,
     jobs,
     usage,
     brand,
@@ -134,17 +125,10 @@ function imageProject(name = 'Create project') {
   return projects.create({ type: 'image', name })
 }
 
-async function setProject() {
-  const project = projects.create({ type: 'set', name: 'Test set', category: 'ceramics' })
+async function photoProject() {
+  const project = projects.create({ type: 'photo', name: 'Edit photo' })
   const bytes = await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 180, g: 170, b: 150 } } }).jpeg().toBuffer()
   await media.importSource({ projectId: project.id, bytes, name: 'mug.jpg' })
-  const plan = createDefaultPlan({
-    category: 'ceramics',
-    productName: 'Test mug',
-    shape: 'square',
-    format: 'webp'
-  })
-  plans.save(project.id, plan)
   return projects.get(project.id)!
 }
 
@@ -475,7 +459,7 @@ describe('job queue create', () => {
 
 describe('job queue edit scene', () => {
   it('sends the source and a scene reference for an edit', async () => {
-    const project = await setProject()
+    const project = await photoProject()
     const sceneProject = imageProject('Edit scene')
     const scene = await media.importSource({
       projectId: sceneProject.id,
@@ -493,140 +477,6 @@ describe('job queue edit scene', () => {
     const request = server.requests()[0]!
     expect((request.body?.images as unknown[]).length).toBe(2)
     expect(String(request.body?.prompt)).toContain('Use @Image2 as the scene reference.')
-  })
-})
-
-describe('job queue set', () => {
-  it('makes one request per shot and streams updates', async () => {
-    const project = await setProject()
-    const { jobId } = await queue.startSet({ projectId: project.id, mode: 'make' })
-    const state = await waitForJob(jobId)
-    expect(state.status).toBe('done')
-    expect(state.done).toBe(6)
-    expect(server.requests()).toHaveLength(6)
-    const shots = images.list(project.id, true).filter((image) => image.shotId)
-    expect(shots).toHaveLength(6)
-    expect(new Set(shots.map((image) => image.label)).size).toBe(6)
-    expect(monthEvents().items).toHaveLength(6)
-    expect(updates.some((entry) => entry.status === 'running')).toBe(true)
-  })
-
-  it('sends the chosen look for an on-person shot', async () => {
-    const project = projects.create({ type: 'set', name: 'Look set', category: 'clothing' })
-    const bytes = await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 180, g: 170, b: 150 } } }).jpeg().toBuffer()
-    await media.importSource({ projectId: project.id, bytes, name: 'shirt.jpg' })
-    const plan = createDefaultPlan({
-      category: 'clothing',
-      productName: 'Shirt',
-      shape: 'square',
-      format: 'webp'
-    })
-    const onmodel = plan.shots.find((shot) => shot.type === 'onmodel')!
-    plans.save(project.id, {
-      ...plan,
-      shots: plan.shots.map((shot) =>
-        shot.id === onmodel.id
-          ? { ...shot, enabled: true, personLook: 'angle' }
-          : { ...shot, enabled: false }
-      )
-    })
-    const { jobId } = await queue.startSet({ projectId: project.id, mode: 'make' })
-    const state = await waitForJob(jobId)
-    expect(state.status).toBe('done')
-    const request = server.requests()[0]!
-    const sentImages = (request.body ?? {}).images as Array<{ image_url: string }>
-    expect(sentImages).toHaveLength(2)
-    const sent = Buffer.from(sentImages[1]!.image_url.split(',')[1]!, 'base64')
-    const expected = fs.readFileSync(path.resolve(__dirname, '../../resources/people/maya-angle.webp'))
-    expect(sent.equals(expected)).toBe(true)
-  })
-
-  it('makes only the shots left enabled in the saved plan', async () => {
-    const project = await setProject()
-    const plan = plans.getActive(project.id)!.json
-    plans.save(project.id, {
-      ...plan,
-      shots: plan.shots.map((shot, index) => ({ ...shot, enabled: index < 3 }))
-    })
-    const { jobId } = await queue.startSet({ projectId: project.id, mode: 'make' })
-    const state = await waitForJob(jobId)
-    expect(state.status).toBe('done')
-    expect(state.done).toBe(3)
-    expect(server.requests()).toHaveLength(3)
-    expect(images.list(project.id, true).filter((image) => image.shotId)).toHaveLength(3)
-  })
-
-  it('sends the category recipe prompts, including the category gift clause', async () => {
-    const bytes = await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 180, g: 170, b: 150 } } }).jpeg().toBuffer()
-    for (const recipe of RECIPES) {
-      server.reset()
-      const project = projects.create({ type: 'set', name: recipe.label, category: recipe.id })
-      await media.importSource({ projectId: project.id, bytes, name: 'product.jpg' })
-      plans.save(
-        project.id,
-        createDefaultPlan({
-          category: recipe.id,
-          productName: 'Product',
-          shape: 'square',
-          format: 'webp'
-        })
-      )
-      const saved = plans.getActive(project.id)!.json
-      const expected = planSetPrompts({ plan: saved, shots: saved.shots })
-      const { jobId } = await queue.startSet({ projectId: project.id, mode: 'make' })
-      const state = await waitForJob(jobId)
-      expect(state.status, recipe.id).toBe('done')
-      const prompts = server.requests().map((request) => String(request.body?.prompt))
-      expect(prompts, recipe.id).toHaveLength(expected.length)
-      expect(new Set(prompts), recipe.id).toEqual(new Set(expected.map((spec) => spec.prompt)))
-      if (recipe.shots.includes('onmodel')) {
-        const onmodel = expected.find((spec) => spec.type === 'onmodel')!
-        const request = server.requests().find((entry) => String(entry.body?.prompt) === onmodel.prompt)!
-        expect(request.body?.images, recipe.id).toHaveLength(2)
-      }
-      if (recipe.shots.includes('gift')) {
-        const gift = expected.find((spec) => spec.type === 'gift')!
-        const clause = (recipe.giftClause ?? GIFT_CLAUSE).trim()
-        expect(gift.prompt, recipe.id).toContain(clause)
-      }
-    }
-  })
-
-  it('adds saved colors to a set prompt only while brand colors are on', async () => {
-    brand.update({ colors: ['#112233'] })
-    const project = await setProject()
-    const shot = plans.getActive(project.id)!.json.shots.find((entry) => entry.type === 'hero')!
-
-    const on = await queue.startSet({ projectId: project.id, mode: 'remake', shotIds: [shot.id] })
-    await waitForJob(on.jobId)
-    expect(String(server.requests()[0]?.body?.prompt)).toContain('#112233')
-
-    server.reset()
-    brand.update({ colorsEnabled: false })
-    const off = await queue.startSet({ projectId: project.id, mode: 'remake', shotIds: [shot.id] })
-    await waitForJob(off.jobId)
-    const prompt = String(server.requests()[0]?.body?.prompt)
-    expect(prompt).not.toContain('#112233')
-    expect(prompt).not.toContain('this shop')
-  })
-
-  it('cancels queued items, lets the in-flight image finish, and bills once', async () => {
-    settings.set('concurrency', 1)
-    server.control('slow')
-    const project = await setProject()
-    const { jobId } = await queue.startSet({ projectId: project.id, mode: 'make' })
-    for (let attempt = 0; attempt < 100 && server.requests().length === 0; attempt += 1) {
-      await new Promise((resolve) => setTimeout(resolve, 20))
-    }
-    queue.cancel(jobId)
-    const state = await waitForJob(jobId, 15000)
-    expect(state.items.filter((item) => item.status === 'cancelled').length).toBeGreaterThan(0)
-    expect(server.requests()).toHaveLength(1)
-    const stored = images.list(project.id, true)
-    expect(stored.filter((image) => image.status === 'pending')).toHaveLength(0)
-    expect(stored.filter((image) => image.status === 'ready' && image.shotId)).toHaveLength(1)
-    expect(monthEvents().total).toBe(1)
-    expect(monthEvents().items[0]).toMatchObject({ action: 'set', returned: 1, costCents: 1 })
   })
 })
 

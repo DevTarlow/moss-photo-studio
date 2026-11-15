@@ -20,7 +20,7 @@ function record(projectId: string, projectName: string, costCents = 1): void {
   usage.record({
     projectId,
     projectName,
-    action: 'set',
+    action: 'edit',
     requestedN: 1,
     returnedN: 1,
     costCents,
@@ -46,7 +46,7 @@ afterEach(() => {
 
 describe('usage project names', () => {
   it('shows the current title after a rename in the ledger and by-project rows', () => {
-    const project = projects.create({ type: 'set', name: 'Old title' })
+    const project = projects.create({ type: 'photo', name: 'Old title' })
     record(project.id, 'Old title')
     record(project.id, 'Old title')
     projects.rename(project.id, 'New title')
@@ -62,7 +62,7 @@ describe('usage project names', () => {
   })
 
   it('keeps one by-project row when a project name changed between runs', () => {
-    const project = projects.create({ type: 'set', name: 'First title' })
+    const project = projects.create({ type: 'photo', name: 'First title' })
     record(project.id, 'First title')
     record(project.id, 'Second title', 3)
 
@@ -73,7 +73,7 @@ describe('usage project names', () => {
   })
 
   it('calls a deleted project Deleted project instead of its old snapshot', () => {
-    const project = projects.create({ type: 'set', name: 'cb1d6ed031a7ef5fe42e75e523b6d294' })
+    const project = projects.create({ type: 'photo', name: 'cb1d6ed031a7ef5fe42e75e523b6d294' })
     record(project.id, 'cb1d6ed031a7ef5fe42e75e523b6d294')
     projects.delete(project.id)
 

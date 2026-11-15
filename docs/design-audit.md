@@ -1,3 +1,5 @@
+> Historical note: this audit describes an earlier build. Sets, the Listing Kit, the Business profile, and text-model calls have since been removed. The current scope is photo editing, image generation, Products, People, Usage, licensing, and settings.
+
 # Design audit (historical)
 
 > This audit was the input to the Astryx redesign. Several findings are fixed in the current build; use [design-system.md](design-system.md) and the later entries in [DECISIONS.md](../DECISIONS.md) for the current rules. Keep this file as the record of what drove the redesign, not as a live defect list.

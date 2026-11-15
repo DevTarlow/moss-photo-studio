@@ -77,8 +77,6 @@ const api: MossApi = {
     list: invokeVoid('products:list'),
     listArchived: invokeVoid('products:listArchived'),
     detail: invoke('products:detail'),
-    analyze: invoke('products:analyze'),
-    cleanShot: invoke('products:cleanShot'),
     createFromImage: invoke('products:createFromImage'),
     createFromBytes: invoke('products:createFromBytes'),
     createFromProject: invoke('products:createFromProject'),
@@ -111,10 +109,6 @@ const api: MossApi = {
     importFromImage: invoke('media:importFromImage'),
     inspect: invoke('media:inspect')
   },
-  plans: {
-    get: invoke('plans:get'),
-    save: invoke('plans:save')
-  },
   images: {
     list: invoke('images:list'),
     library: invoke('images:library'),
@@ -124,7 +118,6 @@ const api: MossApi = {
     setSource: invoke('images:setSource')
   },
   jobs: {
-    startSet: invoke('jobs:startSet'),
     startCreate: invoke('jobs:startCreate'),
     startEdit: invoke('jobs:startEdit'),
     cancel: invoke('jobs:cancel'),
@@ -154,9 +147,7 @@ const api: MossApi = {
     deleteAll: invokeVoid('usage:deleteAll')
   },
   exports: {
-    images: invoke('export:images'),
-    set: invoke('export:set'),
-    cancel: invoke('export:cancel')
+    images: invoke('export:images')
   },
   backup: {
     create: invokeVoid('backup:create'),
@@ -167,20 +158,10 @@ const api: MossApi = {
   diagnostics: {
     create: invokeVoid('diagnostics:create')
   },
-  kit: {
-    export: invoke('kit:export')
-  },
-  listings: {
-    get: invoke('listings:get'),
-    generate: invoke('listings:generate'),
-    save: invoke('listings:save')
-  },
   onJobUpdate: (listener) => subscribe('moss:job:update', listener as never),
   onUpdateState: (listener) => subscribe('moss:update:state', listener as never),
   onLicenseChanged: (listener) => subscribe('moss:license:changed', listener as never),
   onMenuAction: (listener) => subscribe('moss:menu-action', listener as never),
-  onFlushRequest: (listener) => subscribe('moss:flush-before-close', listener as never),
-  flushComplete: () => ipcRenderer.send('moss:flush-complete')
 }
 
 for (const group of Object.values(api)) {

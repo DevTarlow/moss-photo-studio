@@ -25,32 +25,30 @@ afterEach(() => {
   fs.rmSync(dir, { recursive: true, force: true })
 })
 
-describe('business profile', () => {
-  it('saves the shop details and keeps them when colors change', () => {
-    expect(brand.get()).toMatchObject({ businessName: '', sells: '', marketplaces: [], defaultPlatform: 'etsy' })
+describe('brand settings', () => {
+  it('saves colors, badge and default look without business fields', () => {
+    const initial = brand.get()
+    expect(initial).toMatchObject({ colors: [], colorsEnabled: true, badgeEnabled: false, stylePreset: 'none' })
+    expect(initial).not.toHaveProperty('businessName')
     brand.update({
-      businessName: 'Moss Pottery',
-      sells: 'Hand-thrown ceramics',
-      audience: 'People setting up a calm home office',
-      voice: 'Warm, specific, no hype.',
-      policies: 'Ships in three days. Returns within 14.',
-      marketplaces: ['Etsy', 'My own shop'],
-      defaultPlatform: 'etsy',
-      colors: ['#14532d', '#9a3412']
+      colors: ['#14532d', '#9a3412'],
+      badgeEnabled: true,
+      badgeCorner: 'bl',
+      badgeScale: 'l',
+      badgeOpacity: 80,
+      stylePreset: 'warm-home'
     })
     const saved = brand.get()
     expect(saved).toMatchObject({
-      businessName: 'Moss Pottery',
-      sells: 'Hand-thrown ceramics',
-      audience: 'People setting up a calm home office',
-      voice: 'Warm, specific, no hype.',
-      policies: 'Ships in three days. Returns within 14.',
-      marketplaces: ['Etsy', 'My own shop'],
-      defaultPlatform: 'etsy',
-      colors: ['#14532d', '#9a3412']
+      colors: ['#14532d', '#9a3412'],
+      badgeEnabled: true,
+      badgeCorner: 'bl',
+      badgeScale: 'l',
+      badgeOpacity: 80,
+      stylePreset: 'warm-home'
     })
     brand.update({ colorsEnabled: false })
-    expect(brand.get().businessName).toBe('Moss Pottery')
     expect(brand.get().colorsEnabled).toBe(false)
+    expect(brand.get().colors).toEqual(['#14532d', '#9a3412'])
   })
 })

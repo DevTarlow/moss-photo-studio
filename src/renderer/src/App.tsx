@@ -29,7 +29,6 @@ function titleForPath(pathname: string): string {
   const labels: Record<string, string> = {
     library: 'Library',
     products: 'Products',
-    'listing-kit': 'Listing Kit',
     people: 'People',
     usage: 'Usage',
     settings: 'Settings',
@@ -69,11 +68,9 @@ function useJobCompletionToast(): void {
       if (window.location.hash.includes('/onboarding')) return
       if (job.status === 'cancelled') return
       if (job.done > 0) {
-        const message = job.kind === 'set'
-          ? `Your set finished with ${job.done} ${job.done === 1 ? 'image' : 'images'}.`
-          : job.kind === 'create'
-            ? `${job.done} ${job.done === 1 ? 'image is' : 'images are'} ready.`
-            : 'Your change is ready.'
+        const message = job.kind === 'create'
+          ? `${job.done} ${job.done === 1 ? 'image is' : 'images are'} ready.`
+          : 'Your change is ready.'
         toast.status(message, { label: 'Open project', onClick: () => navigate(`/project/${job.projectId}`) })
       } else {
         toast.error('That run finished without an image. Nothing is lost. Open the project to try again.')
@@ -191,13 +188,9 @@ function useGlobalDrop(): { dragOver: boolean } {
       const pathMatch = /\/project\/([^/?#]+)/.exec(location.pathname)
       if (pathMatch?.[1]) {
         const projectId = pathMatch[1]
-        const workspace = useWorkspaceStore.getState()
-        const project = workspace.project?.id === projectId ? workspace.project : null
         const ok = await confirm({
-          title: project?.type === 'photo' ? 'Add this photo?' : project?.type === 'set' ? 'Replace the product photo?' : 'Add this photo?',
-          body: project?.type === 'set'
-            ? 'Images already made stay. New images use this photo.'
-            : 'It becomes a new version source. The versions you have stay.',
+          title: 'Add this photo?',
+          body: 'It becomes a new version source. The versions you have stay.',
           confirmLabel: 'Add Photo'
         })
         if (!ok) return
@@ -220,7 +213,7 @@ function useGlobalDrop(): { dragOver: boolean } {
       try {
         const result = await unwrap(window.moss.media.importBytes({
           kind: 'source',
-          type: event.shiftKey ? 'set' : 'photo',
+          type: 'photo',
           bytes,
           mime: file.type,
           name: file.name
@@ -286,13 +279,6 @@ export function RootLayout(): React.JSX.Element {
 
   useEffect(() => {
     if (!booted) return
-    return window.moss.onFlushRequest(() => {
-      void useWorkspaceStore.getState().savePlan().finally(() => window.moss.flushComplete())
-    })
-  }, [booted])
-
-  useEffect(() => {
-    if (!booted) return
     const unsubscribeJobs = useJobsStore.getState().subscribe()
     void useJobsStore.getState().loadActive()
     const unsubscribeLicense = window.moss.onLicenseChanged((state) => {
@@ -330,16 +316,15 @@ export function RootLayout(): React.JSX.Element {
       }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'n') {
         event.preventDefault()
-        navigate('/library?new=set')
+        navigate('/library?new=photo')
         return
       }
-      if ((event.metaKey || event.ctrlKey) && ['1', '2', '3'].includes(event.key)) {
+      if ((event.metaKey || event.ctrlKey) && (event.key === '1' || event.key === '2')) {
         event.preventDefault()
-        const type = event.key === '1' ? 'set' : event.key === '2' ? 'photo' : 'image'
-        if (type === 'image') {
-          void unwrap(window.moss.projects.create({ type: 'image', draft: true })).then((detail) => navigate(`/project/${detail.project.id}`)).catch(() => toast.error('A new project could not be opened.'))
+        if (event.key === '1') {
+          navigate('/library?new=photo')
         } else {
-          navigate(`/library?new=${type}`)
+          void unwrap(window.moss.projects.create({ type: 'image', draft: true })).then((detail) => navigate(`/project/${detail.project.id}`)).catch(() => toast.error('A new project could not be opened.'))
         }
         return
       }
@@ -404,9 +389,6 @@ export function RootLayout(): React.JSX.Element {
     if (!booted) return
     return window.moss.onMenuAction((event) => {
       switch (event.action) {
-        case 'new-set':
-          navigate('/library?new=set')
-          break
         case 'new-photo':
           navigate('/library?new=photo')
           break
@@ -523,7 +505,7 @@ export function RootLayout(): React.JSX.Element {
       {dragOver && (
         <div className="drop-overlay" aria-hidden>
           <div className="drop-overlay-inner flex items-center gap-2">
-            <Icon icon={ArrowDownToLine} size="md" /> Drop to add. Hold Shift for a set.
+            <Icon icon={ArrowDownToLine} size="md" /> Drop to add a photo or image.
           </div>
         </div>
       )}

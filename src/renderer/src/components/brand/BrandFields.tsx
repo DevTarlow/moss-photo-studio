@@ -150,7 +150,7 @@ export function BrandFields({
               <p className="hint mb-2">
                 Up to {maxColors} saved.{' '}
                 {value.colorsEnabled
-                  ? `The first ${usedCount} steer backgrounds and props when the studio makes a set or changes a photo.${canChooseUsed ? ' Select Use or Used to change which three are used.' : ''}`
+                  ? `The first ${usedCount} steer backgrounds and props when the studio makes an image or changes a photo.${canChooseUsed ? ' Select Use or Used to change which three are used.' : ''}`
                   : 'Colors are off; they stay saved but are not added to a prompt.'}{' '}
                 They never tint the product.
               </p>
@@ -240,7 +240,7 @@ export function BrandFields({
 
         <div>
           <p className="field-label">Default look <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
-          <p className="hint mb-2">A setting and light treatment added to every run, so a set feels related. It never changes the product.</p>
+          <p className="hint mb-2">A setting and light treatment added to every run, so a batch feels related. It never changes the product.</p>
           <select
             className="field"
             aria-label="Default look"

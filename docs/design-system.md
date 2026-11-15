@@ -81,7 +81,7 @@ CSP is unchanged: all Astryx CSS, fonts, and icons are bundled; there are no rem
 | Card/panel/plan-card | Card, ClickableCard, SelectableCard, Section | Whole-card open target; nested actions stay independent. |
 | Onboarding dots | Stepper/Step | Ordered-list semantics; optional steps show Optional. |
 | File dropzone | FileInput | Use dropzone mode; keep the custom global drag overlay. |
-| Set/Photo/Create canvas | Custom | Keep the stage, compare, filmstrip, crop overlay, and zoom. Re-skin chrome with Astryx tokens. |
+| Photo/Create canvas | Custom | Keep the stage, compare, filmstrip, crop overlay, and zoom. Re-skin chrome with Astryx tokens. |
 | Brand badge preview | Custom | Keep the sample preview and color compositing. |
 
 ## Migration rules
@@ -103,6 +103,6 @@ CSP is unchanged: all Astryx CSS, fonts, and icons are bundled; there are no rem
 - The theme ships as static CSS: `npm run theme:build` regenerates `moss-theme.css` and the built module beside it, and release builds refuse to package a stale copy.
 - The app shell's surfaces come from theme targets, so the rail, header, and top nav no longer depend on `.astryx-*` class selectors in `index.css`.
 - Activation is the first surface fully off the homegrown primitives: Astryx `TextInput` and `Button` replace the local `Field` and `Button` there.
-- Onboarding is redesigned with a Welcome screen and setup steps for the key, an optional product, an optional logo and colors, an optional first set, and Ready. Key-later, a persisted category, and sticky actions are unchanged.
+- Onboarding is redesigned with a Welcome screen and setup steps for the key, an optional product, an optional logo and colors, and Ready. Key-later and sticky actions are unchanged.
 - The Astryx AppShell, TopNav, and SideNav now wrap the app; Library, Products, People, Usage, and Settings use Astryx controls and shared collection patterns.
-- The Set tool has Plan and Review phases, a plan preview board, a read-only review, and no duplicate right panel. Photo has a fitted canvas, exporter-aligned rotate/crop preview, a draggable compare divider, and keyboard crop controls. Create results have persistent Edit, Download, Save as Product, and More actions plus a lightbox. Workspace panels can be resized and persist their widths. The custom canvas, crop overlay, filmstrip, and brand preview remain custom.
+- Photo has a fitted canvas, exporter-aligned rotate/crop preview, a draggable compare divider, and keyboard crop controls. Create results have persistent Edit, Download, Save as Product, and More actions plus a lightbox. Workspace panels can be resized and persist their widths. The custom canvas, crop overlay, filmstrip, and brand preview remain custom.

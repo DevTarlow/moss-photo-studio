@@ -6,7 +6,6 @@ import { ERROR_MESSAGES } from '@shared/errors'
 import { JobStartError } from '../jobs/queue'
 import { ImageImportError } from '../media/import'
 import { LicenseError } from '../license/controller'
-import { ListingError } from '../listings/error'
 import type { Logger } from '../logger'
 
 export function ok<T>(value: T): IpcResult<T> {
@@ -48,10 +47,6 @@ export function registerIpc<C extends IpcChannel>(
       if (error instanceof LicenseError) {
         context.logger.warn('ipc', 'license_error', { area: channel, errorCode: error.code })
         return fail(error.code)
-      }
-      if (error instanceof ListingError) {
-        context.logger.warn('ipc', 'listing_error', { area: channel, errorCode: error.code })
-        return fail(error.code, error.message)
       }
       if (error instanceof ImageImportError) {
         const codes: Record<string, ErrorCode> = {

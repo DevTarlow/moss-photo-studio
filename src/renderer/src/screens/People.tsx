@@ -188,16 +188,6 @@ export function People(): React.JSX.Element {
     }
   }
 
-  const startSet = (): void => {
-    if (!previewPerson) return
-    const personId = previewPerson.id
-    const look = previewLook?.key
-    setPreviewPerson(null)
-    navigate(
-      `/library?new=set&person=${encodeURIComponent(personId)}${look ? `&look=${encodeURIComponent(look)}` : ''}`
-    )
-  }
-
   const createImage = async (): Promise<void> => {
     if (!previewPerson) return
     const person = previewPerson
@@ -323,7 +313,7 @@ export function People(): React.JSX.Element {
                 <EmptyState
                   icon={<Icon icon={Users} size="lg" />}
                   title="Add your own person"
-                  line="Add the person you want in your photos. One clear portrait, reused in every set."
+                  line="Add the person you want in your photos. One clear portrait, reused in every image."
                   action={<Button variant="secondary" onClick={() => setAddOpen(true)}>Add a Person</Button>}
                   compact
                 />
@@ -480,8 +470,7 @@ export function People(): React.JSX.Element {
               </>
             )}
             <div className="mt-4 flex flex-wrap gap-2">
-              <Button variant="primary" onClick={startSet}>Create a Set</Button>
-              <Button variant="secondary" onClick={() => void createImage()}>Create an Image</Button>
+              <Button variant="primary" onClick={() => void createImage()}>Create an Image</Button>
             </div>
             <p className="hint mt-2">A set uses the selected photo; an image uses it as the reference.</p>
           </>

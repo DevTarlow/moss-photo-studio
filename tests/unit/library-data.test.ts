@@ -3,14 +3,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { SCENES, SCENE_CATEGORIES } from '@shared/prompts/scenes'
 import { ALL_TEMPLATES, TEMPLATE_GROUPS, QUICK_FIX, templateAsset, templateById } from '@shared/prompts/templates'
-import { RECIPES, recipeById, CATEGORY_CHIPS, recipeShotTypes, recipeShotLabels, defaultDirectionFor } from '@shared/prompts/recipes'
-import { SHOT_TYPES, shotDefinition, directionForPrompt } from '@shared/prompts/shots'
 import { CREATE_PERSON_PROMPT, CREATE_PRODUCT_PROMPT, EXAMPLE_SCENES, STARTERS, exampleTextFor } from '@shared/starters'
 import { BUNDLED_PEOPLE, BUNDLED_PERSON_LOOKS } from '@shared/people'
 import { BUNDLED_PRODUCT_SIZE, BUNDLED_PRODUCTS, bundledProductCards, isBundledProduct } from '@shared/products'
 import { wrapScenePrompt, wrapModelPrompt, PROMPT_MAX } from '@shared/prompts/guards'
-import { createDefaultPlan, makeShots, normalisePlan, enableFirstShots, firstShotsEnabled } from '@shared/plans'
-import { nextCountedLabel, setImageLabel } from '@shared/labels'
+import { nextCountedLabel } from '@shared/labels'
 import { shapeForImage, sizeForShape } from '@shared/shapes'
 import { safeBaseName, uniqueFileName, numberedFileName } from '@shared/files'
 import { usd, estimateCents, monthBounds, monthKey } from '@shared/cost'
@@ -61,182 +58,6 @@ describe('the 32 change tiles', () => {
     for (const template of ALL_TEMPLATES.filter((entry) => entry.kind === 'model')) {
       expect(wrapModelPrompt(template.prompt).length).toBeLessThan(PROMPT_MAX)
     }
-  })
-})
-
-describe('recipes', () => {
-  it('maps every category to four to eight valid shots', () => {
-    for (const recipe of RECIPES) {
-      expect(recipe.shots.length).toBeGreaterThanOrEqual(4)
-      expect(recipe.shots.length).toBeLessThanOrEqual(8)
-      for (const type of recipe.shots) expect(SHOT_TYPES.some((shot) => shot.type === type)).toBe(true)
-    }
-    expect(RECIPES).toHaveLength(CATEGORY_CHIPS.length)
-  })
-
-  it('never includes feature and only puts on a person in clothing and bags', () => {
-    for (const recipe of RECIPES) expect(recipe.shots).not.toContain('feature')
-    const withPerson = RECIPES.filter((recipe) => recipe.shots.includes('onmodel')).map((recipe) => recipe.id)
-    expect(withPerson.sort()).toEqual(['bags', 'clothing'])
-  })
-
-  it('falls back to other', () => {
-    expect(recipeById('missing').id).toBe('other')
-    expect(recipeShotTypes('clothing')).toContain('onmodel')
-  })
-
-  it('plans one default person for an onmodel shot', () => {
-    const shots = makeShots('clothing')
-    const personShot = shots.find((shot) => shot.type === 'onmodel')
-    expect(personShot?.personId).toBe('maya')
-  })
-
-  it('keeps a person look only on a valid on-person shot', () => {
-    const plan = createDefaultPlan({
-      category: 'clothing',
-      productName: 'Shirt',
-      shape: 'portrait',
-      format: 'webp'
-    })
-    plan.shots[0]!.personLook = 'seated'
-    const onmodel = plan.shots.find((shot) => shot.type === 'onmodel')!
-    onmodel.personLook = 'front'
-    const normalised = normalisePlan(plan)
-    expect(normalised.shots[0]!.personLook).toBeNull()
-    expect(normalised.shots.find((shot) => shot.type === 'onmodel')!.personLook).toBe('front')
-
-    const stored = normalisePlan({
-      ...plan,
-      shots: plan.shots.map((shot) =>
-        shot.id === onmodel.id ? { ...shot, personLook: 'original' } : shot
-      )
-    })
-    expect(stored.shots.find((shot) => shot.type === 'onmodel')!.personLook).toBeNull()
-  })
-
-  it('keeps six distinct shots with the hero first', () => {
-    for (const recipe of RECIPES) {
-      expect(recipe.shots).toHaveLength(6)
-      expect(new Set(recipe.shots).size).toBe(6)
-      expect(recipe.shots[0]).toBe('hero')
-      expect(recipeShotLabels(recipe.id)).toHaveLength(6)
-    }
-  })
-
-  it('puts the strongest three shots first for the first run', () => {
-    const firstThree: Record<string, string[]> = {
-      candles: ['hero', 'lifestyle', 'detail'],
-      ceramics: ['hero', 'lifestyle', 'detail'],
-      jewelry: ['hero', 'detail', 'lifestyle'],
-      clothing: ['hero', 'onmodel', 'detail'],
-      bags: ['hero', 'onmodel', 'detail'],
-      prints: ['hero', 'lifestyle', 'detail'],
-      skincare: ['hero', 'lifestyle', 'detail'],
-      food: ['hero', 'lifestyle', 'detail'],
-      homeware: ['hero', 'lifestyle', 'detail'],
-      vintage: ['hero', 'detail', 'lifestyle'],
-      other: ['hero', 'lifestyle', 'detail']
-    }
-    for (const recipe of RECIPES) {
-      expect(recipeShotTypes(recipe.id).slice(0, 3)).toEqual(firstThree[recipe.id])
-    }
-  })
-
-  it('uses the category direction for new plans and empty saved directions', () => {
-    const shots = makeShots('clothing')
-    const hero = shots.find((shot) => shot.type === 'hero')!
-    expect(hero.direction).toBe(defaultDirectionFor('clothing', 'hero'))
-    expect(hero.direction).not.toBe(shotDefinition('hero').defaultDirection)
-    expect(defaultDirectionFor('other', 'hero')).toBe(shotDefinition('hero').defaultDirection)
-
-    const plan = createDefaultPlan({
-      category: 'clothing',
-      productName: 'Shirt',
-      shape: 'portrait',
-      format: 'webp'
-    })
-    plan.shots[0]!.direction = '  '
-    expect(normalisePlan(plan).shots[0]!.direction).toBe(defaultDirectionFor('clothing', 'hero'))
-  })
-
-  it('keeps direction overrides on real recipe shots and inside the caps', () => {
-    for (const recipe of RECIPES) {
-      for (const [type, direction] of Object.entries(recipe.directions ?? {})) {
-        expect(recipe.shots).toContain(type)
-        expect(direction.length).toBeGreaterThan(0)
-        expect(direction.length).toBeLessThanOrEqual(400)
-      }
-      if (recipe.giftClause) {
-        expect(recipe.shots).toContain('gift')
-        expect(recipe.giftClause.startsWith(' ')).toBe(true)
-        expect(recipe.giftClause.length).toBeLessThan(300)
-      }
-    }
-  })
-})
-
-describe('shot directions', () => {
-  it('uses the studio default only when the direction is empty', () => {
-    expect(directionForPrompt('hero', '  ')).toBe(shotDefinition('hero').defaultDirection)
-    expect(directionForPrompt('hero', 'on a chair')).toBe('on a chair')
-    expect(directionForPrompt('feature', '', 'Keeps tea hot')).toContain('Keeps tea hot')
-  })
-
-  it('starts every new shot with the studio direction filled in', () => {
-    for (const shot of makeShots('other')) {
-      expect(shot.direction).toBe(shotDefinition(shot.type).defaultDirection)
-    }
-  })
-
-  it('fills an empty saved direction when a plan is loaded', () => {
-    const plan = createDefaultPlan({
-      category: 'other',
-      productName: 'Mug',
-      shape: 'square',
-      format: 'webp'
-    })
-    plan.shots[0]!.direction = '   '
-    expect(normalisePlan(plan).shots[0]!.direction).toBe(
-      shotDefinition(plan.shots[0]!.type).defaultDirection
-    )
-  })
-})
-
-describe('first-set shot count', () => {
-  function defaultPlan() {
-    return createDefaultPlan({
-      category: 'ceramics',
-      productName: 'Mug',
-      shape: 'square',
-      format: 'webp'
-    })
-  }
-
-  it('turns on exactly the first shots in recipe order', () => {
-    const plan = defaultPlan()
-    const next = enableFirstShots(plan, 3)
-    expect(next.shots.map((shot) => shot.enabled)).toEqual([true, true, true, false, false, false])
-    expect(next.shots.map((shot) => shot.id)).toEqual(plan.shots.map((shot) => shot.id))
-    expect(next.shots.map((shot) => shot.direction)).toEqual(plan.shots.map((shot) => shot.direction))
-    expect(firstShotsEnabled(next, 3)).toBe(true)
-    expect(firstShotsEnabled(next, 6)).toBe(false)
-  })
-
-  it('clamps the count to the plan and can turn everything off', () => {
-    const plan = defaultPlan()
-    expect(enableFirstShots(plan, 99).shots.every((shot) => shot.enabled)).toBe(true)
-    expect(enableFirstShots(plan, 0).shots.every((shot) => !shot.enabled)).toBe(true)
-    expect(firstShotsEnabled(enableFirstShots(plan, plan.shots.length), plan.shots.length)).toBe(true)
-  })
-
-  it('does not treat a custom mix as a count preset', () => {
-    const plan = defaultPlan()
-    const custom = {
-      ...plan,
-      shots: plan.shots.map((shot, index) => ({ ...shot, enabled: index !== 1 }))
-    }
-    expect(firstShotsEnabled(custom, 6)).toBe(false)
-    expect(firstShotsEnabled(custom, 5)).toBe(false)
   })
 })
 
@@ -320,10 +141,7 @@ describe('labels', () => {
     expect(labels[1]).toBe('Edit 03')
   })
 
-  it('labels set remakes and other words', () => {
-    expect(setImageLabel('hero', [])).toBe('Main shot')
-    expect(setImageLabel('hero', ['Main shot'])).toBe('Main shot 2')
-    expect(setImageLabel('hero', ['Main shot', 'Main shot 2'])).toBe('Main shot 3')
+  it('labels other words without reusing numbers', () => {
     expect(nextCountedLabel('Scene', ['Scene 01', 'Scene 03'])).toBe('Scene 04')
     expect(nextCountedLabel('Created', [])).toBe('Created 01')
     expect(nextCountedLabel('Adjust', [])).toBe('Adjust 01')

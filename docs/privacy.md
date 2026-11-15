@@ -2,7 +2,7 @@
 
 Moss Photo Studio sends data to the following places, and only when it is needed:
 
-1. **To Meta Muse**, when you press a button that makes or changes an image, writes listing copy, or reads a product photo: your Muse key, the product photo and any person reference, the composed description or the listing facts and shop profile, the requested shape, format, and count for an image, and a random installation id in the API's `user` field. Meta also sees your IP address, as any service does.
+1. **To Meta Muse**, when you press a button that makes or changes an image: your Muse key, the product and person and scene references you chose, the composed description, the requested shape, format, and count, and a random installation id in the API's `user` field. Meta also sees your IP address, as any service does.
 2. **To the Moss license center (`license.mossaistudio.com`)**, when you activate, validate, or deactivate a license: the license key, an instance id, and a short computer label. The license center is a separate website that stores the buyer account and purchase email; the desktop app never signs in to it.
 3. **To the Moss license center (`license.mossaistudio.com`)**, when a build without automatic updates uses **Check for Updates** in Settings: the app slug, platform, architecture, update channel, and current version. It sends no install id, license key, email, or library data.
 4. **To GitHub Releases (`github.com/DevTarlow/moss-photo-studio`)**, when the Linux AppImage checks for updates on launch, every four hours, or when you press **Check for Updates**: the app version, platform, architecture, and channel. GitHub also sees your IP address. It sends no install id, license key, email, library data, or usage history. The app downloads a newer build in the background and installs it only when you choose Restart.
@@ -32,18 +32,6 @@ For the Linux AppImage, the app checks GitHub Releases on launch and every four 
 
 Builds without automatic updates check the license center only when you press **Check for Updates**. That request sends the app slug, platform, architecture, channel, and current version. It sends no install id, key, email, or library data.
 
-## What is sent when writing listing copy
-
-- The product photo, as the same normalised WebP reference used for images.
-- The product name, category, audience, and notes you saved, the shot directions of the set, and the shop profile fields (business name, what you sell, audience, voice, standard answers, marketplaces) when **Use my Business profile** is on.
-- The platform and its title, description, feature, and tag caps.
-- A random installation id and a request id, like an image request.
-
-
-From a Photo reads the image on this computer to pick colors; it does not send the image anywhere and does not save it.
-
-It does **not** send any other library image, project list, usage history, person names, your logo, or license key. The three saved colors you mark as used are included as hex values in the composed prompt when you make a set or change a photo, unless brand colors are switched off in Settings. A local adjustment never sends anything. The photo check reads the working copy on this computer; it never sends or saves anything. Browsing the library never sends anything.
-
 ## What is sent with a license request
 
 - The license key.
@@ -56,7 +44,7 @@ The license validation request happens no more than once per 24 hours automatica
 
 The application data folder contains:
 
-- `library.sqlite` and its WAL and backup files: projects, images, plans, jobs, usage, people, brand, settings, and license metadata.
+- `library.sqlite` and its WAL and backup files: projects, images, jobs, usage, products, people, brand, settings, and license metadata.
 - `library/`: all original and working images, saved Products, and exports made inside the library.
 - `secrets.bin`: the Muse key, encrypted with the system keyring, or with the documented AES-256-GCM fallback if no keyring is available.
 - `license.json`: the license key and instance id, encrypted.

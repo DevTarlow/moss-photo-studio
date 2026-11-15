@@ -5,7 +5,6 @@ import {
   CheckSquare,
   Grid2X2,
   Image as ImageIcon,
-  Layers,
   List,
   Package,
   Search,
@@ -53,7 +52,6 @@ type LibraryFilter = ProjectFilter | 'products'
 
 const filters: Array<{ id: LibraryFilter; label: string }> = [
   { id: 'all', label: 'All' },
-  { id: 'sets', label: 'Sets' },
   { id: 'photos', label: 'Edited' },
   { id: 'images', label: 'Generated' },
   { id: 'products', label: 'Products' }
@@ -73,11 +71,10 @@ export function Library(): React.JSX.Element {
   const secrets = useAppStore((state) => state.secrets)
   const settings = useAppStore((state) => state.settings)
   const license = useAppStore((state) => state.license)
-  const canGenerate = useAppStore((state) => state.canGenerate)
   const applyLicense = useAppStore((state) => state.applyLicense)
   const products = useAppStore((state) => state.products)
   const refreshProducts = useAppStore((state) => state.refreshProducts)
-  const [newType, setNewType] = useState<'set' | 'photo' | null>(null)
+  const [newType, setNewType] = useState<'photo' | null>(null)
   const [newPersonId, setNewPersonId] = useState<string | null>(null)
   const [newPersonLook, setNewPersonLook] = useState<string | null>(null)
   const [renameProject, setRenameProject] = useState<Project | null>(null)
@@ -142,7 +139,7 @@ export function Library(): React.JSX.Element {
 
   useEffect(() => {
     const nextType = params.get('new')
-    if (nextType === 'set' || nextType === 'photo') {
+    if (nextType === 'photo') {
       setNewType(nextType)
       setNewPersonId(params.get('person'))
       setNewPersonLook(params.get('look'))
@@ -189,10 +186,7 @@ export function Library(): React.JSX.Element {
     }
   }
 
-  const openNew = (type: 'set' | 'photo' | 'image'): void => {
-    if (!canGenerate && type !== 'image') {
-      toast.error(license?.status === 'expired' ? 'Reactivate to make images.' : 'Add your Muse key in Settings to make images.')
-    }
+  const openNew = (type: 'photo' | 'image'): void => {
     if (type === 'image') {
       void createImageProject()
       return
@@ -277,11 +271,6 @@ export function Library(): React.JSX.Element {
 
   const exportProject = async (project: Project): Promise<void> => {
     try {
-      if (project.type === 'set') {
-        const result = await unwrap(window.moss.exports.set({ projectId: project.id, options: { format: project.format, quality: 90, maxDimension: null } }))
-        showExportToast(result.count, result.folderName, project.id)
-        return
-      }
       const images = await unwrap(window.moss.images.list({ projectId: project.id }))
       const image = images.find((entry) => entry.id === project.coverImageId) ?? images[images.length - 1]
       if (!image) {
@@ -330,7 +319,7 @@ export function Library(): React.JSX.Element {
     try {
       const result = await unwrap(window.moss.media.importBytes({
         kind: 'source',
-        type: event.shiftKey ? 'set' : 'photo',
+        type: 'photo',
         bytes: await fileToBytes(file),
         mime: file.type,
         name: file.name
@@ -385,15 +374,7 @@ export function Library(): React.JSX.Element {
     if (productPage > productPages) setProductPage(productPages)
   }, [productPage, productPages])
 
-  const listingKitPath = (project: Project): string | null =>
-    project.type === 'set'
-      ? `/listing-kit?project=${project.id}`
-      : project.coverImageId
-        ? `/listing-kit?image=${project.coverImageId}`
-        : null
-
   const renderProject = (project: Project, view: 'grid' | 'list'): React.ReactNode => {
-    const kitPath = listingKitPath(project)
     return (
       <ProjectCard
         project={project}
@@ -405,7 +386,6 @@ export function Library(): React.JSX.Element {
         onRename={() => { setRenameProject(project); setRenameValue(project.name) }}
         onDuplicate={() => void duplicate(project)}
         onExport={() => void exportProject(project)}
-        onListingKit={kitPath ? () => navigate(kitPath) : undefined}
         onDelete={() => void remove(project)}
       />
     )
@@ -521,7 +501,7 @@ export function Library(): React.JSX.Element {
                 <Banner
                   status="info"
                   title="Finish setting up"
-                  description="Add your first product and make a set when you're ready."
+                  description="Add a product photo and make your first image when you're ready."
                   endContent={<Button label="Resume Setup" variant="secondary" size="sm" onClick={() => navigate('/onboarding')} />}
                   collapsible={false}
                 />
@@ -604,14 +584,12 @@ export function Library(): React.JSX.Element {
 
           <Text type="supporting" color="secondary" className="mt-2 block">
             {productsTab
-              ? 'Saved products. Open one to see its work and listing kit.'
-              : store.filter === 'sets'
-                ? 'Projects you planned as listing sets.'
-                : store.filter === 'photos'
-                  ? 'Projects you started from a photo you already had in the Image Editor.'
-                  : store.filter === 'images'
-                    ? 'Projects you started from a prompt in the Image Generator.'
-                    : 'Your products, sets, edited photos, and generated images.'}
+              ? 'Saved products. Open one to see its photo work.'
+              : store.filter === 'photos'
+                ? 'Projects you started from a photo you already had in the Image Editor.'
+                : store.filter === 'images'
+                  ? 'Projects you started from a prompt in the Image Generator.'
+                  : 'Your products, edited photos, and generated images.'}
           </Text>
 
           {!productsTab && selectedProjects.length > 0 && (
@@ -710,7 +688,6 @@ export function Library(): React.JSX.Element {
                   <Text type="supporting" color="secondary" className="text-center">Start with a photo of something you sell.</Text>
                   <Grid columns={{ minWidth: 220, max: 3 }} gap={4} className="mx-auto mt-4 max-w-[900px]">
                     {[
-                      { type: 'set' as const, icon: Layers, title: 'Set', line: 'One photo in, a full set out.' },
                       { type: 'photo' as const, icon: ImageIcon, title: 'Image Editor', line: 'New scene, new light, same product.' },
                       { type: 'image' as const, icon: Sparkles, title: 'Image Generator', line: 'Describe it, and Meta makes it.' }
                     ].map((card) => {
@@ -764,7 +741,7 @@ export function Library(): React.JSX.Element {
         </div>
         {dragOver && (
           <div className="drop-overlay">
-            <div className="drop-overlay-inner">Drop to add. Hold Shift for a set, or drop for a photo.</div>
+            <div className="drop-overlay-inner">Drop to add. The photo opens in the Image Editor.</div>
           </div>
         )}
       </div>

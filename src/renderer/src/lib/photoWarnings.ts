@@ -1,7 +1,7 @@
 import type { ImportResult } from '@shared/types'
 import { toast } from './toast'
 
-export const SMALL_PHOTO_COPY = 'This photo is small. The set will still work, but a larger photo gives cleaner results.'
+export const SMALL_PHOTO_COPY = 'This photo is small. It will still work, but a larger photo gives cleaner results.'
 
 export function warnIfSmallPhoto(result: ImportResult | null | undefined): void {
   if (!result?.width || !result?.height) return

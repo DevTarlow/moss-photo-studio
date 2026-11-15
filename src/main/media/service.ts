@@ -7,7 +7,6 @@ import type { ProjectRepository } from '../db/repositories/projects'
 import type { ImageRepository } from '../db/repositories/images'
 import type { PeopleRepository } from '../db/repositories/people'
 import type { BrandRepository } from '../db/repositories/brand'
-import type { PlanRepository } from '../db/repositories/plans'
 import type { Logger } from '../logger'
 import {
   ImageImportError,
@@ -28,7 +27,6 @@ export class MediaService {
       images: ImageRepository
       people: PeopleRepository
       brand: BrandRepository
-      plans: PlanRepository
       libraryPath: () => string
       logger: Logger
     }
@@ -69,7 +67,6 @@ export class MediaService {
         format: 'webp',
         prompt: null,
         userText: 'Batch color grade',
-        shotId: image.shotId,
         personId: image.personId,
         label,
         parentId: image.id,
@@ -307,7 +304,6 @@ export class MediaService {
     const newProject = this.deps.projects.create({
       type: detail.type,
       name: `${detail.name} copy`.slice(0, 140),
-      category: detail.category,
       shape: detail.shape,
       format: detail.format
     })
@@ -323,10 +319,6 @@ export class MediaService {
     }
     const images = this.deps.images.list(project.id, true)
     const idMap = new Map<string, string>()
-    const oldPlan = this.deps.projects.row(project.id)
-    const planRecord = oldPlan?.active_plan_id
-      ? this.deps.plans.getById(String(oldPlan.active_plan_id))
-      : null
     for (const image of images) {
       idMap.set(image.id, crypto.randomUUID())
     }
@@ -356,7 +348,6 @@ export class MediaService {
         userText: image.userText,
         revisedPrompt: image.revisedPrompt,
         templateId: image.templateId,
-        shotId: image.shotId,
         personId: image.personId,
         label: image.label,
         parentId: parent,
@@ -366,9 +357,6 @@ export class MediaService {
         isOriginal: image.isOriginal,
         costCents: 0
       })
-    }
-    if (planRecord) {
-      this.deps.plans.save(newProject.id, planRecord.json)
     }
     const newCover = detail.coverImageId ? idMap.get(detail.coverImageId) ?? null : null
     const newSource = detail.sourceImageId ? idMap.get(detail.sourceImageId) ?? null : null
