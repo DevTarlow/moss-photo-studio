@@ -99,7 +99,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 
 ### 3b. App shell and collections
 
-- [x] **A** The rail has Products, All work, People, Usage, a Tools section with Set, Image Editor, Image Generator, and Listing Kit, and Settings. Products is the home. The top-bar New menu launches the same three creation tools from every main screen. The Business settings section saves the shop profile the Listing Writer reads.
+- [x] **A** The rail has All work, Products, People, Usage, a Tools section with Set, Image Editor, Image Generator, and Listing Kit, and Settings. Products is the home. The top-bar New menu launches the same three creation tools from every main screen. The Business settings section saves the shop profile the Listing Writer reads.
 - [x] **A** All work has one New entry point, one key/setup banner area, a Select mode, Select all, Clear, Delete, and a sticky bulk bar. The hover checkbox still works.
 - [x] **A** Products and People have search, sort, and result counts. The Settings storage section is named Storage.
 - [x] **A** Settings uses the same SideNav as the rest of the app; the second settings aside is gone and the content is centered at 1440 and 1024.
