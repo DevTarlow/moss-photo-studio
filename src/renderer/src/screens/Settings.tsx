@@ -15,7 +15,7 @@ import {
   UserRound
 } from 'lucide-react'
 import type { AutoUpdateState, Brand, LicenseState, UpdateCheckResult } from '@shared/types'
-import { APP_NAME, APP_VERSION, LICENSE_API_HOST, LICENSE_PORTAL_URL, LICENSE_STORE_URL, SUPPORT_EMAIL, isStoreUrlPlaceholder } from '@shared/constants'
+import { APP_NAME, APP_VERSION, LICENSE_API_HOST, LICENSE_PORTAL_URL, LICENSE_STORE_URL, STUDIO_URL, SUPPORT_EMAIL, isStoreUrlPlaceholder } from '@shared/constants'
 import { AppFrame } from '../components/ui/AppFrame'
 import { Button } from '../components/ui/Button'
 import { Field } from '../components/ui/Field'
@@ -970,7 +970,18 @@ function AboutSection(): React.JSX.Element {
         </dl>
         <p className="hint mt-5">Update controls are in Settings, Updates.</p>
         <p className="hint mt-2">Support: <span className="font-mono">{SUPPORT_EMAIL}</span></p>
-        <p className="meta mt-5">Copyright 2026 Moss Toolbox. All rights reserved.</p>
+        <p className="meta mt-5">
+          Copyright 2026{' '}
+          <button
+            type="button"
+            className="hover:underline"
+            style={{ color: 'var(--accent)' }}
+            onClick={() => void window.moss.app.openExternal({ url: STUDIO_URL })}
+          >
+            Moss AI Studio
+          </button>
+          . All rights reserved.
+        </p>
       </SectionCard>
     </div>
   )
