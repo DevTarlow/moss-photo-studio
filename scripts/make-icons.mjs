@@ -18,11 +18,37 @@ await mkdir(brand, { recursive: true })
 
 const source = await readFile(path.join(brand, 'moss-photo-studio-icon.png'))
 const sourceMeta = await sharp(source).metadata()
-const icon = await sharp(source)
-  .resize(1024, 1024, {
-    fit: 'contain',
-    background: { r: 0, g: 0, b: 0, alpha: 0 }
-  })
+const trimmed = await sharp(source).trim({ threshold: 1 }).toBuffer({ resolveWithObject: true })
+const pad = 20
+const side = Math.min(
+  Math.max(trimmed.info.width, trimmed.info.height) + pad * 2,
+  Math.min(sourceMeta.width ?? 0, sourceMeta.height ?? 0)
+)
+const left = Math.min(
+  Math.max(0, Math.round(-(trimmed.info.trimOffsetLeft ?? 0) - (side - trimmed.info.width) / 2)),
+  (sourceMeta.width ?? side) - side
+)
+const top = Math.min(
+  Math.max(0, Math.round(-(trimmed.info.trimOffsetTop ?? 0) - (side - trimmed.info.height) / 2)),
+  (sourceMeta.height ?? side) - side
+)
+const art = await sharp(source)
+  .extract({ left, top, width: side, height: side })
+  .toBuffer()
+const inner = 960
+const scaled = await sharp(art)
+  .resize({ width: inner, height: inner, fit: 'contain' })
+  .toBuffer()
+const icon = await sharp({
+  create: { width: 1024, height: 1024, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
+})
+  .composite([
+    {
+      input: scaled,
+      left: Math.round((1024 - inner) / 2),
+      top: Math.round((1024 - inner) / 2)
+    }
+  ])
   .png({ compressionLevel: 9, adaptiveFiltering: true })
   .toBuffer()
 
@@ -34,8 +60,7 @@ await writeFile(path.join(brand, 'icon.ico'), png2icons.createICO(icon, png2icon
 
 // The in-app header mark uses the same plate, trimmed to its edges so it stays
 // legible at 24-40px.
-const mark = await sharp(source)
-  .trim({ threshold: 1 })
+const mark = await sharp(art)
   .resize(512, 512, {
     fit: 'contain',
     background: { r: 0, g: 0, b: 0, alpha: 0 }
