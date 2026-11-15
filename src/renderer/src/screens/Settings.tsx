@@ -25,7 +25,7 @@ import { MuseKeyGuideDialog } from '../components/ui/MuseKeyGuideDialog'
 import { BrandFields } from '../components/brand/BrandFields'
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
-import { usd, formatDateTime, relativeTime } from '../lib/format'
+import { formatDateTime, relativeTime } from '../lib/format'
 import { toast } from '../lib/toast'
 import { markUrl } from '../lib/assets'
 import { Skeleton } from '../components/ui/Skeleton'
@@ -107,7 +107,7 @@ function StudioSection(): React.JSX.Element {
       await refreshSecrets()
       setEditing(false)
       setKey('')
-      toast.status('Muse key saved.')
+      toast.status('Meta Muse key saved.')
     } catch (caught) {
       setError(messageOf(caught))
     } finally {
@@ -137,7 +137,7 @@ function StudioSection(): React.JSX.Element {
 
   const remove = async (): Promise<void> => {
     const ok = await confirm({
-      title: 'Remove the Muse key?',
+      title: 'Remove the Meta Muse key?',
       body: 'Paid runs stop until you add a key again. Your projects and images stay on this computer.',
       confirmLabel: 'Remove Key',
       danger: true
@@ -147,7 +147,7 @@ function StudioSection(): React.JSX.Element {
       await unwrap(window.moss.secrets.clearMuseKey())
       await refreshSecrets()
       setEditing(true)
-      toast.status('Muse key removed.')
+      toast.status('Meta Muse key removed.')
     } catch (caught) {
       toast.error(messageOf(caught))
     }
@@ -157,7 +157,7 @@ function StudioSection(): React.JSX.Element {
   const checked = secrets.validatedAt ? `Checked ${relativeTime(secrets.validatedAt)}` : 'Not checked yet'
   return (
     <div>
-      <SettingsTitle title="API key" line="Your Muse key and how making an image is priced." />
+      <SettingsTitle title="Meta API key" line="Your Meta Muse key and how making an image is priced." />
       {secrets.backend === 'basic_text' && !backendDismissed && secrets.hasKey && (
         <div className="verify-banner mb-4 flex items-start gap-2" role="status">
           <Icon icon={AlertTriangle} size="sm" className="mt-0.5" style={{ color: 'var(--warning)' }} aria-hidden />
@@ -170,7 +170,7 @@ function StudioSection(): React.JSX.Element {
       <SectionCard>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="field-label">Muse key</p>
+            <p className="field-label">Meta Muse key</p>
             {secrets.hasKey && !editing ? (
               <p className="font-mono text-[14px]">•••• •••• {secrets.last4 ?? '••••'}</p>
             ) : (
@@ -191,7 +191,7 @@ function StudioSection(): React.JSX.Element {
         {editing && (
           <div className="mt-5 max-w-[440px]">
             <Field
-              label="Muse key"
+              label="Meta Muse key"
               type={show ? 'text' : 'password'}
               value={key}
               onChange={(event) => setKey(event.target.value)}
@@ -228,8 +228,8 @@ function StudioSection(): React.JSX.Element {
           <div>
             <p className="text-[12px] font-semibold">One cent an image</p>
             <p className="hint mt-1">
-              Meta charges your key {usd(1)} for every image that comes back. The price is on the button before every run.
-              A refusal costs nothing. The app does not add a fee.
+              Meta charges your key $0.01 for every image that comes back. The price is on the button before every run.
+              A refusal costs nothing. The app does not add a fee for any generations.
             </p>
           </div>
         </div>
@@ -506,7 +506,7 @@ function LibrarySection(): React.JSX.Element {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="field-label">Backup</p>
-            <p className="hint mt-1">A copy of the library and database in one folder. Your Muse key and secrets are not included.</p>
+            <p className="hint mt-1">A copy of the library and database in one folder. Your Meta Muse key and secrets are not included.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" disabled={backingUp} onClick={() => void backupNow()}>

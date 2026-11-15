@@ -27,7 +27,7 @@ const STEPS = [
   },
   {
     title: 'Paste and test',
-    body: 'Return here, paste the key into the Muse key field, and choose Test and Save.'
+    body: 'Return here, paste the key into the Meta Muse key field, and choose Test and Save.'
   }
 ] as const
 
