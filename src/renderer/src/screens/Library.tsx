@@ -7,11 +7,13 @@ import {
   Image as ImageIcon,
   Layers,
   List,
+  Package,
   Search,
   Sparkles,
   Trash2
 } from 'lucide-react'
 import type { Project, ProjectFilter, ProjectSort } from '@shared/types'
+import { COLLECTION_PAGE_SIZE } from '@shared/constants'
 import { useLibraryStore } from '../store/library'
 import { useAppStore } from '../store/app'
 import { useJobsStore } from '../store/jobs'
@@ -22,6 +24,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { LibrarySkeleton } from '../components/ui/Skeleton'
 import { ProjectCard } from '../components/library/ProjectCard'
+import { ProductCard } from '../components/products/ProductCard'
 import { NewProjectDialog } from '../components/library/NewProjectDialog'
 import { useConfirm } from '../components/ui/ConfirmProvider'
 import { unwrap, messageOf } from '../lib/ipc'
@@ -46,11 +49,14 @@ import {
   ToggleButtonGroup
 } from '@astryxdesign/core'
 
-const filters: Array<{ id: ProjectFilter; label: string }> = [
+type LibraryFilter = ProjectFilter | 'products'
+
+const filters: Array<{ id: LibraryFilter; label: string }> = [
   { id: 'all', label: 'All' },
   { id: 'sets', label: 'Sets' },
   { id: 'photos', label: 'Photos' },
-  { id: 'images', label: 'Images' }
+  { id: 'images', label: 'Images' },
+  { id: 'products', label: 'Products' }
 ]
 const sorts: Array<{ id: ProjectSort; label: string }> = [
   { id: 'recent', label: 'Recent' },
@@ -69,6 +75,8 @@ export function Library(): React.JSX.Element {
   const license = useAppStore((state) => state.license)
   const canGenerate = useAppStore((state) => state.canGenerate)
   const applyLicense = useAppStore((state) => state.applyLicense)
+  const products = useAppStore((state) => state.products)
+  const refreshProducts = useAppStore((state) => state.refreshProducts)
   const [newType, setNewType] = useState<'set' | 'photo' | null>(null)
   const [newPersonId, setNewPersonId] = useState<string | null>(null)
   const [newPersonLook, setNewPersonLook] = useState<string | null>(null)
@@ -79,6 +87,8 @@ export function Library(): React.JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [dragOver, setDragOver] = useState(false)
   const dragDepth = useRef(0)
+  const [productsTab, setProductsTab] = useState(false)
+  const [productPage, setProductPage] = useState(1)
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
   const [selectMode, setSelectMode] = useState(false)
   const [allTotal, setAllTotal] = useState(0)
@@ -90,6 +100,14 @@ export function Library(): React.JSX.Element {
     void refreshTotal()
     // Initial load only. Filter changes load themselves.
   }, [])
+
+  useEffect(() => {
+    void refreshProducts().catch(() => undefined)
+  }, [refreshProducts])
+
+  useEffect(() => {
+    setProductPage(1)
+  }, [search])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
@@ -338,9 +356,34 @@ export function Library(): React.JSX.Element {
 
   const empty = !store.loading && store.items.length === 0
   const filtering = Boolean(store.search.trim()) || store.filter !== 'all'
+  const userProducts = products.filter((product) => product.source === 'user')
+  const productNeedle = search.trim().toLowerCase()
+  const filteredProducts = userProducts
+    .filter(
+      (product) =>
+        !productNeedle ||
+        [product.name, product.category ?? '', product.blurb ?? ''].some((value) =>
+          value.toLowerCase().includes(productNeedle)
+        )
+    )
+    .sort((a, b) => {
+      if (store.sort === 'name') return a.name.localeCompare(b.name)
+      if (store.sort === 'oldest') return a.createdAt - b.createdAt
+      return b.createdAt - a.createdAt
+    })
+  const productPages = Math.max(1, Math.ceil(filteredProducts.length / COLLECTION_PAGE_SIZE))
+  const visibleProductPage = Math.min(productPage, productPages)
+  const pagedProducts = filteredProducts.slice(
+    (visibleProductPage - 1) * COLLECTION_PAGE_SIZE,
+    visibleProductPage * COLLECTION_PAGE_SIZE
+  )
   const showSetup = Boolean(settings && !settings.onboardingDone)
   const showNoKey = Boolean(settings?.onboardingDone && secrets?.hasKey === false && license?.status !== 'expired')
   const showBanners = license?.status === 'grace' || license?.status === 'expired' || showSetup || showNoKey
+
+  useEffect(() => {
+    if (productPage > productPages) setProductPage(productPages)
+  }, [productPage, productPages])
 
   const listingKitPath = (project: Project): string | null =>
     project.type === 'set'
@@ -396,9 +439,13 @@ export function Library(): React.JSX.Element {
             <div>
               <Heading level={1}>All work</Heading>
               <Text type="supporting" color="secondary">
-                {filtering
-                  ? `Showing ${store.total} of ${allTotal || store.total}`
-                  : `${allTotal || store.total} ${(allTotal || store.total) === 1 ? 'project' : 'projects'}`}
+                {productsTab
+                  ? productNeedle
+                    ? `Showing ${filteredProducts.length} of ${userProducts.length}`
+                    : `${userProducts.length} ${userProducts.length === 1 ? 'product' : 'products'}`
+                  : filtering
+                    ? `Showing ${store.total} of ${allTotal || store.total}`
+                    : `${allTotal || store.total} ${(allTotal || store.total) === 1 ? 'project' : 'projects'}`}
               </Text>
             </div>
             <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -408,16 +455,18 @@ export function Library(): React.JSX.Element {
                 size="sm"
                 onClick={() => navigate('/usage')}
               />
-              <Button
-                label={selectMode ? 'Done selecting' : 'Select'}
-                variant={selectMode ? 'secondary' : 'ghost'}
-                size="sm"
-                icon={<Icon icon={CheckSquare} size="sm" />}
-                onClick={() => {
-                  if (selectMode) setSelected(new Set())
-                  setSelectMode((current) => !current)
-                }}
-              />
+              {!productsTab && (
+                <Button
+                  label={selectMode ? 'Done selecting' : 'Select'}
+                  variant={selectMode ? 'secondary' : 'ghost'}
+                  size="sm"
+                  icon={<Icon icon={CheckSquare} size="sm" />}
+                  onClick={() => {
+                    if (selectMode) setSelected(new Set())
+                    setSelectMode((current) => !current)
+                  }}
+                />
+              )}
             </div>
           </div>
 
@@ -480,11 +529,11 @@ export function Library(): React.JSX.Element {
             <div className="min-w-[220px] flex-1 md:max-w-[340px]">
               <TextInput
                 ref={searchRef}
-                label="Search projects"
+                label={productsTab ? 'Search products' : 'Search projects'}
                 isLabelHidden
                 value={search}
                 onChange={setSearch}
-                placeholder="Search projects"
+                placeholder={productsTab ? 'Search products' : 'Search projects'}
                 startIcon={<Icon icon={Search} size="sm" />}
                 hasClear
                 width="100%"
@@ -492,9 +541,17 @@ export function Library(): React.JSX.Element {
             </div>
             <ToggleButtonGroup
               type="single"
-              label="Filter projects"
-              value={store.filter}
+              className="shrink-0"
+              label="Filter all work"
+              value={productsTab ? 'products' : store.filter}
               onChange={(value) => {
+                if (value === 'products') {
+                  setProductsTab(true)
+                  setSelected(new Set())
+                  setSelectMode(false)
+                  return
+                }
+                setProductsTab(false)
                 store.setFilter((value as ProjectFilter | null) ?? 'all')
               }}
             >
@@ -502,32 +559,37 @@ export function Library(): React.JSX.Element {
                 <ToggleButton key={filter.id} value={filter.id} label={filter.label} size="sm" />
               ))}
             </ToggleButtonGroup>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex shrink-0 items-center gap-2">
               <Selector
-                label="Sort projects"
+                label={productsTab ? 'Sort products' : 'Sort projects'}
                 isLabelHidden
                 value={store.sort}
                 onChange={(value) => {
-                  if (value) store.setSort(value as ProjectSort)
+                  if (value) {
+                    store.setSort(value as ProjectSort)
+                    setProductPage(1)
+                  }
                 }}
                 options={sorts.map((sort) => ({ value: sort.id, label: sort.label }))}
                 width={140}
               />
-              <ToggleButtonGroup
-                type="single"
-                label="View as"
-                value={store.view}
-                onChange={(value) => {
-                  if (value === 'grid' || value === 'list') store.setView(value)
-                }}
-              >
-                <ToggleButton value="grid" label="Grid view" isIconOnly icon={<Icon icon={Grid2X2} size="sm" />} size="sm" />
-                <ToggleButton value="list" label="List view" isIconOnly icon={<Icon icon={List} size="sm" />} size="sm" />
-              </ToggleButtonGroup>
+              {!productsTab && (
+                <ToggleButtonGroup
+                  type="single"
+                  label="View as"
+                  value={store.view}
+                  onChange={(value) => {
+                    if (value === 'grid' || value === 'list') store.setView(value)
+                  }}
+                >
+                  <ToggleButton value="grid" label="Grid view" isIconOnly icon={<Icon icon={Grid2X2} size="sm" />} size="sm" />
+                  <ToggleButton value="list" label="List view" isIconOnly icon={<Icon icon={List} size="sm" />} size="sm" />
+                </ToggleButtonGroup>
+              )}
             </div>
           </div>
 
-          {selectedProjects.length > 0 && (
+          {!productsTab && selectedProjects.length > 0 && (
             <div
               className="mt-4 flex flex-wrap items-center gap-3 rounded-[10px] border px-3 py-2"
               style={{ borderColor: 'var(--color-border-emphasized)', background: 'var(--color-background-surface)' }}
@@ -553,7 +615,39 @@ export function Library(): React.JSX.Element {
           )}
 
           <div className="mt-5">
-            {store.loading ? (
+            {productsTab ? (
+              filteredProducts.length === 0 ? (
+                productNeedle ? (
+                  <EmptyState
+                    icon={<Icon icon={Search} size="lg" />}
+                    title={`No products match "${search.trim()}".`}
+                    line="Try a different word."
+                    action={<Button label="Clear Search" variant="secondary" onClick={() => { setSearch(''); setProductPage(1); store.setSearch(''); void store.load() }} />}
+                  />
+                ) : (
+                  <EmptyState
+                    icon={<Icon icon={Package} size="lg" />}
+                    title="No saved products yet"
+                    line="Save a product from an image, or add one from a file."
+                    action={<Button label="Open Products" variant="secondary" onClick={() => navigate('/products')} />}
+                  />
+                )
+              ) : (
+                <>
+                  <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+                    {pagedProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} onOpen={() => navigate(`/product/${product.id}`)} />
+                    ))}
+                  </div>
+                  <Pagination
+                    page={visibleProductPage}
+                    total={filteredProducts.length}
+                    onPage={setProductPage}
+                    label="Product pages"
+                  />
+                </>
+              )
+            ) : store.loading ? (
               <LibrarySkeleton />
             ) : store.error ? (
               <ErrorState message={store.error} onRetry={() => void store.load()} />
@@ -612,7 +706,7 @@ export function Library(): React.JSX.Element {
             )}
           </div>
 
-          {!empty && (
+          {!productsTab && !empty && (
             <Pagination
               page={store.page}
               total={store.total}

@@ -16,7 +16,7 @@ This is the record of what was run, what passed, and what the acceptance owner s
 | Packaged override test | A packaged release launched to Activation with `MOSS_DEV_UNLOCK=1`, `MOSS_MUSE_FAKE=1`, and `MOSS_E2E=1` set, proving the build gate ignores them. `fakeMode` was false |
 | AppImage launch smoke | Extracted AppImage launched to Activation through Playwright with `APPIMAGE_EXTRACT_AND_RUN=1` |
 | deb launch smoke | `.deb` was unpacked with `dpkg-deb -x` and its executable launched to Activation. The package metadata, desktop entry, icons, and control scripts were inspected |
-| Screenshot baselines | 56 images in `tests/screenshots`, including the Listing Kit picker and source, the product hub, and the source compare. The 1440 by 900 light and dark images are compared with a maximum diff ratio of 0.01. The 1024 by 700 and 150% zoom images are captured fresh because Playwright can restore the Electron viewport under that helper |
+| Screenshot baselines | 57 images in `tests/screenshots`, including the Listing Kit picker and source, the All work Products view, the product hub, and the source compare. The 1440 by 900 light and dark images are compared with a maximum diff ratio of 0.01. The 1024 by 700 and 150% zoom images are captured fresh because Playwright can restore the Electron viewport under that helper |
 
 ### Commands used
 
@@ -73,6 +73,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 - A source import is serialized per project, so two simultaneous first imports keep both originals.
 - A product kit writes Etsy-sized JPEGs, the untouched original, the saved listing copy in `listing.md`, `listing.csv`, `kit.json`, and the disclosure; the integration test checks dimensions and the pinned main image. The kit flow also runs in the E2E kit spec.
 - The Listing Kit opens as its own `/listing-kit` tool from the rail, product hub, set review, editor version panel, generator result menu, All work menu, product card menu, and command palette. A product source uses its latest or chosen set, a set source packs the whole set, and an image source packs exactly one ready image. The E2E kit spec exports a six-image set kit and then a single-image kit for the same listing copy; the integration test covers the single-image path without a plan.
+- All work's Products filter shows the saved products with their work/image counts, opens a product hub from the card, and keeps the existing sets/photos/images filters and pagination. The journey captures `library-products` and axe-checks it.
 - The Listing Writer reads the product photo, plan directions, and Business profile, clamps titles/description/features/tags to Etsy, Shopify, or own-site caps, and saves versions. The E2E kit spec writes and edits a listing with the fake text provider.
 - Read the photo fills blank product details and stores the visible points; the integration test checks the analysis and the `analyze` usage row. The kit E2E clicks it before writing the listing.
 - Size label: in Local Adjust, enter width/height and cm/in; the new version has a bottom badge and the same dimensions. The unit test checks the badge pixels and untouched top.
@@ -86,7 +87,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 
 ## Coverage gaps in the automated artifact
 
-- The 1440 by 900 matrix covers every main screen in light mode, including the Listing Kit picker and its selected product source. Dark mode covers Activation, Onboarding, Library, Set review, Photo, Create, People, Usage, and Settings. Set plan and Set running are light only.
+- The 1440 by 900 matrix covers every main screen in light mode, including the Listing Kit picker and its selected product source, and the All work Products view. Dark mode covers Activation, Onboarding, Library, Set review, Photo, Create, People, Usage, and Settings. Set plan and Set running are light only.
 - Every main screen is captured at 1024 by 700 light. Every main screen also passes a 150% zoom layout and overflow assertion, including the panels as sheets where the viewport hides them.
 - The screenshot matrix was added after the bulk of development. The baseline images reflect the final build states only for the visited journey states.
 - Dialog states are covered by axe during their normal use but are not each captured as standalone screenshots.
@@ -100,7 +101,7 @@ The deb is produced by `scripts/make-deb.mjs` because electron-builder's fpm cal
 ### 3b. App shell and collections
 
 - [x] **A** The rail has All work, Products, People, Usage, a Tools section with Set, Image Editor, Image Generator, and Listing Kit, and Settings. Products is the home. The top-bar New menu launches the same three creation tools from every main screen. The Business settings section saves the shop profile the Listing Writer reads.
-- [x] **A** All work has one New entry point, one key/setup banner area, a Select mode, Select all, Clear, Delete, and a sticky bulk bar. The hover checkbox still works.
+- [x] **A** All work has one New entry point, a Products view for saved products alongside the project filters, one key/setup banner area, a Select mode, Select all, Clear, Delete, and a sticky bulk bar. The hover checkbox still works.
 - [x] **A** Products and People have search, sort, and result counts. The Settings storage section is named Storage.
 - [x] **A** Settings uses the same SideNav as the rest of the app; the second settings aside is gone and the content is centered at 1440 and 1024.
 

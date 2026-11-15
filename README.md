@@ -1,6 +1,6 @@
 # Moss Photo Studio
 
-Moss Photo Studio is a desktop app for people who sell physical things. Start with one product photo, then make a set of listing images, edit a photo you already have, or describe a new scene. Everything you make stays in a library on your computer.
+Moss Photo Studio is a desktop app for people who sell physical things. Start with one product photo, then make a set of listing images, edit a photo you already have, or describe a new scene. Everything you make stays in a library on your computer. All work filters your sets, edits, and images, and can show your saved products too.
 
 I built it for the part of selling that eats an afternoon: getting a bottle, a candle, or a pair of earrings to look right on a listing page. The app handles the set plan, the local edits, the image generation, and the listing kit. But you still decide what the product is and what the shot should say.
 
