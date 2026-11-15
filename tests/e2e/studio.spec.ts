@@ -193,6 +193,8 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.getByLabel('License key').fill('MOSS-E2E-VALID-KEY')
     await page.getByRole('button', { name: 'Activate', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Your personal photo studio.' })).toBeVisible({ timeout: 20_000 })
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1440, 900))
+    await page.waitForTimeout(200)
     await screenshot('onboarding')
     await assertNoSeriousA11y('onboarding')
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1024, 700))
