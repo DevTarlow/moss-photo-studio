@@ -13,9 +13,8 @@ import type {
   AutoUpdateState,
   UpdateStateListener,
   Person,
-  PackExportResult,
-  PackJobInput,
-  PackJson,
+  SetDetail,
+  SetSummary,
   Product,
   ProductDetail,
   LibraryImage,
@@ -46,7 +45,7 @@ export interface IpcChannels {
   'app:openExternal': { request: { url: string }; response: { ok: true } }
   'app:setMenuContext': { request: MenuContext; response: { ok: true } }
   'app:openPath': {
-    request: { kind: 'library' | 'logs' | 'project' | 'exports'; projectId?: string }
+    request: { kind: 'library' | 'logs' | 'project' | 'exports'; projectId?: string; setId?: string }
     response: { ok: true }
   }
   'app:libraryStats': { request: undefined; response: LibraryStats }
@@ -100,11 +99,11 @@ export interface IpcChannels {
   }
   'projects:get': { request: { id: string }; response: ProjectDetail }
   'projects:create': {
-    request: { type: 'photo' | 'image' | 'pack'; name?: string; productId?: string; draft?: boolean }
+    request: { type: 'photo' | 'image'; name?: string; productId?: string; draft?: boolean }
     response: ProjectDetail
   }
   'projects:createFromImage': {
-    request: { sourceImageId: string; name?: string; type?: 'photo' | 'image' | 'pack' }
+    request: { sourceImageId: string; name?: string; type?: 'photo' | 'image' }
     response: ProjectDetail
   }
   'products:list': { request: undefined; response: Product[] }
@@ -128,7 +127,7 @@ export interface IpcChannels {
   'products:unlinkProject': { request: { projectId: string }; response: { ok: true } }
   'products:delete': { request: { id: string }; response: { ok: true } }
   'products:createProject': {
-    request: { productId: string; type: 'photo' | 'image' | 'pack'; name?: string }
+    request: { productId: string; type: 'photo' | 'image'; name?: string }
     response: ProjectDetail
   }
   'products:importIntoProject': {
@@ -163,7 +162,6 @@ export interface IpcChannels {
         name?: string
         shape?: Shape
         format?: Format
-        productId?: string | null
         sourceImageId?: string | null
         coverImageId?: string | null
       }
@@ -173,8 +171,15 @@ export interface IpcChannels {
   'projects:duplicate': { request: { id: string }; response: Project }
   'projects:delete': { request: { id: string }; response: { ok: true } }
   'projects:recent': { request: { limit: number }; response: Project[] }
-  'packs:save': { request: { projectId: string; pack: PackJson }; response: PackJson }
-  'jobs:startPack': { request: PackJobInput; response: { jobId: string } }
+  'sets:list': { request: undefined; response: SetSummary[] }
+  'sets:create': { request: { name: string }; response: SetSummary }
+  'sets:rename': { request: { id: string; name: string }; response: SetSummary }
+  'sets:delete': { request: { id: string }; response: { ok: true } }
+  'sets:detail': { request: { id: string }; response: SetDetail }
+  'sets:export': {
+    request: { id: string; options: ExportOptions }
+    response: { count: number; folderName: string; warnings: string[] }
+  }
   'images:list': {
     request: { projectId: string; includeFailed?: boolean }
     response: Image[]
@@ -183,6 +188,7 @@ export interface IpcChannels {
   'images:delete': { request: { id: string }; response: { ok: true } }
   'images:setCover': { request: { projectId: string; imageId: string }; response: { ok: true } }
   'images:setSource': { request: { projectId: string; imageId: string }; response: { ok: true } }
+  'images:assignSet': { request: { imageId: string; setId: string | null }; response: Image }
   'jobs:startCreate': { request: CreateJobInput; response: { jobId: string } }
   'jobs:startEdit': { request: EditJobInput; response: { jobId: string } }
   'jobs:cancel': { request: { jobId: string }; response: { ok: true } }
@@ -228,10 +234,6 @@ export interface IpcChannels {
   'export:images': {
     request: { projectId: string; imageIds: string[]; options: ExportOptions }
     response: { count: number; folderName: string }
-  }
-  'export:pack': {
-    request: { projectId: string; options: ExportOptions }
-    response: PackExportResult
   }
 }
 
@@ -301,6 +303,14 @@ export interface MossApi {
     delete: Call<'projects:delete'>
     recent: Call<'projects:recent'>
   }
+  sets: {
+    list: CallVoid<'sets:list'>
+    create: Call<'sets:create'>
+    rename: Call<'sets:rename'>
+    delete: Call<'sets:delete'>
+    detail: Call<'sets:detail'>
+    export: Call<'sets:export'>
+  }
   products: {
     list: CallVoid<'products:list'>
     listArchived: CallVoid<'products:listArchived'>
@@ -334,14 +344,11 @@ export interface MossApi {
     delete: Call<'images:delete'>
     setCover: Call<'images:setCover'>
     setSource: Call<'images:setSource'>
-  }
-  packs: {
-    save: Call<'packs:save'>
+    assignSet: Call<'images:assignSet'>
   }
   jobs: {
     startCreate: Call<'jobs:startCreate'>
     startEdit: Call<'jobs:startEdit'>
-    startPack: Call<'jobs:startPack'>
     cancel: Call<'jobs:cancel'>
     state: Call<'jobs:state'>
     active: CallVoid<'jobs:active'>
@@ -370,7 +377,6 @@ export interface MossApi {
   }
   exports: {
     images: Call<'export:images'>
-    pack: Call<'export:pack'>
   }
   backup: {
     create: CallVoid<'backup:create'>

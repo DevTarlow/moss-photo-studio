@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Dialog as RadixDialog } from 'radix-ui'
-import { ChevronLeft, ChevronRight, Columns2, Download, Image as ImageIcon, Package, Star, Trash2, UserPlus, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Columns2, Download, FolderPlus, Image as ImageIcon, Package, Star, Trash2, UserPlus, X } from 'lucide-react'
 import { Icon } from '@astryxdesign/core'
 import type { Image } from '@shared/types'
 import { Button } from './Button'
@@ -17,6 +17,7 @@ export function Lightbox({
   onEdit,
   onSaveProduct,
   onSavePerson,
+  onSaveToSet,
   onDelete,
   onPin,
   isPinned,
@@ -32,6 +33,7 @@ export function Lightbox({
   onEdit?: (image: Image) => void
   onSaveProduct?: (image: Image) => void
   onSavePerson?: (image: Image) => void
+  onSaveToSet?: (image: Image) => void
   onDelete?: (image: Image) => void
   onPin?: (image: Image) => void
   isPinned?: (image: Image) => boolean
@@ -143,6 +145,11 @@ export function Lightbox({
               {onSavePerson && image && (
                 <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onSavePerson(image)}>
                   <Icon icon={UserPlus} size="sm" /> Save as Person
+                </Button>
+              )}
+              {onSaveToSet && image && (
+                <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onSaveToSet(image)}>
+                  <Icon icon={FolderPlus} size="sm" /> Save to Set
                 </Button>
               )}
               {onDelete && image && (

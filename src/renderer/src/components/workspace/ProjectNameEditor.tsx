@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useWorkspaceStore } from '../../store/workspace'
 import { toast } from '../../lib/toast'
 
-const typeLabel = { photo: 'Image Editor', image: 'Image Generator', pack: 'Image Pack' } as const
+const typeLabel = { photo: 'Image Editor', image: 'Image Generator' } as const
 
 export function ProjectNameEditor(): React.JSX.Element | null {
   const project = useWorkspaceStore((state) => state.project)

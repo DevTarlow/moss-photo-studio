@@ -26,7 +26,7 @@ function lastMonths(count: number): string[] {
   return result
 }
 
-const actionLabels = { create: 'Create', set: 'Set', edit: 'Edit', adjust: 'Adjust', pack: 'Image pack', listing: 'Listing copy', analyze: 'Photo read', cutout: 'Cutout' } as const
+const actionLabels = { create: 'Create', set: 'Set', edit: 'Edit', adjust: 'Adjust', listing: 'Listing copy', analyze: 'Photo read', cutout: 'Cutout' } as const
 
 function microsLabel(micros: number): string {
   if (micros <= 0) return 'Under a cent'

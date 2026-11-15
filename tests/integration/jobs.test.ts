@@ -13,9 +13,9 @@ import { ImageRepository } from '@main/db/repositories/images'
 import { JobRepository } from '@main/db/repositories/jobs'
 import { UsageRepository } from '@main/db/repositories/usage'
 import { BrandRepository } from '@main/db/repositories/brand'
-import { PackRepository } from '@main/db/repositories/packs'
 import { PeopleRepository } from '@main/db/repositories/people'
 import { ProductRepository } from '@main/db/repositories/products'
+import { SetRepository } from '@main/db/repositories/sets'
 import { ProductService } from '@main/products/service'
 import { MediaService } from '@main/media/service'
 import { MuseClient } from '@main/muse/client'
@@ -36,9 +36,9 @@ let images: ImageRepository
 let jobs: JobRepository
 let usage: UsageRepository
 let brand: BrandRepository
-let packs: PackRepository
 let people: PeopleRepository
 let products: ProductRepository
+let sets: SetRepository
 let productService: ProductService
 let media: MediaService
 let queue: JobQueue
@@ -66,10 +66,10 @@ beforeEach(async () => {
   jobs = new JobRepository(db)
   usage = new UsageRepository(db)
   brand = new BrandRepository(db)
-  packs = new PackRepository(db)
   people = new PeopleRepository(db)
   products = new ProductRepository(db)
-  media = new MediaService({ projects, images, people, brand, packs, libraryPath, logger })
+  sets = new SetRepository(db)
+  media = new MediaService({ projects, images, people, brand, libraryPath, logger })
   productService = new ProductService({
     products,
     images,
@@ -95,7 +95,6 @@ beforeEach(async () => {
     brand,
     people,
     products,
-    packs,
     settings,
     secrets: {
       hasKey: () => keyPresent,
@@ -458,6 +457,54 @@ describe('job queue create', () => {
     await expect(
       queue.startCreate({ projectId: imageProject().id, prompt: 'x'.repeat(MAX_PROMPT + 1), count: 1, shape: 'square', format: 'webp' })
     ).rejects.toMatchObject({ code: 'invalid_payload' })
+  })
+})
+
+describe('job queue Sets', () => {
+  it('puts generated images from a Set source into the same Set', async () => {
+    const set = sets.create('Spring')
+    const sourceProject = imageProject('Set source')
+    const source = await media.importSource({
+      projectId: sourceProject.id,
+      bytes: await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 180, g: 170, b: 150 } } }).jpeg().toBuffer(),
+      name: 'source.jpg',
+      setId: set.id
+    })
+    const project = imageProject('Set output')
+    const { jobId } = await queue.startCreate({
+      projectId: project.id,
+      prompt: 'A clean product image',
+      count: 1,
+      shape: 'square',
+      format: 'webp',
+      sourceImageId: source.imageId!
+    })
+    await waitForJob(jobId)
+    const created = images.list(project.id)
+    expect(created).toHaveLength(1)
+    expect(created[0]?.setId).toBe(set.id)
+    expect(sets.get(set.id)?.imageCount).toBe(2)
+  })
+
+  it('keeps an edit version in the source image Set', async () => {
+    const set = sets.create('Edits')
+    const project = projects.create({ type: 'photo', name: 'Set edit' })
+    const source = await media.importSource({
+      projectId: project.id,
+      bytes: await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 180, g: 170, b: 150 } } }).jpeg().toBuffer(),
+      name: 'source.jpg',
+      setId: set.id
+    })
+    const { jobId } = await queue.startEdit({
+      projectId: project.id,
+      imageId: source.imageId!,
+      change: 'warmer light',
+      kind: 'edit'
+    })
+    await waitForJob(jobId)
+    const versions = images.list(project.id)
+    expect(versions.find((image) => image.id === source.imageId)?.setId).toBe(set.id)
+    expect(versions.some((image) => image.id !== source.imageId && image.setId === set.id)).toBe(true)
   })
 })
 

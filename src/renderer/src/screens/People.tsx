@@ -360,7 +360,7 @@ export function People(): React.JSX.Element {
         open={addOpen}
         onOpenChange={(open) => { setAddOpen(open); if (!open) { setError(null); setName('') } }}
         title="Add a person"
-        description="One person, one clear portrait. The person is reused in every set and does not need to be added again."
+        description="One person, one clear portrait. The person is reused in edits and images and does not need to be added again."
         width={500}
         footer={
           <>
@@ -456,8 +456,8 @@ export function People(): React.JSX.Element {
                 </div>
                 <p className="hint mt-2" aria-live="polite">
                   {previewLook
-                    ? `${previewLook.label} is used for the next set or image.`
-                    : 'The original photo is used for the next set or image.'}
+                    ? `${previewLook.label} is used for the next image.`
+                    : 'The original photo is used for the next image.'}
                   {previewLook && (
                     <>
                       {' '}
@@ -472,7 +472,7 @@ export function People(): React.JSX.Element {
             <div className="mt-4 flex flex-wrap gap-2">
               <Button variant="primary" onClick={() => void createImage()}>Create an Image</Button>
             </div>
-            <p className="hint mt-2">A set uses the selected photo; an image uses it as the reference.</p>
+            <p className="hint mt-2">The selected photo is used as the person reference.</p>
           </>
         )}
       </Dialog>

@@ -5,7 +5,6 @@ import {
   CheckSquare,
   Grid2X2,
   Image as ImageIcon,
-  Layers,
   List,
   Package,
   Search,
@@ -55,7 +54,6 @@ const filters: Array<{ id: LibraryFilter; label: string }> = [
   { id: 'all', label: 'All' },
   { id: 'photos', label: 'Edited' },
   { id: 'images', label: 'Generated' },
-  { id: 'packs', label: 'Packs' },
   { id: 'products', label: 'Products' }
 ]
 const sorts: Array<{ id: ProjectSort; label: string }> = [
@@ -149,9 +147,6 @@ export function Library(): React.JSX.Element {
     } else if (nextType === 'image') {
       setParams({}, { replace: true })
       void createImageProject()
-    } else if (nextType === 'pack') {
-      setParams({}, { replace: true })
-      void createPackProject()
     }
     if (params.get('focus') === 'search') {
       setParams({}, { replace: true })
@@ -191,22 +186,9 @@ export function Library(): React.JSX.Element {
     }
   }
 
-  const createPackProject = async (): Promise<void> => {
-    try {
-      const detail = await unwrap(window.moss.projects.create({ type: 'pack', draft: true }))
-      navigate(`/project/${detail.project.id}`)
-    } catch (caught) {
-      toast.error(messageOf(caught))
-    }
-  }
-
-  const openNew = (type: 'photo' | 'image' | 'pack'): void => {
+  const openNew = (type: 'photo' | 'image'): void => {
     if (type === 'image') {
       void createImageProject()
-      return
-    }
-    if (type === 'pack') {
-      void createPackProject()
       return
     }
     setNewPersonId(null)
@@ -289,19 +271,6 @@ export function Library(): React.JSX.Element {
 
   const exportProject = async (project: Project): Promise<void> => {
     try {
-      if (project.type === 'pack') {
-        const result = await unwrap(window.moss.exports.pack({
-          projectId: project.id,
-          options: { format: project.format, quality: 90, maxDimension: null }
-        }))
-        if (result.count < 1) {
-          toast.error(result.warnings[0] ?? 'Make at least one image first.')
-          return
-        }
-        showExportToast(result.count, result.folderName, project.id)
-        if (result.warnings.length) toast.error(result.warnings.join(' '))
-        return
-      }
       const images = await unwrap(window.moss.images.list({ projectId: project.id }))
       const image = images.find((entry) => entry.id === project.coverImageId) ?? images[images.length - 1]
       if (!image) {
@@ -620,7 +589,7 @@ export function Library(): React.JSX.Element {
                 ? 'Projects you started from a photo you already had in the Image Editor.'
                 : store.filter === 'images'
                   ? 'Projects you started from a prompt in the Image Generator.'
-                  : 'Your products, packs, edited photos, and generated images.'}
+                  : 'Your products, edited photos, and generated images.'}
           </Text>
 
           {!productsTab && selectedProjects.length > 0 && (
@@ -716,12 +685,11 @@ export function Library(): React.JSX.Element {
                 />
               ) : (
                 <div>
-                  <Text type="supporting" color="secondary" className="text-center">Start with a photo, an idea, or a finished pack.</Text>
+                  <Text type="supporting" color="secondary" className="text-center">Start with a photo of something you sell.</Text>
                   <Grid columns={{ minWidth: 220, max: 3 }} gap={4} className="mx-auto mt-4 max-w-[900px]">
                     {[
                       { type: 'photo' as const, icon: ImageIcon, title: 'Image Editor', line: 'New scene, new light, same product.' },
-                      { type: 'image' as const, icon: Sparkles, title: 'Image Generator', line: 'Describe it, and Meta makes it.' },
-                      { type: 'pack' as const, icon: Layers, title: 'Image Pack', line: 'A consistent set of shots from one idea.' }
+                      { type: 'image' as const, icon: Sparkles, title: 'Image Generator', line: 'Describe it, and Meta makes it.' }
                     ].map((card) => {
                       const Icon = card.icon
                       return (

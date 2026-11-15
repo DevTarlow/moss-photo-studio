@@ -17,7 +17,7 @@ interface ImageRow {
   revised_prompt: string | null
   template_id: string | null
   person_id: string | null
-  shot_id: string | null
+  set_id: string | null
   label: string | null
   seq: number
   parent_id: string | null
@@ -49,7 +49,7 @@ export interface NewImageInput {
   revisedPrompt?: string | null
   templateId?: string | null
   personId?: string | null
-  shotId?: string | null
+  setId?: string | null
   label: string
   parentId?: string | null
   rootId?: string | null
@@ -79,7 +79,7 @@ function mapImage(row: ImageRow): Image {
     revisedPrompt: row.revised_prompt,
     templateId: row.template_id,
     personId: row.person_id,
-    shotId: row.shot_id,
+    setId: row.set_id,
     label: row.label ?? 'Image',
     seq: Number(row.seq),
     parentId: row.parent_id,
@@ -123,7 +123,7 @@ export class ImageRepository {
         .prepare(
           `INSERT INTO images
             (id, project_id, kind, status, file, thumb, width, height, format, mime, prompt, user_text,
-             revised_prompt, template_id, person_id, shot_id, label, seq, parent_id, root_id, size, adjust,
+             revised_prompt, template_id, person_id, set_id, label, seq, parent_id, root_id, size, adjust,
              badge, is_original, cost_cents, duration_ms, job_id, error_code, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
@@ -143,7 +143,7 @@ export class ImageRepository {
           input.revisedPrompt ?? null,
           input.templateId ?? null,
           input.personId ?? null,
-          input.shotId ?? null,
+          input.setId ?? null,
           input.label,
           seq,
           input.parentId ?? null,
@@ -161,6 +161,7 @@ export class ImageRepository {
       this.db
         .prepare('UPDATE images SET origin = ? WHERE id = ?')
         .run(input.kind === 'upload' ? 'upload' : input.kind === 'adjust' ? 'local' : 'ai', id)
+      if (input.setId) this.touchSet(input.setId)
       if (input.isOriginal || input.kind === 'upload') {
         this.db
           .prepare(
@@ -206,6 +207,45 @@ export class ImageRepository {
       }
       return image
     })
+  }
+
+  listBySet(setId: string): LibraryImage[] {
+    const rows = this.db
+      .prepare(
+        `SELECT i.id, i.project_id, p.name AS project_name, p.type AS project_type, i.label,
+                i.file, i.thumb, i.width, i.height, i.kind, i.person_id, i.created_at
+         FROM images i JOIN projects p ON p.id = i.project_id
+         WHERE i.set_id = ? AND i.deleted_at IS NULL AND i.status = 'ready'
+         ORDER BY i.created_at DESC, i.seq DESC`
+      )
+      .all(setId) as Array<{
+      id: string
+      project_id: string
+      project_name: string
+      project_type: ProjectType
+      label: string | null
+      file: string | null
+      thumb: string | null
+      width: number | null
+      height: number | null
+      kind: ImageKind
+      person_id: string | null
+      created_at: number
+    }>
+    return rows.map((row) => ({
+      id: row.id,
+      projectId: row.project_id,
+      projectName: row.project_name,
+      projectType: row.project_type,
+      label: row.label ?? 'Image',
+      url: row.file ? libraryUrl(row.file) : null,
+      thumbUrl: row.thumb ? libraryUrl(row.thumb) : row.file ? libraryUrl(row.file) : null,
+      width: row.width,
+      height: row.height,
+      personId: row.person_id,
+      kind: row.kind,
+      createdAt: Number(row.created_at)
+    }))
   }
 
   listForJob(jobId: string): Image[] {
@@ -275,6 +315,21 @@ export class ImageRepository {
     }
   }
 
+  setSet(id: string, setId: string | null): Image | null {
+    const row = this.getRow(id)
+    if (!row) return null
+    this.db.transaction(() => {
+      this.db.prepare('UPDATE images SET set_id = ? WHERE id = ?').run(setId, id)
+      if (row.set_id) this.touchSet(row.set_id)
+      if (setId) this.touchSet(setId)
+    })()
+    return this.get(id)
+  }
+
+  private touchSet(setId: string): void {
+    this.db.prepare('UPDATE sets SET updated_at = ? WHERE id = ?').run(Date.now(), setId)
+  }
+
   markReady(
     id: string,
     fields: {
@@ -313,6 +368,7 @@ export class ImageRepository {
         id
       )
     this.db.prepare('UPDATE projects SET updated_at = ? WHERE id = ?').run(Date.now(), row.project_id)
+    if (row.set_id) this.touchSet(row.set_id)
     return this.get(id)
   }
 
@@ -358,26 +414,6 @@ export class ImageRepository {
     return Number(row.count)
   }
 
-  latestReadyForShot(projectId: string, shotId: string): Image | null {
-    const row = this.db
-      .prepare(
-        `SELECT * FROM images WHERE project_id = ? AND shot_id = ? AND status = 'ready' AND deleted_at IS NULL
-         ORDER BY created_at DESC, seq DESC LIMIT 1`
-      )
-      .get(projectId, shotId) as ImageRow | undefined
-    return row ? mapImage(row) : null
-  }
-
-  readyForShot(projectId: string, shotId: string): Image[] {
-    const rows = this.db
-      .prepare(
-        `SELECT * FROM images WHERE project_id = ? AND shot_id = ? AND status = 'ready' AND deleted_at IS NULL
-         ORDER BY created_at ASC, seq ASC`
-      )
-      .all(projectId, shotId) as ImageRow[]
-    return rows.map(mapImage)
-  }
-
   setCover(projectId: string, imageId: string): void {
     this.db.prepare('UPDATE projects SET cover_image_id = ? WHERE id = ?').run(imageId, projectId)
   }
@@ -402,6 +438,7 @@ export class ImageRepository {
            ) WHERE id = ? AND cover_image_id = ?`
         )
         .run(row.project_id, row.project_id, id)
+      if (row.set_id) this.touchSet(row.set_id)
     })()
     return { file: row.file, thumb: row.thumb, projectId: row.project_id }
   }

@@ -1,19 +1,19 @@
 import type { Format, Shape } from './shapes'
 export type { Format, Shape } from './shapes'
 
-export type ProjectType = 'photo' | 'image' | 'pack'
+export type ProjectType = 'photo' | 'image'
 export type ImageKind = 'upload' | 'render' | 'edit' | 'adjust'
 export type ImageStatus = 'pending' | 'ready' | 'failed'
-export type JobKind = 'create' | 'edit' | 'pack'
+export type JobKind = 'create' | 'edit'
 export type JobStatus = 'running' | 'done' | 'failed' | 'interrupted' | 'cancelled'
 export type JobItemStatus = 'queued' | 'running' | 'done' | 'partial' | 'failed' | 'cancelled'
-// The first four are the actions new runs write. The rest are kept so
+// The first three are the only actions new runs write. The rest are kept so
 // historical usage rows remain readable after those tools were removed.
-export type UsageAction = 'create' | 'edit' | 'adjust' | 'pack' | 'set' | 'listing' | 'analyze' | 'cutout'
+export type UsageAction = 'create' | 'edit' | 'adjust' | 'set' | 'listing' | 'analyze' | 'cutout'
 export type UsageResult = 'ok' | 'failed'
 export type BadgeCorner = 'br' | 'bl' | 'tr' | 'tl'
 export type BadgeScale = 's' | 'm' | 'l'
-export type ProjectFilter = 'all' | 'photos' | 'images' | 'packs'
+export type ProjectFilter = 'all' | 'photos' | 'images'
 export type ProjectSort = 'recent' | 'oldest' | 'name'
 export type ThemeSetting = 'system' | 'light' | 'dark'
 export type DensitySetting = 'comfortable' | 'compact'
@@ -65,8 +65,8 @@ export interface Image {
   revisedPrompt: string | null
   templateId: string | null
   personId: string | null
-  /** The pack shot this image belongs to, or null for ordinary work. */
-  shotId: string | null
+  /** The Set this image belongs to, or null when it is unfiled. */
+  setId: string | null
   label: string
   seq: number
   parentId: string | null
@@ -129,30 +129,8 @@ export interface ActiveJobSummary {
 export interface ProjectDetail {
   project: Project
   images: Image[]
-  pack: PackJson | null
   activeJob: JobState | null
   usageCents: number
-}
-
-export interface PackShot {
-  id: string
-  templateId: string
-  label: string
-  direction: string
-  enabled: boolean
-  selectedImageId: string | null
-}
-
-export interface PackJson {
-  version: number
-  presetId: string
-  /** null means use the brand's default look. */
-  stylePreset: string | null
-  direction: string
-  personId: string | null
-  personLook: string | null
-  sceneImageId: string | null
-  shots: PackShot[]
 }
 
 export interface PersonLook {
@@ -231,6 +209,21 @@ export interface LibraryImage {
   createdAt: number
 }
 
+export interface SetSummary {
+  id: string
+  name: string
+  imageCount: number
+  coverUrl: string | null
+  createdAt: number
+  updatedAt: number
+}
+
+export interface SetDetail {
+  set: SetSummary
+  images: LibraryImage[]
+  total: number
+}
+
 export interface Brand {
   colors: string[]
   colorsEnabled: boolean
@@ -241,18 +234,6 @@ export interface Brand {
   badgeOpacity: number
   /** A consistent setting/light treatment appended to runs. */
   stylePreset?: string
-}
-
-export interface PackJobInput {
-  projectId: string
-  mode: 'missing' | 'remake'
-  shotIds?: string[]
-}
-
-export interface PackExportResult {
-  count: number
-  folderName: string
-  warnings: string[]
 }
 
 export interface UsageEvent {
@@ -446,7 +427,6 @@ export interface BackupStatus {
 export type MenuAction =
   | 'new-photo'
   | 'new-image'
-  | 'new-pack'
   | 'export'
   | 'find'
   | 'toggle-rail'

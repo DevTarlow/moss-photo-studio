@@ -20,6 +20,7 @@ import { ToastViewport } from './components/ui/Toast'
 import { CommandPalette } from './components/ui/CommandPalette'
 import { ShortcutsSheet } from './components/ui/ShortcutsSheet'
 import { GuideDialog } from './components/ui/GuideDialog'
+import { SaveToSetDialog } from './components/sets/SaveToSetDialog'
 
 const TWELVE_HOURS = 12 * 60 * 60 * 1000
 
@@ -30,6 +31,7 @@ function titleForPath(pathname: string): string {
     library: 'Library',
     products: 'Products',
     people: 'People',
+    sets: 'Sets',
     usage: 'Usage',
     settings: 'Settings',
     onboarding: 'Setup',
@@ -68,11 +70,9 @@ function useJobCompletionToast(): void {
       if (window.location.hash.includes('/onboarding')) return
       if (job.status === 'cancelled') return
       if (job.done > 0) {
-        const message = job.kind === 'pack'
-          ? `Your pack finished with ${job.done} ${job.done === 1 ? 'image' : 'images'}.`
-          : job.kind === 'create'
-            ? `${job.done} ${job.done === 1 ? 'image is' : 'images are'} ready.`
-            : 'Your change is ready.'
+        const message = job.kind === 'create'
+          ? `${job.done} ${job.done === 1 ? 'image is' : 'images are'} ready.`
+          : 'Your change is ready.'
         toast.status(message, { label: 'Open project', onClick: () => navigate(`/project/${job.projectId}`) })
       } else {
         toast.error('That run finished without an image. Nothing is lost. Open the project to try again.')
@@ -321,11 +321,13 @@ export function RootLayout(): React.JSX.Element {
         navigate('/library?new=photo')
         return
       }
-      if ((event.metaKey || event.ctrlKey) && ['1', '2', '3'].includes(event.key)) {
+      if ((event.metaKey || event.ctrlKey) && (event.key === '1' || event.key === '2')) {
         event.preventDefault()
-        if (event.key === '1') navigate('/library?new=photo')
-        else if (event.key === '2') navigate('/library?new=image')
-        else navigate('/library?new=pack')
+        if (event.key === '1') {
+          navigate('/library?new=photo')
+        } else {
+          void unwrap(window.moss.projects.create({ type: 'image', draft: true })).then((detail) => navigate(`/project/${detail.project.id}`)).catch(() => toast.error('A new project could not be opened.'))
+        }
         return
       }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'e') {
@@ -393,10 +395,7 @@ export function RootLayout(): React.JSX.Element {
           navigate('/library?new=photo')
           break
         case 'new-image':
-          navigate('/library?new=image')
-          break
-        case 'new-pack':
-          navigate('/library?new=pack')
+          void unwrap(window.moss.projects.create({ type: 'image', draft: true })).then((detail) => navigate(`/project/${detail.project.id}`)).catch(() => toast.error('A new project could not be opened.'))
           break
         case 'open-project':
           if (event.projectId) navigate(`/project/${event.projectId}`)
@@ -504,6 +503,7 @@ export function RootLayout(): React.JSX.Element {
       <CommandPalette />
       <ShortcutsSheet />
       <GuideDialog />
+      <SaveToSetDialog />
       <ToastViewport />
       {dragOver && (
         <div className="drop-overlay" aria-hidden>

@@ -45,31 +45,28 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 - Edit opens the result in the Image Editor. Download saves the image.
 - A policy refusal, a timeout, a short count, and a 429 each show the approved copy and do not overbill in Usage.
 
-## Image Packs
-
-- Start a pack from a Product, a library image, or the New menu with no source. The workspace shows Pack setup and a six-shot Studio Essentials plan.
-- Change the preset, pack brief, look, shape, format, person/look, and scene. Every shot's prompt preview must match the shared brief and show the product/person/scene guards exactly as the queue will send them.
-- Add, remove, reorder, disable, and rename shots. Clicking a shot expands its label and direction below that row; opening another shot closes the first. A pack holds up to eight shots. A prompt-only pack has no source guard; an On Person shot requires a person.
-- The Person picker shows circular portraits, and the selected person has a larger thumbnail that changes when the look changes and opens a larger preview.
-- Make missing shots; confirm the exact price on the first paid run. Successful shots stay when another fails. Retry missing shots and choose a version per shot.
-- Edit a pack image in the Image Editor; its edited and adjusted versions stay attached to the same shot.
-- Export Pack writes a self-contained folder with one selected/latest image per enabled shot, `pack.json`, and `README.txt`. No marketplace resizing, listing files, or alt-text files are written.
-- Library Packs filter, product work counts, duplicate/delete, dark mode, 1024×700, 150% zoom, and axe checks pass.
-- A reference pack calls image edits; a prompt-only pack calls image generations. There must be no text/chat/SAM request.
-
 ## Products
 
 - Products shows “20 included · N yours,” search, sort, and pagination.
 - Included products open with Edit This Photo and New Image from Reference, without Rename or Delete.
 - Create a Product opens the Image Generator with the product prompt; Save as Product adds it under Yours.
 - A product hub shows the source photo, category, linked work, Link existing work, archive, and delete.
-- **This build intentionally has no sets, Listing Kit, listing copy, or Business profile.** No rail item, menu item, route, or settings section should offer them.
+- **This build intentionally has no Listing Kit, listing copy, or Business profile.** Sets exist only as image organization; no rail item, menu item, or settings section should offer the retired tools.
+
+## Sets
+
+- Save any ready generated image or edited version to a Set from its Lightbox, result More menu, or version panel. Create a new Set from the same dialog.
+- Sets lists each Set with its cover and count. Set detail shows all member images; removing an image leaves the image in its project.
+- From a Set image, Edit Photo opens a new photo project and New Image opens a new generator project. The imported source and all resulting images stay in the Set automatically.
+- Export Set creates a unique folder with numbered ready images and no manifest. Open Folder opens the remembered Set export folder.
+- Delete a Set only removes the organization; images and projects remain.
+- An existing v11 pack library upgrades to v12 with its ready images preserved as ordinary image projects; old pack plans, pending rows, and pack jobs are removed.
 
 ## All work
 
-- The rail has All work, Products, People, Usage, Image Editor, Image Generator, and Settings.
-- Filters are All, Edited, Generated, and Products. There is no Sets filter.
-- Drop a photo on All work to open it in the Image Editor. There is no shift-to-set behavior.
+- The rail has All work, Products, Sets, People, Usage, Image Editor, Image Generator, and Settings.
+- Filters are All, Edited, Generated, and Products. Sets are a separate page, not an All work filter.
+- Drop a photo on All work to open it in the Image Editor. Sets are filled from image actions; there is no drag-to-Set behavior.
 - Rename, duplicate, export, select, bulk delete, search, sort, pagination, and product sections work.
 - A library over 500 projects paginates at 20 cards and keeps selection scoped to loaded cards.
 
@@ -77,7 +74,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 - People lists Yours first and 24 included synthetic people.
 - Included people open with four studio looks; the original can be restored.
-- Create an Image seeds the generator with the person and look. There is no Create a Set action.
+- Create an Image seeds the generator with the person and look.
 - Add, rename, and remove a person. A generated image can be saved as a person.
 
 ## Usage

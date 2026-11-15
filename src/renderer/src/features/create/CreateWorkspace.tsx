@@ -38,6 +38,7 @@ import { warnIfSmallPhoto } from '../../lib/photoWarnings'
 import { elapsedLabel, formatDate } from '../../lib/format'
 import { currentMonth } from '../../store/library'
 import { onCommand } from '../../lib/commands'
+import { openSetPicker } from '../../store/setPicker'
 
 type PromptSource = 'user' | 'starter' | 'example'
 
@@ -843,6 +844,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                           label={`More actions for ${image.label}`}
                           size="sm"
                           items={[
+                            { label: 'Save to Set', onClick: () => openSetPicker(image) },
                             { label: 'Delete', onClick: () => void remove(image) }
                           ]}
                         />
@@ -940,6 +942,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         onEdit={(image) => navigate(`/project/${project.id}?view=photo&image=${image.id}`)}
         onSaveProduct={(image) => { setLightboxIndex(null); setSaveProductImage(image) }}
         onSavePerson={(image) => { setLightboxIndex(null); setSavePersonImage(image) }}
+        onSaveToSet={(image) => { setLightboxIndex(null); openSetPicker(image) }}
         onDelete={(image) => void remove(image)}
       />
       <FirstRunConfirm

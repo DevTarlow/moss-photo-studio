@@ -11,7 +11,6 @@ import { ImageRepository } from '@main/db/repositories/images'
 import { JobRepository } from '@main/db/repositories/jobs'
 import { reconcileOnStartup } from '@main/jobs/queue'
 import { runPendingRemovedDataCleanup } from '@main/removedData'
-import { PackRepository } from '@main/db/repositories/packs'
 
 let dir = ''
 beforeEach(() => {
@@ -39,7 +38,7 @@ describe('migrations', () => {
     const custom = db.prepare('SELECT value FROM meta WHERE key = ?').get('custom') as { value: string }
     expect(custom.value).toBe('kept')
     const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as Array<{ name: string }>
-    expect(tables.map((row) => row.name)).toEqual(expect.arrayContaining(['projects', 'images', 'products', 'packs', 'usage_events', 'license']))
+    expect(tables.map((row) => row.name)).toEqual(expect.arrayContaining(['projects', 'images', 'products', 'sets', 'usage_events', 'license']))
     expect(tables.map((row) => row.name)).not.toEqual(expect.arrayContaining(['plans', 'listings']))
     db.close()
   })
@@ -87,35 +86,40 @@ describe('retired feature cleanup', () => {
   })
 })
 
-
-describe('pack migration', () => {
-  it('adds pack support without losing v10 work or legacy usage history', async () => {
+describe('pack cleanup', () => {
+  it('converts pack projects and keeps their ready images while adding sets', () => {
     const file = path.join(dir, 'library.sqlite')
-    const v10 = openDatabase({ file, libraryPath: path.join(dir, 'library'), logger: logger(), targetVersion: 10 })
+    const v11 = openDatabase({ file, libraryPath: path.join(dir, 'library'), logger: logger(), targetVersion: 11 })
     const now = Date.now()
-    v10.prepare("INSERT INTO projects (id, type, name, created_at, updated_at, shape, format) VALUES (?, ?, ?, ?, ?, ?, ?)")
-      .run('kept-photo', 'photo', 'Kept photo', now, now, 'square', 'webp')
-    v10.prepare("INSERT INTO images (id, project_id, kind, status, file, label, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
-      .run('kept-image', 'kept-photo', 'upload', 'ready', 'projects/kept-photo/source.webp', 'Original photo', now)
-    v10.prepare("INSERT INTO usage_events (id, at, project_id, project_name, action, requested_n, returned_n, cost_cents, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
-      .run('legacy-usage', now, 'kept-photo', 'Kept photo', 'set', 1, 1, 1, 'ok')
-    v10.close()
+    v11.prepare("INSERT INTO projects (id, type, name, created_at, updated_at, shape, format) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .run('pack-project', 'pack', 'Old pack', now, now, 'square', 'webp')
+    v11.prepare("INSERT INTO images (id, project_id, kind, status, file, label, created_at, shot_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+      .run('source-image', 'pack-project', 'upload', 'ready', 'projects/pack-project/source.webp', 'Original photo', now, null)
+    v11.prepare("INSERT INTO images (id, project_id, kind, status, file, label, created_at, shot_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+      .run('ready-shot', 'pack-project', 'render', 'ready', 'projects/pack-project/images/shot.webp', 'Hero', now, 'shot-1')
+    v11.prepare("INSERT INTO images (id, project_id, kind, status, label, created_at, shot_id) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .run('pending-shot', 'pack-project', 'render', 'pending', 'Detail', now, 'shot-2')
+    v11.prepare("INSERT INTO packs (project_id, json, updated_at) VALUES (?, ?, ?)")
+      .run('pack-project', '{}', now)
+    v11.prepare("INSERT INTO jobs (id, project_id, kind, total, status, started_at) VALUES (?, ?, ?, ?, ?, ?)")
+      .run('pack-job', 'pack-project', 'pack', 2, 'done', now)
+    v11.prepare("INSERT INTO usage_events (id, at, project_id, project_name, action, requested_n, returned_n, cost_cents, result) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      .run('pack-usage', now, 'pack-project', 'Old pack', 'pack', 1, 1, 1, 'ok')
+    v11.close()
 
     const db = openDatabase({ file, libraryPath: path.join(dir, 'library'), logger: logger() })
-    expect(db.pragma('user_version', { simple: true })).toBe(SCHEMA_VERSION)
-    expect(db.prepare("SELECT COUNT(*) AS count FROM projects WHERE id = 'kept-photo'").get()).toEqual({ count: 1 })
-    expect(db.prepare("SELECT action FROM usage_events WHERE id = 'legacy-usage'").get()).toEqual({ action: 'set' })
+    expect(db.pragma('user_version', { simple: true })).toBe(12)
+    expect(db.prepare('SELECT type FROM projects WHERE id = ?').get('pack-project')).toEqual({ type: 'image' })
+    expect(db.prepare('SELECT COUNT(*) AS count FROM images WHERE id = ?').get('ready-shot')).toEqual({ count: 1 })
+    expect(db.prepare('SELECT COUNT(*) AS count FROM images WHERE id = ?').get('pending-shot')).toEqual({ count: 0 })
+    expect(db.prepare("SELECT COUNT(*) AS count FROM jobs WHERE kind = 'pack'").get()).toEqual({ count: 0 })
+    expect(db.prepare("SELECT action FROM usage_events WHERE id = 'pack-usage'").get()).toEqual({ action: 'create' })
     const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as Array<{ name: string }>
-    expect(tables.map((row) => row.name)).toContain('packs')
-    const columns = db.pragma('table_info(images)') as Array<{ name: string }>
-    expect(columns.map((row) => row.name)).toContain('shot_id')
-
-    const projects = new ProjectRepository(db)
-    const packs = new PackRepository(db)
-    const project = projects.create({ type: 'pack', name: 'New pack' })
-    packs.save(project.id, { version: 1, presetId: 'custom', stylePreset: null, direction: '', personId: null, personLook: null, sceneImageId: null, shots: [] })
-    expect(projects.get(project.id)?.type).toBe('pack')
-    expect(packs.get(project.id)?.presetId).toBe('custom')
+    expect(tables.map((row) => row.name)).not.toContain('packs')
+    expect(tables.map((row) => row.name)).toContain('sets')
+    const imageColumns = db.pragma('table_info(images)') as Array<{ name: string }>
+    expect(imageColumns.map((row) => row.name)).not.toContain('shot_id')
+    expect(imageColumns.map((row) => row.name)).toContain('set_id')
     db.close()
   })
 })

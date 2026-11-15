@@ -12,9 +12,9 @@ import type {
   ImportResult,
   JobState,
   LicenseState,
-  PackJson,
   Product,
   ProductDetail,
+  SetDetail,
   Project,
   ProjectDetail,
   SettingsAll
@@ -24,13 +24,11 @@ import { MAX_LOGO_BYTES, MAX_PERSON_BYTES, MAX_PROMPT } from '@shared/constants'
 import { nextCountedLabel } from '@shared/labels'
 import { safeBaseName } from '@shared/files'
 import { isBundledProduct } from '@shared/products'
-import { normalisePack } from '@shared/prompts/packPrompt'
-import { createPackFromPreset } from '@shared/prompts/packPresets'
 import { absoluteInLibrary, workingFor } from '../media/paths'
 import { applyLocalAdjust } from '../media/transform'
 import { addSizeLabel } from '../media/label'
 import { exportImageToPath, exportOneImage } from '../media/export'
-import { exportPackProject } from '../media/packExport'
+import { exportSetImages } from '../media/setExport'
 import { openExternalSafely } from '../security'
 import { SCHEMA_VERSION } from '../db/connection'
 import { createBackup, createDiagnostics, inspectBackup, stageRestore } from '../backup'
@@ -40,7 +38,7 @@ import { type SettingKey } from '../settings'
 
 const shapeSchema = z.enum(['square', 'portrait', 'landscape'])
 const formatSchema = z.enum(['webp', 'jpeg', 'png'])
-const projectTypeSchema = z.enum(['photo', 'image', 'pack'])
+const projectTypeSchema = z.enum(['photo', 'image'])
 const idSchema = z.string().min(1).max(120)
 const monthSchema = z.string().regex(/^\d{4}-\d{2}$/)
 const voidSchema = z.undefined()
@@ -65,24 +63,6 @@ const exportOptionsSchema = z.object({
   maxDimension: z.number().int().positive().nullable(),
   includeVersions: z.boolean().optional(),
   filename: z.string().max(120).optional()
-})
-const packShotSchema = z.object({
-  id: z.string().min(1).max(120),
-  templateId: z.string().min(1).max(60),
-  label: z.string().max(80),
-  direction: z.string().max(400),
-  enabled: z.boolean(),
-  selectedImageId: z.string().max(120).nullable()
-})
-const packSchema = z.object({
-  version: z.number().int().min(1).max(10),
-  presetId: z.string().min(1).max(60),
-  stylePreset: z.string().max(60).nullable(),
-  direction: z.string().max(400),
-  personId: z.string().max(120).nullable(),
-  personLook: z.string().max(80).nullable(),
-  sceneImageId: z.string().max(120).nullable(),
-  shots: z.array(packShotSchema).max(8)
 })
 const brandPatchSchema = z.object({
   colors: z.array(z.string().regex(/^#[0-9a-fA-F]{6}$/)).max(6).optional(),
@@ -164,16 +144,9 @@ function buildDetail(context: AppContext, project: Project): ProjectDetail {
   return {
     project: detail,
     images: context.images.list(project.id, false),
-    pack: detail.type === 'pack' ? context.packs.get(detail.id) : null,
     activeJob,
     usageCents: context.usage.projectTotal(project.id)
   }
-}
-
-
-function ensurePack(context: AppContext, project: Project, presetId?: string): void {
-  if (project.type !== 'pack' || context.packs.get(project.id)) return
-  context.packs.save(project.id, createPackFromPreset(presetId))
 }
 
 async function importSourceUse(context: AppContext, input: {
@@ -301,14 +274,15 @@ export function registerIpcHandlers(context: AppContext): void {
   registerIpc(
     context,
     'app:openPath',
-    z.object({ kind: z.enum(['library', 'logs', 'project', 'exports']), projectId: z.string().optional() }),
-    async ({ kind, projectId }) => {
+    z.object({ kind: z.enum(['library', 'logs', 'project', 'exports']), projectId: z.string().optional(), setId: z.string().optional() }),
+    async ({ kind, projectId, setId }) => {
       let target: string
       if (kind === 'library') target = context.libraryPath()
       else if (kind === 'logs') target = path.join(context.userDataDir, 'logs')
       else if (kind === 'exports') {
-        if (!projectId) throw new IpcFault('invalid_payload')
-        const folder = settings.exportFolderFor(projectId)
+        const key = projectId ?? (setId ? `set:${setId}` : null)
+        if (!key) throw new IpcFault('invalid_payload')
+        const folder = settings.exportFolderFor(key)
         if (!folder) throw new IpcFault('not_found')
         target = folder
       } else {
@@ -631,7 +605,7 @@ export function registerIpcHandlers(context: AppContext): void {
     context,
     'projects:list',
     z.object({
-      filter: z.enum(['all', 'photos', 'images', 'packs']).optional(),
+      filter: z.enum(['all', 'photos', 'images']).optional(),
       sort: z.enum(['recent', 'oldest', 'name']).optional(),
       search: z.string().max(200).optional(),
       productId: z.string().nullable().optional(),
@@ -668,13 +642,12 @@ export function registerIpcHandlers(context: AppContext): void {
       const defaults = settings.all()
       const project = context.projects.create({
         type,
-        name: name?.trim() || (type === 'photo' ? 'Untitled photo' : type === 'pack' ? 'Untitled pack' : 'Untitled image'),
+        name: name?.trim() || (type === 'photo' ? 'Untitled photo' : 'Untitled image'),
         productId: productId ?? null,
         shape: defaults.defaultShape,
         format: defaults.defaultFormat,
         draft
       })
-      if (project.type === 'pack') ensurePack(context, project)
       context.refreshMenu()
       return buildDetail(context, project)
     }
@@ -700,9 +673,9 @@ export function registerIpcHandlers(context: AppContext): void {
       await context.media.importSource({
         projectId: project.id,
         bytes,
-        name: `${project.name}.${image.format === 'jpeg' ? 'jpg' : image.format}`
+        name: `${project.name}.${image.format === 'jpeg' ? 'jpg' : image.format}`,
+        setId: image.setId
       })
-      if (project.type === 'pack') ensurePack(context, project)
       context.refreshMenu()
     } catch (error) {
       await context.media.deleteProjectFiles(project.id)
@@ -833,8 +806,6 @@ export function registerIpcHandlers(context: AppContext): void {
         shape: defaults.defaultShape,
         format: defaults.defaultFormat
       })
-      const project = context.projects.get(created.projectId)
-      if (project?.type === 'pack') ensurePack(context, project)
       context.refreshMenu()
       return buildDetail(context, context.projects.get(created.projectId)!)
     }
@@ -923,8 +894,7 @@ export function registerIpcHandlers(context: AppContext): void {
         name: z.string().min(1).max(140).optional(),
         shape: shapeSchema.optional(),
         format: formatSchema.optional(),
-        productId: z.string().nullable().optional(),
-        sourceImageId: z.string().nullable().optional(),
+          sourceImageId: z.string().nullable().optional(),
         coverImageId: z.string().nullable().optional()
       })
     }),
@@ -967,15 +937,67 @@ export function registerIpcHandlers(context: AppContext): void {
     context.projects.recent(limit)
   )
 
+  registerIpc(context, 'sets:list', voidSchema, () => context.sets.list())
+
   registerIpc(
     context,
-    'packs:save',
-    z.object({ projectId: idSchema, pack: packSchema }),
-    ({ projectId, pack }): PackJson => {
-      const project = context.projects.get(projectId)
-      if (!project) throw new IpcFault('not_found')
-      if (project.type !== 'pack') throw new IpcFault('invalid_payload', 'That project is not an image pack.')
-      return context.packs.save(projectId, normalisePack(pack))
+    'sets:create',
+    z.object({ name: z.string().trim().min(1).max(80) }),
+    ({ name }) => context.sets.create(name)
+  )
+
+  registerIpc(
+    context,
+    'sets:rename',
+    z.object({ id: idSchema, name: z.string().trim().min(1).max(80) }),
+    ({ id, name }): SetDetail['set'] => {
+      const updated = context.sets.rename(id, name)
+      if (!updated) throw new IpcFault('not_found')
+      return updated
+    }
+  )
+
+  registerIpc(context, 'sets:delete', z.object({ id: idSchema }), ({ id }) => {
+    if (!context.sets.delete(id)) throw new IpcFault('not_found')
+    return { ok: true as const }
+  })
+
+  registerIpc(context, 'sets:detail', z.object({ id: idSchema }), ({ id }): SetDetail => {
+    const set = context.sets.get(id)
+    if (!set) throw new IpcFault('not_found')
+    const items = context.images.listBySet(id)
+    return { set, images: items, total: items.length }
+  })
+
+  registerIpc(
+    context,
+    'sets:export',
+    z.object({ id: idSchema, options: exportOptionsSchema }),
+    async ({ id, options }) => {
+      const set = context.sets.get(id)
+      if (!set) throw new IpcFault('not_found')
+      const images = context.images
+        .listBySet(id)
+        .map((item) => context.images.get(item.id))
+        .filter((image): image is Image => image?.status === 'ready')
+      if (!images.length) throw new IpcFault('invalid_payload', 'This Set has no ready images yet.')
+      const key = `set:${id}`
+      const pick = await openFolderDialog(context, {
+        title: 'Choose where to export the Set',
+        defaultPath: settings.exportFolderFor(key) ?? app.getPath('pictures'),
+        properties: ['openDirectory', 'createDirectory']
+      })
+      if (pick.canceled || !pick.filePaths[0]) return { count: 0, folderName: '', warnings: [] }
+      const result = await exportSetImages({
+        libraryPath: context.libraryPath(),
+        name: set.name,
+        images,
+        options,
+        parentFolder: pick.filePaths[0],
+        workingPathFor: (image) => workingFor(context.libraryPath(), image.projectId, image.id)
+      })
+      if (result.count > 0) settings.rememberExportFolder(key, result.folder)
+      return { count: result.count, folderName: result.folderName, warnings: result.warnings }
     }
   )
 
@@ -1034,7 +1056,7 @@ export function registerIpcHandlers(context: AppContext): void {
     context.images.softDelete(id)
     if (project?.coverImageId === id) {
       const ready = context.images.list(project.id, false)
-      const next = project.type === 'pack' ? ready.find((entry) => entry.kind !== 'upload') : ready[0]
+      const next = ready[0]
       context.projects.update(project.id, { coverImageId: next?.id ?? null })
     }
     for (const relative of files) {
@@ -1064,6 +1086,20 @@ export function registerIpcHandlers(context: AppContext): void {
       if (!image || image.projectId !== projectId || image.status !== 'ready') throw new IpcFault('invalid_payload')
       context.images.setSource(projectId, imageId)
       return { ok: true as const }
+    }
+  )
+
+  registerIpc(
+    context,
+    'images:assignSet',
+    z.object({ imageId: idSchema, setId: idSchema.nullable() }),
+    ({ imageId, setId }) => {
+      const image = context.images.get(imageId)
+      if (!image || image.status !== 'ready') throw new IpcFault('invalid_payload', 'That image is not ready yet.')
+      if (setId && !context.sets.get(setId)) throw new IpcFault('not_found', 'That Set is not here anymore.')
+      const updated = context.images.setSet(imageId, setId)
+      if (!updated) throw new IpcFault('not_found')
+      return updated
     }
   )
 
@@ -1099,16 +1135,6 @@ export function registerIpcHandlers(context: AppContext): void {
       isGiftShot: z.boolean().optional()
     }),
     (request) => context.queue.startEdit(request)
-  )
-  registerIpc(
-    context,
-    'jobs:startPack',
-    z.object({
-      projectId: idSchema,
-      mode: z.enum(['missing', 'remake']),
-      shotIds: z.array(idSchema).max(8).optional()
-    }),
-    (request) => context.queue.startPack(request)
   )
   registerIpc(context, 'jobs:cancel', z.object({ jobId: idSchema }), ({ jobId }) => {
     context.queue.cancel(jobId)
@@ -1201,8 +1227,8 @@ export function registerIpcHandlers(context: AppContext): void {
         format: 'webp',
         prompt: null,
         userText: 'Size label',
-        shotId: source.shotId,
         personId: source.personId,
+        setId: source.setId,
         label,
         parentId: source.id,
         rootId: source.rootId ?? source.id,
@@ -1260,8 +1286,8 @@ export function registerIpcHandlers(context: AppContext): void {
         prompt: null,
         userText: 'Local adjust',
         templateId: null,
-        shotId: source.shotId,
         personId: source.personId,
+        setId: source.setId,
         label,
         parentId: source.id,
         rootId: source.rootId ?? source.id,
@@ -1482,38 +1508,6 @@ export function registerIpcHandlers(context: AppContext): void {
       }
       settings.rememberExportFolder(projectId, folder!)
       return { count: paths.length, folderName: path.basename(folder!) }
-    }
-  )
-
-  registerIpc(
-    context,
-    'export:pack',
-    z.object({ projectId: idSchema, options: exportOptionsSchema }),
-    async ({ projectId, options }) => {
-      const project = context.projects.get(projectId)
-      if (!project) throw new IpcFault('not_found')
-      if (project.type !== 'pack') throw new IpcFault('invalid_payload', 'That project is not an image pack.')
-      const pack = context.packs.get(projectId)
-      if (!pack) throw new IpcFault('invalid_payload', 'Set up the pack first.')
-      const images = context.images.list(projectId, false)
-      if (!images.length) throw new IpcFault('invalid_payload', 'Make at least one image first.')
-      const pick = await openFolderDialog(context, {
-        title: 'Choose where to export the pack',
-        defaultPath: settings.exportFolderFor(projectId) ?? app.getPath('pictures'),
-        properties: ['openDirectory', 'createDirectory']
-      })
-      if (pick.canceled || !pick.filePaths[0]) return { count: 0, folderName: '', warnings: [] }
-      const result = await exportPackProject({
-        libraryPath: context.libraryPath(),
-        projectName: project.name,
-        pack,
-        images,
-        options,
-        parentFolder: pick.filePaths[0],
-        workingPathFor: (image) => workingFor(context.libraryPath(), image.projectId, image.id)
-      })
-      if (result.count > 0) settings.rememberExportFolder(projectId, result.folder)
-      return { count: result.count, folderName: result.folderName, warnings: result.warnings }
     }
   )
 

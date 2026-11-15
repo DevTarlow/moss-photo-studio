@@ -10,9 +10,9 @@ import { Logger } from '@main/logger'
 import { ProjectRepository } from '@main/db/repositories/projects'
 import { ImageRepository } from '@main/db/repositories/images'
 import { BrandRepository } from '@main/db/repositories/brand'
-import { PackRepository } from '@main/db/repositories/packs'
 import { PeopleRepository } from '@main/db/repositories/people'
 import { MediaService } from '@main/media/service'
+import { SetRepository } from '@main/db/repositories/sets'
 import { ImageImportError, assertImportable, normaliseToWorking } from '@main/media/import'
 
 let dir = ''
@@ -20,6 +20,7 @@ let db: Db
 let projects: ProjectRepository
 let images: ImageRepository
 let media: MediaService
+let sets: SetRepository
 
 beforeEach(() => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-media-'))
@@ -28,14 +29,13 @@ beforeEach(() => {
   projects = new ProjectRepository(db)
   images = new ImageRepository(db)
   const brand = new BrandRepository(db)
-  const packs = new PackRepository(db)
   const people = new PeopleRepository(db)
+  sets = new SetRepository(db)
   media = new MediaService({
     projects,
     images,
     people,
     brand,
-    packs,
     libraryPath: () => path.join(dir, 'library'),
     logger
   })
@@ -148,6 +148,33 @@ describe('HEIC guidance', () => {
     bytes.set([0, 0, 0, 0x18], 0)
     bytes.set(Buffer.from('ftypheic'), 4)
     expect(() => assertImportable(bytes)).toThrow(/HEIC/)
+  })
+})
+
+describe('Set inheritance in media', () => {
+  it('copies Set membership through import, duplication, and batch color', async () => {
+    const set = sets.create('Set media')
+    const sourceProject = projects.create({ type: 'photo', name: 'Source' })
+    const imported = await media.importSource({
+      projectId: sourceProject.id,
+      bytes: await jpeg(700, 500),
+      name: 'source.jpg',
+      setId: set.id
+    })
+    expect(images.get(imported.imageId!)?.setId).toBe(set.id)
+
+    const target = projects.create({ type: 'image', name: 'Target' })
+    const copied = await media.importFromImage({ projectId: target.id, imageId: imported.imageId! })
+    expect(images.get(copied.imageId!)?.setId).toBe(set.id)
+
+    const duplicated = await media.duplicateProject(sourceProject)
+    expect(images.list(duplicated.projectId).every((image) => image.setId === set.id)).toBe(true)
+
+    const batch = await media.applyBatchColor(sourceProject.id, { brightness: 5 })
+    expect(batch.count).toBe(1)
+    const adjusted = images.list(sourceProject.id).filter((image) => image.origin === 'local')
+    expect(adjusted).toHaveLength(1)
+    expect(adjusted[0]?.setId).toBe(set.id)
   })
 })
 

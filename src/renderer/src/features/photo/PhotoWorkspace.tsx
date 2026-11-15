@@ -35,6 +35,7 @@ import { warnIfSmallPhoto } from '../../lib/photoWarnings'
 import { elapsedLabel, formatDate, usd as usdMoney } from '../../lib/format'
 import { previewFilter, previewTransform, isIdentity } from '../../lib/adjustPreview'
 import { onCommand } from '../../lib/commands'
+import { openSetPicker } from '../../store/setPicker'
 import { currentMonth } from '../../store/library'
 
 type Tab = 'change' | 'adjust'
@@ -602,6 +603,7 @@ export function PhotoWorkspace(): React.JSX.Element {
       onFormatChange={(format) => { void useWorkspaceStore.getState().updateProject({ format }).catch(() => toast.error('The format could not be saved.')) }}
       onSaveProduct={selected ? () => setSaveProductImageId(selected.id) : undefined}
       onSavePerson={selected ? () => setSavePersonImageId(selected.id) : undefined}
+      onSaveToSet={selected ? () => openSetPicker(selected) : undefined}
     />
   )
 
@@ -614,7 +616,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const canPreview = Boolean(displayImage?.url) && !compare && !crop && !isRunning
   const lightboxIndex = Math.max(0, ready.findIndex((image) => image.id === selected?.id))
 
-  const backLabel = project.type === 'image' ? 'Back to Image Generator' : project.type === 'pack' ? 'Back to Image Pack' : null
+  const backLabel = project.type === 'image' ? 'Back to Image Generator' : null
   const goBackToProject = (): void => {
     void navigate(`/project/${project.id}`)
   }
@@ -913,6 +915,7 @@ export function PhotoWorkspace(): React.JSX.Element {
           const next = ready[index]
           if (next) selectImage(next.id)
         }}
+        onSaveToSet={(image) => { setLightboxOpen(false); openSetPicker(image) }}
       />
       <ExportDialog open={exportOpen} onOpenChange={setExportOpen} project={project} image={selected} />
     </>

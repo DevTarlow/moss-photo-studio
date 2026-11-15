@@ -5,7 +5,7 @@ import { BUNDLED_PEOPLE } from '@shared/people'
 
 interface ProjectRow {
   id: string
-  type: 'photo' | 'image' | 'pack'
+  type: 'photo' | 'image'
   name: string
   created_at: number
   updated_at: number
@@ -22,7 +22,7 @@ interface ProjectRow {
 }
 
 export interface CreateProjectInput {
-  type: 'photo' | 'image' | 'pack'
+  type: 'photo' | 'image'
   name: string
   productId?: string | null
   shape?: 'square' | 'portrait' | 'landscape'
@@ -117,7 +117,6 @@ export class ProjectRepository {
     }
     if (filter === 'photos') clauses.push("p.type = 'photo'")
     if (filter === 'images') clauses.push("p.type = 'image'")
-    if (filter === 'packs') clauses.push("p.type = 'pack'")
     const search = options.search?.trim()
     if (search) {
       const like = `%${escapeLike(search)}%`
@@ -224,10 +223,8 @@ export class ProjectRepository {
   setCoverFromProject(id: string): void {
     const first = this.db
       .prepare(
-        `SELECT i.id FROM images i JOIN projects p ON p.id = i.project_id
-         WHERE i.project_id = ? AND i.status = 'ready' AND i.deleted_at IS NULL
-           AND (p.type <> 'pack' OR i.kind <> 'upload')
-         ORDER BY CASE WHEN p.type = 'pack' THEN 0 ELSE i.is_original END DESC, i.created_at ASC LIMIT 1`
+        `SELECT id FROM images WHERE project_id = ? AND status = 'ready' AND deleted_at IS NULL
+         ORDER BY is_original DESC, created_at ASC LIMIT 1`
       )
       .get(id) as { id: string } | undefined
     if (first?.id) {
@@ -249,8 +246,7 @@ export class ProjectRepository {
         `DELETE FROM projects
          WHERE draft = 1
            AND NOT EXISTS (SELECT 1 FROM images i WHERE i.project_id = projects.id)
-           AND NOT EXISTS (SELECT 1 FROM jobs j WHERE j.project_id = projects.id)
-           AND NOT EXISTS (SELECT 1 FROM packs p WHERE p.project_id = projects.id)`
+           AND NOT EXISTS (SELECT 1 FROM jobs j WHERE j.project_id = projects.id)`
       )
       .run().changes
   }

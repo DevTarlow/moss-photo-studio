@@ -100,6 +100,14 @@ const api: MossApi = {
     delete: invoke('projects:delete'),
     recent: invoke('projects:recent')
   },
+  sets: {
+    list: invokeVoid('sets:list'),
+    create: invoke('sets:create'),
+    rename: invoke('sets:rename'),
+    delete: invoke('sets:delete'),
+    detail: invoke('sets:detail'),
+    export: invoke('sets:export')
+  },
   dialogs: {
     importImage: invoke('dialog:importImage'),
     pickProduct: invokeVoid('dialog:pickProduct')
@@ -115,15 +123,12 @@ const api: MossApi = {
     get: invoke('images:get'),
     delete: invoke('images:delete'),
     setCover: invoke('images:setCover'),
-    setSource: invoke('images:setSource')
-  },
-  packs: {
-    save: invoke('packs:save')
+    setSource: invoke('images:setSource'),
+    assignSet: invoke('images:assignSet')
   },
   jobs: {
     startCreate: invoke('jobs:startCreate'),
     startEdit: invoke('jobs:startEdit'),
-    startPack: invoke('jobs:startPack'),
     cancel: invoke('jobs:cancel'),
     state: invoke('jobs:state'),
     active: invokeVoid('jobs:active'),
@@ -151,8 +156,7 @@ const api: MossApi = {
     deleteAll: invokeVoid('usage:deleteAll')
   },
   exports: {
-    images: invoke('export:images'),
-    pack: invoke('export:pack')
+    images: invoke('export:images')
   },
   backup: {
     create: invokeVoid('backup:create'),

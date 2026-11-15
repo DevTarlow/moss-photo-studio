@@ -67,7 +67,7 @@ export function CommandPalette(): React.JSX.Element {
         id: `project-${project.id}`,
         group: 'Projects',
         label: project.name,
-        hint: project.type === 'photo' ? 'Image Editor' : project.type === 'pack' ? 'Image Pack' : 'Image Generator',
+        hint: project.type === 'photo' ? 'Image Editor' : 'Image Generator',
         run: () => go(`/project/${project.id}`)
       })
     }
@@ -78,13 +78,6 @@ export function CommandPalette(): React.JSX.Element {
         label: 'New Image Editor',
         hint: 'Change a photo you have',
         run: () => go('/library?new=photo')
-      },
-      {
-        id: 'new-pack',
-        group: 'Actions',
-        label: 'New Image Pack',
-        hint: 'A consistent set of shots from one idea',
-        run: () => go('/library?new=pack')
       },
       {
         id: 'new-image',
@@ -109,6 +102,13 @@ export function CommandPalette(): React.JSX.Element {
           }
           emitCommand('export')
         }
+      },
+      {
+        id: 'sets',
+        group: 'Actions',
+        label: 'Open Sets',
+        hint: 'Images kept together',
+        run: () => go('/sets')
       },
       {
         id: 'usage',

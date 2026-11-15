@@ -7,7 +7,6 @@ import type { ProjectRepository } from '../db/repositories/projects'
 import type { ImageRepository } from '../db/repositories/images'
 import type { PeopleRepository } from '../db/repositories/people'
 import type { BrandRepository } from '../db/repositories/brand'
-import type { PackRepository } from '../db/repositories/packs'
 import type { Logger } from '../logger'
 import {
   ImageImportError,
@@ -28,7 +27,6 @@ export class MediaService {
       images: ImageRepository
       people: PeopleRepository
       brand: BrandRepository
-      packs: PackRepository
       libraryPath: () => string
       logger: Logger
     }
@@ -69,8 +67,8 @@ export class MediaService {
         format: 'webp',
         prompt: null,
         userText: 'Batch color grade',
-        shotId: image.shotId,
         personId: image.personId,
+        setId: image.setId,
         label,
         parentId: image.id,
         rootId: image.rootId ?? image.id,
@@ -120,6 +118,7 @@ export class MediaService {
     name?: string
     label?: string
     personId?: string | null
+    setId?: string | null
   }): Promise<ImportResult> {
     const previous = this.importChains.get(input.projectId) ?? Promise.resolve()
     const next = previous.then(
@@ -143,6 +142,7 @@ export class MediaService {
     name?: string
     label?: string
     personId?: string | null
+    setId?: string | null
   }): Promise<ImportResult> {
     const project = this.deps.projects.get(input.projectId)
     if (!project) throw new ImageImportError('unreadable', 'That project is not here anymore.')
@@ -186,6 +186,7 @@ export class MediaService {
       height: normalised.height,
       format,
       personId: input.personId ?? null,
+      setId: input.setId ?? null,
       label: input.label ?? uploadLabel(labels),
       isOriginal: first,
       costCents: 0
@@ -237,7 +238,8 @@ export class MediaService {
       projectId: input.projectId,
       bytes,
       label: image.label,
-      personId: image.personId
+      personId: image.personId,
+      setId: image.setId
     })
   }
 
@@ -313,10 +315,7 @@ export class MediaService {
     const newRoot = absoluteInLibrary(this.deps.libraryPath(), path.posix.join('projects', newProject.id))
     const oldRoot = absoluteInLibrary(this.deps.libraryPath(), path.posix.join('projects', project.id))
     await fs.mkdir(newRoot, { recursive: true })
-    const entries = await fs.readdir(oldRoot, { withFileTypes: true }).catch((error: NodeJS.ErrnoException) => {
-      if (error.code === 'ENOENT') return []
-      throw error
-    })
+    const entries = await fs.readdir(oldRoot, { withFileTypes: true })
     for (const entry of entries) {
       if (entry.name === 'exports') continue
       const source = path.join(oldRoot, entry.name)
@@ -352,10 +351,10 @@ export class MediaService {
         format: image.format,
         prompt: image.prompt,
         userText: image.userText,
-        shotId: image.shotId,
         revisedPrompt: image.revisedPrompt,
         templateId: image.templateId,
         personId: image.personId,
+        setId: image.setId,
         label: image.label,
         parentId: parent,
         rootId: root,
@@ -363,17 +362,6 @@ export class MediaService {
         badge: image.badge,
         isOriginal: image.isOriginal,
         costCents: 0
-      })
-    }
-    const oldPack = this.deps.packs.get(project.id)
-    if (oldPack) {
-      this.deps.packs.save(newProject.id, {
-        ...oldPack,
-        shots: oldPack.shots.map((shot) => ({
-          ...shot,
-          selectedImageId: shot.selectedImageId ? idMap.get(shot.selectedImageId) ?? null : null
-        })),
-        sceneImageId: oldPack.sceneImageId ? idMap.get(oldPack.sceneImageId) ?? oldPack.sceneImageId : null
       })
     }
     const newCover = detail.coverImageId ? idMap.get(detail.coverImageId) ?? null : null

@@ -5,6 +5,8 @@ import { Onboarding } from './screens/Onboarding'
 import { Library } from './screens/Library'
 import { People } from './screens/People'
 import { Products } from './screens/Products'
+import { Sets } from './screens/Sets'
+import { SetDetail } from './screens/SetDetail'
 import { ProductDetail } from './screens/ProductDetail'
 import { Usage } from './screens/Usage'
 import { Settings } from './screens/Settings'
@@ -18,6 +20,8 @@ const children = [
   { path: 'library', element: <Library /> },
   { path: 'people', element: <People /> },
   { path: 'products', element: <Products /> },
+  { path: 'sets', element: <Sets /> },
+  { path: 'sets/:id', element: <SetDetail /> },
   { path: 'product/:id', element: <ProductDetail /> },
   { path: 'usage', element: <Usage /> },
   { path: 'settings', element: <Navigate to="/settings/studio" replace /> },

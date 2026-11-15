@@ -518,6 +518,105 @@ const migrations: Migration[] = [
       `)
     }
   },
+  {
+    version: 12,
+    up(db) {
+      const hasTable = (name: string): boolean =>
+        Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(name))
+      const hasColumn = (table: string, column: string): boolean =>
+        (db.pragma(`table_info(${table})`) as Array<{ name: string }>).some((row) => row.name === column)
+
+      if (hasTable('packs')) db.exec('DROP TABLE packs')
+      if (hasColumn('images', 'shot_id')) {
+        db.exec("DELETE FROM images WHERE status = 'pending' AND shot_id IS NOT NULL")
+        db.exec('DROP INDEX IF EXISTS idx_images_shot')
+        db.exec('ALTER TABLE images DROP COLUMN shot_id')
+      }
+      db.exec("DELETE FROM jobs WHERE kind = 'pack'")
+      db.exec("UPDATE projects SET type = 'image' WHERE type = 'pack'")
+      db.exec("UPDATE usage_events SET action = 'create' WHERE action = 'pack'")
+
+      db.exec(`
+        CREATE TABLE projects_v12 (
+          id TEXT PRIMARY KEY,
+          type TEXT NOT NULL CHECK (type IN ('photo','image')),
+          name TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          last_opened_at INTEGER,
+          archived_at INTEGER,
+          cover_image_id TEXT,
+          source_image_id TEXT,
+          product_id TEXT REFERENCES products(id) ON DELETE SET NULL,
+          draft INTEGER NOT NULL DEFAULT 0,
+          shape TEXT NOT NULL DEFAULT 'square',
+          format TEXT NOT NULL DEFAULT 'webp',
+          person_look TEXT
+        );
+        INSERT INTO projects_v12
+          (id, type, name, created_at, updated_at, last_opened_at, archived_at, cover_image_id, source_image_id, product_id, draft, shape, format, person_look)
+        SELECT id, type, name, created_at, updated_at, last_opened_at, archived_at, cover_image_id, source_image_id, product_id, draft, shape, format, person_look
+        FROM projects;
+        DROP TABLE projects;
+        ALTER TABLE projects_v12 RENAME TO projects;
+        CREATE INDEX IF NOT EXISTS idx_projects_product ON projects(product_id);
+
+        CREATE TABLE jobs_v12 (
+          id TEXT PRIMARY KEY,
+          project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+          kind TEXT NOT NULL CHECK (kind IN ('create','edit')),
+          total INTEGER NOT NULL,
+          done INTEGER NOT NULL DEFAULT 0,
+          failed INTEGER NOT NULL DEFAULT 0,
+          status TEXT NOT NULL CHECK (status IN ('running','done','failed','interrupted','cancelled')),
+          started_at INTEGER NOT NULL,
+          finished_at INTEGER,
+          snapshot TEXT
+        );
+        INSERT INTO jobs_v12
+          (id, project_id, kind, total, done, failed, status, started_at, finished_at, snapshot)
+        SELECT id, project_id, kind, total, done, failed, status, started_at, finished_at, snapshot
+        FROM jobs;
+        DROP TABLE jobs;
+        ALTER TABLE jobs_v12 RENAME TO jobs;
+
+        CREATE TABLE usage_events_v12 (
+          id TEXT PRIMARY KEY,
+          at INTEGER NOT NULL,
+          project_id TEXT,
+          project_name TEXT,
+          image_id TEXT,
+          action TEXT NOT NULL CHECK (action IN ('create','edit','adjust','set','listing','analyze','cutout')),
+          requested_n INTEGER NOT NULL DEFAULT 0,
+          returned_n INTEGER NOT NULL DEFAULT 0,
+          cost_cents INTEGER NOT NULL DEFAULT 0,
+          cost_micros INTEGER NOT NULL DEFAULT 0,
+          duration_ms INTEGER,
+          result TEXT NOT NULL CHECK (result IN ('ok','failed')),
+          error_code TEXT,
+          request_id TEXT
+        );
+        INSERT INTO usage_events_v12
+          (id, at, project_id, project_name, image_id, action, requested_n, returned_n, cost_cents, cost_micros, duration_ms, result, error_code, request_id)
+        SELECT id, at, project_id, project_name, image_id, action, requested_n, returned_n, cost_cents, cost_micros, duration_ms, result, error_code, request_id
+        FROM usage_events;
+        DROP TABLE usage_events;
+        ALTER TABLE usage_events_v12 RENAME TO usage_events;
+        CREATE INDEX IF NOT EXISTS idx_usage_at ON usage_events(at);
+
+        CREATE TABLE sets (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+        ALTER TABLE images ADD COLUMN set_id TEXT REFERENCES sets(id) ON DELETE SET NULL;
+        CREATE INDEX IF NOT EXISTS idx_images_set ON images(set_id, deleted_at, status, created_at);
+
+        INSERT OR REPLACE INTO meta (key, value) VALUES ('schemaVersion', '12');
+      `)
+    }
+  },
 ]
 
 export const SCHEMA_VERSION = migrations[migrations.length - 1]!.version

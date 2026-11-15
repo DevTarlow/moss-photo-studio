@@ -1,4 +1,4 @@
-> Current scope note: the set plan, listing writer/kit, Business profile, and text-model paths described below were removed in the photo-studio refactor. Image Packs were then added as a universal, prompt-template workflow. This file remains as the historical delivery record.
+> Current scope note: the set plan, listing writer/kit, Business profile, and text-model paths described below were removed in the photo-studio refactor. Lightweight Sets were later added as image organization only. This file remains as the historical delivery record.
 
 # Milestones
 

@@ -9,7 +9,6 @@ import { Logger } from '@main/logger'
 import { ProjectRepository } from '@main/db/repositories/projects'
 import { ImageRepository } from '@main/db/repositories/images'
 import { BrandRepository } from '@main/db/repositories/brand'
-import { PackRepository } from '@main/db/repositories/packs'
 import { PeopleRepository } from '@main/db/repositories/people'
 import { ProductRepository } from '@main/db/repositories/products'
 import { MediaService } from '@main/media/service'
@@ -32,10 +31,9 @@ beforeEach(() => {
   projects = new ProjectRepository(db)
   images = new ImageRepository(db)
   const brand = new BrandRepository(db)
-  const packs = new PackRepository(db)
   const people = new PeopleRepository(db)
   products = new ProductRepository(db)
-  media = new MediaService({ projects, images, people, brand, packs, libraryPath, logger })
+  media = new MediaService({ projects, images, people, brand, libraryPath, logger })
   productService = new ProductService({
     products,
     images,
