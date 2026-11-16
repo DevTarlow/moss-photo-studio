@@ -106,7 +106,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const [rightSheet, setRightSheet] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
   const leftPanelWidth = usePanelWidth('moss.workspace.photo.left', 300)
-  const rightPanelWidth = usePanelWidth('moss.workspace.photo.right', 300, 260, 360)
+  const rightPanelWidth = usePanelWidth('moss.workspace.photo.right', 300, 260, 360, 'right')
   useEffect(() => {
     if (!leftHidden) setLeftSheet(false)
     if (!rightHidden) setRightSheet(false)

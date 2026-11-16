@@ -121,7 +121,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const [rightCollapsed, setRightCollapsed] = useState(false)
   const [outputOpen, setOutputOpen] = useState(false)
   const leftPanelWidth = usePanelWidth('moss.workspace.create.left', 300)
-  const rightPanelWidth = usePanelWidth('moss.workspace.create.right', 300, 260, 360)
+  const rightPanelWidth = usePanelWidth('moss.workspace.create.right', 300, 260, 360, 'right')
   useEffect(() => {
     if (!leftHidden) setLeftSheet(false)
     if (!rightHidden) setRightSheet(false)

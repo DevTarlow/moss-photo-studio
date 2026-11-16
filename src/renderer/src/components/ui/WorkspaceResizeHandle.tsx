@@ -20,7 +20,8 @@ export function usePanelWidth(
   key: string,
   initial = 300,
   min = MIN_WIDTH,
-  max = MAX_WIDTH
+  max = MAX_WIDTH,
+  side: 'left' | 'right' = 'left'
 ): {
   width: number
   onPointerDown: (event: React.PointerEvent<HTMLElement>) => void
@@ -42,7 +43,8 @@ export function usePanelWidth(
     const startX = event.clientX
     const startWidth = width
     const move = (moveEvent: PointerEvent): void => {
-      setWidth(clamp(startWidth + moveEvent.clientX - startX, min, max))
+      const delta = moveEvent.clientX - startX
+      setWidth(clamp(startWidth + (side === 'right' ? -delta : delta), min, max))
     }
     const up = (): void => {
       window.removeEventListener('pointermove', move)
@@ -50,16 +52,17 @@ export function usePanelWidth(
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
-  }, [width, min, max])
+  }, [width, min, max, side])
 
   const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLElement>): void => {
     const step = event.shiftKey ? 40 : 12
+    const direction = side === 'right' ? -1 : 1
     if (event.key === 'ArrowLeft') {
       event.preventDefault()
-      setWidth((current) => clamp(current - step, min, max))
+      setWidth((current) => clamp(current - step * direction, min, max))
     } else if (event.key === 'ArrowRight') {
       event.preventDefault()
-      setWidth((current) => clamp(current + step, min, max))
+      setWidth((current) => clamp(current + step * direction, min, max))
     } else if (event.key === 'Home') {
       event.preventDefault()
       setWidth(min)
@@ -67,7 +70,7 @@ export function usePanelWidth(
       event.preventDefault()
       setWidth(max)
     }
-  }, [min, max])
+  }, [min, max, side])
 
   const reset = useCallback((): void => setWidth(initial), [initial])
 
