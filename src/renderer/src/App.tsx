@@ -21,6 +21,7 @@ import { CommandPalette } from './components/ui/CommandPalette'
 import { ShortcutsSheet } from './components/ui/ShortcutsSheet'
 import { GuideDialog } from './components/ui/GuideDialog'
 import { MetaKeyDialog } from './components/ui/MetaKeyDialog'
+import { BudgetLimitDialog } from './components/ui/BudgetLimitDialog'
 import { SaveToSetDialog } from './components/sets/SaveToSetDialog'
 
 const TWELVE_HOURS = 12 * 60 * 60 * 1000
@@ -260,6 +261,8 @@ export function RootLayout(): React.JSX.Element {
   const setGuide = useUiStore((state) => state.setGuide)
   const metaKeyOpen = useUiStore((state) => state.metaKeyOpen)
   const setMetaKeyOpen = useUiStore((state) => state.setMetaKeyOpen)
+  const budgetOpen = useUiStore((state) => state.budgetOpen)
+  const setBudgetOpen = useUiStore((state) => state.setBudgetOpen)
   const jobsRevision = useJobsStore((state) => state.revision)
   const projectName = useWorkspaceStore((state) => state.project?.name ?? null)
   const navigate = useNavigate()
@@ -510,6 +513,7 @@ export function RootLayout(): React.JSX.Element {
       <ShortcutsSheet />
       <GuideDialog />
       <MetaKeyDialog open={metaKeyOpen} onOpenChange={setMetaKeyOpen} />
+      <BudgetLimitDialog open={budgetOpen} onOpenChange={setBudgetOpen} />
       <SaveToSetDialog />
       <ToastViewport />
       {dragOver && (

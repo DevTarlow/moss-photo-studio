@@ -65,6 +65,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const canGenerate = useAppStore((state) => state.canGenerate)
   const refreshSettings = useAppStore((state) => state.refreshSettings)
   const setMetaKeyOpen = useUiStore((state) => state.setMetaKeyOpen)
+  const setBudgetOpen = useUiStore((state) => state.setBudgetOpen)
   const jobs = useJobsStore((state) => state.jobs)
   const upsert = useJobsStore((state) => state.upsert)
   const confirm = useConfirm()
@@ -874,7 +875,7 @@ export function PhotoWorkspace(): React.JSX.Element {
               {applyBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Apply Adjustment · Free
             </Button>
           ) : overBudget ? (
-            <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => navigate('/usage')} />
+            <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => setBudgetOpen(true)} />
           ) : !secrets?.hasKey ? (
             <Button variant="primary" onClick={() => setMetaKeyOpen(true)}>
               Connect Meta to Make Images

@@ -5,6 +5,8 @@ import { Banner, Icon, MoreMenu } from '@astryxdesign/core'
 import { Check, ChevronDown, Download, Image as ImageIcon, Loader2, Mountain, Package, Pencil, Sparkles, UserPlus, UserRound, X } from 'lucide-react'
 import type { Format, Image, JobState, Project, Shape } from '@shared/types'
 import { MAX_PROMPT } from '@shared/constants'
+import { isBundledProduct } from '@shared/products'
+import { shapeLabel } from '@shared/shapes'
 import { composeCreatePrompt } from '@shared/prompts/guards'
 import { CREATE_PERSON_PROMPT, CREATE_PRODUCT_PROMPT, EXAMPLE_SCENES, exampleTextFor, startersByCategory } from '@shared/starters'
 import type { ExampleScene, Starter } from '@shared/starters'
@@ -61,6 +63,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const canGenerate = useAppStore((state) => state.canGenerate)
   const refreshSettings = useAppStore((state) => state.refreshSettings)
   const setMetaKeyOpen = useUiStore((state) => state.setMetaKeyOpen)
+  const setBudgetOpen = useUiStore((state) => state.setBudgetOpen)
   const jobs = useJobsStore((state) => state.jobs)
   const upsert = useJobsStore((state) => state.upsert)
   const navigate = useNavigate()
@@ -106,6 +109,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const [leftSheet, setLeftSheet] = useState(false)
   const [rightSheet, setRightSheet] = useState(false)
   const [rightCollapsed, setRightCollapsed] = useState(false)
+  const [outputOpen, setOutputOpen] = useState(false)
   const leftPanelWidth = usePanelWidth('moss.workspace.create.left', 300)
   const rightPanelWidth = usePanelWidth('moss.workspace.create.right', 300, 260, 360)
   useEffect(() => {
@@ -157,6 +161,8 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
     })
     .sort((a, b) => b.createdAt - a.createdAt || b.seq - a.seq)
   const examplesVisible = results.length === 0 && !isRunning
+  const lastDescription = results.find((image) => image.userText?.trim())?.userText ?? null
+  const hasHistory = runs.length > 0 || isRunning
   const overBudget = (settings?.budgetCents ?? null) !== null && monthCents + estimateCents(requestedCount) > (settings?.budgetCents ?? 0)
   const promptTooLongForReference = hasReference && composedPrompt.length > MAX_PROMPT
   const canSubmit = Boolean(prompt.trim()) && composedPrompt.length <= MAX_PROMPT && Boolean(secrets?.hasKey) && canGenerate
@@ -430,16 +436,44 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
     }
   }
 
+  const useStarterProduct = async (choice: Extract<SourceChoice, { kind: 'product' }>): Promise<void> => {
+    try {
+      const existing = images.find(
+        (image) => image.projectId === project.id && !image.personId && image.label === choice.name
+      )
+      if (existing) {
+        setProductRef({ kind: 'image', imageId: existing.id, label: existing.label, thumbUrl: existing.thumbUrl })
+        setExampleUsesProduct(true)
+        syncExampleText(true, true)
+        return
+      }
+      const imported = await unwrap(window.moss.products.importIntoProject({ productId: choice.productId, projectId: project.id }))
+      if (!imported?.imageId) throw new Error('The starter product could not be added.')
+      await useWorkspaceStore.getState().refresh()
+      const added = useWorkspaceStore.getState().images.find((image) => image.id === imported.imageId)
+      if (!added) throw new Error('The starter product could not be added.')
+      setProductRef({ kind: 'image', imageId: added.id, label: added.label, thumbUrl: added.thumbUrl })
+      setExampleUsesProduct(true)
+      syncExampleText(true, true)
+    } catch (caught) {
+      setProductRef(null)
+      setExampleUsesProduct(false)
+      toast.error(messageOf(caught))
+    }
+  }
+
   const chooseProductRef = (choice: SourceChoice): void => {
     setProductRef(choice)
     setExampleUsesProduct(true)
     setPendingApply(null)
     syncExampleText(true, true)
-    if (choice.kind !== 'image') return
+    if (choice.kind === 'product') {
+      if (isBundledProduct(choice.productId)) void useStarterProduct(choice)
+      return
+    }
     const image = images.find((entry) => entry.id === choice.imageId)
     if (!image || image.projectId !== project.id || image.personId) return
-    // Keep the project source in step with a reference chosen from this project,
-    // matching the old reference picker. External sources are not copied.
+    // Keep the project source in step with a photo chosen from this project.
     void window.moss.images.setSource({ projectId: project.id, imageId: image.id })
       .then(() => useWorkspaceStore.getState().refresh())
       .catch(() => undefined)
@@ -471,6 +505,24 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         <p className="section-label">Describe the image</p>
         {prompt && <button type="button" className="text-[11px]" style={{ color: 'var(--text-faint)' }} onClick={() => { setPrompt(''); setPromptSource('user'); setLoadedExample(null); setPendingApply(null) }}>Clear</button>}
       </div>
+      {!prompt.trim() && lastDescription && (
+        <button
+          type="button"
+          className="mt-2 inline-flex items-center gap-1.5 rounded-[8px] border px-2 py-1 text-[11px] font-medium"
+          style={{ borderColor: 'var(--border)', color: 'var(--accent)' }}
+          title={lastDescription}
+          onClick={() => {
+            setPrompt(lastDescription)
+            setPromptSource('user')
+            setLoadedExample(null)
+            setPendingApply(null)
+            setError(null)
+            window.setTimeout(() => textareaRef.current?.focus(), 0)
+          }}
+        >
+          <Icon icon={Sparkles} size="xsm" /> Use Last Description
+        </button>
+      )}
       <div className="mt-2">
         <TextareaCounter
           ref={textareaRef}
@@ -656,7 +708,21 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         <p className="hint mt-2">You can add a product, a person, and a scene. With any of them, Moss makes one image at a time.</p>
       )}
 
-      <div className="mt-5 space-y-4 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
+      <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-2"
+          aria-expanded={outputOpen}
+          onClick={() => setOutputOpen((value) => !value)}
+        >
+          <span className="field-label mb-0">Output Settings</span>
+          <span className="meta flex items-center gap-1.5">
+            {requestedCount} {requestedCount === 1 ? 'image' : 'images'} · {shapeLabel(shape)} · {format === 'webp' ? 'WebP' : format.toUpperCase()}
+            <Icon icon={ChevronDown} size="xsm" style={{ transform: outputOpen ? 'rotate(180deg)' : undefined }} />
+          </span>
+        </button>
+        {outputOpen && (
+        <div className="mt-4 space-y-4">
         <div>
           <p className="field-label">How many</p>
           <Segmented
@@ -687,7 +753,9 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
             <option value="png">PNG</option>
           </select>
         </div>
-        <p className="hint">The shape sets the frame, not the pixel size. Meta returns its own resolution.</p>
+        <p className="hint">Shape sets the frame. Meta chooses the pixel size.</p>
+        </div>
+        )}
       </div>
     </div>
   )
@@ -737,7 +805,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
           <div className="flex items-center gap-2 border-b px-4" style={{ height: 44, borderColor: 'var(--border)', background: 'var(--bg)' }}>
             <p className="min-w-0 flex-1 truncate text-[12px] font-medium">{runFilter ? `History · ${formatDate(runFilter.startedAt, true)}` : 'Image Generator'}</p>
             {leftHidden && <Button variant="ghost" size="sm" onClick={() => setLeftSheet(true)}>Describe</Button>}
-            {(rightHidden || rightCollapsed) && <Button variant="ghost" size="sm" onClick={() => { if (rightHidden) setRightSheet(true); else setRightCollapsed(false) }}>History</Button>}
+            {hasHistory && (rightHidden || rightCollapsed) && <Button variant="ghost" size="sm" onClick={() => { if (rightHidden) setRightSheet(true); else setRightCollapsed(false) }}>History</Button>}
             {isRunning && job && <span className="badge" data-tone="success">Making</span>}
           </div>
           <div className="scroll-area flex-1 p-5">
@@ -891,7 +959,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
             )}
           </div>
         </section>
-        {!rightHidden && !rightCollapsed && (
+        {hasHistory && !rightHidden && !rightCollapsed && (
           <>
             <WorkspaceResizeHandle label="Resize runs panel" side="right" width={rightPanelWidth.width} min={260} max={360} onPointerDown={rightPanelWidth.onPointerDown} onKeyDown={rightPanelWidth.onKeyDown} onReset={rightPanelWidth.reset} />
             <aside className="ws-right" style={{ width: rightPanelWidth.width, minWidth: rightPanelWidth.width }}>{rightPanel}</aside>
@@ -908,7 +976,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         </button>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {overBudget ? (
-            <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => navigate('/usage')} onFewer={requestedCount > 1 ? () => setCount((current) => Math.max(1, current - 1)) : undefined} />
+            <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => setBudgetOpen(true)} onFewer={requestedCount > 1 ? () => setCount((current) => Math.max(1, current - 1)) : undefined} />
           ) : !secrets?.hasKey ? (
             <Button variant="primary" onClick={() => setMetaKeyOpen(true)}>
               Connect Meta to Make Images

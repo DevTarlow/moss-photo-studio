@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Loader2, Package, Plus, Search } from 'lucide-react'
 import { Icon } from '@astryxdesign/core'
 import type { LibraryImage } from '@shared/types'
+import { bundledProductCards } from '@shared/products'
 import { Dialog } from '../ui/Dialog'
 import { Button } from '../ui/Button'
 import { Pagination } from '../ui/Pagination'
@@ -35,6 +36,7 @@ export function SourcePickerDialog({
 }): React.JSX.Element {
   const products = useAppStore((state) => state.products)
   const refreshProducts = useAppStore((state) => state.refreshProducts)
+  const starterProducts = bundledProductCards()
   const [tab, setTab] = useState<'products' | 'library'>(libraryOnly ? 'library' : 'products')
   const [search, setSearch] = useState('')
   const [items, setItems] = useState<LibraryImage[]>([])
@@ -87,12 +89,16 @@ export function SourcePickerDialog({
     return () => window.clearTimeout(timer)
   }, [open, tab, search])
 
-  useEffect(() => {
-    const pages = Math.max(1, Math.ceil(products.length / COLLECTION_PAGE_SIZE))
-    if (productPage > pages) setProductPage(pages)
-  }, [products.length, productPage])
+  const needle = search.trim().toLowerCase()
+  const filteredProducts = products.filter((product) => !needle || product.name.toLowerCase().includes(needle))
+  const filteredStarters = starterProducts.filter((product) => !needle || product.name.toLowerCase().includes(needle))
 
-  const visibleProducts = products.slice(
+  useEffect(() => {
+    const pages = Math.max(1, Math.ceil(filteredProducts.length / COLLECTION_PAGE_SIZE))
+    if (productPage > pages) setProductPage(pages)
+  }, [filteredProducts.length, productPage])
+
+  const visibleProducts = filteredProducts.slice(
     (productPage - 1) * COLLECTION_PAGE_SIZE,
     productPage * COLLECTION_PAGE_SIZE
   )
@@ -148,58 +154,89 @@ export function SourcePickerDialog({
             ]}
           />
         )}
-        {tab === 'library' && (
-          <div className="relative min-w-[200px] flex-1">
-            <Icon icon={Search} size="sm" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-faint)' }} aria-hidden />
-            <input
-              className="field search-field h-8 text-[12px]"
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search projects and images"
-              aria-label="Search library images"
-            />
-          </div>
-        )}
+        <div className="relative min-w-[200px] flex-1">
+          <Icon icon={Search} size="sm" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-faint)' }} aria-hidden />
+          <input
+            className="field search-field h-8 text-[12px]"
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={tab === 'products' ? 'Search products' : 'Search projects and images'}
+            aria-label={tab === 'products' ? 'Search products' : 'Search library images'}
+          />
+        </div>
       </div>
 
       <div className="mt-4 max-h-[52vh] overflow-y-auto">
         {tab === 'products' ? (
-          products.length === 0 ? (
-            <div className="flex flex-col items-center py-10 text-center">
-              <Icon icon={Package} size="lg" style={{ color: 'var(--text-faint)' }} />
-              <p className="mt-2 text-[13px] font-semibold">No saved products yet</p>
-              <p className="meta mt-1 max-w-[320px]">Save a product photo from an image, or add one from a file.</p>
-              <Button variant="secondary" size="sm" className="mt-3" disabled={addingProduct} onClick={() => void addProduct()}>
-                {addingProduct ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Plus} size="sm" />} Add a Product
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {visibleProducts.map((product) => (
-                <button
-                  key={product.id}
-                  type="button"
-                  className="card card-hover overflow-hidden text-left"
-                  aria-label={`Use ${product.name}`}
-                  onClick={() => choose({ kind: 'product', productId: product.id, name: product.name, thumbUrl: product.thumbUrl })}
-                >
-                  <img src={product.thumbUrl} alt="" className="aspect-[4/3] w-full object-cover" style={{ background: 'var(--surface-2)' }} />
-                  <span className="block p-2">
-                    <span className="block truncate text-[12px] font-medium">{product.name}</span>
-                    <span className="meta">Saved product</span>
-                  </span>
-                </button>
-              ))}
-              <Pagination
-                page={productPage}
-                total={products.length}
-                onPage={setProductPage}
-                className="col-span-2 sm:col-span-3"
-                label="Product source pages"
-              />
-            </div>
-          )
+          <div className="space-y-5">
+            {filteredProducts.length === 0 ? (
+              !needle ? (
+                <div className="rounded-[8px] border p-4 text-center" style={{ borderColor: 'var(--border)' }}>
+                  <Icon icon={Package} size="lg" style={{ color: 'var(--text-faint)' }} />
+                  <p className="mt-2 text-[13px] font-semibold">No saved products yet</p>
+                  <p className="meta mt-1 max-w-[320px] mx-auto">Save a product photo from an image, or add one from a file.</p>
+                  <Button variant="secondary" size="sm" className="mt-3" disabled={addingProduct} onClick={() => void addProduct()}>
+                    {addingProduct ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Plus} size="sm" />} Add a Product
+                  </Button>
+                </div>
+              ) : null
+            ) : (
+              <div>
+                <p className="section-label">Your Products</p>
+                <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {visibleProducts.map((product) => (
+                    <button
+                      key={product.id}
+                      type="button"
+                      className="card card-hover overflow-hidden text-left"
+                      aria-label={`Use ${product.name}`}
+                      onClick={() => choose({ kind: 'product', productId: product.id, name: product.name, thumbUrl: product.thumbUrl })}
+                    >
+                      <img src={product.thumbUrl} alt="" className="aspect-[4/3] w-full object-cover" style={{ background: 'var(--surface-2)' }} />
+                      <span className="block p-2">
+                        <span className="block truncate text-[12px] font-medium">{product.name}</span>
+                        <span className="meta">Saved product</span>
+                      </span>
+                    </button>
+                  ))}
+                  <Pagination
+                    page={productPage}
+                    total={filteredProducts.length}
+                    onPage={setProductPage}
+                    className="col-span-2 sm:col-span-3"
+                    label="Product source pages"
+                  />
+                </div>
+              </div>
+            )}
+            {filteredStarters.length > 0 && (
+              <div>
+                <p className="section-label">Starter Products</p>
+                <p className="meta mt-1">Use one as the product in this project. It is added to the project as a photo.</p>
+                <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {filteredStarters.map((product) => (
+                    <button
+                      key={product.id}
+                      type="button"
+                      className="card card-hover overflow-hidden text-left"
+                      aria-label={`Use starter ${product.name}`}
+                      onClick={() => choose({ kind: 'product', productId: product.id, name: product.name, thumbUrl: product.thumbUrl })}
+                    >
+                      <img src={product.thumbUrl} alt="" className="aspect-[4/3] w-full object-cover" style={{ background: 'var(--surface-2)' }} />
+                      <span className="block p-2">
+                        <span className="block truncate text-[12px] font-medium">{product.name}</span>
+                        <span className="meta">Starter product</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {filteredProducts.length === 0 && filteredStarters.length === 0 && (
+              <p className="meta text-center">Nothing matches that. Try a different word.</p>
+            )}
+          </div>
         ) : loading ? (
           <div className="flex items-center justify-center py-12">
             <Icon icon={Loader2} size="md" className="animate-spin" style={{ color: 'var(--text-faint)' }} />

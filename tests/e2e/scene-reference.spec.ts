@@ -59,7 +59,7 @@ test('a scene reference is sent as the second image and never as the product', a
     await expect(page.getByText('Scene Product', { exact: true })).toBeVisible()
 
     await page.getByRole('button', { name: 'Choose a Scene' }).click()
-    const dialog = page.getByRole('dialog', { name: 'Choose a Scene Reference' })
+    const dialog = page.getByRole('dialog', { name: 'Choose a Scene' })
     await expect(dialog).toBeVisible()
     await dialog.getByRole('button', { name: /Use .* from Windowsill/ }).click()
     await expect(page.getByText('The setting and light are borrowed; its subject is not.')).toBeVisible()

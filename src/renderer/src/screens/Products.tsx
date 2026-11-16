@@ -14,6 +14,7 @@ import { Pagination } from '../components/ui/Pagination'
 import { SetupBanner } from '../components/ui/SetupBanner'
 import { useConfirm } from '../components/ui/ConfirmProvider'
 import { ProductCard } from '../components/products/ProductCard'
+import { AddProductDialog } from '../components/products/AddProductDialog'
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
 import { formatDate } from '../lib/format'
@@ -35,6 +36,7 @@ export function Products(): React.JSX.Element {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'recent' | 'oldest' | 'name'>('recent')
   const [preview, setPreview] = useState<Product | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
   const [renaming, setRenaming] = useState<Product | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [unfiled, setUnfiled] = useState<Project[]>([])
@@ -89,21 +91,6 @@ export function Products(): React.JSX.Element {
     (page - 1) * COLLECTION_PAGE_SIZE,
     page * COLLECTION_PAGE_SIZE
   )
-
-  const addProduct = async (): Promise<void> => {
-    setBusy(true)
-    try {
-      const product = await unwrap(window.moss.dialogs.pickProduct())
-      if (product) {
-        await refreshProducts()
-        toast.status('Product added.')
-      }
-    } catch (caught) {
-      toast.error(messageOf(caught))
-    } finally {
-      setBusy(false)
-    }
-  }
 
   const createProduct = async (): Promise<void> => {
     setCreatingProduct(true)
@@ -214,7 +201,7 @@ export function Products(): React.JSX.Element {
               <Button variant="secondary" disabled={creatingProduct} onClick={() => void createProduct()}>
                 <Icon icon={Sparkles} size="sm" /> Generate Product Photo
               </Button>
-              <Button variant="primary" onClick={() => void addProduct()} disabled={busy}>
+              <Button variant="primary" onClick={() => setAddOpen(true)}>
                 {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Plus} size="sm" />} Add Product Photo
               </Button>
             </div>
@@ -280,7 +267,7 @@ export function Products(): React.JSX.Element {
                         icon={<Icon icon={Package} size="lg" />}
                         title="No saved products yet"
                         line="Save a product photo from an image, or add one from a file."
-                        action={<Button variant="secondary" onClick={() => void addProduct()}>Add Product Photo</Button>}
+                        action={<Button variant="secondary" onClick={() => setAddOpen(true)}>Add Product Photo</Button>}
                         compact
                       />
                     </div>
@@ -412,6 +399,8 @@ export function Products(): React.JSX.Element {
           </>
         )}
       </Dialog>
+
+      <AddProductDialog open={addOpen} onOpenChange={setAddOpen} />
 
       <Dialog
         open={Boolean(renaming)}
