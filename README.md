@@ -24,7 +24,7 @@ Generated images can be saved to a Set, as a product, or as a person. A product 
 
 A Set is a simple collection of images, made for keeping related work together. Open any generated image, edited version, or saved product and choose **Add to Set**. Pick an existing Set or name a new one. An image or product photo belongs to one Set at a time, and removing it from the Set never deletes the image or its project.
 
-The **Sets** page shows every image and product photo in one place. Open a Set and choose **Add to Set** to bring in a saved product or a ready image. From any item there, choose **Edit Photo** or **Make an Image with This Photo** to start a new project with that photo as the source. The imported source and the images made from it stay in the Set automatically, so the Set grows with the work. You can still move individual images or remove them later.
+The **Sets** page shows every image and product photo in one place. Open a Set and choose **Add to Set** to bring in a saved product or a ready image. From any item there, choose **Edit Photo** or **Make an Image with this Photo** to start a new project with that photo as the source. The imported source and the images made from it stay in the Set automatically, so the Set grows with the work. You can still move individual images or remove them later.
 
 Sets also appear in **All work** under their own section. Choose the **Sets** filter to see only Sets. When a product belongs to a Set, its page shows the Set name and links back to it.
 

@@ -116,10 +116,10 @@ test('a Set keeps images together and starts new work from them', async () => {
     await screenshot(page, 'sets')
     await setCard.click()
     await expect(page.getByRole('heading', { name: 'Spring collection', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Make an Image with This Photo', exact: true })).toHaveCount(1)
+    await expect(page.getByRole('button', { name: 'Make an Image with this Photo', exact: true })).toHaveCount(1)
     await screenshot(page, 'set-detail')
 
-    await page.getByRole('button', { name: 'Make an Image with This Photo', exact: true }).click()
+    await page.getByRole('button', { name: 'Make an Image with this Photo', exact: true }).click()
     await expect(page.getByText('Image Generator', { exact: true }).first()).toBeVisible({ timeout: 20_000 })
     await page.locator('textarea').first().fill('The same ceramic mug on a pale linen table with window light')
     await page.getByRole('button', { name: /Make 1 Image · \$0\.01/ }).click()

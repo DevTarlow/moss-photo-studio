@@ -61,7 +61,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 - Add any ready generated image, edited version, or saved product with Add to Set. Create a new Set from the same dialog. Open a Set and use Add to Set to bring in a product or image; Done closes the picker.
 - Sets lists each Set with its cover and count. Set detail shows member images and product photos, an Add to Set action, and a contextual back route that returns to the Set. Removing one leaves the image or product in place.
-- From a Set image or product source, Edit Photo opens a new photo project and Make an Image with This Photo / This Product opens a new generator project. The imported source and all resulting images stay in the Set automatically.
+- From a Set image or product source, Edit Photo opens a new photo project and Make an Image with this Photo or this Product opens a new generator project. The imported source and all resulting images stay in the Set automatically.
 - Export Set creates a unique folder with numbered ready images and product sources, with no manifest. Open Folder opens the remembered Set export folder.
 - Delete a Set only removes the organization; images and projects remain.
 - An existing v11 pack library upgrades to v12 with its ready images preserved as ordinary image projects; old pack plans, pending rows, and pack jobs are removed.
