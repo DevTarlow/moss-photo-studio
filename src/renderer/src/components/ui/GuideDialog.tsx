@@ -2,6 +2,7 @@ import { Dialog } from './Dialog'
 import { useUiStore } from '../../store/ui'
 import { Button } from './Button'
 import { useNavigate } from 'react-router-dom'
+import { usd } from '@shared/cost'
 
 export function GuideDialog(): React.JSX.Element {
   const open = useUiStore((state) => state.guideOpen)
@@ -13,7 +14,7 @@ export function GuideDialog(): React.JSX.Element {
     ['Image Generator', 'Describe a picture. Add a product, person, or scene to keep it consistent.'],
     ['Sets', 'Add related images to a Set, start something new from any image in it, or export the whole Set.'],
     ['Find anything', 'Press Ctrl K. Drag a photo anywhere in the app to start.'],
-    ['Know the cost', 'The price is on the button. Meta charges $0.01 for every image that comes back.']
+    ['Know the cost', `The price is on the button. Meta charges ${usd(1)} for every image that comes back.`]
   ]
   return (
     <Dialog open={open} onOpenChange={setOpen} title="A short guide" width={520} footer={

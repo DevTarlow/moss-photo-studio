@@ -267,7 +267,7 @@ export function Products(): React.JSX.Element {
                         icon={<Icon icon={Package} size="lg" />}
                         title="No saved products yet"
                         line="Save a product photo from an image, or add one from a file."
-                        action={<Button variant="secondary" onClick={() => setAddOpen(true)}>Add Product Photo</Button>}
+                        action={<Button variant="secondary" onClick={() => setAddOpen(true)}>Add a Product Photo</Button>}
                         compact
                       />
                     </div>

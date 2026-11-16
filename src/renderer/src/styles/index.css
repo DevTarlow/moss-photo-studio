@@ -412,6 +412,11 @@ html[data-motion='reduce'] .skeleton { background: var(--surface-2); }
 
 /* Density affects row heights only. */
 html[data-density='compact'] .lib-list-row { height: 44px; }
+
+/* At 150% zoom the project title needs the room; the workspace header still names the type. */
+@media (max-width: 839px) {
+  .project-type-badge { display: none; }
+}
 html[data-density='compact'] .rail-item { height: 30px; }
 html[data-density='compact'] .settings-row { padding-top: 6px; padding-bottom: 6px; }
 
@@ -420,6 +425,11 @@ html[data-density='compact'] .settings-row { padding-top: 6px; padding-bottom: 6
   .app-topbar { gap: 8px; padding-right: 8px; }
 }
 html[data-density='compact'] .lib-list-row { height: 44px; }
+
+/* At 150% zoom the project title needs the room; the workspace header still names the type. */
+@media (max-width: 839px) {
+  .project-type-badge { display: none; }
+}
 
 /* Onboarding shot chips ---------------------------------------------------- */
 @layer components {

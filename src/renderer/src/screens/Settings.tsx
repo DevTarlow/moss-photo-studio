@@ -167,7 +167,7 @@ function StudioSection(): React.JSX.Element {
         <div className="verify-banner mb-4 flex items-start gap-2" role="status">
           <Icon icon={AlertTriangle} size="sm" className="mt-0.5" style={{ color: 'var(--warning)' }} aria-hidden />
           <div className="flex-1">
-            <p>Your system keyring isn't available. The key is stored with basic protection on this computer.</p>
+            <p>This computer can't use its secure key store. Your key is protected, but less strongly.</p>
             <button type="button" className="mt-1 font-semibold" onClick={() => setBackendDismissed(true)}>Dismiss</button>
           </div>
         </div>
@@ -231,10 +231,10 @@ function StudioSection(): React.JSX.Element {
         <div className="flex items-start gap-3">
           <Icon icon={ShieldCheck} size="md" style={{ color: 'var(--accent)' }} aria-hidden />
           <div>
-            <p className="text-[12px] font-semibold">One cent an image</p>
+            <p className="text-[12px] font-semibold">{usd(1)} an image</p>
             <p className="hint mt-1">
-              Meta charges your key {usd(1)} for every image that comes back. The price is on the button before every run.
-              A refusal costs nothing. The app does not add a fee for any generations.
+              Meta charges your key {usd(1)} for every image that comes back. The price is on the button before every image.
+              A refusal costs nothing. Moss does not add a fee.
             </p>
           </div>
         </div>

@@ -18,13 +18,13 @@ Versions branch instead of overwrite. You can compare them, move through the fil
 
 The Image Generator has 30 starters, including person ideas for holding, wearing, and using an item. Generate 1 to 4 images in three shapes and three formats. A product reference and a person reference can go together, so a person can hold the product. An optional scene reference supplies the setting, light, and props without asking the model to copy its subject.
 
-Generated images can be saved to a Set, as a product, or as a person. A generated project appears in All work after its first image.
+Generated images can be saved to a Set, as a product, or as a person. A product photo can come from your saved products or from the 20 starter products. A generated project appears in All work after its first image.
 
 ### Keep images in Sets
 
-A Set is a simple collection of images, made for keeping related work together. Open any generated image or edited version and choose **Save to Set**—or open a saved product and choose **Add to Set**. Pick an existing Set or name a new one. An image or product source belongs to one Set at a time, and removing it from the Set never deletes the image or its project.
+A Set is a simple collection of images, made for keeping related work together. Open any generated image, edited version, or saved product and choose **Add to Set**. Pick an existing Set or name a new one. An image or product photo belongs to one Set at a time, and removing it from the Set never deletes the image or its project.
 
-The **Sets** page shows every image and product source in one place. From any item there, choose **Edit Photo** or **New Image** to start a new project with that photo as the source. The imported source and the images made from it stay in the Set automatically, so the Set grows with the work. You can still move individual images or remove them later.
+The **Sets** page shows every image and product photo in one place. Open a Set and choose **Add to Set** to bring in a saved product or a ready image. From any item there, choose **Edit This Photo** or **Make an Image with This Photo** to start a new project with that photo as the source. The imported source and the images made from it stay in the Set automatically, so the Set grows with the work. You can still move individual images or remove them later.
 
 Sets also appear in **All work** under their own section. Choose the **Sets** filter to see only Sets. When a product belongs to a Set, its page shows the Set name and links back to it.
 
@@ -38,7 +38,7 @@ Save a product photo as a Product, or start from one of the 20 clean, unbranded 
 
 A returned image costs $0.01. The price is on the button before every run. A refusal costs nothing, and the app does not add a fee for any generations.
 
-The Usage ledger tracks returned images, shows the current month, supports a budget limit, and exports to CSV. Local Adjust and the local photo check are free.
+The Usage page tracks returned images, shows the current month, supports a monthly limit, and exports to a spreadsheet. Adjust Photo and the local photo check are free.
 
 ## Get a license
 
@@ -101,7 +101,7 @@ The library lives under the application data folder shown in **Settings, Storage
 
 The Meta key is stored in `secrets.bin`, encrypted with Electron's `safeStorage` when a system keyring is available. The fallback is AES-256-GCM with a local key protected by file mode `0600`. The license key is stored encrypted. No key is returned to the renderer, logged, or placed in a URL. Settings shows the last four characters only.
 
-The app sends prompts and the images you choose to Meta when you run a paid image action. Local Adjust and the local photo check stay on your computer. No telemetry is sent. The automatic update check goes to GitHub Releases and sends the app version, platform, architecture, and channel. It sends no key, email, or library data.
+The app sends prompts and the images you choose to Meta when you run a paid image action. Adjust Photo and the local photo check stay on your computer. No telemetry is sent. The automatic update check goes to GitHub Releases and sends the app version, platform, architecture, and channel. It sends no key, email, or library data.
 
 See [docs/privacy.md](docs/privacy.md).
 

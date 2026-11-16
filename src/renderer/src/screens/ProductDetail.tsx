@@ -295,7 +295,7 @@ export function ProductDetail(): React.JSX.Element {
                   icon={<Icon icon={Package} size="lg" />}
                   title="No projects yet"
                   line="Make an image from the source photo, or link an existing project."
-                  action={<Button variant="secondary" onClick={() => void start('image')}>Make an Image with This Product</Button>}
+                  action={<Button variant="secondary" onClick={() => void start('image')}>Make the First Image</Button>}
                   compact
                 />
               </div>

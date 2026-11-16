@@ -177,7 +177,7 @@ export function Usage(): React.JSX.Element {
                 <Card padding={4}>
                   <Text type="label" color="secondary" className="block">Images made</Text>
                   <Text weight="bold" className="mt-2 block tabular" style={{ fontSize: 24 }}>{summary?.images ?? 0}</Text>
-                  <Text type="supporting" color="secondary" className="block">{monthLabel(month)} · $0.01 for each image that came back</Text>
+                  <Text type="supporting" color="secondary" className="block">{monthLabel(month)} · {usd(1)} for each image that came back</Text>
                 </Card>
                 <Card padding={4}>
                   <Text type="label" color="secondary" className="block">Spent</Text>

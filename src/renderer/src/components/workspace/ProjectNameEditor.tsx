@@ -50,7 +50,7 @@ export function ProjectNameEditor(): React.JSX.Element | null {
         aria-label="Project name"
         className="min-w-[100px] max-w-[340px] flex-1 rounded-[6px] border border-transparent bg-transparent px-1.5 py-0.5 text-[13px] font-semibold outline-none hover:border-[var(--border)] focus:border-[var(--border-strong)]"
       />
-      <span className="badge">{typeLabel[project.type]}</span>
+      <span className="badge project-type-badge">{typeLabel[project.type]}</span>
     </div>
   )
 }

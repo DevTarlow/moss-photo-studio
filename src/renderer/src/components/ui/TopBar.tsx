@@ -39,7 +39,7 @@ export function TopBar({
           />
         }
         startContent={
-          <div className="no-drag flex min-w-0 items-center gap-2">
+          <div className={`no-drag flex min-w-0 items-center gap-2${compact ? ' max-w-[45vw]' : ''}`}>
             {backTo && (
               <IconButton
                 label={backLabel}

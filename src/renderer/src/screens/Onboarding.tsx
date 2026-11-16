@@ -8,7 +8,6 @@ import {
   Button,
   Card,
   FileInput,
-  Grid,
   Heading,
   Icon,
   Selector,
@@ -23,6 +22,7 @@ import { unwrap, messageOf } from '../lib/ipc'
 import { fileToBytes } from '../lib/files'
 import { markUrl, bundledUrl } from '../lib/assets'
 import { toast } from '../lib/toast'
+import { usd } from '@shared/cost'
 import { warnIfSmallPhoto } from '../lib/photoWarnings'
 import { BrandFields, BrandPreview } from '../components/brand/BrandFields'
 import { NewProjectDialog } from '../components/library/NewProjectDialog'
@@ -364,7 +364,7 @@ export function Onboarding(): React.JSX.Element {
                           Edit a photo you already have, describe a new image and make it, or keep related images in a Set. Everything you make stays on this computer.
                         </Text>
                       </Stack>
-                      <Grid columns={{ minWidth: 260 }} gap={4}>
+                      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
                         <Stack gap={3}>
                           <Stack direction="horizontal" gap={3} align="start">
                             <Badge label="1" variant="neutral" />
@@ -388,14 +388,14 @@ export function Onboarding(): React.JSX.Element {
                             </Stack>
                           </Stack>
                         </Stack>
-                        <div className="overflow-hidden rounded-[12px] border" style={{ borderColor: 'var(--color-border)', background: 'var(--color-background-surface)' }}>
+                        <div className="hidden overflow-hidden rounded-[12px] border xl:block" style={{ borderColor: 'var(--color-border)', background: 'var(--color-background-surface)' }}>
                           <img src={bundledUrl('products/speckled-mug.webp')} alt="An example product photo" className="aspect-[4/3] w-full object-cover" />
                           <div className="p-3">
                             <Text weight="bold">A product photo is enough to start.</Text>
                             <Text type="supporting" color="secondary" display="block" className="mt-1">Edit it for free, or use it as the product in a new scene.</Text>
                           </div>
                         </div>
-                      </Grid>
+                      </div>
                     </>
                   )}
 
@@ -407,7 +407,7 @@ export function Onboarding(): React.JSX.Element {
                           Connect Meta
                         </Heading>
                         <Text type="body" color="secondary">
-                          Moss makes images with your Meta account. Meta charges you $0.01 for each image that comes back.
+                          Moss makes images with your Meta account. Meta charges you {usd(1)} for each image that comes back.
                         </Text>
                       </Stack>
                       <Banner

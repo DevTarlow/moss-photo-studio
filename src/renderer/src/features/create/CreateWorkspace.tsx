@@ -531,7 +531,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
           rows={5}
           onChange={(event) => { setPrompt(event.target.value); setPromptSource('user'); setLoadedExample(null); setPendingApply(null); setError(null) }}
           placeholder="Describe the picture you want. For example: a ceramic mug on a warm kitchen table, soft morning light."
-          hint="Meta makes the picture. You pay $0.01 for every image that comes back."
+          hint={`Meta makes the picture. You pay ${usd(1)} for every image that comes back.`}
         />
         {promptTooLongForReference && (
           <p className="error-text mt-1" role="alert">This product, person, or scene adds {guardChars} characters. Shorten your description.</p>
@@ -711,14 +711,16 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
         <button
           type="button"
-          className="flex w-full items-center justify-between gap-2"
+          className="w-full text-left"
           aria-expanded={outputOpen}
           onClick={() => setOutputOpen((value) => !value)}
         >
-          <span className="field-label mb-0">Output Settings</span>
-          <span className="meta flex items-center gap-1.5">
-            {requestedCount} {requestedCount === 1 ? 'image' : 'images'} · {shapeLabel(shape)} · {format === 'webp' ? 'WebP' : format.toUpperCase()}
+          <span className="flex items-center justify-between gap-2">
+            <span className="field-label mb-0">Output Settings</span>
             <Icon icon={ChevronDown} size="xsm" style={{ transform: outputOpen ? 'rotate(180deg)' : undefined }} />
+          </span>
+          <span className="meta mt-1 block">
+            {requestedCount} {requestedCount === 1 ? 'image' : 'images'} · {shapeLabel(shape)} · {format === 'webp' ? 'WebP' : format.toUpperCase()}
           </span>
         </button>
         {outputOpen && (
@@ -880,7 +882,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
             {results.length === 0 ? (
               !isRunning && (
                 <div>
-                  <p className="text-center text-[12px]" style={{ color: 'var(--text-muted)' }}>Describe the picture you want. Meta makes it, and you pay $0.01 an image.</p>
+                  <p className="text-center text-[12px]" style={{ color: 'var(--text-muted)' }}>Describe the picture you want. Meta makes it, and you pay {usd(1)} an image.</p>
                   {productRef ? (
                     <div className="mx-auto mt-4 flex max-w-[760px] flex-wrap items-center justify-center gap-3">
                       <p className="text-center text-[13px] font-semibold">Examples</p>

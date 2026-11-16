@@ -464,7 +464,7 @@ export function Library(): React.JSX.Element {
       />
     )
   }
-  const shownNotices = showAllNotices ? notices : notices.slice(0, 1)
+  const shownNotices = showAllNotices ? notices : notices.slice(0, 2)
 
   useEffect(() => {
     if (productPage > productPages) setProductPage(productPages)
@@ -575,14 +575,14 @@ export function Library(): React.JSX.Element {
           {notices.length > 0 && (
             <div className="mt-4 flex flex-col gap-2">
               {shownNotices}
-              {notices.length > 1 && (
+              {notices.length > 2 && (
                 <button
                   type="button"
                   className="self-start text-[11px] underline"
                   style={{ color: 'var(--text-muted)' }}
                   onClick={() => setShowAllNotices((value) => !value)}
                 >
-                  {showAllNotices ? 'Show Less' : `Show ${notices.length - 1} More`}
+                  {showAllNotices ? 'Show Less' : `Show ${notices.length - 2} More`}
                 </button>
               )}
             </div>

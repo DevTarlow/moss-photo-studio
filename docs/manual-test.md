@@ -24,7 +24,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 - Add product: a JPEG, PNG, or WebP saves as a Product. A photo under 800 px is allowed with the small-photo warning.
 - Skip product: the optional step continues to Make it your own.
 - Make it your own: logo, colors, badge, and default look save; skip also continues.
-- Ready: Finish Setup opens the saved product hub, or Products when no product was saved.
+- Ready: Edit This Product starts a photo project from the saved product; Open a Photo opens the photo picker. Finish Setup still exits to the product hub, or Products when no product was saved.
 - Restart during setup: the app resumes a safe step and never traps the user on a removed step.
 
 ## Image Editor
@@ -32,7 +32,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 - Start from a saved product, a library image, or a dropped file. The original is the first version.
 - Choose a tile or write a change. The button shows the price before the run; the first paid run shows the first-run confirmation and then disappears on later runs.
 - Hold Space for the earlier version; compare with the slider, mouse divider, and keyboard.
-- Local Adjust: crop, rotate, flip, brightness, contrast, saturation, warmth, sharpen, vignette. Apply Locally is free and creates a version.
+- Adjust Photo: crop, rotate, flip, brightness, contrast, saturation, warmth, sharpen, vignette. Apply Adjustment is free and creates a version.
 - Batch color applies only color controls and creates one version per ready image, capped at 50.
 - Export writes the chosen format to the chosen folder; the file opens.
 - Copy Image and Paste Image work through the main process.
@@ -48,16 +48,16 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 ## Products
 
 - Products shows “20 included · N yours,” search, sort, and pagination.
-- Included products open with Edit This Photo and New Image from Reference, without Rename or Delete.
-- Create a Product opens the Image Generator with the product prompt; Save as Product adds it under Yours.
-- A product hub shows the source photo, Add to Set, New Image from Reference, linked work, Link existing work, archive, and delete.
+- Starter Products open with Edit This Photo and Make an Image with This Product, without Rename or Delete.
+- Generate Product Photo opens the Image Generator with the product prompt; Save as Product adds it under Your Products. Add Product Photo asks for a name before saving.
+- A product hub shows the source photo, Add to Set, Make an Image with This Product, linked projects, Link Existing Projects, archive, and delete.
 - **This build intentionally has no Listing Kit, listing copy, or Business profile.** Sets exist only as image organization; no rail item, menu item, or settings section should offer the retired tools.
 
 ## Sets
 
-- Save any ready generated image or edited version with Save to Set, or a saved product with Add to Set. Create a new Set from the same dialog.
-- Sets lists each Set with its cover and count. Set detail shows member images and product sources; removing one leaves the image or product in place.
-- From a Set image or product source, Edit Photo opens a new photo project and New Image / New Image from Reference opens a new generator project. The imported source and all resulting images stay in the Set automatically.
+- Add any ready generated image, edited version, or saved product with Add to Set. Create a new Set from the same dialog. Open a Set and use Add to Set to bring in a product or image; Done closes the picker.
+- Sets lists each Set with its cover and count. Set detail shows member images and product photos, an Add to Set action, and a contextual back route that returns to the Set. Removing one leaves the image or product in place.
+- From a Set image or product source, Edit This Photo opens a new photo project and Make an Image with This Photo / This Product opens a new generator project. The imported source and all resulting images stay in the Set automatically.
 - Export Set creates a unique folder with numbered ready images and product sources, with no manifest. Open Folder opens the remembered Set export folder.
 - Delete a Set only removes the organization; images and projects remain.
 - An existing v11 pack library upgrades to v12 with its ready images preserved as ordinary image projects; old pack plans, pending rows, and pack jobs are removed.
@@ -65,16 +65,16 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 ## All work
 
 - The rail has All work, Products, Sets, People, Usage, Image Editor, Image Generator, and Settings.
-- Filters are All, Edited, Generated, Products, and Sets. Sets also appear under All work in their own section. An empty library offers three cards: Image Editor, Image Generator, and Sets.
+- Filters are All, Edited, Generated, Products, and Sets. Sets also appear under All work in their own section. An empty library offers four cards: Add a Product Photo, Image Editor, Image Generator, and Sets.
 - Drop a photo on All work to open it in the Image Editor. Sets are filled from image actions; there is no drag-to-Set behavior.
 - Rename, duplicate, export, select, bulk delete, search, sort, pagination, and product sections work.
 - A library over 500 projects paginates at 20 cards and keeps selection scoped to loaded cards.
 
 ## People
 
-- People lists Yours first and 24 included synthetic people.
-- Included people open with four studio looks; the original can be restored.
-- Create an Image seeds the generator with the person and look.
+- People lists Your People first and 24 starter synthetic people.
+- Starter people open with four studio looks; the original can be restored.
+- Make an Image with This Person seeds the generator with the person and look.
 - Add, rename, and remove a person. A generated image can be saved as a person.
 
 ## Usage
@@ -82,7 +82,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 - The month card counts returned images at one cent each. There is no text-cost line.
 - CSV export opens with the documented columns; cost rows sum to the displayed month spend.
 - Budget saves a monthly limit, shows the warning when a run would exceed it, and can be cleared.
-- Old historical `set`, `listing`, `analyze`, and `cutout` rows remain in the ledger with their recorded cost.
+- Old historical `set`, `listing`, `analyze`, and `cutout` rows remain in Every Image with their recorded cost.
 
 ## Settings
 
@@ -96,7 +96,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 ## License and offline behavior
 
 - With 13 days since the last check and the portal down, the app shows Working offline and can still generate.
-- After 14 days offline, the library is read-only; Browse My Library still opens it. Local Adjust and export work.
+- After 14 days offline, the library is read-only; Browse My Library still opens it. Adjust Photo and export work.
 - A valid key restores generation. Deactivation releases the machine.
 - No key or prompt is shown in the interface, logs, or clipboard.
 
