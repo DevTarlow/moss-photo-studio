@@ -579,7 +579,13 @@ export function PhotoWorkspace(): React.JSX.Element {
             onText={(next, source) => { setText(next); setTextSource(source); setError(null) }}
             onKind={setKind}
             onTemplate={setTemplateId}
-            onPerson={setPersonId}
+            onPerson={(id) => {
+              setPersonId(id)
+              if (!id && kind === 'model') {
+                setKind('')
+                setTemplateId(null)
+              }
+            }}
             onChooseScene={() => setScenePickerOpen(true)}
             onClearScene={() => setSceneRef(null)}
             onClear={() => { setText(''); setKind(''); setTemplateId(null) }}

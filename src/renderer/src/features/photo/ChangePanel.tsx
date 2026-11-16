@@ -169,7 +169,6 @@ export function ChangePanel({
             <PersonPicker
               people={people}
               personId={personId}
-              allowRemove={false}
               disabled={disabled}
               onPerson={onPerson}
             />

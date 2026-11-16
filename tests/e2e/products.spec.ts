@@ -73,6 +73,10 @@ test('a generated image becomes a reusable product across the editor and generat
     const personPreview = page.getByRole('dialog', { name: 'Maya' })
     await expect(personPreview).toBeVisible()
     await personPreview.getByRole('button', { name: 'Close' }).last().click()
+    await page.getByRole('button', { name: 'Remove person' }).click()
+    await expect(page.getByRole('button', { name: 'Choose a Person' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Person: Maya' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /Make This Change/ })).toBeEnabled()
 
     await page.getByRole('link', { name: 'Products', exact: true }).click()
     await page.getByRole('button', { name: 'Open Ceramic Mug' }).click()
