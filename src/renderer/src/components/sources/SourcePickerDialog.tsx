@@ -7,9 +7,9 @@ import { Dialog } from '../ui/Dialog'
 import { Button } from '../ui/Button'
 import { Pagination } from '../ui/Pagination'
 import { Segmented } from '../ui/Segmented'
+import { AddProductDialog } from '../products/AddProductDialog'
 import { useAppStore } from '../../store/app'
 import { unwrap, messageOf } from '../../lib/ipc'
-import { toast } from '../../lib/toast'
 import { cn } from '../../lib/cn'
 import { COLLECTION_PAGE_SIZE } from '@shared/constants'
 
@@ -35,7 +35,6 @@ export function SourcePickerDialog({
   libraryOnly?: boolean
 }): React.JSX.Element {
   const products = useAppStore((state) => state.products)
-  const refreshProducts = useAppStore((state) => state.refreshProducts)
   const starterProducts = bundledProductCards()
   const [tab, setTab] = useState<'products' | 'library'>(libraryOnly ? 'library' : 'products')
   const [search, setSearch] = useState('')
@@ -45,7 +44,7 @@ export function SourcePickerDialog({
   const [error, setError] = useState<string | null>(null)
   const [libraryPage, setLibraryPage] = useState(1)
   const [productPage, setProductPage] = useState(1)
-  const [addingProduct, setAddingProduct] = useState(false)
+  const [addProductOpen, setAddProductOpen] = useState(false)
 
   const loadLibrary = async (query: string, requestedPage: number): Promise<void> => {
     setLoading(true)
@@ -77,6 +76,7 @@ export function SourcePickerDialog({
     setSearch('')
     setLibraryPage(1)
     setProductPage(1)
+    setAddProductOpen(false)
     void loadLibrary('', 1)
   }, [open, libraryOnly])
 
@@ -103,28 +103,13 @@ export function SourcePickerDialog({
     productPage * COLLECTION_PAGE_SIZE
   )
 
-  const addProduct = async (): Promise<void> => {
-    setAddingProduct(true)
-    try {
-      const product = await unwrap(window.moss.dialogs.pickProduct())
-      if (product) {
-        await refreshProducts()
-        setProductPage(1)
-        toast.status('Product added.')
-      }
-    } catch (caught) {
-      toast.error(messageOf(caught))
-    } finally {
-      setAddingProduct(false)
-    }
-  }
-
   const choose = (choice: SourceChoice): void => {
     onChoose(choice)
     onOpenChange(false)
   }
 
   return (
+    <>
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
@@ -176,14 +161,19 @@ export function SourcePickerDialog({
                   <Icon icon={Package} size="lg" style={{ color: 'var(--text-faint)' }} />
                   <p className="mt-2 text-[13px] font-semibold">No saved products yet</p>
                   <p className="meta mt-1 max-w-[320px] mx-auto">Save a product photo from an image, or add one from a file.</p>
-                  <Button variant="secondary" size="sm" className="mt-3" disabled={addingProduct} onClick={() => void addProduct()}>
-                    {addingProduct ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Plus} size="sm" />} Add a Product
+                  <Button variant="secondary" size="sm" className="mt-3" onClick={() => setAddProductOpen(true)}>
+                    <Icon icon={Plus} size="sm" /> Add Product Photo
                   </Button>
                 </div>
               ) : null
             ) : (
               <div>
-                <p className="section-label">Your Products</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="section-label">Your Products</p>
+                  <Button variant="ghost" size="sm" onClick={() => setAddProductOpen(true)}>
+                    <Icon icon={Plus} size="sm" /> Add Product Photo
+                  </Button>
+                </div>
                 <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {visibleProducts.map((product) => (
                     <button
@@ -281,5 +271,7 @@ export function SourcePickerDialog({
         )}
       </div>
     </Dialog>
+    <AddProductDialog open={addProductOpen} onOpenChange={setAddProductOpen} />
+    </>
   )
 }

@@ -36,12 +36,12 @@ test('an untouched Image Generator leaves no project behind', async () => {
     await page.getByText('Image Editor', { exact: true }).last().click()
     await page.getByRole('button', { name: 'Choose a Saved Photo' }).click()
     const picker = page.getByRole('dialog', { name: 'Choose a Photo to Edit' })
-    await expect(picker.getByRole('button', { name: 'Add a Product' })).toBeVisible()
-    await app.evaluate(({ dialog }, file) => {
-      dialog.showOpenDialog = (async () => ({ canceled: false, filePaths: [file] })) as typeof dialog.showOpenDialog
-    }, productPhoto)
-    await picker.getByRole('button', { name: 'Add a Product' }).click()
-    await expect(picker.getByRole('button', { name: 'Use product' })).toBeVisible({ timeout: 20_000 })
+    await picker.getByRole('button', { name: 'Add Product Photo' }).click()
+    const addProduct = page.getByRole('dialog', { name: 'Add Product Photo' })
+    await addProduct.locator('input[type=file]').setInputFiles(productPhoto)
+    await addProduct.getByLabel('Product name').fill('Test product')
+    await addProduct.getByRole('button', { name: 'Add Product' }).click()
+    await expect(picker.getByRole('button', { name: 'Use Test product' })).toBeVisible({ timeout: 20_000 })
     await picker.getByRole('button', { name: 'Library' }).click()
     await expect(picker.getByLabel('Search library images')).toHaveCSS('padding-left', '34px')
     await picker.getByRole('button', { name: 'Cancel' }).click()
