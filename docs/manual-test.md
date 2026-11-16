@@ -20,6 +20,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 - Launch with no license. Activation is the first screen; the theme follows the system and the app reports an unavailable keyring truthfully.
 - Activate with a valid test key. Welcome shows “Your personal photo studio.” with a clean focus outline.
+- Welcome only offers Set Up AI Images as the primary action; it never opens the photo dialog or leaves setup.
 - Connect Meta: the Meta key is optional and can be added later. A bad key shows a plain error; a saved key shows only its last four characters.
 - Add product: a JPEG, PNG, or WebP saves as a Product. A photo under 800 px is allowed with the small-photo warning.
 - Skip product: the optional step continues to Make it your own.

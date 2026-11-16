@@ -13,18 +13,17 @@ async function launch(userData: string) {
   return { app, page: await app.firstWindow() }
 }
 
-test('the free photo path opens before setup, and setup resumes from Products', async () => {
+test('onboarding starts with setup and resumes from Products', async () => {
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-first-run-e2e-'))
   const { app, page } = await launch(userData)
 
   try {
     await expect(page.getByRole('heading', { name: 'Your personal photo studio.' })).toBeVisible({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Open a Photo' }).click()
-    const editor = page.getByRole('dialog', { name: 'Image Editor' })
-    await expect(editor.getByRole('heading', { name: 'Image Editor' })).toBeVisible()
-    await page.waitForTimeout(300)
-    await expect(editor.getByRole('button', { name: 'Choose a Saved Photo' })).toHaveCount(0)
-    await editor.getByRole('button', { name: 'Cancel' }).click()
+    await expect(page.getByRole('button', { name: 'Open a Photo' })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Set Up AI Images' }).click()
+    await expect(page.getByRole('heading', { name: 'Connect Meta' })).toBeVisible()
+    await page.getByRole('button', { name: 'Back' }).click()
+    await expect(page.getByRole('heading', { name: 'Your personal photo studio.' })).toBeVisible()
 
     await page.getByRole('button', { name: 'Skip for Now' }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()

@@ -25,7 +25,6 @@ import { toast } from '../lib/toast'
 import { usd } from '@shared/cost'
 import { warnIfSmallPhoto } from '../lib/photoWarnings'
 import { BrandFields, BrandPreview } from '../components/brand/BrandFields'
-import { NewProjectDialog } from '../components/library/NewProjectDialog'
 import { Skeleton } from '../components/ui/Skeleton'
 import { MuseKeyGuideDialog } from '../components/ui/MuseKeyGuideDialog'
 
@@ -74,7 +73,6 @@ export function Onboarding(): React.JSX.Element {
   const [brandDraft, setBrandDraft] = useState<Brand | null>(brand)
   const [brandBusy, setBrandBusy] = useState(false)
   const [brandAdvanced, setBrandAdvanced] = useState(false)
-  const [newPhotoOpen, setNewPhotoOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
 
@@ -111,17 +109,6 @@ export function Onboarding(): React.JSX.Element {
       .catch(() => undefined)
     toast.status('You can finish setup from All Work or Products.')
     navigate('/products', { replace: true })
-  }
-
-  const openPhotoNow = async (): Promise<void> => {
-    setOnboardingBypass(true)
-    try {
-      await unwrap(window.moss.settings.set({ key: 'onboardingDismissed', value: true }))
-      await refreshSettings()
-    } catch {
-      // The photo dialog still opens; the next boot asks for setup again.
-    }
-    setNewPhotoOpen(true)
   }
 
   const addProduct = (next: Product): void => {
@@ -268,7 +255,7 @@ export function Onboarding(): React.JSX.Element {
   const hasKey = Boolean(secrets?.hasKey)
   const primaryLabel =
     step === 0
-      ? 'Open a Photo'
+      ? 'Set Up AI Images'
       : step === 1
         ? hasKey && !keyValue.trim()
           ? 'Continue'
@@ -288,7 +275,7 @@ export function Onboarding(): React.JSX.Element {
     (step === 2 && photoBusy)
 
   const onPrimary = (): void => {
-    if (step === 0) void openPhotoNow()
+    if (step === 0) void goTo(1)
     else if (step === 1) void saveKey()
     else if (step === 2) void goTo(3)
     else if (step === 3) void saveBrandAndContinue()
@@ -296,9 +283,7 @@ export function Onboarding(): React.JSX.Element {
   }
 
   const secondaryActions =
-    step === 0 ? (
-      <Button label="Set Up AI Images" variant="secondary" onClick={() => void goTo(1)} />
-    ) : step === 1 ? (
+    step === 0 ? null : step === 1 ? (
       <Button label="Add key later" variant="ghost" onClick={() => void goTo(2)} />
     ) : step === 2 ? (
       <Button label="Skip for now" variant="ghost" isDisabled={photoBusy} onClick={() => void goTo(3)} />
@@ -605,7 +590,6 @@ export function Onboarding(): React.JSX.Element {
       </div>
 
       <MuseKeyGuideDialog open={keyGuideOpen} onOpenChange={setKeyGuideOpen} />
-      <NewProjectDialog open={newPhotoOpen} type={newPhotoOpen ? 'photo' : null} onOpenChange={setNewPhotoOpen} />
     </div>
   )
 }
