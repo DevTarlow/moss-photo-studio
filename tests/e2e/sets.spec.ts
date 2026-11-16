@@ -90,6 +90,7 @@ test('a Set keeps images together and starts new work from them', async () => {
     await screenshot(page, 'save-to-set')
     await page.getByRole('button', { name: 'Create & Save', exact: true }).click()
     await expect(page.getByRole('dialog', { name: 'Add to Set' })).toHaveCount(0)
+    await expect(page.getByText('In a Set', { exact: true }).first()).toBeVisible({ timeout: 20_000 })
     await page.keyboard.press('Escape')
 
     await page.getByRole('link', { name: 'All work', exact: true }).first().click()

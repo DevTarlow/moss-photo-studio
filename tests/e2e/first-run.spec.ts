@@ -55,3 +55,27 @@ test('a missing Meta key offers the connection dialog in the generator', async (
     fs.rmSync(userData, { recursive: true, force: true })
   }
 })
+
+test('a draft description survives leaving and returning in the same session', async () => {
+  const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-draft-retain-e2e-'))
+  const { app, page } = await launch(userData)
+
+  try {
+    await page.getByRole('button', { name: 'Skip for Now' }).waitFor({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Skip for Now' }).click()
+    await page.keyboard.press('Control+2')
+    await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
+    const projectId = await page.evaluate(() => window.location.hash.split('/project/')[1]?.split(/[?#]/)[0] ?? null)
+    expect(projectId).toBeTruthy()
+    await page.locator('textarea').first().fill('A warm linen table with a single ceramic mug')
+
+    await page.getByRole('link', { name: 'All work', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible({ timeout: 20_000 })
+    await page.evaluate((id) => { window.location.hash = `#/project/${id}` }, projectId)
+    await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
+    await expect(page.locator('textarea').first()).toHaveValue('A warm linen table with a single ceramic mug')
+  } finally {
+    await app.close().catch(() => undefined)
+    fs.rmSync(userData, { recursive: true, force: true })
+  }
+})

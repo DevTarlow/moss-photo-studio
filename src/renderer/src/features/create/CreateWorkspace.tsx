@@ -51,6 +51,16 @@ type PendingApply = {
   scene?: ExampleScene
 }
 
+const draftKey = (projectId: string): string => `moss.create-draft.${projectId}`
+
+function readDraft(projectId: string): string {
+  try {
+    return sessionStorage.getItem(draftKey(projectId)) ?? ''
+  } catch {
+    return ''
+  }
+}
+
 export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?: string | null }): React.JSX.Element {
   const project = useWorkspaceStore((state) => state.project) as Project
   const images = useWorkspaceStore((state) => state.images)
@@ -75,7 +85,8 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const leftHidden = tier === 'tiny'
   const rightHidden = !useIsWideWorkspace()
   const canResizeLeft = tier === 'wide' || tier === 'medium'
-  const [prompt, setPrompt] = useState('')
+  const [prompt, setPrompt] = useState(() => readDraft(project.id))
+  const hydratedProject = useRef(project.id)
   const [promptSource, setPromptSource] = useState<PromptSource>('user')
   const [pendingApply, setPendingApply] = useState<PendingApply | null>(null)
   const [exampleUsesProduct, setExampleUsesProduct] = useState(true)
@@ -166,6 +177,27 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const overBudget = (settings?.budgetCents ?? null) !== null && monthCents + estimateCents(requestedCount) > (settings?.budgetCents ?? 0)
   const promptTooLongForReference = hasReference && composedPrompt.length > MAX_PROMPT
   const canSubmit = Boolean(prompt.trim()) && composedPrompt.length <= MAX_PROMPT && Boolean(secrets?.hasKey) && canGenerate
+
+  useEffect(() => {
+    // Persist only after the prompt belongs to the project on screen. See the
+    // rehydrate effect below; the guard avoids writing one project's draft into
+    // the next project during the same render.
+    if (hydratedProject.current !== project.id) return
+    try {
+      sessionStorage.setItem(draftKey(project.id), prompt)
+    } catch {
+      // Session storage is best-effort; the workspace still works.
+    }
+  }, [prompt, project.id])
+
+  useEffect(() => {
+    if (hydratedProject.current === project.id) return
+    hydratedProject.current = project.id
+    setPrompt(readDraft(project.id))
+    setPromptSource('user')
+    setLoadedExample(null)
+    setPendingApply(null)
+  }, [project.id])
 
   useEffect(() => {
     if (seededCreatePerson.current || params.get('createPerson') !== '1') return
@@ -926,6 +958,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                       <span className="sr-only">Open {image.label} larger</span>
                       {image.url && <img src={image.url} alt="" className="aspect-[4/3] w-full object-cover" />}
                       {index === 0 && !runFilter && <span className="badge absolute left-2 top-2" data-tone="canvas">Newest</span>}
+                      {image.setId && <span className="badge absolute right-2 top-2" data-tone="success">In a Set</span>}
                     </button>
                     <div className="flex flex-wrap items-center gap-1 border-t px-2 py-2" style={{ borderColor: 'var(--border)' }}>
                       <Button variant="ghost" size="sm" onClick={() => navigate(photoViewUrl(image.id))}>

@@ -48,6 +48,7 @@ export function VersionDetails({
               <p className="meta">Look: {templateName}</p>
             )}
             <p className="meta">Shape: {shapeLabel(project.shape)}</p>
+            {selected.setId && <p className="meta">In a Set</p>}
             <div>
               <p className="meta">File format</p>
               <div className="mt-1">
