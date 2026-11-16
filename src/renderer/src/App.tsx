@@ -20,6 +20,7 @@ import { ToastViewport } from './components/ui/Toast'
 import { CommandPalette } from './components/ui/CommandPalette'
 import { ShortcutsSheet } from './components/ui/ShortcutsSheet'
 import { GuideDialog } from './components/ui/GuideDialog'
+import { MetaKeyDialog } from './components/ui/MetaKeyDialog'
 import { SaveToSetDialog } from './components/sets/SaveToSetDialog'
 
 const TWELVE_HOURS = 12 * 60 * 60 * 1000
@@ -257,6 +258,8 @@ export function RootLayout(): React.JSX.Element {
   const toggleRail = useUiStore((state) => state.toggleRail)
   const setShortcuts = useUiStore((state) => state.setShortcuts)
   const setGuide = useUiStore((state) => state.setGuide)
+  const metaKeyOpen = useUiStore((state) => state.metaKeyOpen)
+  const setMetaKeyOpen = useUiStore((state) => state.setMetaKeyOpen)
   const jobsRevision = useJobsStore((state) => state.revision)
   const navigate = useNavigate()
   const location = useLocation()
@@ -503,6 +506,7 @@ export function RootLayout(): React.JSX.Element {
       <CommandPalette />
       <ShortcutsSheet />
       <GuideDialog />
+      <MetaKeyDialog open={metaKeyOpen} onOpenChange={setMetaKeyOpen} />
       <SaveToSetDialog />
       <ToastViewport />
       {dragOver && (

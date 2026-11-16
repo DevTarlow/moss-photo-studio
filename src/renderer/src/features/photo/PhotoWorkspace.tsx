@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Download, Loader2, Maximize2, PanelLeft, PanelRight, Plus } from 'lucide-react'
-import { Icon } from '@astryxdesign/core'
+import { Icon, Banner } from '@astryxdesign/core'
 import type { AdjustTransform, Image, Project } from '@shared/types'
 import { estimateCents, usd } from '@shared/cost'
 import { errorMessage, billingUncertain } from '@shared/errors'
@@ -10,6 +10,7 @@ import { shapeLabel } from '@shared/shapes'
 import { usedBrandColors } from '@shared/brandColors'
 import { useWorkspaceStore } from '../../store/workspace'
 import { useAppStore } from '../../store/app'
+import { useUiStore } from '../../store/ui'
 import { useJobsStore } from '../../store/jobs'
 import { useIsWideWorkspace, useViewportTier } from '../../lib/viewport'
 import { usePanelWidth, WorkspaceResizeHandle } from '../../components/ui/WorkspaceResizeHandle'
@@ -63,6 +64,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const secrets = useAppStore((state) => state.secrets)
   const canGenerate = useAppStore((state) => state.canGenerate)
   const refreshSettings = useAppStore((state) => state.refreshSettings)
+  const setMetaKeyOpen = useUiStore((state) => state.setMetaKeyOpen)
   const jobs = useJobsStore((state) => state.jobs)
   const upsert = useJobsStore((state) => state.upsert)
   const confirm = useConfirm()
@@ -542,6 +544,23 @@ export function PhotoWorkspace(): React.JSX.Element {
         <button type="button" data-selected={tab === 'change'} disabled={tabDisabled} onClick={() => setTab('change')}>Change Photo</button>
         <button type="button" data-selected={tab === 'adjust'} disabled={tabDisabled} onClick={() => setTab('adjust')}>Adjust Photo <span className="ml-1 badge pill-sm">Free</span></button>
       </div>
+      {tab === 'change' && (!secrets?.hasKey || !canGenerate) && (
+        <div className="px-4 pt-3">
+          <Banner
+            status={!secrets?.hasKey ? 'info' : 'warning'}
+            title={!secrets?.hasKey ? 'Add a Meta key to make images' : 'Reactivate to make images'}
+            description={!secrets?.hasKey
+              ? 'You can still crop, light, and color for free in Adjust Photo. A key connects Moss to your Meta account for paid changes.'
+              : 'Your library and free adjustments still work. Open License to restore paid image making.'}
+            endContent={!secrets?.hasKey ? (
+              <Button variant="secondary" size="sm" onClick={() => setMetaKeyOpen(true)}>Add Key</Button>
+            ) : (
+              <Button variant="secondary" size="sm" onClick={() => navigate('/settings/license')}>Open License</Button>
+            )}
+            collapsible={false}
+          />
+        </div>
+      )}
       <div className="scroll-area flex-1 p-4">
         {tab === 'change' ? (
           <ChangePanel
@@ -854,15 +873,18 @@ export function PhotoWorkspace(): React.JSX.Element {
             </Button>
           ) : overBudget ? (
             <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => navigate('/usage')} />
+          ) : !secrets?.hasKey ? (
+            <Button variant="primary" onClick={() => setMetaKeyOpen(true)}>
+              Connect Meta to Make Images
+            </Button>
+          ) : !canGenerate ? (
+            <Button variant="primary" onClick={() => navigate('/settings/license')}>
+              Reactivate to Make Images
+            </Button>
           ) : (
             <Button variant="primary" disabled={changePrimaryDisabled || isRunning} onClick={() => void startChange()}>
               Make This Change · {usdMoney(estimateCents(1))}
             </Button>
-          )}
-          {tab === 'change' && (!secrets?.hasKey || !canGenerate) && (
-            <button type="button" className="hint underline" onClick={() => navigate(!secrets?.hasKey ? '/settings/studio' : '/settings/license')}>
-              {!secrets?.hasKey ? 'Add your Meta key in Settings to make images.' : 'Reactivate to make images.'}
-            </button>
           )}
         </div>
       </div>

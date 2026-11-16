@@ -12,6 +12,7 @@ import { estimateCents, usd } from '@shared/cost'
 import { errorMessage, billingUncertain } from '@shared/errors'
 import { useWorkspaceStore } from '../../store/workspace'
 import { useAppStore } from '../../store/app'
+import { useUiStore } from '../../store/ui'
 import { SourcePickerDialog } from '../../components/sources/SourcePickerDialog'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { SaveProductDialog } from '../../components/products/SaveProductDialog'
@@ -59,6 +60,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const people = useAppStore((state) => state.people)
   const canGenerate = useAppStore((state) => state.canGenerate)
   const refreshSettings = useAppStore((state) => state.refreshSettings)
+  const setMetaKeyOpen = useUiStore((state) => state.setMetaKeyOpen)
   const jobs = useJobsStore((state) => state.jobs)
   const upsert = useJobsStore((state) => state.upsert)
   const navigate = useNavigate()
@@ -732,6 +734,28 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
             {isRunning && job && <span className="badge" data-tone="success">Making</span>}
           </div>
           <div className="scroll-area flex-1 p-5">
+            {!secrets?.hasKey && (
+              <div className="mb-5">
+                <Banner
+                  status="info"
+                  title="Add a Meta key to make images"
+                  description="Your description, examples, and free photo edits still work. A key connects Moss to your Meta account for paid images."
+                  endContent={<Button variant="secondary" size="sm" onClick={() => setMetaKeyOpen(true)}>Add Key</Button>}
+                  collapsible={false}
+                />
+              </div>
+            )}
+            {secrets?.hasKey && !canGenerate && (
+              <div className="mb-5">
+                <Banner
+                  status="warning"
+                  title="Reactivate to make images"
+                  description="Your library and local edits still work. Open License to restore paid image making."
+                  endContent={<Button variant="secondary" size="sm" onClick={() => navigate('/settings/license')}>Open License</Button>}
+                  collapsible={false}
+                />
+              </div>
+            )}
             {createPersonMode && (
               <div className="mb-5">
                 <Banner
@@ -878,14 +902,20 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {overBudget ? (
             <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => navigate('/usage')} onFewer={requestedCount > 1 ? () => setCount((current) => Math.max(1, current - 1)) : undefined} />
+          ) : !secrets?.hasKey ? (
+            <Button variant="primary" onClick={() => setMetaKeyOpen(true)}>
+              Connect Meta to Make Images
+            </Button>
+          ) : !canGenerate ? (
+            <Button variant="primary" onClick={() => navigate('/settings/license')}>
+              Reactivate to Make Images
+            </Button>
           ) : (
             <Button variant="primary" disabled={!canSubmit || isRunning || promptTooLongForReference} onClick={() => void submit()}>
               {isRunning ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null}
               Make {requestedCount} {requestedCount === 1 ? 'Image' : 'Images'} · {usd(estimateCents(requestedCount))}
             </Button>
           )}
-          {!secrets?.hasKey && <button type="button" className="hint underline" onClick={() => navigate('/settings/studio')}>Add your Meta key in Settings to make images.</button>}
-          {secrets?.hasKey && !canGenerate && <button type="button" className="hint underline" onClick={() => navigate('/settings/license')}>Reactivate to make images.</button>}
         </div>
       </div>
 
