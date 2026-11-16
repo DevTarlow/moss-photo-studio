@@ -13,16 +13,16 @@ test('a generated image becomes a reusable product across the editor and generat
 
   try {
     const page = await app.firstWindow()
-    await page.getByRole('button', { name: 'Look Around First' }).waitFor({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Skip for Now' }).waitFor({ timeout: 20_000 })
     await page.waitForTimeout(300)
     await page.evaluate(async () => {
       await window.moss.secrets.setMuseKey({ key: 'LLM|e2e-products-key' })
       await window.moss.settings.set({ key: 'firstRunConfirmShown', value: true })
     })
     await page.reload()
-    await page.getByRole('button', { name: 'Look Around First' }).waitFor({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Skip for Now' }).waitFor({ timeout: 20_000 })
     await page.waitForTimeout(300)
-    await page.getByRole('button', { name: 'Look Around First' }).click()
+    await page.getByRole('button', { name: 'Skip for Now' }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()
 
     const projectId = await page.evaluate(async () => {

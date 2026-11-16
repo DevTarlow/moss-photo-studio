@@ -25,8 +25,8 @@ test('an example can use the selected product photo or stay as shown', async () 
 
   try {
     const page = await app.firstWindow()
-    await page.getByRole('button', { name: 'Look around first' }).waitFor({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Look around first' }).click()
+    await page.getByRole('button', { name: 'Skip for Now' }).waitFor({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Skip for Now' }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible({ timeout: 20_000 })
 
     const bytes = Array.from(fs.readFileSync(productPhoto))

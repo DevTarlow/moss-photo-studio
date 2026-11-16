@@ -19,15 +19,15 @@ test('Create a Person opens the generator and saves a generated image as a perso
 
   try {
     const page = await app.firstWindow()
-    await page.getByRole('button', { name: 'Look Around First' }).waitFor({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Skip for Now' }).waitFor({ timeout: 20_000 })
     await page.evaluate(async () => {
       await window.moss.secrets.setMuseKey({ key: 'LLM|e2e-create-person' })
       await window.moss.settings.set({ key: 'firstRunConfirmShown', value: true })
     })
     await page.reload()
-    await page.getByRole('button', { name: 'Look Around First' }).waitFor({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Skip for Now' }).waitFor({ timeout: 20_000 })
     await page.waitForTimeout(300)
-    await page.getByRole('button', { name: 'Look Around First' }).click()
+    await page.getByRole('button', { name: 'Skip for Now' }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible({ timeout: 20_000 })
 
     await page.getByRole('link', { name: 'People', exact: true }).click()

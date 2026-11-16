@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check, Image as ImageIcon, Layers, Sparkles } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
 import type { Brand, Product } from '@shared/types'
 import {
   Badge,
@@ -21,10 +21,11 @@ import {
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
 import { fileToBytes } from '../lib/files'
-import { markUrl } from '../lib/assets'
+import { markUrl, bundledUrl } from '../lib/assets'
 import { toast } from '../lib/toast'
 import { warnIfSmallPhoto } from '../lib/photoWarnings'
-import { BrandFields } from '../components/brand/BrandFields'
+import { BrandFields, BrandPreview } from '../components/brand/BrandFields'
+import { NewProjectDialog } from '../components/library/NewProjectDialog'
 import { Skeleton } from '../components/ui/Skeleton'
 import { MuseKeyGuideDialog } from '../components/ui/MuseKeyGuideDialog'
 
@@ -45,22 +46,6 @@ function productNameFromFile(name: string): string {
   return base || 'Product'
 }
 
-function ToolCard({ icon, title, body }: { icon: React.JSX.Element; title: string; body: string }): React.JSX.Element {
-  return (
-    <Card padding={4} variant="muted">
-      <Stack gap={2}>
-        <span
-          className="grid h-10 w-10 place-items-center rounded-full"
-          style={{ background: 'var(--color-accent-muted)', color: 'var(--color-text-accent)' }}
-        >
-          {icon}
-        </span>
-        <Text weight="bold">{title}</Text>
-        <Text type="supporting" color="secondary">{body}</Text>
-      </Stack>
-    </Card>
-  )
-}
 
 export function Onboarding(): React.JSX.Element {
   const navigate = useNavigate()
@@ -88,6 +73,8 @@ export function Onboarding(): React.JSX.Element {
   const [finishing, setFinishing] = useState(false)
   const [brandDraft, setBrandDraft] = useState<Brand | null>(brand)
   const [brandBusy, setBrandBusy] = useState(false)
+  const [brandAdvanced, setBrandAdvanced] = useState(false)
+  const [newPhotoOpen, setNewPhotoOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
 
@@ -124,6 +111,17 @@ export function Onboarding(): React.JSX.Element {
       .catch(() => undefined)
     toast.status('You can finish setup from All Work or Products.')
     navigate('/products', { replace: true })
+  }
+
+  const openPhotoNow = async (): Promise<void> => {
+    setOnboardingBypass(true)
+    try {
+      await unwrap(window.moss.settings.set({ key: 'onboardingDismissed', value: true }))
+      await refreshSettings()
+    } catch {
+      // The photo dialog still opens; the next boot asks for setup again.
+    }
+    setNewPhotoOpen(true)
   }
 
   const addProduct = (next: Product): void => {
@@ -225,12 +223,12 @@ export function Onboarding(): React.JSX.Element {
     }
   }
 
-  const finish = async (): Promise<void> => {
+  const completeSetup = async (after: () => Promise<void>): Promise<void> => {
     setFinishing(true)
     try {
       await unwrap(window.moss.settings.set({ key: 'onboardingDone', value: true }))
       await refreshSettings()
-      navigate(product ? `/product/${product.id}` : '/products', { replace: true })
+      await after()
     } catch {
       toast.error('The setup could not be saved.')
     } finally {
@@ -238,10 +236,39 @@ export function Onboarding(): React.JSX.Element {
     }
   }
 
+  const finish = async (): Promise<void> => {
+    await completeSetup(async () => {
+      navigate(product ? `/product/${product.id}` : '/products', { replace: true })
+    })
+  }
+
+  const startEditing = async (): Promise<void> => {
+    await completeSetup(async () => {
+      if (product) {
+        const created = await unwrap(window.moss.products.createProject({ productId: product.id, type: 'photo' }))
+        navigate(`/project/${created.project.id}`, { replace: true })
+        return
+      }
+      navigate('/library?new=photo', { replace: true })
+    })
+  }
+
+  const startImage = async (): Promise<void> => {
+    await completeSetup(async () => {
+      if (product) {
+        const created = await unwrap(window.moss.products.createProject({ productId: product.id, type: 'image' }))
+        navigate(`/project/${created.project.id}`, { replace: true })
+        return
+      }
+      const detail = await unwrap(window.moss.projects.create({ type: 'image', draft: true }))
+      navigate(`/project/${detail.project.id}`, { replace: true })
+    })
+  }
+
   const hasKey = Boolean(secrets?.hasKey)
   const primaryLabel =
     step === 0
-      ? 'Set up the studio'
+      ? 'Open a Photo'
       : step === 1
         ? hasKey && !keyValue.trim()
           ? 'Continue'
@@ -250,7 +277,9 @@ export function Onboarding(): React.JSX.Element {
           ? 'Continue'
           : step === 3
             ? 'Continue'
-            : 'Finish Setup'
+            : product
+              ? 'Edit This Product'
+              : 'Open a Photo'
 
   const primaryDisabled =
     finishing ||
@@ -259,23 +288,28 @@ export function Onboarding(): React.JSX.Element {
     (step === 2 && photoBusy)
 
   const onPrimary = (): void => {
-    if (step === 0) void goTo(1)
+    if (step === 0) void openPhotoNow()
     else if (step === 1) void saveKey()
     else if (step === 2) void goTo(3)
     else if (step === 3) void saveBrandAndContinue()
-    else void finish()
+    else void startEditing()
   }
 
   const secondaryActions =
     step === 0 ? (
-      <Button label="Look around first" variant="ghost" onClick={skip} />
+      <Button label="Set Up AI Images" variant="secondary" onClick={() => void goTo(1)} />
     ) : step === 1 ? (
       <Button label="Add key later" variant="ghost" onClick={() => void goTo(2)} />
     ) : step === 2 ? (
       <Button label="Skip for now" variant="ghost" isDisabled={photoBusy} onClick={() => void goTo(3)} />
     ) : step === 3 ? (
       <Button label="Skip for now" variant="ghost" isDisabled={brandBusy} onClick={() => void goTo(4)} />
-    ) : null
+    ) : (
+      <>
+        <Button label="Finish Setup" variant="ghost" isDisabled={finishing} onClick={() => void finish()} />
+        <Button label="Make an Image" variant="secondary" isDisabled={finishing} onClick={() => void startImage()} />
+      </>
+    )
 
   return (
     <div className="flex h-full flex-col overflow-hidden" style={{ background: 'var(--color-background-body)' }}>
@@ -285,7 +319,7 @@ export function Onboarding(): React.JSX.Element {
           <span className="wordmark">Moss Photo Studio</span>
           <Badge label="Setup" variant="neutral" />
         </div>
-        <Button label="Finish later" variant="ghost" size="sm" onClick={skip} />
+        <Button label="Skip for Now" variant="ghost" size="sm" onClick={skip} />
       </header>
 
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
@@ -330,10 +364,37 @@ export function Onboarding(): React.JSX.Element {
                           Edit a photo you already have, describe a new image and make it, or keep related images in a Set. Everything you make stays on this computer.
                         </Text>
                       </Stack>
-                      <Grid columns={{ minWidth: 180 }} gap={3}>
-                        <ToolCard icon={<Icon icon={ImageIcon} size="md" />} title="Image Editor" body="Change a photo you already have." />
-                        <ToolCard icon={<Icon icon={Sparkles} size="md" />} title="Image Generator" body="Describe a picture and make it." />
-                        <ToolCard icon={<Icon icon={Layers} size="md" />} title="Sets" body="Keep related images together." />
+                      <Grid columns={{ minWidth: 260 }} gap={4}>
+                        <Stack gap={3}>
+                          <Stack direction="horizontal" gap={3} align="start">
+                            <Badge label="1" variant="neutral" />
+                            <Stack gap={0.5}>
+                              <Text weight="bold">Add a product photo</Text>
+                              <Text type="supporting" color="secondary">Start with a photo you already have.</Text>
+                            </Stack>
+                          </Stack>
+                          <Stack direction="horizontal" gap={3} align="start">
+                            <Badge label="2" variant="neutral" />
+                            <Stack gap={0.5}>
+                              <Text weight="bold">Choose a look or describe a change</Text>
+                              <Text type="supporting" color="secondary">Free edits stay on this computer.</Text>
+                            </Stack>
+                          </Stack>
+                          <Stack direction="horizontal" gap={3} align="start">
+                            <Badge label="3" variant="neutral" />
+                            <Stack gap={0.5}>
+                              <Text weight="bold">Save, export, or add it to a Set</Text>
+                              <Text type="supporting" color="secondary">Everything you make stays in your library.</Text>
+                            </Stack>
+                          </Stack>
+                        </Stack>
+                        <div className="overflow-hidden rounded-[12px] border" style={{ borderColor: 'var(--color-border)', background: 'var(--color-background-surface)' }}>
+                          <img src={bundledUrl('products/speckled-mug.webp')} alt="An example product photo" className="aspect-[4/3] w-full object-cover" />
+                          <div className="p-3">
+                            <Text weight="bold">A product photo is enough to start.</Text>
+                            <Text type="supporting" color="secondary" display="block" className="mt-1">Edit it for free, or use it as the product in a new scene.</Text>
+                          </div>
+                        </div>
                       </Grid>
                     </>
                   )}
@@ -450,10 +511,27 @@ export function Onboarding(): React.JSX.Element {
                           Make it your own
                         </Heading>
                         <Text type="body" color="secondary">
-                          Optional. Add a logo and colors, and choose where the badge sits.
+                          Add a logo and colors now, or change them later in Settings.
                         </Text>
                       </Stack>
-                      {brandDraft ? <BrandFields value={brandDraft} onChange={setBrandDraft} /> : <Skeleton className="h-96" />}
+                      <Stack gap={3}>
+                        <Card padding={4}>
+                          <Stack gap={3}>
+                            {brandDraft ? <BrandPreview brand={brandDraft} /> : <Skeleton className="h-48" />}
+                            <Stack direction="horizontal" gap={2} align="center" wrap="wrap">
+                              <Badge label="Optional" variant="neutral" />
+                              <Text type="supporting" color="secondary">Your logo, colors, and badge appear on images you make.</Text>
+                            </Stack>
+                            <Button
+                              label={brandAdvanced ? 'Hide Brand Options' : 'Customize Brand'}
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setBrandAdvanced((value) => !value)}
+                            />
+                          </Stack>
+                        </Card>
+                        {brandAdvanced && (brandDraft ? <BrandFields value={brandDraft} onChange={setBrandDraft} showPreview={false} /> : <Skeleton className="h-96" />)}
+                      </Stack>
                     </>
                   )}
 
@@ -487,17 +565,26 @@ export function Onboarding(): React.JSX.Element {
                           <Badge label="Ready" variant="success" />
                         </Stack>
                       </Card>
-                      <Stack gap={2}>
-                        <Stack gap={0.5}>
-                          <Text weight="bold">What's next</Text>
-                          <Text type="supporting" color="secondary">Find these in the studio rail whenever you need them.</Text>
+                      <Card padding={4}>
+                        <Stack direction="horizontal" gap={4} align="center" wrap="wrap">
+                          {product ? (
+                            <img src={product.imageUrl} alt="" className="h-16 w-16 rounded-[8px] object-cover" style={{ background: 'var(--color-background-muted)' }} />
+                          ) : (
+                            <span className="grid h-16 w-16 place-items-center rounded-[8px]" style={{ background: 'var(--color-background-muted)', color: 'var(--color-text-accent)' }}>
+                              <Icon icon={Check} size="md" />
+                            </span>
+                          )}
+                          <Stack gap={0.5} className="min-w-[220px] flex-1">
+                            <Text weight="bold">{product ? `Start with ${product.name}` : 'Start with a photo'}</Text>
+                            <Text type="supporting" color="secondary">
+                              {product
+                                ? 'Edit it for free, or make a new image with it as the product.'
+                                : 'Open a photo you already have, or describe a new image to make.'}
+                            </Text>
+                          </Stack>
+                          {!hasKey && <Badge label="Meta key optional" variant="neutral" />}
                         </Stack>
-                        <Grid columns={{ minWidth: 180 }} gap={3}>
-                          <ToolCard icon={<Icon icon={ImageIcon} size="md" />} title="Image Editor" body="Change a photo you already have." />
-                          <ToolCard icon={<Icon icon={Sparkles} size="md" />} title="Image Generator" body="Describe a picture and make it." />
-                          <ToolCard icon={<Icon icon={Layers} size="md" />} title="Sets" body="Keep related images together." />
-                        </Grid>
-                      </Stack>
+                      </Card>
                     </>
                   )}
                 </Stack>
@@ -518,6 +605,7 @@ export function Onboarding(): React.JSX.Element {
       </div>
 
       <MuseKeyGuideDialog open={keyGuideOpen} onOpenChange={setKeyGuideOpen} />
+      <NewProjectDialog open={newPhotoOpen} type={newPhotoOpen ? 'photo' : null} onOpenChange={setNewPhotoOpen} />
     </div>
   )
 }

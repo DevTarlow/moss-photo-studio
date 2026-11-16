@@ -14,8 +14,8 @@ test('included products start an editor and generator project, and Create a Prod
 
   try {
     const page = await app.firstWindow()
-    await page.getByRole('button', { name: 'Look Around First' }).waitFor({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Look Around First' }).click()
+    await page.getByRole('button', { name: 'Skip for Now' }).waitFor({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Skip for Now' }).click()
     await page.getByRole('link', { name: 'Products', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()
     await expect(page.getByText('20 included · 0 yours')).toBeVisible()

@@ -62,8 +62,8 @@ test('a Set keeps images together and starts new work from them', async () => {
     const pageErrors: string[] = []
     page.on('pageerror', (error) => pageErrors.push(error.message))
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1440, 900))
-    await page.getByRole('button', { name: 'Look Around First' }).waitFor({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Look Around First' }).click()
+    await page.getByRole('button', { name: 'Skip for Now' }).waitFor({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Skip for Now' }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()
     await page.evaluate(async () => { await window.moss.secrets.setMuseKey({ key: 'LLM|e2e-sets-key' }) })
     await page.reload()

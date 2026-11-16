@@ -21,8 +21,8 @@ test('an untouched Image Generator leaves no project behind', async () => {
 
   try {
     const page = await app.firstWindow()
-    await page.getByRole('button', { name: 'Look around first' }).waitFor({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Look around first' }).click()
+    await page.getByRole('button', { name: 'Skip for Now' }).waitFor({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'Skip for Now' }).click()
     await page.getByRole('link', { name: 'All work', exact: true }).first().click()
     await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('0 projects', { exact: true })).toBeVisible()

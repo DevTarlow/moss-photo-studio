@@ -206,7 +206,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await screenshot('onboarding-dark')
     await setAppTheme('light')
     await expect(page.getByRole('heading', { name: 'Your personal photo studio.' })).toBeVisible({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Set up the studio' }).click()
+    await page.getByRole('button', { name: 'Set Up AI Images' }).click()
     await expect(page.getByRole('heading', { name: 'Connect Meta' })).toBeVisible()
     await page.getByLabel('Meta key').fill('LLM|e2e-muse-key')
     await page.getByRole('button', { name: 'Test and connect' }).click()
