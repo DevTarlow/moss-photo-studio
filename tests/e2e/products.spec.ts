@@ -97,7 +97,7 @@ test('a generated image becomes a reusable product across the editor and generat
     await page.keyboard.press('Enter')
     await expect(page.getByRole('heading', { name: 'Ceramic Mug', exact: true })).toBeVisible()
 
-    await page.getByRole('button', { name: 'Make an Image with This Product' }).click()
+    await page.getByRole('button', { name: 'Make an Image with this Product' }).click()
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
 
     await page.getByRole('button', { name: 'Choose a Person' }).click()

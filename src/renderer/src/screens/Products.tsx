@@ -392,7 +392,7 @@ export function Products(): React.JSX.Element {
                   <Icon icon={ImageIcon} size="sm" /> Edit This Photo
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'image')}>
-                  <Icon icon={Sparkles} size="sm" /> Make an Image with This Product
+                  <Icon icon={Sparkles} size="sm" /> Make an Image with this Product
                 </Button>
               </div>
             </div>

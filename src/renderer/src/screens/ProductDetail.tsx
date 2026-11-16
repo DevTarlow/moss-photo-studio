@@ -331,7 +331,7 @@ export function ProductDetail(): React.JSX.Element {
                   {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={ImageIcon} size="sm" />} Edit This Photo
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void start('image')}>
-                  <Icon icon={Sparkles} size="sm" /> Make an Image with This Product
+                  <Icon icon={Sparkles} size="sm" /> Make an Image with this Product
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => openProductSetPicker(detail.product, () => void load())}>
                   <Icon icon={FolderPlus} size="sm" /> Add to Set

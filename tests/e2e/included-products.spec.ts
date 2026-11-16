@@ -40,7 +40,7 @@ test('included products start an editor and generator project, and Create a Prod
 
     await page.getByRole('link', { name: 'Products', exact: true }).click()
     await page.getByRole('button', { name: 'Open Amber dropper bottle' }).click()
-    await page.getByRole('dialog').getByRole('button', { name: 'Make an Image with This Product' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Make an Image with this Product' }).click()
     await page.getByText('Describe the image').waitFor({ timeout: 20_000 })
     await expect(page.getByText('Amber dropper bottle', { exact: true }).first()).toBeVisible()
     const imageSource = await page.evaluate(async () => {

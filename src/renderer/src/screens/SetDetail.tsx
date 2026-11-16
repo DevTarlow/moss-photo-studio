@@ -231,7 +231,7 @@ export function SetDetail(): React.JSX.Element {
                                 {busy === `product:${product.id}:photo` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Pencil} size="sm" />} Edit This Photo
                               </Button>
                               <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromProduct(product.id, 'image')}>
-                                {busy === `product:${product.id}:image` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Make an Image with This Product
+                                {busy === `product:${product.id}:image` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Make an Image with this Product
                               </Button>
                             </div>
                           </div>

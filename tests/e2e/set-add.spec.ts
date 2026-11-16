@@ -45,7 +45,7 @@ test('a Set can take a product from its own page and return to it', async () => 
     await expect(addTo).toHaveCount(0)
     await expect(page.getByText('Test Mug', { exact: true })).toBeVisible()
 
-    await page.getByRole('button', { name: 'Make an Image with This Product', exact: true }).click()
+    await page.getByRole('button', { name: 'Make an Image with this Product', exact: true }).click()
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
     const backToSet = page.getByRole('button', { name: 'Back to Set', exact: true })
     await expect(backToSet).toBeVisible({ timeout: 20_000 })
