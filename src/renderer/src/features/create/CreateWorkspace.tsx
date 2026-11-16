@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { DropdownMenu, Popover } from 'radix-ui'
 import { Banner, Icon, MoreMenu } from '@astryxdesign/core'
-import { Check, ChevronDown, Download, Image as ImageIcon, Loader2, Mountain, Package, Pencil, Sparkles, UserPlus, UserRound, X } from 'lucide-react'
+import { Check, ChevronDown, Download, Image as ImageIcon, Loader2, Mountain, Pencil, Sparkles, UserRound, X } from 'lucide-react'
 import type { Format, Image, JobState, Project, Shape } from '@shared/types'
 import { MAX_PROMPT } from '@shared/constants'
 import { isBundledProduct } from '@shared/products'
@@ -932,26 +932,23 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                       <Button variant="ghost" size="sm" onClick={() => void download(image)}>
                         <Icon icon={Download} size="xsm" /> Download
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setSaveProductImage(image)}>
-                        <Icon icon={Package} size="xsm" /> Save as Product
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setSavePersonImage(image)}>
-                        <Icon icon={UserPlus} size="xsm" /> Save as Person
-                      </Button>
                       <div className="ml-auto">
                         <MoreMenu
                           label={`More actions for ${image.label}`}
                           size="sm"
                           items={[
+                            { label: 'Save as Product', onClick: () => setSaveProductImage(image) },
+                            ...(personId || image.personId || createPersonMode
+                              ? [{ label: 'Save as Person', onClick: () => setSavePersonImage(image) }]
+                              : []),
                             { label: 'Add to Set', onClick: () => openSetPicker(image) },
                             { label: 'Delete', onClick: () => void remove(image) }
                           ]}
                         />
                       </div>
                     </div>
-                    <div className="flex items-center justify-between gap-2 px-3 pb-2">
+                    <div className="px-3 pb-2">
                       <span className="text-[11px] font-medium">{image.label}</span>
-                      <span className="meta">1 image</span>
                     </div>
                   </div>
                 ))}

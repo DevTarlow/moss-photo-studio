@@ -37,7 +37,8 @@ test('a generated image becomes a reusable product across the editor and generat
     await page.getByRole('button', { name: /Make 1 Image · \$0\.01/ }).click()
     await expect(page.getByText('Newest')).toBeVisible({ timeout: 30_000 })
 
-    await page.getByRole('button', { name: 'Save as Product' }).first().click()
+    await page.getByRole('button', { name: /More actions for/ }).first().click()
+    await page.getByRole('menuitem', { name: 'Save as Product' }).click()
     const save = page.getByRole('dialog')
     await expect(save.getByRole('heading', { name: 'Save as Product' })).toBeVisible()
     await save.getByLabel('Product name').fill('Ceramic Mug')

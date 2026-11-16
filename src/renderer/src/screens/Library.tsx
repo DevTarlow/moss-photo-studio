@@ -810,7 +810,6 @@ export function Library(): React.JSX.Element {
                       { type: 'image' as const, icon: Sparkles, title: 'Image Generator', line: 'Describe the picture and make it.' },
                       { type: 'sets' as const, icon: Layers, title: 'Sets', line: 'Keep related images together.' }
                     ].map((card) => {
-                      const Icon = card.icon
                       return (
                         <ClickableCard
                           key={card.type}
@@ -823,7 +822,7 @@ export function Library(): React.JSX.Element {
                             className="grid h-10 w-10 place-items-center rounded-full"
                             style={{ background: 'var(--color-accent-muted)', color: 'var(--color-text-accent)' }}
                           >
-                            <Icon size={20} />
+                            <Icon icon={card.icon} size="md" />
                           </span>
                           <Text weight="bold" display="block" className="mt-4">{card.title}</Text>
                           <Text type="supporting" color="secondary" display="block" className="mt-1">{card.line}</Text>

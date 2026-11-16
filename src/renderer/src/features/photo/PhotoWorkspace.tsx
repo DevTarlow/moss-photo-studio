@@ -618,9 +618,7 @@ export function PhotoWorkspace(): React.JSX.Element {
     <VersionDetails
       project={project}
       selected={selected}
-      images={ready}
       parentLabel={parentLabel}
-      onSelect={(id) => selectImage(id)}
       onNewVersion={startNewVersion}
       onFormatChange={(format) => { void useWorkspaceStore.getState().updateProject({ format }).catch(() => toast.error('The format could not be saved.')) }}
       onSaveProduct={selected ? () => setSaveProductImageId(selected.id) : undefined}

@@ -41,7 +41,7 @@ export function monthLabel(key: string): string {
 export function shortMonthLabel(key: string): string {
   const [year, month] = key.split('-').map(Number)
   if (!year || !month) return key
-  return new Intl.DateTimeFormat(undefined, { month: 'short', year: '2-digit' }).format(new Date(year, month - 1, 1))
+  return new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' }).format(new Date(year, month - 1, 1))
 }
 
 export function elapsedLabel(startedAt: number | undefined, now = Date.now()): string {

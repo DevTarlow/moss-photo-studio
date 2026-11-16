@@ -130,6 +130,8 @@ export function Usage(): React.JSX.Element {
   }
 
   const budgetCents = summary?.budgetCents ?? null
+  const savedBudget = budgetCents === null ? '' : (budgetCents / 100).toFixed(2)
+  const budgetDirty = budget.trim().replace(/^\$/, '') !== savedBudget
   const maxProject = Math.max(1, ...(summary?.projects.map((project) => project.spendCents) ?? [0]))
   const visibleProjects = (summary?.projects ?? []).slice(
     (projectPage - 1) * COLLECTION_PAGE_SIZE,
@@ -183,7 +185,7 @@ export function Usage(): React.JSX.Element {
                   <Text type="supporting" color="secondary" className="block">Images that came back</Text>
                 </Card>
                 <Card padding={4}>
-                  <Text type="label" color="secondary" className="block">Monthly Limit</Text>
+                  <Text type="label" color="secondary" className="block">Monthly Limit (USD)</Text>
                   {budgetCents === null ? (
                     <Text weight="bold" className="mt-2 block">No monthly limit</Text>
                   ) : (
@@ -216,7 +218,7 @@ export function Usage(): React.JSX.Element {
                       variant="primary"
                       size="sm"
                       isLoading={savingBudget}
-                      isDisabled={savingBudget}
+                      isDisabled={savingBudget || !budgetDirty}
                       onClick={() => void saveBudget()}
                     />
                   </div>

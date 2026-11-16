@@ -499,12 +499,16 @@ function AppearanceSection(): React.JSX.Element {
               <p className="field-label mb-0">Reduce motion</p>
               <p className="hint">Use the system preference, or choose for this app.</p>
             </div>
-            <label className="sr-only" htmlFor="reduce-motion">Reduce motion</label>
-            <select id="reduce-motion" className="field w-[180px]" value={settings.reduceMotion} onChange={(event) => void setSetting('reduceMotion', event.target.value)}>
-              <option value="system">Use system setting</option>
-              <option value="reduce">Reduce motion</option>
-              <option value="full">Full motion</option>
-            </select>
+            <Segmented
+              label="Reduce motion"
+              value={settings.reduceMotion}
+              onChange={(value) => void setSetting('reduceMotion', value)}
+              options={[
+                { value: 'system' as const, label: 'System' },
+                { value: 'reduce' as const, label: 'Reduce' },
+                { value: 'full' as const, label: 'Full' }
+              ]}
+            />
           </div>
         </SectionCard>
       </div>

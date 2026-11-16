@@ -5,13 +5,12 @@ import { templateById } from '@shared/prompts/templates'
 import { shapeLabel } from '@shared/shapes'
 import { usd, formatDateTime } from '../../lib/format'
 import { Button } from '../../components/ui/Button'
+import { Segmented } from '../../components/ui/Segmented'
 
 export function VersionDetails({
   project,
   selected,
-  images,
   parentLabel,
-  onSelect,
   onNewVersion,
   onFormatChange,
   onSaveProduct,
@@ -20,9 +19,7 @@ export function VersionDetails({
 }: {
   project: Project
   selected: Image | null
-  images: Image[]
   parentLabel: string | null
-  onSelect: (id: string) => void
   onNewVersion: () => void
   onFormatChange: (format: Project['format']) => void
   onSaveProduct?: () => void
@@ -51,13 +48,20 @@ export function VersionDetails({
               <p className="meta">Look: {templateName}</p>
             )}
             <p className="meta">Shape: {shapeLabel(project.shape)}</p>
-            <div className="flex items-center gap-2">
-              <label htmlFor="version-output-format" className="meta">File format</label>
-              <select id="version-output-format" className="field h-7 w-[86px] text-[11px]" value={project.format} onChange={(event) => onFormatChange(event.target.value as Project['format'])}>
-                <option value="webp">WebP</option>
-                <option value="jpeg">JPEG</option>
-                <option value="png">PNG</option>
-              </select>
+            <div>
+              <p className="meta">File format</p>
+              <div className="mt-1">
+                <Segmented
+                  label="File format"
+                  value={project.format}
+                  onChange={onFormatChange}
+                  options={[
+                    { value: 'webp' as const, label: 'WebP' },
+                    { value: 'jpeg' as const, label: 'JPEG' },
+                    { value: 'png' as const, label: 'PNG' }
+                  ]}
+                />
+              </div>
             </div>
             <p className="meta">Made: {formatDateTime(selected.createdAt)}</p>
             <p className="meta">Cost: {selected.adjust ? 'Free' : usd(selected.costCents)}</p>
@@ -88,35 +92,13 @@ export function VersionDetails({
         <p className="meta mt-2">Choose a version.</p>
       )}
 
-      <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
-        <div className="flex items-center justify-between">
-          <p className="section-label">Versions</p>
-          {selected && (
-            <Button variant="secondary" size="sm" onClick={onNewVersion}>
-              <Icon icon={Plus} size="sm" /> New Version
-            </Button>
-          )}
+      {selected && (
+        <div className="mt-4 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
+          <Button variant="secondary" size="sm" onClick={onNewVersion}>
+            <Icon icon={Plus} size="sm" /> New Version
+          </Button>
         </div>
-        <div className="mt-2 space-y-1">
-          {images.map((image) => (
-            <button
-              key={image.id}
-              type="button"
-              className="flex w-full items-center gap-2 rounded-[6px] p-1.5 text-left"
-              style={{ background: selected?.id === image.id ? 'var(--accent-soft)' : 'transparent', color: selected?.id === image.id ? 'var(--accent)' : 'var(--text)' }}
-              onClick={() => onSelect(image.id)}
-            >
-              {image.thumbUrl ? (
-                <img src={image.thumbUrl} alt="" className="h-8 w-8 rounded object-cover" />
-              ) : (
-                <span className="h-8 w-8 rounded" style={{ background: 'var(--surface-2)' }} />
-              )}
-              <span className="min-w-0 flex-1 truncate text-[11px] font-medium">{image.label}</span>
-              {image.isOriginal && <span className="badge pill-sm">Original</span>}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   )
 }

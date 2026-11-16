@@ -44,12 +44,13 @@ test('Create a Person opens the generator and saves a generated image as a perso
     await expect(page.getByText('Newest')).toBeVisible({ timeout: 30_000 })
 
     // The lightbox offers the same action as the result card.
-    await page.getByRole('button', { name: /Open Created/ }).click()
+    await page.getByRole('button', { name: /Open Image/ }).click()
     await expect(page.getByRole('dialog').getByRole('button', { name: 'Save as Person' })).toBeVisible()
     await page.keyboard.press('Escape')
     await expect(page.getByRole('dialog')).toBeHidden()
 
-    await page.getByRole('button', { name: 'Save as Person' }).first().click()
+    await page.getByRole('button', { name: /More actions for/ }).first().click()
+    await page.getByRole('menuitem', { name: 'Save as Person' }).click()
     const dialog = page.getByRole('dialog')
     await expect(dialog.getByRole('heading', { name: 'Save as Person' })).toBeVisible()
     await dialog.getByLabel('Person name').fill('Test Person')
