@@ -562,8 +562,8 @@ export function Library(): React.JSX.Element {
               {showNoKey && (
                 <Banner
                   status="warning"
-                  title="Add your Muse key"
-                  description="Making images needs a Meta Muse key. Your library and local edits still work."
+                  title="Add your Meta key"
+                  description="Making images needs a Meta key. Your library and local edits still work."
                   endContent={<Button label="Open Settings" variant="secondary" size="sm" onClick={() => navigate('/settings/studio')} />}
                   collapsible={false}
                 />
@@ -813,9 +813,9 @@ export function Library(): React.JSX.Element {
                   <Text type="supporting" color="secondary" className="text-center">Start with a photo, an idea, or a Set.</Text>
                   <Grid columns={{ minWidth: 220, max: 3 }} gap={4} className="mx-auto mt-4 max-w-[900px]">
                     {[
-                      { type: 'photo' as const, icon: ImageIcon, title: 'Image Editor', line: 'New scene, new light, same product.' },
-                      { type: 'image' as const, icon: Sparkles, title: 'Image Generator', line: 'Describe it, and Meta makes it.' },
-                      { type: 'sets' as const, icon: Layers, title: 'Sets & Offline Library', line: 'Keep related images together, all on this computer.' }
+                      { type: 'photo' as const, icon: ImageIcon, title: 'Image Editor', line: 'Change a photo you already have.' },
+                      { type: 'image' as const, icon: Sparkles, title: 'Image Generator', line: 'Describe the picture and make it.' },
+                      { type: 'sets' as const, icon: Layers, title: 'Sets', line: 'Keep related images together.' }
                     ].map((card) => {
                       const Icon = card.icon
                       return (

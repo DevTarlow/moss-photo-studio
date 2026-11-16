@@ -53,8 +53,8 @@ test('onboarding saves the first photo as a Product without creating a project',
     await expect(page.getByRole('heading', { name: "You're ready to make photos." })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Finish Setup' }).click()
     await expect(page.getByRole('heading', { name: 'product', exact: true })).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByRole('button', { name: 'Edit this Photo' })).toBeVisible()
-    await expect(page.getByText('No work yet')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Edit This Photo' })).toBeVisible()
+    await expect(page.getByText('No projects yet')).toBeVisible()
 
     const afterSave = await page.evaluate(async () => {
       const products = await window.moss.products.list()

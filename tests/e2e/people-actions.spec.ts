@@ -50,7 +50,7 @@ test('a person opens larger, keeps a studio look, and seeds the image generator'
     await page.getByRole('button', { name: 'Open Mei larger' }).click()
     await expect(preview.getByRole('heading', { name: 'Mei · 30s' })).toBeVisible()
     await preview.getByRole('button', { name: 'Use Full length for Mei' }).click()
-    await preview.getByRole('button', { name: 'Create an Image' }).click()
+    await preview.getByRole('button', { name: 'Make an Image with This Person' }).click()
     await page.getByText('Describe the image').waitFor({ timeout: 20_000 })
     await expect(page.getByText('Image Generator', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('Mei · 30s · Full length', { exact: true })).toBeVisible()

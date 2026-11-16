@@ -129,7 +129,7 @@ export function Onboarding(): React.JSX.Element {
       .set({ key: 'onboardingDismissed', value: true })
       .then(() => refreshSettings())
       .catch(() => undefined)
-    toast.status('You can finish setting up later from Products.')
+    toast.status('You can finish setup from All Work or Products.')
     navigate('/products', { replace: true })
   }
 
@@ -340,7 +340,7 @@ export function Onboarding(): React.JSX.Element {
                       <Grid columns={{ minWidth: 180 }} gap={3}>
                         <ToolCard icon={<Icon icon={ImageIcon} size="md" />} title="Image Editor" body="Change a photo you already have." />
                         <ToolCard icon={<Icon icon={Sparkles} size="md" />} title="Image Generator" body="Describe a picture and make it." />
-                        <ToolCard icon={<Icon icon={Layers} size="md" />} title="Sets & Offline Library" body="Keep related images together, all on this computer." />
+                        <ToolCard icon={<Icon icon={Layers} size="md" />} title="Sets" body="Keep related images together." />
                       </Grid>
                     </>
                   )}
@@ -350,10 +350,10 @@ export function Onboarding(): React.JSX.Element {
                       <Stack gap={2}>
                         <Text type="label" color="secondary">Step 2 of 5 · optional</Text>
                         <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
-                          Connect Meta Muse
+                          Connect Meta
                         </Heading>
                         <Text type="body" color="secondary">
-                          Moss uses your own Meta key to make images. Meta charges your account one cent for each image that comes back.
+                          Moss makes images with your Meta account. Meta charges you $0.01 for each image that comes back.
                         </Text>
                       </Stack>
                       <Banner
@@ -367,13 +367,13 @@ export function Onboarding(): React.JSX.Element {
                         collapsible={false}
                       />
                       <TextInput
-                        label="Meta Muse key"
+                        label="Meta key"
                         type={revealKey ? 'text' : 'password'}
                         value={keyValue}
                         onChange={setKeyValue}
                         onEnter={() => void saveKey()}
-                        placeholder={hasKey ? `Saved key ending ${secrets?.last4 ?? '••••'}. Paste a new one to replace it.` : 'LLM|...'}
-                        description="The key is stored in your system keyring and never leaves this computer."
+                        placeholder={hasKey ? `Saved key ending ${secrets?.last4 ?? '••••'}. Paste a new one to replace it.` : 'Paste the key from Meta'}
+                        description="The key is stored on this computer."
                         status={keyError ? { type: 'error', message: keyError } : undefined}
                         width="100%"
                         hasAutoFocus
@@ -502,7 +502,7 @@ export function Onboarding(): React.JSX.Element {
                         <Grid columns={{ minWidth: 180 }} gap={3}>
                           <ToolCard icon={<Icon icon={ImageIcon} size="md" />} title="Image Editor" body="Change a photo you already have." />
                           <ToolCard icon={<Icon icon={Sparkles} size="md" />} title="Image Generator" body="Describe a picture and make it." />
-                          <ToolCard icon={<Icon icon={Layers} size="md" />} title="Sets & Offline Library" body="Keep related images together, all on this computer." />
+                          <ToolCard icon={<Icon icon={Layers} size="md" />} title="Sets" body="Keep related images together." />
                         </Grid>
                       </Stack>
                     </>

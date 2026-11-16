@@ -153,7 +153,7 @@ export function AdjustPanel({
           <IconButton label="Redo" disabled={!canRedo} onClick={onRedo}><Icon icon={Redo2} size="sm" /></IconButton>
         </div>
       </div>
-      <p className="hint mt-1">Free. No API call. The original stays untouched.</p>
+      <p className="hint mt-1">Free. Done on this computer. The original stays untouched.</p>
 
       <section className="mt-5">
         <div className="flex items-center gap-2">
@@ -165,7 +165,7 @@ export function AdjustPanel({
             <Chip key={aspect.id} selected={currentAspect === aspect.id} onClick={() => setAspect(aspect.ratio)}>{aspect.label}</Chip>
           ))}
         </div>
-        <p className="mt-1.5 text-[11px]" style={{ color: 'var(--text-faint)' }}>Drag the edges, or focus the crop and use arrow keys. Hold Alt to resize and Shift for bigger steps.</p>
+        <p className="mt-1.5 text-[11px]" style={{ color: 'var(--text-faint)' }}>Drag the corners to crop. Use the arrow keys for fine control.</p>
       </section>
 
       <section className="mt-5">
@@ -198,7 +198,7 @@ export function AdjustPanel({
 
       {batchCount > 1 && (
         <div className="mt-5 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
-          <p className="text-[12px] font-semibold">Apply this grade to all</p>
+          <p className="text-[12px] font-semibold">Apply these adjustments to every version</p>
           <p className="hint mt-1">Creates a new local version of each of the {batchCount} ready images. Crop, rotate, and flips stay on this image.</p>
           <Button variant="secondary" size="sm" className="mt-2" disabled={batchBusy} onClick={onApplyBatch}>
             {batchBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Apply to {batchCount} Images

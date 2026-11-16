@@ -26,7 +26,7 @@ function lastMonths(count: number): string[] {
   return result
 }
 
-const actionLabels = { create: 'Create', set: 'Set', edit: 'Edit', adjust: 'Adjust', listing: 'Listing copy', analyze: 'Photo read', cutout: 'Cutout' } as const
+const actionLabels = { create: 'Made image', set: 'Set', edit: 'Edited image', adjust: 'Adjusted', listing: 'Listing copy', analyze: 'Photo read', cutout: 'Cutout' } as const
 
 function microsLabel(micros: number): string {
   if (micros <= 0) return 'Under a cent'
@@ -154,7 +154,7 @@ export function Usage(): React.JSX.Element {
                 options={months.map((value) => ({ value, label: shortMonthLabel(value) }))}
                 width={130}
               />
-              <Button label="Export CSV" variant="secondary" icon={<Icon icon={Download} size="sm" />} onClick={() => void exportCsv()} />
+              <Button label="Download Spreadsheet" variant="secondary" icon={<Icon icon={Download} size="sm" />} onClick={() => void exportCsv()} />
             </div>
           </div>
 
@@ -175,7 +175,7 @@ export function Usage(): React.JSX.Element {
                 <Card padding={4}>
                   <Text type="label" color="secondary" className="block">Images made</Text>
                   <Text weight="bold" className="mt-2 block tabular" style={{ fontSize: 24 }}>{summary?.images ?? 0}</Text>
-                  <Text type="supporting" color="secondary" className="block">{monthLabel(month)} · one cent per returned image</Text>
+                  <Text type="supporting" color="secondary" className="block">{monthLabel(month)} · $0.01 for each image that came back</Text>
                 </Card>
                 <Card padding={4}>
                   <Text type="label" color="secondary" className="block">Spent</Text>
@@ -183,7 +183,7 @@ export function Usage(): React.JSX.Element {
                   <Text type="supporting" color="secondary" className="block">Images that came back</Text>
                 </Card>
                 <Card padding={4}>
-                  <Text type="label" color="secondary" className="block">Budget</Text>
+                  <Text type="label" color="secondary" className="block">Monthly Limit</Text>
                   {budgetCents === null ? (
                     <Text weight="bold" className="mt-2 block">No monthly limit</Text>
                   ) : (
@@ -203,7 +203,7 @@ export function Usage(): React.JSX.Element {
                     <div className="w-[130px]">
                       <TextInput
                         id="budget"
-                        label="Budget in dollars"
+                        label="Monthly limit in dollars"
                         isLabelHidden
                         value={budget}
                         onChange={setBudget}
@@ -220,7 +220,7 @@ export function Usage(): React.JSX.Element {
                       onClick={() => void saveBudget()}
                     />
                   </div>
-                  <Text type="supporting" color="secondary" className="mt-2 block">A limit inside the app. Empty means no limit.</Text>
+                  <Text type="supporting" color="secondary" className="mt-2 block">We'll warn you before a make goes over this. Leave it empty for no limit.</Text>
                 </Card>
               </div>
 
@@ -231,7 +231,7 @@ export function Usage(): React.JSX.Element {
                 </div>
                 <div className="card mt-2 overflow-hidden">
                   {(summary?.projects.length ?? 0) === 0 ? (
-                    <p className="meta p-4">Nothing yet this month.</p>
+                    <p className="meta p-4">No images this month.</p>
                   ) : (
                     visibleProjects.map((project) => (
                       <div key={`${project.projectId}-${project.name}`} className="flex items-center gap-3 border-b px-4 py-3 last:border-b-0" style={{ borderColor: 'var(--border)' }}>
@@ -259,17 +259,17 @@ export function Usage(): React.JSX.Element {
 
               <section className="mt-8">
                 <div className="flex items-baseline justify-between">
-                  <h2 className="section-label">Full ledger</h2>
+                  <h2 className="section-label">Every Image</h2>
                   <span className="meta-faint">{total} {total === 1 ? 'row' : 'rows'}</span>
                 </div>
                 {events.length === 0 ? (
-                  <EmptyState icon={<Icon icon={BarChart3} size="lg" />} title="No images made yet" line="Your runs and their cost show up here." />
+                  <EmptyState icon={<Icon icon={BarChart3} size="lg" />} title="No images yet" line="Images you make and what they cost will show here." />
                 ) : (
                   <div className="card mt-2 overflow-x-auto">
                     <table className="w-full min-w-[780px] border-collapse text-left">
                       <thead>
                         <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
-                          {['Date', 'Project', 'Action', 'Images', 'Cost', 'Duration', 'Result'].map((heading) => (
+                          {['Date', 'Project', 'What Happened', 'Images', 'Cost', 'Duration', 'Outcome'].map((heading) => (
                             <th key={heading} className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--text-faint)' }}>
                               {heading}
                             </th>
@@ -316,7 +316,7 @@ export function Usage(): React.JSX.Element {
                   total={total}
                   onPage={(next) => void goToPage(next)}
                   busy={loadingEvents}
-                  label="Ledger pages"
+                  label="Image history pages"
                 />
               </section>
 

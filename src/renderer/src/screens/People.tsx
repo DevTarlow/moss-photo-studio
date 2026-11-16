@@ -239,16 +239,16 @@ export function People(): React.JSX.Element {
               <Text type="supporting" color="secondary" className="block">
                 {search.trim()
                   ? `Showing ${matching.length} of ${people.length}`
-                  : `${included.length} included · ${yours.length} yours`}
+                  : `${included.length} starter people · ${yours.length} of yours`}
               </Text>
-              <Text type="supporting" color="secondary" className="block">The people you can put your products on.</Text>
+              <Text type="supporting" color="secondary" className="block">People you can add to your product photos.</Text>
             </div>
             <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
               <Button variant="secondary" disabled={creatingPerson} onClick={() => void createPerson()}>
-                <Icon icon={Sparkles} size="sm" /> Create a Person
+                <Icon icon={Sparkles} size="sm" /> Generate Person Photo
               </Button>
               <Button variant="primary" onClick={() => setAddOpen(true)}>
-                <Icon icon={UserPlus} size="sm" /> Add a Person
+                <Icon icon={UserPlus} size="sm" /> Add Portrait
               </Button>
             </div>
           </div>
@@ -305,7 +305,7 @@ export function People(): React.JSX.Element {
           <>
           <section className="mt-8" aria-labelledby="yours-heading">
             <div className="flex items-baseline gap-2">
-              <h2 id="yours-heading" className="section-label">Yours</h2>
+              <h2 id="yours-heading" className="section-label">Your People</h2>
               <span className="meta-faint">{yours.length}</span>
             </div>
             {yours.length === 0 ? (
@@ -314,7 +314,7 @@ export function People(): React.JSX.Element {
                   icon={<Icon icon={Users} size="lg" />}
                   title="Add your own person"
                   line="Add the person you want in your photos. One clear portrait, reused in every image."
-                  action={<Button variant="secondary" onClick={() => setAddOpen(true)}>Add a Person</Button>}
+                  action={<Button variant="secondary" onClick={() => setAddOpen(true)}>Add Portrait</Button>}
                   compact
                 />
               </div>
@@ -341,7 +341,7 @@ export function People(): React.JSX.Element {
 
           <section className="mt-8" aria-labelledby="included-heading">
             <div className="flex items-baseline gap-2">
-              <h2 id="included-heading" className="section-label">Included</h2>
+              <h2 id="included-heading" className="section-label">Starter People</h2>
               <span className="meta-faint">{included.length}</span>
             </div>
             <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
@@ -349,7 +349,7 @@ export function People(): React.JSX.Element {
                 <PersonCard key={person.id} person={person} onOpen={() => setPreviewPerson(person)} />
               ))}
             </div>
-            <p className="hint mt-3">Synthetic reference people made for Moss. They are not photographs of real people.</p>
+            <p className="hint mt-3">Starter people made for Moss. They are not photographs of real people.</p>
           </section>
           </>
           )}
@@ -359,14 +359,14 @@ export function People(): React.JSX.Element {
       <Dialog
         open={addOpen}
         onOpenChange={(open) => { setAddOpen(open); if (!open) { setError(null); setName('') } }}
-        title="Add a person"
+        title="Add a Portrait"
         description="One person, one clear portrait. The person is reused in edits and images and does not need to be added again."
         width={500}
         footer={
           <>
             <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
             <Button variant="primary" disabled={busy || !name.trim()} onClick={() => void addWithPicker()}>
-              {busy ? 'Opening...' : 'Choose a Photo'}
+              {busy ? 'Opening...' : 'Choose a Portrait'}
             </Button>
           </>
         }
@@ -386,7 +386,7 @@ export function People(): React.JSX.Element {
             hint="JPEG, PNG or WebP. Up to 20 MB."
             onClick={() => void addWithPicker()}
             onFiles={(files) => { const file = files[0]; if (file) void addWithFile(file) }}
-            label="Choose a Photo"
+            label="Choose a Portrait"
           />
           {error && <p className="error-text" role="alert">{error}</p>}
           <p className="hint">A clear portrait, no sunglasses, one person in the frame.</p>
@@ -470,9 +470,9 @@ export function People(): React.JSX.Element {
               </>
             )}
             <div className="mt-4 flex flex-wrap gap-2">
-              <Button variant="primary" onClick={() => void createImage()}>Create an Image</Button>
+              <Button variant="primary" onClick={() => void createImage()}>Make an Image with This Person</Button>
             </div>
-            <p className="hint mt-2">The selected photo is used as the person reference.</p>
+            <p className="hint mt-2">This portrait will be used for the person.</p>
           </>
         )}
       </Dialog>

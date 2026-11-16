@@ -15,7 +15,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   aborted: 'That change was stopped.',
   unlicensed: 'Reactivate to make images.',
   unlicensed_library: 'Reactivate to make images.',
-  no_key: 'Add your Muse key in Settings to make images.',
+  no_key: 'Add your Meta key in Settings to make images.',
   budget: 'This run would pass your monthly limit. Raise it in Usage, or make fewer images.',
   disk_full:
     'The image was made but could not be saved. Meta may bill for it. Free some space and try again.',

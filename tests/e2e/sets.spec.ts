@@ -42,9 +42,9 @@ async function screenshot(page: Page, name: string): Promise<void> {
 }
 
 async function firstRun(page: Page): Promise<void> {
-  const confirm = page.getByRole('dialog', { name: 'Before your first run' })
+  const confirm = page.getByRole('dialog', { name: 'Before your first image' })
   if (await confirm.isVisible().catch(() => false)) {
-    await confirm.getByRole('button', { name: /Create 1 Image/ }).click()
+    await confirm.getByRole('button', { name: /Make 1 Image/ }).click()
   }
 }
 
@@ -76,20 +76,20 @@ test('a Set keeps images together and starts new work from them', async () => {
     expect(product).toBeTruthy()
     await page.evaluate((id) => { window.location.hash = `#/product/${id}` }, product!.id)
     await expect(page.getByRole('heading', { name: 'Studio mug', exact: true })).toBeVisible({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'New Image from Reference', exact: true }).click()
+    await page.getByRole('button', { name: 'Make an Image with This Product', exact: true }).click()
     await expect(page.getByText('Image Generator', { exact: true }).first()).toBeVisible({ timeout: 20_000 })
     await page.locator('textarea').first().fill('A ceramic mug on a warm wooden table, soft morning light')
-    await page.getByRole('button', { name: /Create 1 Image · \$0\.01/ }).click()
+    await page.getByRole('button', { name: /Make 1 Image · \$0\.01/ }).click()
     await firstRun(page)
     await expect(page.getByRole('button', { name: /Open .* larger/ }).first()).toBeVisible({ timeout: 30_000 })
 
     await page.getByRole('button', { name: /Open .* larger/ }).first().click()
     await page.getByRole('button', { name: 'Save to Set', exact: true }).click()
-    await expect(page.getByRole('dialog', { name: 'Save to Set' })).toBeVisible()
+    await expect(page.getByRole('dialog', { name: 'Add to Set' })).toBeVisible()
     await page.locator('#save-to-new-set').fill('Spring collection')
     await screenshot(page, 'save-to-set')
     await page.getByRole('button', { name: 'Create & Save', exact: true }).click()
-    await expect(page.getByRole('dialog', { name: 'Save to Set' })).toHaveCount(0)
+    await expect(page.getByRole('dialog', { name: 'Add to Set' })).toHaveCount(0)
     await page.keyboard.press('Escape')
 
     await page.getByRole('link', { name: 'All work', exact: true }).first().click()
@@ -115,13 +115,13 @@ test('a Set keeps images together and starts new work from them', async () => {
     await screenshot(page, 'sets')
     await setCard.click()
     await expect(page.getByRole('heading', { name: 'Spring collection', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'New Image', exact: true })).toHaveCount(1)
+    await expect(page.getByRole('button', { name: 'Make an Image with This Photo', exact: true })).toHaveCount(1)
     await screenshot(page, 'set-detail')
 
-    await page.getByRole('button', { name: 'New Image', exact: true }).click()
+    await page.getByRole('button', { name: 'Make an Image with This Photo', exact: true }).click()
     await expect(page.getByText('Image Generator', { exact: true }).first()).toBeVisible({ timeout: 20_000 })
     await page.locator('textarea').first().fill('The same ceramic mug on a pale linen table with window light')
-    await page.getByRole('button', { name: /Create 1 Image · \$0\.01/ }).click()
+    await page.getByRole('button', { name: /Make 1 Image · \$0\.01/ }).click()
     await firstRun(page)
     await expect(page.getByRole('button', { name: /Open .* larger/ }).first()).toBeVisible({ timeout: 30_000 })
 
@@ -184,11 +184,11 @@ test('a Set keeps images together and starts new work from them', async () => {
     const productSetCard = page.getByRole('button', { name: /Product picks/ }).first()
     await expect(productSetCard).toContainText('1 image')
     await productSetCard.click()
-    await expect(page.getByText('Product source', { exact: true })).toBeVisible()
-    await page.getByRole('button', { name: 'New Image from Reference', exact: true }).click()
+    await expect(page.getByText('Product Photo', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Make an Image with This Product', exact: true }).click()
     await expect(page.getByText('Image Generator', { exact: true }).first()).toBeVisible({ timeout: 20_000 })
     await page.locator('textarea').first().fill('The same mug on a soft grey background')
-    await page.getByRole('button', { name: /Create 1 Image · \$0\.01/ }).click()
+    await page.getByRole('button', { name: /Make 1 Image · \$0\.01/ }).click()
     await firstRun(page)
     await expect(page.getByRole('button', { name: /Open .* larger/ }).first()).toBeVisible({ timeout: 30_000 })
     await page.getByRole('link', { name: 'Sets', exact: true }).click()

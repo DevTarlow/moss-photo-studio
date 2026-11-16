@@ -276,8 +276,8 @@ export function templateAsset(template: Template, personId: string | null): stri
   return template.asset
 }
 
-export function templateWord(template: Template | undefined): 'Scene' | 'Model' | 'Edit' {
+export function templateWord(template: Template | undefined): 'Scene' | 'Person' | 'Edit' {
   if (template?.group === 'scene') return 'Scene'
-  if (template?.group === 'model') return 'Model'
+  if (template?.group === 'model') return 'Person'
   return 'Edit'
 }

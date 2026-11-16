@@ -151,7 +151,7 @@ export function ProductDetail(): React.JSX.Element {
     if (!detail) return
     const ok = await confirm({
       title: `Delete "${detail.product.name}"?`,
-      body: 'Its images stay, but they become unfiled work. This cannot be undone.',
+      body: 'Its images stay, but they become projects without a product. This cannot be undone.',
       confirmLabel: 'Delete Product',
       danger: true
     })
@@ -241,7 +241,7 @@ export function ProductDetail(): React.JSX.Element {
                 <img src={product.imageUrl} alt={product.name} className="aspect-square w-full object-contain" />
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <div className="card p-2 text-center"><p className="text-[16px] font-semibold tabular">{counts.projects}</p><p className="meta">work</p></div>
+                <div className="card p-2 text-center"><p className="text-[16px] font-semibold tabular">{counts.projects}</p><p className="meta">projects</p></div>
                 <div className="card p-2 text-center"><p className="text-[16px] font-semibold tabular">{counts.images}</p><p className="meta">images</p></div>
               </div>
             </div>
@@ -275,10 +275,10 @@ export function ProductDetail(): React.JSX.Element {
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button variant="primary" disabled={busy} onClick={() => void start('photo')}>
-                  {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={ImageIcon} size="sm" />} Edit this Photo
+                  {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={ImageIcon} size="sm" />} Edit This Photo
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void start('image')}>
-                  <Icon icon={Sparkles} size="sm" /> New Image from Reference
+                  <Icon icon={Sparkles} size="sm" /> Make an Image with This Product
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => openProductSetPicker(detail.product, () => void load())}>
                   <Icon icon={FolderPlus} size="sm" /> Add to Set
@@ -290,17 +290,17 @@ export function ProductDetail(): React.JSX.Element {
 
           <section className="mt-8" aria-labelledby="product-work-heading">
             <div className="flex items-center gap-2">
-              <h2 id="product-work-heading" className="section-label">Work for this product</h2>
+              <h2 id="product-work-heading" className="section-label">Projects for This Product</h2>
               <span className="meta-faint">{projects.length}</span>
-              <Button variant="ghost" size="sm" className="ml-auto" onClick={() => void openLink()}><Icon icon={Link2} size="sm" /> Link existing work</Button>
+              <Button variant="ghost" size="sm" className="ml-auto" onClick={() => void openLink()}><Icon icon={Link2} size="sm" /> Link Existing Projects</Button>
             </div>
             {projects.length === 0 ? (
               <div className="mt-3">
                 <EmptyState
                   icon={<Icon icon={Package} size="lg" />}
-                  title="No work yet"
-                  line="Make an image from the source photo, or link existing work."
-                  action={<Button variant="secondary" onClick={() => void start('image')}>Make an Image</Button>}
+                  title="No projects yet"
+                  line="Make an image from the source photo, or link an existing project."
+                  action={<Button variant="secondary" onClick={() => void start('image')}>Make an Image with This Product</Button>}
                   compact
                 />
               </div>
@@ -337,13 +337,13 @@ export function ProductDetail(): React.JSX.Element {
       <Dialog
         open={linkOpen}
         onOpenChange={setLinkOpen}
-        title="Link existing work"
-        description="Unfiled edits and generated images move under this product. Their files stay where they are."
+        title="Link Existing Projects"
+        description="Projects not in a product move under this product. Their files stay where they are."
         width={620}
         footer={<Button variant="secondary" onClick={() => setLinkOpen(false)}>Close</Button>}
       >
         {unfiled.length === 0 ? (
-          <p className="hint">There is no unfiled work right now.</p>
+          <p className="hint">There are no projects to link right now.</p>
         ) : (
           <div className="grid max-h-[420px] gap-2 overflow-y-auto">
             {unfiled.map((project) => (

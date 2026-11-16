@@ -20,7 +20,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 - Launch with no license. Activation is the first screen; the theme follows the system and the app reports an unavailable keyring truthfully.
 - Activate with a valid test key. Welcome shows “Your personal photo studio.” with a clean focus outline.
-- Connect Meta: the Meta Muse key is optional and can be added later. A bad key shows a plain error; a saved key shows only its last four characters.
+- Connect Meta: the Meta key is optional and can be added later. A bad key shows a plain error; a saved key shows only its last four characters.
 - Add product: a JPEG, PNG, or WebP saves as a Product. A photo under 800 px is allowed with the small-photo warning.
 - Skip product: the optional step continues to Make it your own.
 - Make it your own: logo, colors, badge, and default look save; skip also continues.
@@ -65,7 +65,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 ## All work
 
 - The rail has All work, Products, Sets, People, Usage, Image Editor, Image Generator, and Settings.
-- Filters are All, Edited, Generated, and Products. Sets are a separate page, not an All work filter. An empty library offers three cards: Image Editor, Image Generator, and Sets & Offline Library.
+- Filters are All, Edited, Generated, Products, and Sets. Sets also appear under All work in their own section. An empty library offers three cards: Image Editor, Image Generator, and Sets.
 - Drop a photo on All work to open it in the Image Editor. Sets are filled from image actions; there is no drag-to-Set behavior.
 - Rename, duplicate, export, select, bulk delete, search, sort, pagination, and product sections work.
 - A library over 500 projects paginates at 20 cards and keeps selection scoped to loaded cards.
@@ -86,9 +86,9 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 ## Settings
 
-- Meta API key: Test Connection, Replace, Test and Save, and Remove with confirmation. The full key never appears after saving.
+- Meta connection: Test Connection, Replace, Test and Save, and Remove with confirmation. The full key never appears after saving.
 - Logo & Colors: colors, From a Photo, logo, badge corner/size/opacity, default look, preview.
-- **There is no Business section.** `/settings/business` redirects to the API key page.
+- **There is no Business section.** `/settings/business` redirects to the Meta connection page.
 - Storage: backup, restore, diagnostics, library path, and the backup status.
 - Appearance: theme, density, reduced motion; preferences persist after restart.
 - License, Updates, Privacy, and About work as before. About uses the Meta AI Studio link.

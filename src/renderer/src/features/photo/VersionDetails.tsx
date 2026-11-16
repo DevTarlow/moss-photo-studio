@@ -39,7 +39,7 @@ export function VersionDetails({
           <h2 className="mt-2 text-[14px] font-semibold">{selected.label}</h2>
           <div className="mt-2 space-y-1.5 text-[12px]">
             <p style={{ color: 'var(--text-muted)' }}>
-              {selected.isOriginal ? 'The original upload. It never changes.' : selected.adjust ? 'A local adjust. Free and stored as a version.' : 'Made with Meta Muse.'}
+              {selected.isOriginal ? 'The original upload. It never changes.' : selected.adjust ? 'A local adjust. Free and stored as a version.' : 'Made with Meta.'}
             </p>
             {selected.userText && (
               <div>
@@ -48,11 +48,11 @@ export function VersionDetails({
               </div>
             )}
             {templateName && (
-              <p className="meta">Tile: {templateName}</p>
+              <p className="meta">Look: {templateName}</p>
             )}
             <p className="meta">Shape: {shapeLabel(project.shape)}</p>
             <div className="flex items-center gap-2">
-              <label htmlFor="version-output-format" className="meta">Next change format</label>
+              <label htmlFor="version-output-format" className="meta">File format</label>
               <select id="version-output-format" className="field h-7 w-[86px] text-[11px]" value={project.format} onChange={(event) => onFormatChange(event.target.value as Project['format'])}>
                 <option value="webp">WebP</option>
                 <option value="jpeg">JPEG</option>

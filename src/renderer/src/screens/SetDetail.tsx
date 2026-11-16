@@ -164,7 +164,7 @@ export function SetDetail(): React.JSX.Element {
                     <span className="badge">{detail.total} {detail.total === 1 ? 'image' : 'images'}</span>
                   </div>
                   <Text type="supporting" color="secondary" className="block">
-                    Images and product references saved here stay together. Start new work from any one of them.
+                    Images and products in this Set stay together. Start something new from any of them.
                   </Text>
                 </div>
                 <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
@@ -195,7 +195,7 @@ export function SetDetail(): React.JSX.Element {
                 <EmptyState
                   icon={<Icon icon={Layers} size="lg" />}
                   title="This Set is empty"
-                  line="Open an image or product and choose Add to Set."
+                  line="Add a product photo or an image to this Set."
                 />
               ) : (
                 <>
@@ -211,7 +211,7 @@ export function SetDetail(): React.JSX.Element {
                             <div className="flex items-start gap-2">
                               <div className="min-w-0 flex-1">
                                 <p className="truncate text-[13px] font-semibold">{product.name}</p>
-                                <p className="meta mt-0.5">Product source</p>
+                                <p className="meta mt-0.5">Product Photo</p>
                               </div>
                               <button type="button" className="icon-btn shrink-0" aria-label={`Remove product ${product.name} from ${detail.set.name}`} disabled={busy !== null} onClick={() => void removeProduct(product.id)}>
                                 <Icon icon={X} size="sm" />
@@ -219,10 +219,10 @@ export function SetDetail(): React.JSX.Element {
                             </div>
                             <div className="mt-3 flex flex-wrap gap-1.5">
                               <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromProduct(product.id, 'photo')}>
-                                {busy === `product:${product.id}:photo` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Pencil} size="sm" />} Edit Photo
+                                {busy === `product:${product.id}:photo` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Pencil} size="sm" />} Edit This Photo
                               </Button>
                               <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromProduct(product.id, 'image')}>
-                                {busy === `product:${product.id}:image` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} New Image from Reference
+                                {busy === `product:${product.id}:image` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Make an Image with This Product
                               </Button>
                             </div>
                           </div>
@@ -255,10 +255,10 @@ export function SetDetail(): React.JSX.Element {
                             </div>
                             <div className="mt-3 flex flex-wrap gap-1.5">
                               <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromImage(image, 'photo')}>
-                                {busy === `${image.id}:photo` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Pencil} size="sm" />} Edit Photo
+                                {busy === `${image.id}:photo` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Pencil} size="sm" />} Edit This Photo
                               </Button>
                               <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromImage(image, 'image')}>
-                                {busy === `${image.id}:image` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} New Image
+                                {busy === `${image.id}:image` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Make an Image with This Photo
                               </Button>
                             </div>
                           </div>

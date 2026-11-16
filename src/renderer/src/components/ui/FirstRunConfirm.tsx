@@ -25,14 +25,14 @@ export function FirstRunConfirm({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Before your first run"
-      description={`Meta charges your key ${perImage} for every image that comes back. This run makes ${imageCount} ${imageCount === 1 ? 'image' : 'images'}, about ${total}. Nothing is charged until you press ${runLabel.split(' · ')[0]}.`}
+      title="Before your first image"
+      description={`Meta charges your account ${perImage} for every image that comes back. This makes ${imageCount} ${imageCount === 1 ? 'image' : 'images'}, about ${total}. Nothing is charged until you choose ${runLabel.split(' · ')[0]}.`}
       width={460}
       initialFocusRef={confirmRef}
       footer={
         <>
           <Button type="button" variant="ghost" onClick={onGotIt}>
-            Got it
+            Not Now
           </Button>
           <Button ref={confirmRef} type="button" variant="primary" onClick={onConfirm}>
             {runLabel}
@@ -41,7 +41,7 @@ export function FirstRunConfirm({
       }
     >
       <p className="help-line">
-        The price on the button is the price of this run. Images that do not come back are not counted in your spend.
+        The price on the button is the price of this image. Images that do not come back are not counted in your spend.
       </p>
     </Dialog>
   )

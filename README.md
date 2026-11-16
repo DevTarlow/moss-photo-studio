@@ -10,7 +10,7 @@ The desktop app has no account. A license key is required. The separate license 
 
 ### Edit a photo
 
-The Image Editor has 32 looks in six groups, 12 bundled people, and a local adjust panel for crop, rotate, flip, brightness, contrast, saturation, warmth, sharpen, and vignette. Adjustments make a new version and stay on your computer.
+The Image Editor has 32 looks in six groups, 24 bundled people, and a local adjust panel for crop, rotate, flip, brightness, contrast, saturation, warmth, sharpen, and vignette. Adjustments make a new version and stay on your computer.
 
 Versions branch instead of overwrite. You can compare them, move through the filmstrip, export the one you want, or start from a file, a product, or a library image and add another source later.
 

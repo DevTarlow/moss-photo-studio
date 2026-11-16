@@ -63,21 +63,21 @@ test('an example can use the selected product photo or stay as shown', async () 
     await expect(page.getByText('Not used with this example.')).toBeVisible()
     await expect(countTwo).toBeEnabled()
 
-    await page.getByRole('button', { name: /Create 1 Image/ }).click()
+    await page.getByRole('button', { name: /Make 1 Image/ }).click()
     await expect
       .poll(() => muse.requests().filter((entry) => entry.path.endsWith('/images/generations')).length, { timeout: 30_000 })
       .toBe(1)
     const generation = muse.requests().find((entry) => entry.path.endsWith('/images/generations'))
     expect(String(generation?.body?.prompt)).toBe(productScene.exampleText)
     await expect(page.getByText('Newest')).toBeVisible({ timeout: 30_000 })
-    await expect(page.getByRole('button', { name: /Create 1 Image/ })).toBeEnabled({ timeout: 30_000 })
+    await expect(page.getByRole('button', { name: /Make 1 Image/ })).toBeEnabled({ timeout: 30_000 })
 
     // The examples grid is gone now; the reference card keeps the switch reachable.
     await page.getByRole('switch', { name: 'Use my product photo in examples' }).click()
     await expect(editor).toHaveValue(productScene.productText)
     await expect(page.getByText('Sent with the request so the product stays the same.')).toBeVisible()
 
-    await page.getByRole('button', { name: /Create 1 Image/ }).click()
+    await page.getByRole('button', { name: /Make 1 Image/ }).click()
     await expect
       .poll(() => muse.requests().filter((entry) => entry.path.endsWith('/images/edits')).length, { timeout: 30_000 })
       .toBe(1)
@@ -86,7 +86,7 @@ test('an example can use the selected product photo or stay as shown', async () 
     expect(String(edit?.body?.prompt)).toContain('Keep the product exactly as pictured in the reference.')
     // Let the run finish before closing; a running job makes the app ask for
     // confirmation on quit, which would block a headless teardown.
-    await expect(page.getByRole('button', { name: /Create 1 Image/ })).toBeEnabled({ timeout: 30_000 })
+    await expect(page.getByRole('button', { name: /Make 1 Image/ })).toBeEnabled({ timeout: 30_000 })
   } finally {
     await app.close().catch(() => undefined)
     await muse.close().catch(() => undefined)

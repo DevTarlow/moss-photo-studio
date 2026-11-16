@@ -15,10 +15,10 @@ export function BudgetWarning({
     <div className="flex w-full flex-wrap items-center gap-3 rounded-[10px] border p-3" style={{ borderColor: 'var(--warning)', background: 'var(--warning-soft)' }}>
       <Icon icon={AlertTriangle} size="md" style={{ color: 'var(--warning)' }} aria-hidden />
       <p className="min-w-[200px] flex-1 text-[12px]">
-        This run would pass your {usd(limitCents)} monthly limit. Raise it in Usage{onFewer ? ', or make fewer images' : ''}.
+        This image would go over your {usd(limitCents)} monthly limit. Change the limit in Usage{onFewer ? ', or make fewer images' : ''}.
       </p>
-      <Button label="Raise the Limit" variant="secondary" size="sm" onClick={onRaise} />
-      {onFewer && <Button label="Make Fewer Images" variant="secondary" size="sm" onClick={onFewer} />}
+      <Button label="Change Limit" variant="secondary" size="sm" onClick={onRaise} />
+      {onFewer && <Button label="Make Fewer" variant="secondary" size="sm" onClick={onFewer} />}
     </div>
   )
 }

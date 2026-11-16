@@ -34,7 +34,7 @@ test('a generated image becomes a reusable product across the editor and generat
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
 
     await page.locator('textarea').first().fill('A ceramic mug on a pure white background, product photo.')
-    await page.getByRole('button', { name: /Create 1 Image · \$0\.01/ }).click()
+    await page.getByRole('button', { name: /Make 1 Image · \$0\.01/ }).click()
     await expect(page.getByText('Newest')).toBeVisible({ timeout: 30_000 })
 
     await page.getByRole('button', { name: 'Save as Product' }).first().click()
@@ -61,7 +61,7 @@ test('a generated image becomes a reusable product across the editor and generat
 
     await page.getByRole('link', { name: 'Products', exact: true }).click()
     await page.getByRole('button', { name: 'Open Ceramic Mug' }).click()
-    await page.getByRole('button', { name: 'New Image from Reference' }).click()
+    await page.getByRole('button', { name: 'Make an Image with This Product' }).click()
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
 
     await page.getByRole('button', { name: 'Choose a Person' }).click()
@@ -73,7 +73,7 @@ test('a generated image becomes a reusable product across the editor and generat
     await page.getByRole('button', { name: 'Close', exact: true }).first().click()
     await expect(page.getByRole('group', { name: 'How many images' }).getByRole('button', { name: '4', exact: true })).toBeDisabled()
     await page.locator('textarea').first().fill('holding the ceramic mug')
-    await page.getByRole('button', { name: /Create 1 Image · \$0\.01/ }).click()
+    await page.getByRole('button', { name: /Make 1 Image · \$0\.01/ }).click()
     await expect(page.getByText('Newest')).toBeVisible({ timeout: 30_000 })
 
     await page.getByRole('link', { name: 'Products', exact: true }).click()

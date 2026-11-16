@@ -28,7 +28,25 @@ The theme is applied by `src/renderer/src/theme/MossThemeProvider.tsx`. It resol
 
 `src/renderer/src/styles/tokens.css` keeps the app's short names (`--bg`, `--text`, `--accent`) but holds no palette of its own: each semantic name is a `var(--color-…)` alias to a theme token, and the values the theme has no role for (the rail, the canvas, tints, media inks) use `light-dark()` pairs so one rule covers both modes. Elevation is the one exception that still needs an `html[data-theme='dark']` block, because `light-dark()` only accepts colours. Adding a literal palette value to that file means the theme is no longer the source of truth; add a theme token instead.
 
-## Icons
+## Language and vocabulary
+
+The interface should describe what changes in the user's picture, not how the model works. Keep the calm, first-person, full-sentence voice used throughout the app, and use Title Case for primary button labels (for example **Add Product Photo**) with sentence case for headings and fields.
+
+| Use | Avoid | Notes |
+|---|---|---|
+| Meta key, Meta connection | Muse key, Meta Muse key, API key, LLM | The user owns a Meta account; keep Meta explicit where it affects billing or privacy. |
+| Look | tile, template, style preset | The 32 image treatments are looks in the interface. |
+| Description | prompt, words, studio words | The user writes a description of the picture they want. |
+| Product photo, Person, Scene | product reference, person reference, scene reference | These are the pictures the user chooses, not model inputs. |
+| History | runs | A run is an implementation detail. |
+| Image 4, Adjusted 1, Scene 2, Person 1 | Created 04, Adjust 01, Model 01 | Version labels are user-facing. |
+| Starter Products, Starter People | included | Starter content is a starting point, not a separate product tier. |
+| All Work | Library (as a page name) | The page is All Work; the library is the folder on disk. |
+| Add to Set | Save to Set | One action for images and products; an item belongs to one Set at a time. |
+| Support report | diagnostics | Support reports are for people, not developers. |
+
+Do not expose model/provider internals, API hosts, install IDs, or timing columns in primary UI. Put them behind a Details/advanced disclosure. Do not use “reference”, “tile”, “run”, or “ledger” as user-facing nouns.
+
 
 Render every icon through Astryx `Icon`: pass the lucide component to the `icon` prop and pick a semantic size.
 

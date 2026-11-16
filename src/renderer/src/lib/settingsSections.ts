@@ -1,5 +1,5 @@
 export const settingsSections = [
-  { id: 'studio', label: 'Meta API key' },
+  { id: 'studio', label: 'Meta connection' },
   { id: 'brand', label: 'Logo & Colors' },
   { id: 'library', label: 'Storage' },
   { id: 'appearance', label: 'Appearance' },

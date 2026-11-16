@@ -331,7 +331,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       return
     }
     if (promptTooLongForReference) {
-      setError(`These references add ${guardChars} characters to the request. Shorten your description by ${composedPrompt.length - MAX_PROMPT}.`)
+      setError(`This product, person, or scene adds ${guardChars} characters to the request. Shorten your description by ${composedPrompt.length - MAX_PROMPT}.`)
       return
     }
     if (!settings?.firstRunConfirmShown) {
@@ -470,10 +470,10 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
           rows={5}
           onChange={(event) => { setPrompt(event.target.value); setPromptSource('user'); setLoadedExample(null); setPendingApply(null); setError(null) }}
           placeholder="Describe the picture you want. For example: a ceramic mug on a warm kitchen table, soft morning light."
-          hint="Meta makes the picture. You pay a cent for every image that comes back."
+          hint="Meta makes the picture. You pay $0.01 for every image that comes back."
         />
         {promptTooLongForReference && (
-          <p className="error-text mt-1" role="alert">These references add {guardChars} characters. Shorten your description.</p>
+          <p className="error-text mt-1" role="alert">This product, person, or scene adds {guardChars} characters. Shorten your description.</p>
         )}
       </div>
 
@@ -517,10 +517,10 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       </div>
 
       <div className="mt-5">
-        <p className="field-label">Product reference <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+        <p className="field-label">Product photo <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
         {productRef ? (
           <div className="flex items-center gap-2 rounded-[8px] border p-2" style={{ borderColor: 'var(--border)' }}>
-            {productRef.thumbUrl && <img src={productRef.thumbUrl} alt="The product reference" className="h-10 w-10 rounded object-cover" />}
+            {productRef.thumbUrl && <img src={productRef.thumbUrl} alt="The product photo" className="h-10 w-10 rounded object-cover" />}
             <div className="min-w-0 flex-1">
               <p className="truncate text-[11px] font-medium">{productRef.kind === 'product' ? productRef.name : productRef.label}</p>
               <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
@@ -536,7 +536,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
             <button
               type="button"
               className="icon-btn"
-              aria-label="Remove product reference"
+              aria-label="Remove product photo"
               onClick={() => {
                 setProductRef(null)
                 setPendingApply(null)
@@ -554,7 +554,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       </div>
 
       <div className="mt-4">
-        <p className="field-label">Person reference <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+        <p className="field-label">Person <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
         {people.length === 0 ? (
           <p className="hint">Add a person on the People page to use one here.</p>
         ) : (
@@ -565,7 +565,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                   <button
                     type="button"
                     className="field field-trigger min-w-0 flex-1"
-                    aria-label={selectedPerson ? `Person reference: ${selectedPerson.name}` : 'Choose a Person'}
+                    aria-label={selectedPerson ? `Person: ${selectedPerson.name}` : 'Choose a Person'}
                   >
                     <span className="truncate">
                       {selectedPerson
@@ -606,7 +606,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                       onError={(event) => { event.currentTarget.style.visibility = 'hidden' }}
                     />
                   </button>
-                  <button type="button" className="icon-btn" aria-label="Remove person reference" onClick={() => { setPersonId(null); setPersonLook(null) }}><Icon icon={X} size="sm" /></button>
+                  <button type="button" className="icon-btn" aria-label="Remove person" onClick={() => { setPersonId(null); setPersonLook(null) }}><Icon icon={X} size="sm" /></button>
                 </>
               ) : (
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border" style={{ borderColor: 'var(--border)', color: 'var(--text-faint)' }} aria-hidden>
@@ -624,7 +624,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       </div>
 
       <div className="mt-4">
-        <p className="field-label">Scene reference <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+        <p className="field-label">Scene <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
         {hasScene && sceneRef?.kind === 'image' ? (
           <div className="flex items-center gap-2 rounded-[8px] border p-2" style={{ borderColor: 'var(--border)' }}>
             <img src={sceneRef.thumbUrl ?? ''} alt="" className="h-10 w-10 rounded object-cover" style={{ background: 'var(--surface-2)' }} />
@@ -632,19 +632,19 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
               <p className="truncate text-[11px] font-medium">{sceneRef.label}</p>
               <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>The setting and light are borrowed; its subject is not.</p>
             </div>
-            <button type="button" className="icon-btn" aria-label="Remove scene reference" onClick={() => setSceneRef(null)}><Icon icon={X} size="sm" /></button>
+            <button type="button" className="icon-btn" aria-label="Remove scene" onClick={() => setSceneRef(null)}><Icon icon={X} size="sm" /></button>
           </div>
         ) : activeProductRef ? (
           <Button variant="secondary" className="w-full justify-start" type="button" onClick={() => setScenePickerOpen(true)}>
             <Icon icon={Mountain} size="sm" /> Choose a Scene
           </Button>
         ) : (
-          <p className="hint">Choose a product reference first, then add a scene to borrow its setting and light.</p>
+          <p className="hint">Choose a product photo first, then add a scene to borrow its setting and light.</p>
         )}
       </div>
 
       {hasReference && (
-        <p className="hint mt-2">A product, person, and scene can be sent together. References make one image at a time.</p>
+        <p className="hint mt-2">You can add a product, a person, and a scene. With any of them, Moss makes one image at a time.</p>
       )}
 
       <div className="mt-5 space-y-4 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
@@ -660,7 +660,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
               disabled: hasReference && value !== 1
             }))}
           />
-          {hasReference && <p className="hint mt-1">References make one image at a time.</p>}
+          {hasReference && <p className="hint mt-1">With a product, person, or scene, Moss makes one image at a time.</p>}
         </div>
         <div>
           <p className="field-label">Shape</p>
@@ -686,11 +686,11 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const rightPanel = (
     <div className="p-4">
       <div className="flex items-center justify-between">
-        <p className="section-label">Runs</p>
+        <p className="section-label">History</p>
         {runFilter && <button type="button" className="text-[11px]" style={{ color: 'var(--accent)' }} onClick={() => setRunFilter(null)}>Show all</button>}
       </div>
       {completeJobs.length === 0 ? (
-        <p className="meta mt-2">No runs yet.</p>
+        <p className="meta mt-2">No images yet.</p>
       ) : (
         <div className="mt-2 space-y-1.5">
           {completeJobs.map((run) => (
@@ -726,9 +726,9 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         )}
         <section className="ws-center">
           <div className="flex items-center gap-2 border-b px-4" style={{ height: 44, borderColor: 'var(--border)', background: 'var(--bg)' }}>
-            <p className="min-w-0 flex-1 truncate text-[12px] font-medium">{runFilter ? `One run · ${formatDate(runFilter.startedAt, true)}` : 'Image Generator'}</p>
+            <p className="min-w-0 flex-1 truncate text-[12px] font-medium">{runFilter ? `History · ${formatDate(runFilter.startedAt, true)}` : 'Image Generator'}</p>
             {leftHidden && <Button variant="ghost" size="sm" onClick={() => setLeftSheet(true)}>Describe</Button>}
-            {(rightHidden || rightCollapsed) && <Button variant="ghost" size="sm" onClick={() => { if (rightHidden) setRightSheet(true); else setRightCollapsed(false) }}>Runs</Button>}
+            {(rightHidden || rightCollapsed) && <Button variant="ghost" size="sm" onClick={() => { if (rightHidden) setRightSheet(true); else setRightCollapsed(false) }}>History</Button>}
             {isRunning && job && <span className="badge" data-tone="success">Making</span>}
           </div>
           <div className="scroll-area flex-1 p-5">
@@ -781,7 +781,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
             {results.length === 0 ? (
               !isRunning && (
                 <div>
-                  <p className="text-center text-[12px]" style={{ color: 'var(--text-muted)' }}>Describe the picture you want. Meta makes it, and you pay a cent an image.</p>
+                  <p className="text-center text-[12px]" style={{ color: 'var(--text-muted)' }}>Describe the picture you want. Meta makes it, and you pay $0.01 an image.</p>
                   {productRef ? (
                     <div className="mx-auto mt-4 flex max-w-[760px] flex-wrap items-center justify-center gap-3">
                       <p className="text-center text-[13px] font-semibold">Examples</p>
@@ -868,7 +868,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         )}
       </div>
       <Sheet open={leftSheet} onOpenChange={setLeftSheet} side="left" title="Image Generator">{leftPanel}</Sheet>
-      <Sheet open={rightSheet} onOpenChange={setRightSheet} side="right" title="Runs">{rightPanel}</Sheet>
+      <Sheet open={rightSheet} onOpenChange={setRightSheet} side="right" title="History">{rightPanel}</Sheet>
 
       <div className="ws-bottom">
         <button type="button" className="min-w-0 text-left" onClick={() => navigate('/usage')}>
@@ -881,10 +881,10 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
           ) : (
             <Button variant="primary" disabled={!canSubmit || isRunning || promptTooLongForReference} onClick={() => void submit()}>
               {isRunning ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null}
-              Create {requestedCount} {requestedCount === 1 ? 'Image' : 'Images'} · {usd(estimateCents(requestedCount))}
+              Make {requestedCount} {requestedCount === 1 ? 'Image' : 'Images'} · {usd(estimateCents(requestedCount))}
             </Button>
           )}
-          {!secrets?.hasKey && <button type="button" className="hint underline" onClick={() => navigate('/settings/studio')}>Add your Muse key in Settings to make images.</button>}
+          {!secrets?.hasKey && <button type="button" className="hint underline" onClick={() => navigate('/settings/studio')}>Add your Meta key in Settings to make images.</button>}
           {secrets?.hasKey && !canGenerate && <button type="button" className="hint underline" onClick={() => navigate('/settings/license')}>Reactivate to make images.</button>}
         </div>
       </div>
@@ -901,7 +901,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         open={scenePickerOpen}
         onOpenChange={setScenePickerOpen}
         onChoose={(choice) => { if (choice.kind === 'image') setSceneRef(choice) }}
-        title="Choose a Scene Reference"
+        title="Choose a Scene"
         description="Use a ready image for the setting, light, and props. Its subject is never copied."
         libraryOnly
       />
@@ -947,7 +947,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       />
       <FirstRunConfirm
         open={firstOpen}
-        runLabel={`Create ${requestedCount} ${requestedCount === 1 ? 'Image' : 'Images'} · ${usd(estimateCents(requestedCount))}`}
+        runLabel={`Make ${requestedCount} ${requestedCount === 1 ? 'Image' : 'Images'} · ${usd(estimateCents(requestedCount))}`}
         imageCount={requestedCount}
         onOpenChange={setFirstOpen}
         onConfirm={() => void confirmFirst()}

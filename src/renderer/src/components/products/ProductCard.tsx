@@ -27,7 +27,7 @@ export function ProductCard({
         <p className="meta mt-0.5">
           {product.source === 'bundled'
             ? product.category
-            : `${product.projectCount ?? 0} work · ${product.imageCount ?? 0} ${product.imageCount === 1 ? 'image' : 'images'}`}
+            : `${product.projectCount ?? 0} ${(product.projectCount ?? 0) === 1 ? 'project' : 'projects'} · ${product.imageCount ?? 0} ${product.imageCount === 1 ? 'image' : 'images'}`}
         </p>
         {product.blurb && <p className="mt-1 line-clamp-2 text-[11px]" style={{ color: 'var(--text-faint)' }}>{product.blurb}</p>}
       </div>

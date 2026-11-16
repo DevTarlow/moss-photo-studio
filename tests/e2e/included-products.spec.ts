@@ -19,7 +19,7 @@ test('included products start an editor and generator project, and Create a Prod
     await page.getByRole('link', { name: 'Products', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()
     await expect(page.getByText('20 included · 0 yours')).toBeVisible()
-    await expect(page.getByText('Included', { exact: true })).toBeVisible()
+    await expect(page.getByText('Starter Products', { exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Open Amber dropper bottle' })).toBeVisible()
 
     await page.getByRole('button', { name: 'Open Amber dropper bottle' }).click()
@@ -40,7 +40,7 @@ test('included products start an editor and generator project, and Create a Prod
 
     await page.getByRole('link', { name: 'Products', exact: true }).click()
     await page.getByRole('button', { name: 'Open Amber dropper bottle' }).click()
-    await page.getByRole('dialog').getByRole('button', { name: 'New Image from Reference' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'Make an Image with This Product' }).click()
     await page.getByText('Describe the image').waitFor({ timeout: 20_000 })
     await expect(page.getByText('Amber dropper bottle', { exact: true }).first()).toBeVisible()
     const imageSource = await page.evaluate(async () => {
@@ -54,7 +54,7 @@ test('included products start an editor and generator project, and Create a Prod
     expect(imageSource).toEqual({ type: 'image', label: 'Amber dropper bottle' })
 
     await page.getByRole('link', { name: 'Products', exact: true }).click()
-    await page.getByRole('button', { name: 'Create a Product' }).click()
+    await page.getByRole('button', { name: 'Generate Product Photo' }).click()
     await expect(page.getByText('Make a new product')).toBeVisible({ timeout: 20_000 })
     await expect(page.locator('textarea').first()).toHaveValue(CREATE_PRODUCT_PROMPT)
   } finally {

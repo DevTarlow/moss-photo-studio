@@ -73,8 +73,8 @@ export function SaveToSetDialog(): React.JSX.Element {
     <Dialog
       open={Boolean(target)}
       onOpenChange={(open) => { if (!open) close() }}
-      title={target?.kind === 'product' ? 'Add to Set' : 'Save to Set'}
-      description="Sets keep related images together. An image or product can be in one Set at a time."
+      title="Add to Set"
+      description="Sets keep related images and products together. An item can be in one Set at a time."
       width={480}
       footer={<Button variant="ghost" onClick={close}>Cancel</Button>}
     >

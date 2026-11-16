@@ -112,7 +112,7 @@ function StudioSection(): React.JSX.Element {
       await refreshSecrets()
       setEditing(false)
       setKey('')
-      toast.status('Meta Muse key saved.')
+      toast.status('Meta key saved.')
     } catch (caught) {
       setError(messageOf(caught))
     } finally {
@@ -142,8 +142,8 @@ function StudioSection(): React.JSX.Element {
 
   const remove = async (): Promise<void> => {
     const ok = await confirm({
-      title: 'Remove the Meta Muse key?',
-      body: 'Paid runs stop until you add a key again. Your projects and images stay on this computer.',
+      title: 'Remove the Meta key?',
+      body: 'Images cannot be made until you add a key again. Your projects and images stay on this computer.',
       confirmLabel: 'Remove Key',
       danger: true
     })
@@ -152,7 +152,7 @@ function StudioSection(): React.JSX.Element {
       await unwrap(window.moss.secrets.clearMuseKey())
       await refreshSecrets()
       setEditing(true)
-      toast.status('Meta Muse key removed.')
+      toast.status('Meta key removed.')
     } catch (caught) {
       toast.error(messageOf(caught))
     }
@@ -162,7 +162,7 @@ function StudioSection(): React.JSX.Element {
   const checked = secrets.validatedAt ? `Checked ${relativeTime(secrets.validatedAt)}` : 'Not checked yet'
   return (
     <div>
-      <SettingsTitle title="Meta API key" line="Your Meta Muse key and how making an image is priced." />
+      <SettingsTitle title="Meta connection" line="Your Meta key and how making an image is priced." />
       {secrets.backend === 'basic_text' && !backendDismissed && secrets.hasKey && (
         <div className="verify-banner mb-4 flex items-start gap-2" role="status">
           <Icon icon={AlertTriangle} size="sm" className="mt-0.5" style={{ color: 'var(--warning)' }} aria-hidden />
@@ -175,7 +175,7 @@ function StudioSection(): React.JSX.Element {
       <SectionCard>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="field-label">Meta Muse key</p>
+            <p className="field-label">Meta key</p>
             {secrets.hasKey && !editing ? (
               <p className="font-mono text-[14px]">•••• •••• {secrets.last4 ?? '••••'}</p>
             ) : (
@@ -196,14 +196,14 @@ function StudioSection(): React.JSX.Element {
         {editing && (
           <div className="mt-5 max-w-[440px]">
             <Field
-              label="Meta Muse key"
+              label="Meta key"
               type={show ? 'text' : 'password'}
               value={key}
               onChange={(event) => setKey(event.target.value)}
-              placeholder="LLM|..."
+              placeholder="Paste the key from Meta"
               autoFocus
               error={error}
-              hint="Stored in your system keyring. It never reaches the interface again."
+              hint="The key is stored on this computer. It never reaches the interface again."
             />
             <div className="mt-2 flex items-center justify-between">
               <button type="button" className="text-[11px]" style={{ color: 'var(--text-faint)' }} onClick={() => setShow((value) => !value)}>
@@ -377,7 +377,7 @@ function LibrarySection(): React.JSX.Element {
     setDiagnosing(true)
     try {
       const result = await unwrap(window.moss.diagnostics.create())
-      toast.status(`Diagnostics saved in ${result.folderName}.`)
+      toast.status(`Support report saved in ${result.folderName}.`)
     } catch (caught) {
       toast.error(messageOf(caught))
     } finally {
@@ -417,7 +417,7 @@ function LibrarySection(): React.JSX.Element {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="field-label">Backup</p>
-            <p className="hint mt-1">A copy of the library and database in one folder. Your Meta Muse key and secrets are not included.</p>
+            <p className="hint mt-1">A copy of the library and database in one folder. Your Meta key and secrets are not included.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" disabled={backingUp} onClick={() => void backupNow()}>
@@ -436,11 +436,11 @@ function LibrarySection(): React.JSX.Element {
         </p>
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
           <div>
-            <p className="field-label">Diagnostics</p>
+            <p className="field-label">Support Report</p>
             <p className="hint mt-1">App information, library counts and local logs for support. No keys, prompts or images.</p>
           </div>
           <Button variant="secondary" disabled={diagnosing} onClick={() => void diagnostics()}>
-            {diagnosing ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Stethoscope} size="sm" />} Create Diagnostics
+            {diagnosing ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Stethoscope} size="sm" />} Create Support Report
           </Button>
         </div>
       </SectionCard>
@@ -515,7 +515,7 @@ function AppearanceSection(): React.JSX.Element {
 function LicenseStatusChip({ license }: { license: LicenseState | null }): React.JSX.Element {
   if (!license) return <span className="badge">Unknown</span>
   if (license.status === 'licensed') return <span className="badge" data-tone="success"><Icon icon={Check} size="xsm" /> Licensed</span>
-  if (license.status === 'grace') return <span className="badge" data-tone="warning"><Icon icon={AlertTriangle} size="xsm" /> Offline grace</span>
+  if (license.status === 'grace') return <span className="badge" data-tone="warning"><Icon icon={AlertTriangle} size="xsm" /> Working Offline</span>
   if (license.status === 'expired') return <span className="badge" data-tone="danger">Expired</span>
   return <span className="badge" data-tone="warning">Not activated</span>
 }
@@ -547,9 +547,9 @@ function LicenseSection(): React.JSX.Element {
 
   const deactivate = async (): Promise<void> => {
     const ok = await confirm({
-      title: 'Deactivate this computer?',
+      title: 'Remove the license from this computer?',
       body: "The library stays. You'll need the key to use the studio here again.",
-      confirmLabel: 'Deactivate This Machine',
+      confirmLabel: 'Remove License',
       danger: true
     })
     if (!ok) return
@@ -585,19 +585,19 @@ function LicenseSection(): React.JSX.Element {
         </div>
         <dl className="mt-5 grid gap-3 sm:grid-cols-2">
           <div>
-            <dt className="section-label">Key</dt>
+            <dt className="section-label">License Key</dt>
             <dd className="mt-1 font-mono text-[12px]">{license?.keyLast4 ? `•••• ${license.keyLast4}` : 'Not activated'}</dd>
           </div>
           <div>
-            <dt className="section-label">Machine</dt>
+            <dt className="section-label">This Computer</dt>
             <dd className="mt-1 break-all text-[12px]">{license?.machineLabel ?? 'Not set'}</dd>
           </div>
           <div>
-            <dt className="section-label">Last check</dt>
+            <dt className="section-label">Last Checked</dt>
             <dd className="mt-1 text-[12px]">{license?.lastValidatedAt ? formatDateTime(license.lastValidatedAt) : 'Never'}</dd>
           </div>
           <div>
-            <dt className="section-label">Offline until</dt>
+            <dt className="section-label">Offline Until</dt>
             <dd className="mt-1 text-[12px]">{license?.offlineUntil ? formatDateTime(license.offlineUntil) : 'Not set'}</dd>
           </div>
         </dl>
@@ -607,7 +607,7 @@ function LicenseSection(): React.JSX.Element {
             {checking ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Check Now
           </Button>
           <Button variant="secondary" disabled={busy || !license || license.source === 'dev'} onClick={() => void deactivate()}>
-            <Icon icon={UserRound} size="sm" /> Deactivate This Machine
+            <Icon icon={UserRound} size="sm" /> Remove License from This Computer
           </Button>
           <button type="button" className="inline-flex items-center gap-1 text-[12px]" style={{ color: 'var(--accent)' }} onClick={() => void window.moss.app.openExternal({ url: LICENSE_PORTAL_URL })}>
             Manage license <Icon icon={ExternalLink} size="xsm" />
@@ -638,7 +638,7 @@ function PrivacySection(): React.JSX.Element {
   const deleteUsage = async (): Promise<void> => {
     const ok = await confirm({
       title: 'Delete all usage history?',
-      body: 'The ledger and the monthly totals are cleared. Images on this computer are not touched.',
+      body: 'The history and the monthly totals are cleared. Images on this computer are not touched.',
       confirmLabel: 'Delete History',
       danger: true
     })
@@ -675,7 +675,7 @@ function PrivacySection(): React.JSX.Element {
         <div className="mt-5 grid gap-3">
           <div className="rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
             <p className="text-[12px] font-semibold">api.meta.ai</p>
-            <p className="hint mt-1">Receives the direction and the working image for a run, plus a random install ID. It never receives your name, email, license key, file names, or library path.</p>
+            <p className="hint mt-1">Receives the description and the working image for a request, plus a random install ID. It never receives your name, email, license key, file names, or library path.</p>
           </div>
           <div className="rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
             <p className="text-[12px] font-semibold">{LICENSE_API_HOST}</p>
@@ -683,7 +683,7 @@ function PrivacySection(): React.JSX.Element {
           </div>
         </div>
         <p className="hint mt-4">There is no telemetry, analytics, crash reporting, or cloud sync.</p>
-        <p className="hint mt-1">The app cannot see a request Meta billed but never answered. If Meta made an image after a timeout, it may appear on your Meta bill and not in this ledger.</p>
+        <p className="hint mt-1">The app cannot see a request Meta billed but never answered. If Meta made an image after a timeout, it may appear on your Meta bill and not in this history.</p>
       </SectionCard>
       <SectionCard className="mt-4">
         <div className="flex flex-wrap items-center justify-between gap-3">

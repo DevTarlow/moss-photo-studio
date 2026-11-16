@@ -32,7 +32,7 @@ test('Create a Person opens the generator and saves a generated image as a perso
 
     await page.getByRole('link', { name: 'People', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'People', exact: true })).toBeVisible()
-    await page.getByRole('button', { name: 'Create a Person' }).click()
+    await page.getByRole('button', { name: 'Generate Person Photo' }).click()
 
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('Make a new person')).toBeVisible()
@@ -40,7 +40,7 @@ test('Create a Person opens the generator and saves a generated image as a perso
     await expect(page.getByRole('button', { name: /A new person/ })).toBeVisible()
     await expect(page.locator('textarea').first()).toHaveValue(CREATE_PERSON_PROMPT)
 
-    await page.getByRole('button', { name: /Create 1 Image/ }).click()
+    await page.getByRole('button', { name: /Make 1 Image/ }).click()
     await expect(page.getByText('Newest')).toBeVisible({ timeout: 30_000 })
 
     // The lightbox offers the same action as the result card.

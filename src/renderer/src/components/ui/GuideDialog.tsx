@@ -8,12 +8,12 @@ export function GuideDialog(): React.JSX.Element {
   const setOpen = useUiStore((state) => state.setGuide)
   const navigate = useNavigate()
   const rows = [
-    ['Image Editor', 'Open any photo, choose a tile or write your own direction. The original stays first.'],
+    ['Image Editor', 'Open any photo, choose a look or write your own direction. The original stays first.'],
     ['Products', 'Save a product photo once, then reuse it in the editor or generator.'],
-    ['Image Generator', 'Describe a picture. Add a reference image to keep its subject exactly as it is.'],
-    ['Sets', 'Save related images into a Set, start new work from any image in it, or export the whole Set.'],
+    ['Image Generator', 'Describe a picture. Add a product, person, or scene to keep it consistent.'],
+    ['Sets', 'Add related images to a Set, start something new from any image in it, or export the whole Set.'],
     ['Find anything', 'Press Ctrl K. Drag a photo anywhere in the app to start.'],
-    ['Know the cost', 'The price is on the button. Meta charges one cent for every image that comes back.']
+    ['Know the cost', 'The price is on the button. Meta charges $0.01 for every image that comes back.']
   ]
   return (
     <Dialog open={open} onOpenChange={setOpen} title="A short guide" width={520} footer={

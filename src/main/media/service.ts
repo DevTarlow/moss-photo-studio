@@ -53,7 +53,7 @@ export class MediaService {
         projectId,
         transform
       })
-      const label = nextCountedLabel('Adjust', labels)
+      const label = nextCountedLabel('Adjusted', labels)
       labels = [...labels, label]
       this.deps.images.create({
         id,

@@ -69,7 +69,7 @@ test('an untouched Image Generator leaves no project behind', async () => {
     await page.keyboard.press('Control+2')
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
     await page.locator('textarea').first().fill('A ceramic mug on a pure white background, product photo.')
-    await page.getByRole('button', { name: /Create 1 Image/ }).click()
+    await page.getByRole('button', { name: /Make 1 Image/ }).click()
     await expect(page.getByText('Newest')).toBeVisible({ timeout: 30_000 })
 
     await page.getByRole('link', { name: 'All work', exact: true }).first().click()

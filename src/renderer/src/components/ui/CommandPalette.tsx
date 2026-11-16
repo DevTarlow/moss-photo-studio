@@ -144,7 +144,7 @@ export function CommandPalette(): React.JSX.Element {
       })
     }
     ;[
-      ['Meta API key', '/settings/studio'],
+      ['Meta connection', '/settings/studio'],
       ['Logo & Colors', '/settings/brand'],
       ['Library', '/settings/library'],
       ['Appearance', '/settings/appearance'],

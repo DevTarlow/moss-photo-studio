@@ -199,7 +199,7 @@ async function confirmRestore(context: AppContext, summary: { projects: number; 
     title: 'Restore this backup?',
     message: `Restore ${summary.projects} ${summary.projects === 1 ? 'project' : 'projects'} and ${summary.images} ${summary.images === 1 ? 'image' : 'images'}?`,
     detail:
-      'The restored library opens in the folder you choose. The current library stays where it is until the restore finishes. The app restarts to complete it, and your Muse key must be entered again.',
+      'The restored library opens in the folder you choose. The current library stays where it is until the restore finishes. The app restarts to complete it, and your Meta key must be entered again.',
     buttons: ['Restore', 'Cancel'],
     defaultId: 1,
     cancelId: 1
@@ -1289,7 +1289,7 @@ export function registerIpcHandlers(context: AppContext): void {
         transform
       })
       const labels = context.images.labels(source.projectId)
-      const label = nextCountedLabel('Adjust', labels)
+      const label = nextCountedLabel('Adjusted', labels)
       context.images.create({
         id: newId,
         projectId: source.projectId,

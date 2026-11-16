@@ -67,7 +67,7 @@ interface WorkItemSpec {
   templateId: string | null
   setId: string | null
   action: Action
-  labelWord: 'Scene' | 'Model' | 'Edit' | 'Created' | null
+  labelWord: 'Scene' | 'Person' | 'Edit' | 'Image' | null
   pendingImageId?: string
   parentId: string | null
   rootId: string | null
@@ -168,7 +168,7 @@ export class JobQueue {
       throw new JobStartError('invalid_payload', 'Choose between 1 and 4 images.')
     }
     if (input.sourceImageId && input.productId) {
-      throw new JobStartError('invalid_payload', 'Choose one product reference, not two.')
+      throw new JobStartError('invalid_payload', 'Choose one product photo, not two.')
     }
     let source: Image | null = null
     if (input.sourceImageId) {
@@ -194,20 +194,20 @@ export class JobQueue {
     const hasProduct = Boolean(source || input.productId) && !legacyPerson
     const scene = input.sceneImageId ? this.deps.images.get(input.sceneImageId) : null
     if (input.sceneImageId && (!scene || scene.status !== 'ready')) {
-      throw new JobStartError('invalid_payload', 'That scene reference is not here anymore.')
+      throw new JobStartError('invalid_payload', 'That scene is not here anymore.')
     }
     if (input.sceneImageId && !hasProduct) {
-      throw new JobStartError('invalid_payload', 'Choose a product reference before adding a scene.')
+      throw new JobStartError('invalid_payload', 'Choose a product photo before adding a scene.')
     }
     const hasScene = Boolean(input.sceneImageId)
     if ((hasPerson || hasProduct || hasScene) && input.count !== 1) {
-      throw new JobStartError('invalid_payload', 'References make one image at a time.')
+      throw new JobStartError('invalid_payload', 'A product, person, or scene makes one image at a time.')
     }
     const prompt = composeCreatePrompt({ text, hasProduct, hasPerson, hasScene })
     if (prompt.length > PROMPT_MAX) {
       throw new JobStartError(
         'invalid_payload',
-        `This reference adds ${prompt.length - text.length} characters. Shorten your description by ${prompt.length - PROMPT_MAX}.`
+        `This product, person, or scene adds ${prompt.length - text.length} characters. Shorten your description by ${prompt.length - PROMPT_MAX}.`
       )
     }
     await this.requireDiskRoom(input.count)
@@ -234,7 +234,7 @@ export class JobQueue {
           templateId: null,
           setId: source?.setId ?? null,
           action: 'create',
-          labelWord: 'Created',
+          labelWord: 'Image',
           parentId: null,
           rootId: null,
           createMode: true
@@ -275,7 +275,7 @@ export class JobQueue {
     if (input.sceneImageId) {
       const scene = this.deps.images.get(input.sceneImageId)
       if (!scene || scene.status !== 'ready') {
-        throw new JobStartError('invalid_payload', 'That scene reference is not here anymore.')
+        throw new JobStartError('invalid_payload', 'That scene is not here anymore.')
       }
     }
     const template = input.templateId ? templateById(input.templateId) : undefined
@@ -300,7 +300,7 @@ export class JobQueue {
     }
     await this.requireDiskRoom(1)
     const reservation = this.requireBudget(estimateCents(1))
-    const word = template ? templateWord(template) : input.kind === 'scene' ? 'Scene' : input.kind === 'model' ? 'Model' : 'Edit'
+    const word = template ? templateWord(template) : input.kind === 'scene' ? 'Scene' : input.kind === 'model' ? 'Person' : 'Edit'
     const work: JobWork = {
       kind: 'edit',
       projectId: project.id,
@@ -429,7 +429,7 @@ export class JobQueue {
 
   private async requireKey(): Promise<void> {
     if (!this.deps.secrets.hasKey() || !(await this.deps.secrets.read())) {
-      throw new JobStartError('no_key', 'Add your Muse key in Settings to make images.')
+      throw new JobStartError('no_key', 'Add your Meta key in Settings to make images.')
     }
   }
 
@@ -488,7 +488,7 @@ export class JobQueue {
         let label = spec.label
         if (!spec.createMode) {
           const word = spec.labelWord ?? 'Edit'
-          label = word === 'Created' ? nextCountedLabel('Created', labels) : nextCountedLabel(word, labels)
+          label = nextCountedLabel(word, labels)
           labels = [...labels, label]
           const row = this.deps.images.create({
             projectId: work.projectId,
@@ -746,7 +746,7 @@ export class JobQueue {
           })
           const badge = await this.addBadge(run, imageId, relative)
           const thumb = await this.generateThumb(run, imageId, saved.path)
-          const label = nextCountedLabel('Created', labels)
+          const label = nextCountedLabel('Image', labels)
           labels = [...labels, label]
           this.deps.images.create({
             id: imageId,

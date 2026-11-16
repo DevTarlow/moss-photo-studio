@@ -168,7 +168,7 @@ export async function createBackup(input: {
         `Created ${new Date(manifest.createdAt).toISOString()}`,
         '',
         'This folder contains the library database, the image library, and a manifest.',
-        'It does not contain your Muse key or the encrypted secret files.',
+        'It does not contain your Meta key or the encrypted secret files.',
         'The database keeps an encrypted license row; after a restore, re-activate if asked.',
         'Keep the whole folder together. Restoring needs both library.sqlite and library/.',
         ''
@@ -394,7 +394,7 @@ export async function createDiagnostics(input: {
       'Moss Photo Studio diagnostics',
       '',
       'This folder has app information, library counts, and local logs.',
-      'It does not contain your Muse key, license key, prompts, or images.',
+      'It does not contain your Meta key, license key, prompts, or images.',
       'Attach the folder to a support message if you need help.',
       ''
     ].join('\n'),

@@ -1,4 +1,4 @@
-export type LabelWord = 'Scene' | 'Model' | 'Edit' | 'Created' | 'Adjust' | 'Size'
+export type LabelWord = 'Scene' | 'Person' | 'Edit' | 'Image' | 'Adjusted' | 'Size'
 
 type CountedWord = LabelWord
 
@@ -15,8 +15,7 @@ function countForWord(word: CountedWord, labels: readonly string[]): number {
 }
 
 export function nextCountedLabel(word: CountedWord, labels: readonly string[]): string {
-  const count = countForWord(word, labels)
-  return `${word} ${String(count).padStart(2, '0')}`
+  return `${word} ${countForWord(word, labels)}`
 }
 
 export function uploadLabel(labels: readonly string[]): string {
@@ -24,6 +23,6 @@ export function uploadLabel(labels: readonly string[]): string {
 }
 
 export function asLabelWord(word: string): LabelWord | null {
-  const valid: LabelWord[] = ['Scene', 'Model', 'Edit', 'Created', 'Adjust']
+  const valid: LabelWord[] = ['Scene', 'Person', 'Edit', 'Image', 'Adjusted', 'Size']
   return valid.includes(word as LabelWord) ? (word as LabelWord) : null
 }

@@ -133,18 +133,18 @@ describe('labels', () => {
   it('numbers one hundred edits without gaps or renumbering', () => {
     const labels: string[] = []
     for (let index = 0; index < 100; index += 1) labels.push(nextCountedLabel('Edit', labels))
-    expect(labels[0]).toBe('Edit 01')
+    expect(labels[0]).toBe('Edit 1')
     expect(labels[9]).toBe('Edit 10')
     expect(labels[99]).toBe('Edit 100')
     labels.splice(1, 1)
     expect(nextCountedLabel('Edit', labels)).toBe('Edit 101')
-    expect(labels[1]).toBe('Edit 03')
+    expect(labels[1]).toBe('Edit 3')
   })
 
   it('labels other words without reusing numbers', () => {
-    expect(nextCountedLabel('Scene', ['Scene 01', 'Scene 03'])).toBe('Scene 04')
-    expect(nextCountedLabel('Created', [])).toBe('Created 01')
-    expect(nextCountedLabel('Adjust', [])).toBe('Adjust 01')
+    expect(nextCountedLabel('Scene', ['Scene 1', 'Scene 3'])).toBe('Scene 4')
+    expect(nextCountedLabel('Image', [])).toBe('Image 1')
+    expect(nextCountedLabel('Adjusted', [])).toBe('Adjusted 1')
   })
 })
 

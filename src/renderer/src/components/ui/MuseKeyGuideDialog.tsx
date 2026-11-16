@@ -6,7 +6,7 @@ import { Dialog } from './Dialog'
 
 const STEPS = [
   {
-    title: 'Open the Meta Model API dashboard',
+    title: 'Open your Meta dashboard',
     body: 'Use the Open Meta Dashboard button below. It opens dev.meta.ai in your browser.'
   },
   {
@@ -14,8 +14,8 @@ const STEPS = [
     body: 'Use the Meta account that will pay for image requests.'
   },
   {
-    title: 'Open API keys',
-    body: 'In the dashboard, choose the API keys tab.'
+    title: 'Open your API keys',
+    body: 'In the Meta dashboard, open the API keys tab.'
   },
   {
     title: 'Create a key',
@@ -27,7 +27,7 @@ const STEPS = [
   },
   {
     title: 'Paste and test',
-    body: 'Return here, paste the key into the Meta Muse key field, and choose Test and Save.'
+    body: 'Return here, paste the key into the Meta key field, and choose Test and Save.'
   }
 ] as const
 
@@ -42,8 +42,8 @@ export function MuseKeyGuideDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Get your Meta Muse key"
-      description="Moss Photo Studio uses your own Meta key. Here is how to create one and bring it back."
+      title="Get a Meta key"
+      description="Moss uses your own Meta key to make images. Here is how to create one and bring it back."
       width={560}
       footer={
         <>
@@ -72,7 +72,7 @@ export function MuseKeyGuideDialog({
         ))}
       </ol>
       <div className="mt-4 rounded-[10px] border p-3" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
-        <p className="hint">If the dashboard asks for a payment method, add one there. Meta bills your Meta account directly for each image; the app shows the price before every run.</p>
+        <p className="hint">If the dashboard asks for a payment method, add one there. Meta bills your Meta account directly for each image; the app shows the price before every image.</p>
         <p className="hint mt-1">The key is stored encrypted on this computer. Moss never sees your Meta password.</p>
       </div>
     </Dialog>

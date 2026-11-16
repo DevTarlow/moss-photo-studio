@@ -110,7 +110,7 @@ export function ChangePanel({
 
       {pending && (
         <div className="mt-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border-strong)', background: 'var(--surface-2)' }} role="alert">
-          <p className="text-[12px] font-medium">Replace your words with this tile?</p>
+          <p className="text-[12px] font-medium">Replace your description with this look?</p>
           <div className="mt-2 flex gap-2">
             <Button size="sm" variant="secondary" onClick={() => applyTile(pending)}>Replace</Button>
             <Button size="sm" variant="ghost" onClick={() => {
@@ -146,12 +146,12 @@ export function ChangePanel({
       </div>
 
       <div className="mt-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
-        <p className="field-label">Scene reference <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+        <p className="field-label">Scene <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
         {sceneRef?.kind === 'image' ? (
           <div className="flex items-center gap-2">
             <img src={sceneRef.thumbUrl ?? ''} alt="" className="h-8 w-8 rounded object-cover" style={{ background: 'var(--surface-2)' }} />
             <p className="min-w-0 flex-1 truncate text-[11px]">{sceneRef.label}</p>
-            <button type="button" className="icon-btn" aria-label="Remove scene reference" disabled={disabled} onClick={onClearScene}><Icon icon={X} size="xsm" /></button>
+            <button type="button" className="icon-btn" aria-label="Remove scene" disabled={disabled} onClick={onClearScene}><Icon icon={X} size="xsm" /></button>
           </div>
         ) : (
           <Button variant="secondary" size="sm" className="mt-1 w-full justify-start" disabled={disabled} onClick={onChooseScene}>
@@ -165,7 +165,7 @@ export function ChangePanel({
         <div className="mt-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
           <label className="field-label" htmlFor="editor-person">Person</label>
           {people.length === 0 ? (
-            <p className="hint">Add a person to use these tiles.</p>
+            <p className="hint">Add a person to use these looks.</p>
           ) : (
             <div className="flex items-center gap-2">
               {modelPerson?.portraitUrl && <img src={modelPerson.portraitUrl} alt="" className="h-8 w-8 rounded-full object-cover" />}
@@ -213,7 +213,7 @@ export function ChangePanel({
 
       {textSource === 'tile' && selectedTemplate && (
         <p className="mt-4 flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--text-faint)' }}>
-          <Icon icon={Sparkles} size="xsm" /> Studio words from {selectedTemplate.label}.
+          <Icon icon={Sparkles} size="xsm" /> Description added from {selectedTemplate.label}. You can edit it.
         </p>
       )}
     </div>

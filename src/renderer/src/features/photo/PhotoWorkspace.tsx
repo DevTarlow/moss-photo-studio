@@ -393,7 +393,7 @@ export function PhotoWorkspace(): React.JSX.Element {
       return
     }
     if (!secrets?.hasKey) {
-      setError('Add your Muse key in Settings to make images.')
+      setError('Add your Meta key in Settings to make images.')
       return
     }
     if (!canGenerate) {
@@ -539,8 +539,8 @@ export function PhotoWorkspace(): React.JSX.Element {
   const leftPanel = (
     <div className="flex h-full flex-col">
       <div className="tabs px-4 pt-2">
-        <button type="button" data-selected={tab === 'change'} disabled={tabDisabled} onClick={() => setTab('change')}>Change</button>
-        <button type="button" data-selected={tab === 'adjust'} disabled={tabDisabled} onClick={() => setTab('adjust')}>Local Adjust <span className="ml-1 badge pill-sm">Free</span></button>
+        <button type="button" data-selected={tab === 'change'} disabled={tabDisabled} onClick={() => setTab('change')}>Change Photo</button>
+        <button type="button" data-selected={tab === 'adjust'} disabled={tabDisabled} onClick={() => setTab('adjust')}>Adjust Photo <span className="ml-1 badge pill-sm">Free</span></button>
       </div>
       <div className="scroll-area flex-1 p-4">
         {tab === 'change' ? (
@@ -850,7 +850,7 @@ export function PhotoWorkspace(): React.JSX.Element {
           </Button>
           {tab === 'adjust' ? (
             <Button variant="primary" disabled={applyDisabled} onClick={() => void applyAdjust()}>
-              {applyBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Apply Locally · Free
+              {applyBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Apply Adjustment · Free
             </Button>
           ) : overBudget ? (
             <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => navigate('/usage')} />
@@ -861,7 +861,7 @@ export function PhotoWorkspace(): React.JSX.Element {
           )}
           {tab === 'change' && (!secrets?.hasKey || !canGenerate) && (
             <button type="button" className="hint underline" onClick={() => navigate(!secrets?.hasKey ? '/settings/studio' : '/settings/license')}>
-              {!secrets?.hasKey ? 'Add your Muse key in Settings to make images.' : 'Reactivate to make images.'}
+              {!secrets?.hasKey ? 'Add your Meta key in Settings to make images.' : 'Reactivate to make images.'}
             </button>
           )}
         </div>
@@ -891,7 +891,7 @@ export function PhotoWorkspace(): React.JSX.Element {
         open={scenePickerOpen}
         onOpenChange={setScenePickerOpen}
         onChoose={(choice) => { if (choice.kind === 'image') setSceneRef(choice) }}
-        title="Choose a Scene Reference"
+        title="Choose a Scene"
         description="Use a ready image for the setting, light, and props. Its subject is never copied."
         libraryOnly
       />

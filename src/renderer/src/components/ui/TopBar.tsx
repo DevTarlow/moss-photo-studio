@@ -36,7 +36,7 @@ export function TopBar({
           <div className="no-drag flex min-w-0 items-center gap-2">
             {backTo && (
               <IconButton
-                label="Back to Library"
+                label="Back"
                 icon={<Icon icon={ArrowLeft} size="sm" />}
                 variant="ghost"
                 size="sm"

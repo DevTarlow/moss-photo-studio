@@ -203,10 +203,10 @@ export function BrandFields({
             />
             <div className="w-[120px]">
               <Field
-                label="Hex"
+                label="Color code"
                 value={hex}
                 onChange={(event) => setHex(event.target.value)}
-                placeholder="RRGGBB"
+                placeholder="e.g. 1A2B3C"
                 maxLength={7}
                 className="font-mono"
               />
@@ -240,7 +240,7 @@ export function BrandFields({
 
         <div>
           <p className="field-label">Default look <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
-          <p className="hint mb-2">A setting and light treatment added to every run, so a batch feels related. It never changes the product.</p>
+          <p className="hint mb-2">A look added to every image so your photos feel related. It never changes the product.</p>
           <select
             className="field"
             aria-label="Default look"

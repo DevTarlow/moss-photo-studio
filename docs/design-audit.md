@@ -1,4 +1,4 @@
-> Historical note: this audit describes an earlier build. Sets, the Listing Kit, the Business profile, and text-model calls have since been removed. The current scope is photo editing, image generation, Products, People, Usage, licensing, and settings.
+> Historical note: this audit describes an earlier build. The Listing Kit, the Business profile, and text-model calls have since been removed; Sets have since returned as image organization. The current scope is photo editing, image generation, Products, People, Sets, Usage, licensing, and settings.
 
 # Design audit (historical)
 

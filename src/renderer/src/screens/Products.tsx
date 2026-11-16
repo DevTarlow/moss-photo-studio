@@ -205,16 +205,16 @@ export function Products(): React.JSX.Element {
               <Text type="supporting" color="secondary" className="block">
                 {search.trim()
                   ? `Showing ${matchingCount} of ${included.length + products.length}`
-                  : `${included.length} included · ${products.length} yours`}
+                  : `${included.length} starter products · ${products.length} of yours`}
               </Text>
-              <Text type="supporting" color="secondary" className="block">A product holds its source photo and the images and edits made from it.</Text>
+              <Text type="supporting" color="secondary" className="block">Your reusable product photos and the projects made from them.</Text>
             </div>
             <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
               <Button variant="secondary" disabled={creatingProduct} onClick={() => void createProduct()}>
-                <Icon icon={Sparkles} size="sm" /> Create a Product
+                <Icon icon={Sparkles} size="sm" /> Generate Product Photo
               </Button>
               <Button variant="primary" onClick={() => void addProduct()} disabled={busy}>
-                {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Plus} size="sm" />} Add Product
+                {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Plus} size="sm" />} Add Product Photo
               </Button>
             </div>
           </div>
@@ -262,7 +262,7 @@ export function Products(): React.JSX.Element {
               {(filteredProducts.length > 0 || !search.trim()) && (
                 <section className="mt-8" aria-labelledby="your-products-heading">
                   <div className="flex items-baseline gap-2">
-                    <h2 id="your-products-heading" className="section-label">Yours</h2>
+                    <h2 id="your-products-heading" className="section-label">Your Products</h2>
                     <span className="meta-faint">{filteredProducts.length}</span>
                   </div>
                   {loading && products.length === 0 ? (
@@ -275,7 +275,7 @@ export function Products(): React.JSX.Element {
                         icon={<Icon icon={Package} size="lg" />}
                         title="No saved products yet"
                         line="Save a product photo from an image, or add one from a file."
-                        action={<Button variant="secondary" onClick={() => void addProduct()}>Add Product</Button>}
+                        action={<Button variant="secondary" onClick={() => void addProduct()}>Add Product Photo</Button>}
                         compact
                       />
                     </div>
@@ -306,10 +306,10 @@ export function Products(): React.JSX.Element {
               {!search.trim() && unfiled.length > 0 && (
                 <section className="mt-8" aria-labelledby="unfiled-work-heading">
                   <div className="flex items-baseline gap-2">
-                    <h2 id="unfiled-work-heading" className="section-label">Unfiled work</h2>
+                    <h2 id="unfiled-work-heading" className="section-label">Not in a Product</h2>
                     <span className="meta-faint">{unfiled.length}</span>
                   </div>
-                  <p className="hint mt-1">Edits and generated images that are not under a product yet. Make a product from one to keep them together.</p>
+                  <p className="hint mt-1">Projects that are not under a product yet. Save one as a product to keep it here.</p>
                   <div className="mt-3 grid gap-2">
                     {unfiled.map((project) => (
                       <div key={project.id} className="card flex flex-wrap items-center gap-2 p-3">
@@ -318,7 +318,7 @@ export function Products(): React.JSX.Element {
                           <p className="meta">{project.type === 'photo' ? 'Photo edit' : 'Image'} · {project.imageCount} {project.imageCount === 1 ? 'image' : 'images'}</p>
                         </div>
                         <Button variant="ghost" size="sm" onClick={() => navigate(`/project/${project.id}`)}>Open</Button>
-                        <Button variant="secondary" size="sm" disabled={busy} onClick={() => void makeProductFromProject(project)}>Make a Product</Button>
+                        <Button variant="secondary" size="sm" disabled={busy} onClick={() => void makeProductFromProject(project)}>Save as Product</Button>
                       </div>
                     ))}
                   </div>
@@ -337,7 +337,7 @@ export function Products(): React.JSX.Element {
                         <img src={product.thumbUrl} alt="" className="h-10 w-10 rounded object-cover" />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-[13px] font-semibold">{product.name}</p>
-                          <p className="meta">Archived · {product.projectCount ?? 0} work kept</p>
+                          <p className="meta">Archived · {product.projectCount ?? 0} {(product.projectCount ?? 0) === 1 ? 'project' : 'projects'} kept</p>
                         </div>
                         <Button variant="secondary" size="sm" onClick={() => void restore(product)}>Restore</Button>
                       </div>
@@ -349,7 +349,7 @@ export function Products(): React.JSX.Element {
               {filteredIncluded.length > 0 && (
                 <section className="mt-8" aria-labelledby="included-products-heading">
                   <div className="flex items-baseline gap-2">
-                    <h2 id="included-products-heading" className="section-label">Included</h2>
+                    <h2 id="included-products-heading" className="section-label">Starter Products</h2>
                     <span className="meta-faint">{filteredIncluded.length}</span>
                   </div>
                   <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
@@ -357,7 +357,7 @@ export function Products(): React.JSX.Element {
                       <ProductCard key={product.id} product={product} onOpen={() => setPreview(product)} />
                     ))}
                   </div>
-                  <p className="hint mt-3">Clean, unbranded starter products. Use one as a starting point for your own product photos.</p>
+                  <p className="hint mt-3">Starter products to use as a starting point for your own product photos.</p>
                 </section>
               )}
             </>
@@ -394,13 +394,13 @@ export function Products(): React.JSX.Element {
               <img src={preview.imageUrl} alt={preview.name} className="mx-auto max-h-[420px] w-full object-contain" />
             </div>
             <div className="mt-4">
-              <p className="section-label">Start with this product</p>
+              <p className="section-label">Start with This Product</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'photo')}>
                   <Icon icon={ImageIcon} size="sm" /> Edit This Photo
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'image')}>
-                  <Icon icon={Sparkles} size="sm" /> New Image from Reference
+                  <Icon icon={Sparkles} size="sm" /> Make an Image with This Product
                 </Button>
               </div>
             </div>
