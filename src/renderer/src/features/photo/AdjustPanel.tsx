@@ -147,7 +147,7 @@ export function AdjustPanel({
   return (
     <div>
       <div className="flex items-center justify-between gap-2">
-        <p className="section-label">Local adjust</p>
+        <p className="section-label">Adjustments</p>
         <div className="flex items-center gap-1">
           <IconButton label="Undo" disabled={!canUndo} onClick={onUndo}><Icon icon={Undo2} size="sm" /></IconButton>
           <IconButton label="Redo" disabled={!canRedo} onClick={onRedo}><Icon icon={Redo2} size="sm" /></IconButton>
@@ -198,7 +198,7 @@ export function AdjustPanel({
 
       {batchCount > 1 && (
         <div className="mt-5 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
-          <p className="text-[12px] font-semibold">Apply these adjustments to every version</p>
+          <p className="text-[12px] font-semibold">Apply to every version</p>
           <p className="hint mt-1">Creates a new local version of each of the {batchCount} ready images. Crop, rotate, and flips stay on this image.</p>
           <Button variant="secondary" size="sm" className="mt-2" disabled={batchBusy} onClick={onApplyBatch}>
             {batchBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Apply to {batchCount} Images

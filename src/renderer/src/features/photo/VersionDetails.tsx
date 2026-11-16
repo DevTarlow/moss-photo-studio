@@ -36,7 +36,7 @@ export function VersionDetails({
           <h2 className="mt-2 text-[14px] font-semibold">{selected.label}</h2>
           <div className="mt-2 space-y-1.5 text-[12px]">
             <p style={{ color: 'var(--text-muted)' }}>
-              {selected.isOriginal ? 'The original upload. It never changes.' : selected.adjust ? 'A local adjust. Free and stored as a version.' : 'Made with Meta.'}
+              {selected.isOriginal ? 'The original upload. It never changes.' : selected.adjust ? 'A free adjustment. Stored as a version.' : 'Made with Meta.'}
             </p>
             {selected.userText && (
               <div>
