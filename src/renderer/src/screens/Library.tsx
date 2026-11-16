@@ -27,6 +27,7 @@ import { ProjectCard } from '../components/library/ProjectCard'
 import { ProductCard } from '../components/products/ProductCard'
 import { SetCard } from '../components/sets/SetCard'
 import { NewProjectDialog } from '../components/library/NewProjectDialog'
+import { SetupBanner } from '../components/ui/SetupBanner'
 import { useConfirm } from '../components/ui/ConfirmProvider'
 import { unwrap, messageOf } from '../lib/ipc'
 import { usd } from '../lib/format'
@@ -550,15 +551,7 @@ export function Library(): React.JSX.Element {
                   collapsible={false}
                 />
               )}
-              {showSetup && (
-                <Banner
-                  status="info"
-                  title="Finish setting up"
-                  description="Add a product photo and make your first image when you're ready."
-                  endContent={<Button label="Resume Setup" variant="secondary" size="sm" onClick={() => navigate('/onboarding')} />}
-                  collapsible={false}
-                />
-              )}
+              {showSetup && <SetupBanner />}
               {showNoKey && (
                 <Banner
                   status="warning"

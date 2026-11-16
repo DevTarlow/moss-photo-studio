@@ -105,13 +105,6 @@ export function Onboarding(): React.JSX.Element {
     return () => window.clearTimeout(timer)
   }, [step])
 
-  useEffect(() => {
-    if (step !== 4 || settings?.onboardingDone) return
-    void unwrap(window.moss.settings.set({ key: 'onboardingDone', value: true }))
-      .then(() => refreshSettings())
-      .catch(() => undefined)
-  }, [step, settings?.onboardingDone, refreshSettings])
-
   const goTo = async (next: number): Promise<void> => {
     setStep(next)
     setKeyError(null)

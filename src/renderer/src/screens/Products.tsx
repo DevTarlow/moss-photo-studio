@@ -11,6 +11,7 @@ import { ErrorState } from '../components/ui/ErrorState'
 import { Field } from '../components/ui/Field'
 import { Skeleton } from '../components/ui/Skeleton'
 import { Pagination } from '../components/ui/Pagination'
+import { SetupBanner } from '../components/ui/SetupBanner'
 import { useConfirm } from '../components/ui/ConfirmProvider'
 import { ProductCard } from '../components/products/ProductCard'
 import { useAppStore } from '../store/app'
@@ -217,6 +218,10 @@ export function Products(): React.JSX.Element {
                 {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Plus} size="sm" />} Add Product Photo
               </Button>
             </div>
+          </div>
+
+          <div className="mt-4">
+            <SetupBanner />
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
