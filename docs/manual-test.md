@@ -44,6 +44,9 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 ## Image Generator
 
 - Create a draft, describe the image, choose 1–4 images, shape, and format. The price is on the button.
+- The Details panel is present before the first image and shows three short description tips; they disappear after the first result. Output settings (count, shape, format) live in the same panel; at 1024–1439 the Details button opens them as a sheet.
+- Select a result by opening it: the inspector shows its label, description, size, cost, created time, Set link, and Edit, Download, Save as Product, Save as Person, Add to Set, and Delete. The newest result is selected by default.
+- History lists completed makes with a friendly status. Choosing a row filters the results; Show all clears it; a make with no images shows an empty state instead of the examples.
 - Add a product photo, a person, and a scene. A product can be added and named from the picker mid-flow. The scene supplies setting/light/props without its subject.
 - A generated image can be saved as a Product or a Person. Save Product appears on the Products page after a refresh.
 - Edit opens the result in the Image Editor. Download saves the image.

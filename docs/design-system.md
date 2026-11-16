@@ -113,14 +113,29 @@ CSP is unchanged: all Astryx CSS, fonts, and icons are bundled; there are no rem
 7. Add axe coverage for portals, dialogs, the command palette, dropzones, and reduced-motion states.
 8. Before a release, build the theme statically and measure the renderer bundle and first paint.
 
+## Workspace inspector pattern
+
+The editor and the generator share one workspace grammar: the left column holds the inputs, the center holds the output, the right column is the inspector for the selected output, and the footer holds the priced action. The generator's inspector is not a dashboard: it follows the editor's version panel.
+
+- **Panels:** `ws-left` and `ws-right` use `--surface` with a 1px `--border`; the center uses `--bg`. A `ws-right` inspector is always mounted at 1440 and wider, resizable (300px default, 260–360), and opens as a `Sheet` titled `Details` below 1440.
+- **Sections:** `.section-label` (11px, 600, uppercase, `--text-faint`) names each block. Sections separate with `mt-4 border-t pt-4` and `--border`. Do not add nested cards inside the rail; the inspector is already a surface.
+- **Copy:** result headings use 15px/600; `.meta` and `.hint` carry dates and costs; `.field-label` labels settings controls. The description uses the shared `DescriptionPreview` clamp and its `Show more` control.
+- **Actions:** full-width secondary `Button size="sm"` rows with a 16px `Icon`; destructive actions are ghost with `--danger`. Keep the same order in both tools: use the output, then read its description/details, then delete.
+- **Disclosure:** the output settings show a one-line summary at all times and open their controls on demand. The content stays in the DOM with `hidden` so `aria-controls` always resolves. History appears only when a completed make exists.
+- **Empty states:** one short explanation plus, before the first result, three tips that directly affect picture quality. No illustration dashboards, no counters.
+
+### Result selection
+
+The generator keeps the editor's selection model: the newest result is selected by default; opening another result selects it; a completed make returns selection to the newest. The selected card takes the same ring language as a selected library card (`--accent` border plus a `--accent-soft` tint). The inspector is a second, stable home for the selected image; it does not replace the persistent card actions.
+
 ## Current status
 
 - Foundation, theme, providers, and CSS layer order are in place.
-- Colour has one owner: every semantic name in `tokens.css` aliases the theme, the mode block holds only elevation, and `npm run audit:tokens` reads `mossTheme` so a stale or missing token fails instead of rendering an inherited colour.
-- Every icon renders through Astryx `Icon` (211 call sites); no direct lucide elements remain.
+- Colour has one owner: every semantic name in `tokens.css` aliases the theme, the mode block holds only elevation, and `npm run audit:tokens` reads `mossTheme` so a stale or missing token fails instead of rendering an inherited colour. The audit also covers the selected-row tints and the danger badge used by the generator inspector.
+- Every icon renders through Astryx `Icon`; no direct lucide elements remain.
 - The theme ships as static CSS: `npm run theme:build` regenerates `moss-theme.css` and the built module beside it, and release builds refuse to package a stale copy.
 - The app shell's surfaces come from theme targets, so the rail, header, and top nav no longer depend on `.astryx-*` class selectors in `index.css`.
 - Activation is the first surface fully off the homegrown primitives: Astryx `TextInput` and `Button` replace the local `Field` and `Button` there.
 - Sets use collection cards with a cover/count and a detail grid for images and product sources with explicit Edit Photo, New Image from Reference, and remove actions. SaveToSetDialog is a small dialog mounted once at the app root and opened from image actions. Onboarding is redesigned with a Welcome screen and setup steps for the key, an optional product, an optional logo and colors, and Ready. Key-later and sticky actions are unchanged.
 - The Astryx AppShell, TopNav, and SideNav now wrap the app; Library, Products, People, Usage, and Settings use Astryx controls and shared collection patterns.
-- Photo has a fitted canvas, exporter-aligned rotate/crop preview, a draggable compare divider, and keyboard crop controls. Create results have persistent Edit, Download, Save as Product, and More actions plus a lightbox. Workspace panels can be resized and persist their widths. The custom canvas, crop overlay, filmstrip, and brand preview remain custom.
+- Photo has a fitted canvas, exporter-aligned rotate/crop preview, a draggable compare divider, and keyboard crop controls. Create has a persistent Details inspector with the selected image's description/details/actions, the Output settings disclosure, and History; it becomes a Details sheet below 1440. Create results keep their persistent Edit, Download, Save as Product, and More actions plus a lightbox. The version and result panels share `DescriptionPreview`. Workspace panels can be resized and persist their widths. The custom canvas, crop overlay, filmstrip, and brand preview remain custom.

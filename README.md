@@ -18,6 +18,8 @@ Versions branch instead of overwrite. You can compare them, move through the fil
 
 The Image Generator has 30 starters, including person ideas for holding, wearing, and using an item. Generate 1 to 4 images in three shapes and three formats. A product reference and a person reference can go together, so a person can hold the product. An optional scene reference supplies the setting, light, and props without asking the model to copy its subject.
 
+The Details panel keeps the selected image's description, size, cost, and actions together, with the output settings and past makes. At a smaller window, **Details** opens the same panel over the results.
+
 Generated images can be saved to a Set, as a product, or as a person. A product photo can come from your saved products or from the 20 starter products. A generated project appears in All work after its first image.
 
 ### Keep images in Sets

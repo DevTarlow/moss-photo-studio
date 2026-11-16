@@ -1,15 +1,12 @@
-import { useEffect, useState } from 'react'
 import { Copy, Download, FolderPlus, Package, Plus, Trash2, UserPlus } from 'lucide-react'
 import { Badge, Icon } from '@astryxdesign/core'
 import type { Image, Project } from '@shared/types'
 import { templateById } from '@shared/prompts/templates'
 import { shapeLabel } from '@shared/shapes'
 import { usd, formatDateTime } from '../../lib/format'
-import { cn } from '../../lib/cn'
 import { Button } from '../../components/ui/Button'
+import { DescriptionPreview } from '../../components/ui/DescriptionPreview'
 import { Segmented } from '../../components/ui/Segmented'
-
-const DESCRIPTION_PREVIEW_LENGTH = 200
 
 export function VersionDetails({
   project,
@@ -44,11 +41,6 @@ export function VersionDetails({
   onSavePerson?: () => void
   onSaveToSet?: () => void
 }): React.JSX.Element {
-  const [expanded, setExpanded] = useState(false)
-  useEffect(() => {
-    setExpanded(false)
-  }, [selected?.id])
-
   const template = selected?.templateId ? templateById(selected.templateId) : undefined
   const templateName = selected?.templateId === 'quick-fix' ? 'Quick fix' : template?.label
   const status = selected?.isOriginal
@@ -57,8 +49,6 @@ export function VersionDetails({
       ? { label: 'Adjusted', variant: 'success' as const }
       : { label: 'AI edit', variant: 'info' as const }
   const description = selected?.userText?.trim() ?? ''
-  const isLongDescription =
-    description.length > DESCRIPTION_PREVIEW_LENGTH || description.split('\n').length > 4
   const cost = selected ? (selected.costCents > 0 ? usd(selected.costCents) : 'Free') : ''
   const hasActions = Boolean(onSaveProduct || onSavePerson || onSaveToSet || onExport || onCopy)
 
@@ -122,27 +112,7 @@ export function VersionDetails({
             {description && (
               <div className="mt-4 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
                 <p className="section-label">Description</p>
-                <p
-                  id="version-description"
-                  className={cn(
-                    'mt-1 whitespace-pre-wrap text-[12px]',
-                    !expanded && isLongDescription && 'version-description'
-                  )}
-                >
-                  {description}
-                </p>
-                {isLongDescription && (
-                  <button
-                    type="button"
-                    className="mt-1 text-[11px] font-medium"
-                    style={{ color: 'var(--accent)' }}
-                    aria-expanded={expanded}
-                    aria-controls="version-description"
-                    onClick={() => setExpanded((value) => !value)}
-                  >
-                    {expanded ? 'Show less' : 'Show more'}
-                  </button>
-                )}
+                <DescriptionPreview key={selected.id} id="version-description" text={description} />
               </div>
             )}
 

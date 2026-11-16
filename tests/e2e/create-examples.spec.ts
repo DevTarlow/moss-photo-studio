@@ -46,7 +46,7 @@ test('an example can use the selected product photo or stay as shown', async () 
     await expect(page.getByText('Click a photo to load a starting description.')).toBeVisible()
     await expect(page.getByRole('button', { name: /A person holding product/ })).toBeVisible()
 
-    await page.getByRole('button', { name: /Output Settings/ }).click()
+    await page.getByRole('button', { name: /Output settings/ }).click()
     const editor = page.locator('textarea').first()
     const countTwo = page
       .getByRole('group', { name: 'How many images' })
@@ -76,7 +76,7 @@ test('an example can use the selected product photo or stay as shown', async () 
     // The examples grid is gone now; the reference card keeps the switch reachable.
     await page.getByRole('switch', { name: 'Use my product photo in examples' }).click()
     await expect(editor).toHaveValue(productScene.productText)
-    await expect(page.getByText('Sent with the request so the product stays the same.')).toBeVisible()
+    await expect(page.getByText('Sent with your description so the product stays the same.')).toBeVisible()
 
     await page.getByRole('button', { name: /Make 1 Image/ }).click()
     await expect

@@ -181,6 +181,10 @@ select.field { appearance: none; background-image: linear-gradient(45deg, transp
 .counter[data-over='true'] { color: var(--danger); }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
 .card-hover:hover { border-color: var(--border-strong); }
+/* The result whose details the inspector shows. Mirrors the selected library
+   card: the border stays a full-contrast accent and the tint is decorative. */
+.result-card { transition: border-color 120ms var(--ease-moss), box-shadow 120ms var(--ease-moss); }
+.result-card[data-selected='true'] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .generator-example { transition: border-color 120ms var(--ease-moss), box-shadow 120ms var(--ease-moss), transform 120ms var(--ease-moss); }
 .generator-example img { transition: transform 180ms var(--ease-moss); }
 .generator-example:hover { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft), var(--shadow); transform: translateY(-2px); }

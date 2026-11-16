@@ -41,7 +41,9 @@ export function shapeLabel(shape: Shape): string {
 }
 
 export function formatLabel(format: Format): string {
-  return format === 'jpeg' ? 'JPEG' : format.toUpperCase()
+  if (format === 'jpeg') return 'JPEG'
+  if (format === 'webp') return 'WebP'
+  return 'PNG'
 }
 
 export function mimeForFormat(format: Format): string {

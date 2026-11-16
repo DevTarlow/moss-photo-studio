@@ -15,6 +15,7 @@ import { errorMessage, billingUncertain } from '@shared/errors'
 import { useWorkspaceStore } from '../../store/workspace'
 import { useAppStore } from '../../store/app'
 import { useUiStore } from '../../store/ui'
+import { CreateInspector } from './CreateInspector'
 import { SourcePickerDialog } from '../../components/sources/SourcePickerDialog'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { SaveProductDialog } from '../../components/products/SaveProductDialog'
@@ -25,7 +26,6 @@ import { useIsWideWorkspace, useViewportTier } from '../../lib/viewport'
 import { usePanelWidth, WorkspaceResizeHandle } from '../../components/ui/WorkspaceResizeHandle'
 import { useConfirm } from '../../components/ui/ConfirmProvider'
 import { Button } from '../../components/ui/Button'
-import { Segmented } from '../../components/ui/Segmented'
 import { Sheet } from '../../components/ui/Sheet'
 import { Progress } from '../../components/ui/Progress'
 import { Switch } from '../../components/ui/Switch'
@@ -38,7 +38,7 @@ import { unwrap, messageOf } from '../../lib/ipc'
 import { toast } from '../../lib/toast'
 import { showExportToast } from '../../lib/exportFeedback'
 import { warnIfSmallPhoto } from '../../lib/photoWarnings'
-import { elapsedLabel, formatDate } from '../../lib/format'
+import { elapsedLabel, formatDate, plural } from '../../lib/format'
 import { currentMonth } from '../../store/library'
 import { onCommand } from '../../lib/commands'
 import { openSetPicker } from '../../store/setPicker'
@@ -67,6 +67,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const sourceImageId = useWorkspaceStore((state) => state.project?.sourceImageId ?? null)
   const refresh = useWorkspaceStore((state) => state.refresh)
   const refreshImages = useWorkspaceStore((state) => state.refreshImages)
+  const updateProject = useWorkspaceStore((state) => state.updateProject)
   const settings = useAppStore((state) => state.settings)
   const secrets = useAppStore((state) => state.secrets)
   const people = useAppStore((state) => state.people)
@@ -92,7 +93,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const [exampleUsesProduct, setExampleUsesProduct] = useState(true)
   const [loadedExample, setLoadedExample] = useState<{ scene: ExampleScene; text: string } | null>(null)
   const [count, setCount] = useState(1)
-  const [shape, setShape] = useState<Shape>(settings?.defaultShape ?? 'square')
+  const [shape, setShape] = useState<Shape>(project.shape)
   const [format, setFormat] = useState<Format>(project.format ?? settings?.defaultFormat ?? 'webp')
   const [productRef, setProductRef] = useState<SourceChoice | null>(null)
   const [personId, setPersonId] = useState<string | null>(null)
@@ -114,6 +115,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const [currentJobId, setCurrentJobId] = useState<string | null>(null)
   const [runs, setRuns] = useState<JobState[]>([])
   const [runFilter, setRunFilter] = useState<JobState | null>(null)
+  const [selectedResultId, setSelectedResultId] = useState<string | null>(null)
   const [monthCents, setMonthCents] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [leftSheet, setLeftSheet] = useState(false)
@@ -170,9 +172,11 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       return image.createdAt >= runFilter.startedAt - 100 && image.createdAt <= end + 100
     })
     .sort((a, b) => b.createdAt - a.createdAt || b.seq - a.seq)
-  const examplesVisible = results.length === 0 && !isRunning
+  const selectedResult = results.find((image) => image.id === selectedResultId) ?? results[0] ?? null
+  const examplesVisible = results.length === 0 && !isRunning && !runFilter
+  const filterEmpty = Boolean(runFilter) && results.length === 0 && !isRunning
+  const canSaveAsPerson = Boolean(personId || selectedResult?.personId || createPersonMode)
   const lastDescription = results.find((image) => image.userText?.trim())?.userText ?? null
-  const hasHistory = runs.length > 0 || isRunning
   const overBudget = (settings?.budgetCents ?? null) !== null && monthCents + estimateCents(requestedCount) > (settings?.budgetCents ?? 0)
   const promptTooLongForReference = hasReference && composedPrompt.length > MAX_PROMPT
   const canSubmit = Boolean(prompt.trim()) && composedPrompt.length <= MAX_PROMPT && Boolean(secrets?.hasKey) && canGenerate
@@ -262,6 +266,8 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
     }
     if (handled.current.has(jobToReport.id)) return
     handled.current.add(jobToReport.id)
+    // A finished make should bring the newest image into the inspector.
+    setSelectedResultId(null)
     void (async () => {
       await refresh()
       await loadRuns()
@@ -279,14 +285,14 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
 
   useEffect(() => {
     return onCommand((command) => {
-      if (command === 'export' && results[0]) void download(results[0])
+      if (command === 'export' && selectedResult) void download(selectedResult)
       if (command === 'toggle-panel') {
         if (rightHidden) setRightSheet(true)
         else setRightCollapsed((collapsed) => !collapsed)
       }
     })
-    // The newest result is the one the shortcut exports.
-  }, [images, rightHidden])
+    // The image in the inspector is the one the shortcut exports.
+  }, [selectedResult, rightHidden])
 
   useEffect(() => {
     void window.moss.app.setMenuContext({
@@ -316,6 +322,28 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
     } catch {
       setRuns([])
     }
+  }
+
+  const focusResult = (image: Image): void => setSelectedResultId(image.id)
+
+  const showAllResults = (): void => {
+    setRunFilter(null)
+    setSelectedResultId(null)
+  }
+
+  const selectRun = (run: JobState): void => {
+    setRunFilter(run.id === runFilter?.id ? null : run)
+    setSelectedResultId(null)
+  }
+
+  const changeShape = (next: Shape): void => {
+    setShape(next)
+    void updateProject({ shape: next }).catch(() => toast.error('That setting could not be saved.'))
+  }
+
+  const changeFormat = (next: Format): void => {
+    setFormat(next)
+    void updateProject({ format: next }).catch(() => toast.error('That setting could not be saved.'))
   }
 
   const applyText = (text: string, source: 'starter' | 'example', scene?: ExampleScene): void => {
@@ -377,7 +405,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       return
     }
     if (promptTooLongForReference) {
-      setError(`This product, person, or scene adds ${guardChars} characters to the request. Shorten your description by ${composedPrompt.length - MAX_PROMPT}.`)
+      setError(`This product, person, or scene adds ${guardChars} characters. Shorten your description by ${composedPrompt.length - MAX_PROMPT}.`)
       return
     }
     if (!settings?.firstRunConfirmShown) {
@@ -388,6 +416,8 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   }
 
   const execute = async (): Promise<void> => {
+    setRunFilter(null)
+    setSelectedResultId(null)
     try {
       const result = await unwrap(window.moss.jobs.startCreate({
         projectId: project.id,
@@ -414,6 +444,8 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const makeTheRest = async (): Promise<void> => {
     if (!reportableRun || remainingFromRun < 1) return
     setError(null)
+    setRunFilter(null)
+    setSelectedResultId(null)
     try {
       const result = await unwrap(window.moss.jobs.retryFailed({ jobId: reportableRun.id }))
       handled.current.delete(result.jobId)
@@ -459,6 +491,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
     if (!ok) return
     try {
       await unwrap(window.moss.images.delete({ id: image.id }))
+      if (selectedResultId === image.id) setSelectedResultId(null)
       await refresh()
       if (lightboxIndex !== null) setLightboxIndex(null)
       toast.status('Image deleted.')
@@ -616,7 +649,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
             <div className="min-w-0 flex-1">
               <p className="truncate text-[11px] font-medium">{productRef.kind === 'product' ? productRef.name : productRef.label}</p>
               <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
-                {activeProductRef ? 'Sent with the request so the product stays the same.' : 'Not used with this example.'}
+                {activeProductRef ? 'Sent with your description so the product stays the same.' : 'Not used with this example.'}
               </p>
               {!examplesVisible && (
                 <div className="mt-1.5 flex items-center gap-2 text-[11px]" style={{ color: 'var(--text-faint)' }}>
@@ -658,7 +691,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
               onPerson={(id, look) => { setPersonId(id); setPersonLook(look) }}
             />
             {selectedPerson ? (
-              <p className="hint mt-1">Sent with the request so the person stays the same.</p>
+              <p className="hint mt-1">Sent with your description so the person stays the same.</p>
             ) : (
               <p className="hint mt-1">Pick a portrait to keep the same person in the image.</p>
             )}
@@ -689,91 +722,31 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       {hasReference && (
         <p className="hint mt-2">You can add a product, a person, and a scene. With any of them, Moss makes one image at a time.</p>
       )}
-
-      <div className="mt-5 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
-        <button
-          type="button"
-          className="w-full text-left"
-          aria-expanded={outputOpen}
-          onClick={() => setOutputOpen((value) => !value)}
-        >
-          <span className="flex items-center justify-between gap-2">
-            <span className="field-label mb-0">Output Settings</span>
-            <Icon icon={ChevronDown} size="xsm" style={{ transform: outputOpen ? 'rotate(180deg)' : undefined }} />
-          </span>
-          <span className="meta mt-1 block">
-            {requestedCount} {requestedCount === 1 ? 'image' : 'images'} · {shapeLabel(shape)} · {format === 'webp' ? 'WebP' : format.toUpperCase()}
-          </span>
-        </button>
-        {outputOpen && (
-        <div className="mt-4 space-y-4">
-        <div>
-          <p className="field-label">How many</p>
-          <Segmented
-            label="How many images"
-            value={String(count) as '1' | '2' | '3' | '4'}
-            onChange={(value) => setCount(Number(value))}
-            options={[1, 2, 3, 4].map((value) => ({
-              value: String(value) as '1' | '2' | '3' | '4',
-              label: String(value),
-              disabled: hasReference && value !== 1
-            }))}
-          />
-          {hasReference && <p className="hint mt-1">With a product, person, or scene, Moss makes one image at a time.</p>}
-        </div>
-        <div>
-          <p className="field-label">Shape</p>
-          <Segmented label="Shape" value={shape} onChange={(next) => { setShape(next); void useWorkspaceStore.getState().updateProject({ shape: next }).catch(() => undefined) }} options={[
-            { value: 'square' as const, label: 'Square' },
-            { value: 'portrait' as const, label: 'Portrait' },
-            { value: 'landscape' as const, label: 'Landscape' }
-          ]} />
-        </div>
-        <div>
-          <label className="field-label" htmlFor="create-format">Format</label>
-          <select id="create-format" className="field" value={format} onChange={(event) => { const next = event.target.value as Format; setFormat(next); void useWorkspaceStore.getState().updateProject({ format: next }).catch(() => undefined) }}>
-            <option value="webp">WebP</option>
-            <option value="jpeg">JPEG</option>
-            <option value="png">PNG</option>
-          </select>
-        </div>
-        <p className="hint">Shape sets the frame. Meta chooses the pixel size.</p>
-        </div>
-        )}
-      </div>
     </div>
   )
 
   const rightPanel = (
-    <div className="p-4">
-      <div className="flex items-center justify-between">
-        <p className="section-label">History</p>
-        {runFilter && <button type="button" className="text-[11px]" style={{ color: 'var(--accent)' }} onClick={() => setRunFilter(null)}>Show all</button>}
-      </div>
-      {completeJobs.length === 0 ? (
-        <p className="meta mt-2">No images yet.</p>
-      ) : (
-        <div className="mt-2 space-y-1.5">
-          {completeJobs.map((run) => (
-            <button
-              key={run.id}
-              type="button"
-              className="w-full rounded-[8px] border p-2 text-left"
-              style={{ borderColor: run.id === runFilter?.id ? 'var(--accent)' : 'var(--border)', background: run.id === runFilter?.id ? 'var(--accent-soft)' : 'transparent' }}
-              onClick={() => setRunFilter(run.id === runFilter?.id ? null : run)}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-medium">{formatDate(run.startedAt, true)}</span>
-                <span className="badge" data-tone={run.status === 'done' ? 'success' : run.status === 'failed' ? 'danger' : undefined}>
-                  {run.status === 'done' ? 'Made' : run.status === 'failed' ? 'Failed' : run.status}
-                </span>
-              </div>
-              <p className="meta mt-0.5">{run.done} images · {usd(run.costCents)}</p>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <CreateInspector
+      selected={selectedResult}
+      completeJobs={completeJobs}
+      runFilterId={runFilter?.id ?? null}
+      isRunning={isRunning}
+      canSaveAsPerson={canSaveAsPerson}
+      settings={{ count, requestedCount, hasReference, shape, format, open: outputOpen }}
+      onOutputOpenChange={setOutputOpen}
+      onCount={setCount}
+      onShape={changeShape}
+      onFormat={changeFormat}
+      onSelectRun={selectRun}
+      onShowAll={showAllResults}
+      onEdit={(image) => { focusResult(image); navigate(photoViewUrl(image.id)) }}
+      onDownload={(image) => { focusResult(image); void download(image) }}
+      onSaveProduct={(image) => { focusResult(image); setSaveProductImage(image) }}
+      onSavePerson={(image) => { focusResult(image); setSavePersonImage(image) }}
+      onSaveToSet={(image) => { focusResult(image); openSetPicker(image) }}
+      onDelete={(image) => void remove(image)}
+      onOpenSet={(setId) => navigate(`/sets/${setId}`)}
+    />
   )
 
   return (
@@ -781,15 +754,16 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       <div className="workspace">
         {!leftHidden && (
           <>
-            <aside className="ws-left" style={canResizeLeft ? { width: leftPanelWidth.width, minWidth: leftPanelWidth.width } : undefined}>{leftPanel}</aside>
+            <aside className="ws-left" aria-label="Describe" style={canResizeLeft ? { width: leftPanelWidth.width, minWidth: leftPanelWidth.width } : undefined}>{leftPanel}</aside>
             {canResizeLeft && <WorkspaceResizeHandle label="Resize describe panel" side="left" width={leftPanelWidth.width} onPointerDown={leftPanelWidth.onPointerDown} onKeyDown={leftPanelWidth.onKeyDown} onReset={leftPanelWidth.reset} />}
           </>
         )}
         <section className="ws-center">
           <div className="flex items-center gap-2 border-b px-4" style={{ height: 44, borderColor: 'var(--border)', background: 'var(--bg)' }}>
             <p className="min-w-0 flex-1 truncate text-[12px] font-medium">{runFilter ? `History · ${formatDate(runFilter.startedAt, true)}` : 'Image Generator'}</p>
+            {runFilter && (rightHidden || rightCollapsed) && <Button variant="ghost" size="sm" onClick={showAllResults}>Show all</Button>}
             {leftHidden && <Button variant="ghost" size="sm" onClick={() => setLeftSheet(true)}>Describe</Button>}
-            {hasHistory && (rightHidden || rightCollapsed) && <Button variant="ghost" size="sm" onClick={() => { if (rightHidden) setRightSheet(true); else setRightCollapsed(false) }}>History</Button>}
+            {(rightHidden || rightCollapsed) && <Button variant="ghost" size="sm" onClick={() => { if (rightHidden) setRightSheet(true); else setRightCollapsed(false) }}>Details</Button>}
             {isRunning && job && <span className="badge" data-tone="success">Making</span>}
           </div>
           <div className="scroll-area flex-1 p-5">
@@ -862,7 +836,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
               </div>
             ) : null}
             {results.length === 0 ? (
-              !isRunning && (
+              examplesVisible ? (
                 <div>
                   <p className="text-center text-[12px]" style={{ color: 'var(--text-muted)' }}>Describe the picture you want. Meta makes it, and you pay {usd(1)} an image.</p>
                   {productRef ? (
@@ -895,15 +869,24 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                     ))}
                   </div>
                 </div>
-              )
+              ) : filterEmpty ? (
+                <div className="py-12 text-center">
+                  <p className="text-[13px] font-semibold">No images from this make.</p>
+                  <p className="meta mt-1">Choose Show all to see your other images.</p>
+                </div>
+              ) : null
             ) : (
               <div className="mx-auto grid max-w-[900px] grid-cols-2 gap-4">
                 {results.map((image, index) => (
-                  <div key={image.id} className="card overflow-hidden">
+                  <div
+                    key={image.id}
+                    className="card result-card overflow-hidden"
+                    data-selected={image.id === selectedResult?.id}
+                  >
                     <button
                       type="button"
                       className="relative block w-full cursor-zoom-in"
-                      onClick={() => setLightboxIndex(index)}
+                      onClick={() => { focusResult(image); setLightboxIndex(index) }}
                     >
                       <span className="sr-only">Open {image.label} larger</span>
                       {image.url && <img src={image.url} alt="" className="aspect-[4/3] w-full object-cover" />}
@@ -911,16 +894,17 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                       {image.setId && <span className="badge absolute right-2 top-2" data-tone="success">In a Set</span>}
                     </button>
                     <div className="flex flex-wrap items-center gap-1 border-t px-2 py-2" style={{ borderColor: 'var(--border)' }}>
-                      <Button variant="ghost" size="sm" onClick={() => navigate(photoViewUrl(image.id))}>
+                      <Button variant="ghost" size="sm" onClick={() => { focusResult(image); navigate(photoViewUrl(image.id)) }}>
                         <Icon icon={Pencil} size="xsm" /> Edit
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => void download(image)}>
+                      <Button variant="ghost" size="sm" onClick={() => { focusResult(image); void download(image) }}>
                         <Icon icon={Download} size="xsm" /> Download
                       </Button>
                       <div className="ml-auto">
                         <MoreMenu
                           label={`More actions for ${image.label}`}
                           size="sm"
+                          onOpenChange={(open) => { if (open) focusResult(image) }}
                           items={[
                             { label: 'Save as Product', onClick: () => setSaveProductImage(image) },
                             ...(personId || image.personId || createPersonMode
@@ -941,19 +925,19 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
             )}
           </div>
         </section>
-        {hasHistory && !rightHidden && !rightCollapsed && (
+        {!rightHidden && !rightCollapsed && (
           <>
-            <WorkspaceResizeHandle label="Resize runs panel" side="right" width={rightPanelWidth.width} min={260} max={360} onPointerDown={rightPanelWidth.onPointerDown} onKeyDown={rightPanelWidth.onKeyDown} onReset={rightPanelWidth.reset} />
-            <aside className="ws-right" style={{ width: rightPanelWidth.width, minWidth: rightPanelWidth.width }}>{rightPanel}</aside>
+            <WorkspaceResizeHandle label="Resize details panel" side="right" width={rightPanelWidth.width} min={260} max={360} onPointerDown={rightPanelWidth.onPointerDown} onKeyDown={rightPanelWidth.onKeyDown} onReset={rightPanelWidth.reset} />
+            <aside className="ws-right" aria-label="Details" style={{ width: rightPanelWidth.width, minWidth: rightPanelWidth.width }}>{rightPanel}</aside>
           </>
         )}
       </div>
-      <Sheet open={leftSheet} onOpenChange={setLeftSheet} side="left" title="Image Generator">{leftPanel}</Sheet>
-      <Sheet open={rightSheet} onOpenChange={setRightSheet} side="right" title="History">{rightPanel}</Sheet>
+      <Sheet open={leftSheet} onOpenChange={setLeftSheet} side="left" title="Describe">{leftPanel}</Sheet>
+      <Sheet open={rightSheet} onOpenChange={setRightSheet} side="right" title="Details">{rightPanel}</Sheet>
 
       <div className="ws-bottom">
         <button type="button" className="min-w-0 text-left" onClick={() => navigate('/usage')}>
-          <p className="truncate text-[12px] font-medium tabular">{requestedCount} {requestedCount === 1 ? 'image' : 'images'} · {usd(estimateCents(requestedCount))}</p>
+          <p className="truncate text-[12px] font-medium tabular">{plural(requestedCount, 'image')} · {shapeLabel(shape)} · {usd(estimateCents(requestedCount))}</p>
           <p className="meta tabular">Month {usd(monthCents)}{settings?.budgetCents != null ? ` of ${usd(settings.budgetCents)}` : ''}</p>
         </button>
         <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -1008,7 +992,11 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         onOpenChange={(open) => { if (!open) setLightboxIndex(null) }}
         images={results}
         index={lightboxIndex ?? 0}
-        onIndex={setLightboxIndex}
+        onIndex={(index) => {
+          setLightboxIndex(index)
+          const next = results[index]
+          if (next) focusResult(next)
+        }}
         onDownload={(image) => void download(image)}
         onEdit={(image) => navigate(photoViewUrl(image.id))}
         onSaveProduct={(image) => { setLightboxIndex(null); setSaveProductImage(image) }}
