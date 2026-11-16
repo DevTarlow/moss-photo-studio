@@ -20,8 +20,11 @@ test('the free photo path opens before setup, and setup resumes from Products', 
   try {
     await expect(page.getByRole('heading', { name: 'Your personal photo studio.' })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Open a Photo' }).click()
-    await expect(page.getByRole('dialog').getByRole('heading', { name: 'Image Editor' })).toBeVisible()
-    await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click()
+    const editor = page.getByRole('dialog', { name: 'Image Editor' })
+    await expect(editor.getByRole('heading', { name: 'Image Editor' })).toBeVisible()
+    await page.waitForTimeout(300)
+    await expect(editor.getByRole('button', { name: 'Choose a Saved Photo' })).toHaveCount(0)
+    await editor.getByRole('button', { name: 'Cancel' }).click()
 
     await page.getByRole('button', { name: 'Skip for Now' }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()

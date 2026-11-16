@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { ImportResult } from '@shared/types'
 import { unwrap, messageOf } from '../../lib/ipc'
@@ -27,9 +27,34 @@ export function NewProjectDialog({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [hasSavedPhotos, setHasSavedPhotos] = useState(false)
   const personQuery = personId
     ? `?person=${encodeURIComponent(personId)}${personLook ? `&look=${encodeURIComponent(personLook)}` : ''}`
     : ''
+
+  // Offer the saved-photo shortcut only when there is something saved to choose.
+  // A first-run library has no products or ready images, so the picker would be empty.
+  useEffect(() => {
+    if (!open || !type) {
+      setHasSavedPhotos(false)
+      return
+    }
+    let cancelled = false
+    setHasSavedPhotos(false)
+    void Promise.all([
+      unwrap(window.moss.products.list()),
+      unwrap(window.moss.images.library({ limit: 1 }))
+    ])
+      .then(([savedProducts, library]) => {
+        if (!cancelled) setHasSavedPhotos(savedProducts.length > 0 || library.total > 0)
+      })
+      .catch(() => {
+        // The dropzone and file picker still work without the shortcut.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, type])
 
   const finish = (result: ImportResult | null): void => {
     if (!result?.projectId) return
@@ -108,11 +133,13 @@ export function NewProjectDialog({
         onClick={() => void openPicker()}
         label="Choose a photo"
       />
-      <div className="mt-3 flex justify-center">
-        <Button variant="secondary" size="sm" disabled={busy} onClick={() => setPickerOpen(true)}>
-          Choose a Saved Photo
-        </Button>
-      </div>
+      {hasSavedPhotos && (
+        <div className="mt-3 flex justify-center">
+          <Button variant="secondary" size="sm" disabled={busy} onClick={() => setPickerOpen(true)}>
+            Choose a Saved Photo
+          </Button>
+        </div>
+      )}
       {error && <p className="error-text mt-2" role="alert">{error}</p>}
       <SourcePickerDialog
         open={pickerOpen}

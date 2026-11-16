@@ -33,6 +33,29 @@ test('an untouched Image Generator leaves no project behind', async () => {
     await page.getByRole('link', { name: 'All work', exact: true }).first().click()
     await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible({ timeout: 20_000 })
 
+    // A library with nothing saved has nothing for the picker to show.
+    await page.getByText('Image Editor', { exact: true }).last().click()
+    const editor = page.getByRole('dialog', { name: 'Image Editor' })
+    await expect(editor.getByRole('heading', { name: 'Image Editor', exact: true })).toBeVisible()
+    await page.waitForTimeout(300)
+    await expect(editor.getByRole('button', { name: 'Choose a Saved Photo' })).toHaveCount(0)
+    await editor.getByRole('button', { name: 'Cancel' }).click()
+
+    // Seed a saved product so the shortcut appears for the picker flow below.
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = 800
+      canvas.height = 600
+      const context = canvas.getContext('2d')!
+      context.fillStyle = '#e8e0d4'
+      context.fillRect(0, 0, 800, 600)
+      const blob = await new Promise<Blob>((resolve) => canvas.toBlob((value) => resolve(value!), 'image/png'))
+      await window.moss.products.createFromBytes({
+        bytes: new Uint8Array(await blob.arrayBuffer()),
+        name: 'Seed product'
+      })
+    })
+
     await page.getByText('Image Editor', { exact: true }).last().click()
     await page.getByRole('button', { name: 'Choose a Saved Photo' }).click()
     const picker = page.getByRole('dialog', { name: 'Choose a Photo to Edit' })
