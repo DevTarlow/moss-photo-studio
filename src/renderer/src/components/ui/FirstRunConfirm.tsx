@@ -20,13 +20,14 @@ export function FirstRunConfirm({
 }): React.JSX.Element {
   const perImage = usd(CENTS_PER_IMAGE)
   const total = usd(estimateCents(imageCount))
+  const countLabel = imageCount === 1 ? 'one image' : `${imageCount} images`
   const confirmRef = useRef<HTMLButtonElement>(null)
   return (
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
       title="Before your first image"
-      description={`Meta charges your account ${perImage} for every image that comes back. This makes ${imageCount} ${imageCount === 1 ? 'image' : 'images'}, about ${total}. Nothing is charged until you choose ${runLabel.split(' · ')[0]}.`}
+      description={`Meta charges your account ${perImage} for every image that comes back. This makes ${countLabel}, about ${total}. Nothing is charged until you choose ${runLabel.split(' · ')[0]}.`}
       width={460}
       initialFocusRef={confirmRef}
       footer={

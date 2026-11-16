@@ -65,7 +65,7 @@ test('a scene reference is sent as the second image and never as the product', a
     await expect(page.getByText('The setting and light are borrowed; its subject is not.')).toBeVisible()
 
     await page.locator('textarea').first().fill('A mug on a calm windowsill')
-    await page.getByRole('button', { name: /Make 1 Image/ }).click()
+    await page.getByRole('button', { name: /Make Image/ }).click()
     await expect
       .poll(() => muse.requests().filter((entry) => entry.path.endsWith('/images/edits')).length, { timeout: 30_000 })
       .toBe(1)
@@ -73,7 +73,7 @@ test('a scene reference is sent as the second image and never as the product', a
     expect((edit?.body?.images as unknown[]).length).toBe(2)
     expect(String(edit?.body?.prompt)).toContain('@Image2 as the scene reference')
     expect(String(edit?.body?.prompt)).toContain('Keep the product exactly as pictured in the reference.')
-    await expect(page.getByRole('button', { name: /Make 1 Image/ })).toBeEnabled({ timeout: 30_000 })
+    await expect(page.getByRole('button', { name: /Make Image/ })).toBeEnabled({ timeout: 30_000 })
   } finally {
     await app.close()
   }

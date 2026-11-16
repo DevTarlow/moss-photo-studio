@@ -2,7 +2,7 @@ import { ChevronDown, Download, FolderPlus, Package, Pencil, Trash2, UserPlus } 
 import { Icon } from '@astryxdesign/core'
 import type { Format, Image, JobState, Shape } from '@shared/types'
 import { formatLabel, shapeLabel } from '@shared/shapes'
-import { formatDate, formatDateTime, plural, usd } from '../../lib/format'
+import { formatDate, formatDateTime, imageCountLabel, usd } from '../../lib/format'
 import { Button } from '../../components/ui/Button'
 import { DescriptionPreview } from '../../components/ui/DescriptionPreview'
 import { Segmented } from '../../components/ui/Segmented'
@@ -194,7 +194,7 @@ export function CreateInspector({
               <Icon icon={ChevronDown} size="xsm" style={{ transform: settings.open ? 'rotate(180deg)' : undefined }} />
             </span>
             <span className="meta mt-1 block">
-              {plural(settings.requestedCount, 'image')} · {shapeLabel(settings.shape)} · {formatLabel(settings.format)}
+              {[imageCountLabel(settings.requestedCount), shapeLabel(settings.shape), formatLabel(settings.format)].filter(Boolean).join(' · ')}
             </span>
           </button>
           <div id="create-output-settings" hidden={!settings.open} className="mt-4 space-y-4">
@@ -278,7 +278,7 @@ export function CreateInspector({
                       <span className="text-[11px] font-medium">{formatDate(run.startedAt, true)}</span>
                       <span className="badge" data-tone={status.tone}>{status.label}</span>
                     </div>
-                    <p className="meta mt-0.5">{plural(run.done, 'image')} · {usd(run.costCents)}</p>
+                    <p className="meta mt-0.5">{[imageCountLabel(run.done), usd(run.costCents)].filter(Boolean).join(' · ')}</p>
                   </button>
                 )
               })}

@@ -40,7 +40,7 @@ test('Create a Person opens the generator and saves a generated image as a perso
     await expect(page.getByRole('button', { name: /A person holding product/ })).toBeVisible()
     await expect(page.locator('textarea').first()).toHaveValue(CREATE_PERSON_PROMPT)
 
-    await page.getByRole('button', { name: /Make 1 Image/ }).click()
+    await page.getByRole('button', { name: /Make Image/ }).click()
     await expect(page.getByText('Newest')).toBeVisible({ timeout: 30_000 })
 
     // The lightbox offers the same action as the result card.

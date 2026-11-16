@@ -54,3 +54,8 @@ export function elapsedLabel(startedAt: number | undefined, now = Date.now()): s
 export function plural(count: number, singular: string, pluralForm = `${singular}s`): string {
   return `${count} ${count === 1 ? singular : pluralForm}`
 }
+
+/** A count for a summary where one is the default: leave the singular out. */
+export function imageCountLabel(count: number): string {
+  return count === 1 ? '' : plural(count, 'image')
+}

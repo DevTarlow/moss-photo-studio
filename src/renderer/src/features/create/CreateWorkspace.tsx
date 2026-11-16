@@ -38,7 +38,7 @@ import { unwrap, messageOf } from '../../lib/ipc'
 import { toast } from '../../lib/toast'
 import { showExportToast } from '../../lib/exportFeedback'
 import { warnIfSmallPhoto } from '../../lib/photoWarnings'
-import { elapsedLabel, formatDate, plural } from '../../lib/format'
+import { elapsedLabel, formatDate, imageCountLabel } from '../../lib/format'
 import { currentMonth } from '../../store/library'
 import { onCommand } from '../../lib/commands'
 import { openSetPicker } from '../../store/setPicker'
@@ -160,6 +160,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const hasScene = Boolean(sceneRef && activeProductRef)
   const hasReference = Boolean(activeProductRef || personId || hasScene)
   const requestedCount = hasReference ? 1 : count
+  const makeActionLabel = `${requestedCount === 1 ? 'Make Image' : `Make ${requestedCount} Images`} · ${usd(estimateCents(requestedCount))}`
   const selectedPerson = people.find((person) => person.id === personId) ?? null
   const selectedLook = selectedPerson?.looks.find((look) => look.key === personLook) ?? null
   const composedPrompt = composeCreatePrompt({ text: prompt, hasProduct: Boolean(activeProductRef), hasPerson: Boolean(personId), hasScene })
@@ -274,7 +275,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       await loadMonth()
       if (jobToReport.done > 0) {
         setError(jobToReport.done < jobToReport.total ? `${jobToReport.done} of ${jobToReport.total} came back. You were charged for ${jobToReport.done}.` : null)
-        toast.status(`${jobToReport.done} ${jobToReport.done === 1 ? 'image' : 'images'} made · ${usd(jobToReport.costCents)}.`)
+        toast.status(`${jobToReport.done === 1 ? 'Image' : `${jobToReport.done} images`} made · ${usd(jobToReport.costCents)}.`)
       } else {
         const code = jobToReport.items[0]?.errorCode ?? 'unknown'
         const suffix = billingUncertain(code as never) ? ' If Meta made it, it may still show on your bill.' : ''
@@ -813,10 +814,10 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
               <div className="card mb-5 p-4">
                 <div className="flex items-center gap-2">
                   <Icon icon={Loader2} size="sm" className="animate-spin" style={{ color: 'var(--accent)' }} />
-                  <p className="text-[12px] font-semibold">Making {job.total} {job.total === 1 ? 'image' : 'images'} · {elapsedLabel(job.startedAt, now)}</p>
+                  <p className="text-[12px] font-semibold">Making {job.total === 1 ? 'your image' : `${job.total} images`} · {elapsedLabel(job.startedAt, now)}</p>
                   <p className="meta ml-auto tabular">{usd(job.costCents)} so far</p>
                 </div>
-                <div className="mt-2"><Progress value={job.done} max={job.total} label={`${job.done} of ${job.total} images made`} /></div>
+                <div className="mt-2"><Progress value={job.done} max={job.total} label={`${job.done} of ${job.total} made`} /></div>
                 <p className="meta mt-1" aria-live="polite">{job.done} made · {job.failed} failed · {job.total} total</p>
               </div>
             )}
@@ -937,7 +938,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
 
       <div className="ws-bottom">
         <button type="button" className="min-w-0 text-left" onClick={() => navigate('/usage')}>
-          <p className="truncate text-[12px] font-medium tabular">{plural(requestedCount, 'image')} · {shapeLabel(shape)} · {usd(estimateCents(requestedCount))}</p>
+          <p className="truncate text-[12px] font-medium tabular">{[imageCountLabel(requestedCount), shapeLabel(shape), usd(estimateCents(requestedCount))].filter(Boolean).join(' · ')}</p>
           <p className="meta tabular">Month {usd(monthCents)}{settings?.budgetCents != null ? ` of ${usd(settings.budgetCents)}` : ''}</p>
         </button>
         <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -954,7 +955,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
           ) : (
             <Button variant="primary" disabled={!canSubmit || isRunning || promptTooLongForReference} onClick={() => void submit()}>
               {isRunning ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null}
-              Make {requestedCount} {requestedCount === 1 ? 'Image' : 'Images'} · {usd(estimateCents(requestedCount))}
+              {makeActionLabel}
             </Button>
           )}
         </div>
@@ -1006,7 +1007,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       />
       <FirstRunConfirm
         open={firstOpen}
-        runLabel={`Make ${requestedCount} ${requestedCount === 1 ? 'Image' : 'Images'} · ${usd(estimateCents(requestedCount))}`}
+        runLabel={makeActionLabel}
         imageCount={requestedCount}
         onOpenChange={setFirstOpen}
         onConfirm={() => void confirmFirst()}

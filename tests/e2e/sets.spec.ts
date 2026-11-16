@@ -44,7 +44,7 @@ async function screenshot(page: Page, name: string): Promise<void> {
 async function firstRun(page: Page): Promise<void> {
   const confirm = page.getByRole('dialog', { name: 'Before your first image' })
   if (await confirm.isVisible().catch(() => false)) {
-    await confirm.getByRole('button', { name: /Make 1 Image/ }).click()
+    await confirm.getByRole('button', { name: /Make Image/ }).click()
   }
 }
 
@@ -79,7 +79,7 @@ test('a Set keeps images together and starts new work from them', async () => {
     await page.getByRole('button', { name: 'Make an Image with this Product', exact: true }).click()
     await expect(page.getByText('Image Generator', { exact: true }).first()).toBeVisible({ timeout: 20_000 })
     await page.locator('textarea').first().fill('A ceramic mug on a warm wooden table, soft morning light')
-    await page.getByRole('button', { name: /Make 1 Image · \$0\.01/ }).click()
+    await page.getByRole('button', { name: /Make Image · \$0\.01/ }).click()
     await firstRun(page)
     await expect(page.getByRole('button', { name: /Open .* larger/ }).first()).toBeVisible({ timeout: 30_000 })
 
@@ -123,7 +123,7 @@ test('a Set keeps images together and starts new work from them', async () => {
     await page.getByRole('button', { name: 'Make an Image with this Photo', exact: true }).click()
     await expect(page.getByText('Image Generator', { exact: true }).first()).toBeVisible({ timeout: 20_000 })
     await page.locator('textarea').first().fill('The same ceramic mug on a pale linen table with window light')
-    await page.getByRole('button', { name: /Make 1 Image · \$0\.01/ }).click()
+    await page.getByRole('button', { name: /Make Image · \$0\.01/ }).click()
     await firstRun(page)
     await expect(page.getByRole('button', { name: /Open .* larger/ }).first()).toBeVisible({ timeout: 30_000 })
 
@@ -190,7 +190,7 @@ test('a Set keeps images together and starts new work from them', async () => {
     await page.getByRole('button', { name: 'Make an Image with this Product', exact: true }).click()
     await expect(page.getByText('Image Generator', { exact: true }).first()).toBeVisible({ timeout: 20_000 })
     await page.locator('textarea').first().fill('The same mug on a soft grey background')
-    await page.getByRole('button', { name: /Make 1 Image · \$0\.01/ }).click()
+    await page.getByRole('button', { name: /Make Image · \$0\.01/ }).click()
     await firstRun(page)
     await expect(page.getByRole('button', { name: /Open .* larger/ }).first()).toBeVisible({ timeout: 30_000 })
     await page.getByRole('link', { name: 'Sets', exact: true }).click()
