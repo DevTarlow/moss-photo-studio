@@ -122,6 +122,7 @@ The editor and the generator share one workspace grammar: the left column holds 
 - **Copy:** result headings use 15px/600; `.meta` and `.hint` carry dates and costs; `.field-label` labels settings controls. The description uses the shared `DescriptionPreview` clamp and its `Show more` control.
 - **Actions:** full-width secondary `Button size="sm"` rows with a 16px `Icon`; destructive actions are ghost with `--danger`. Keep the same order in both tools: use the output, then read its description/details, then delete.
 - **Disclosure:** the output settings show a one-line summary at all times and open their controls on demand. The content stays in the DOM with `hidden` so `aria-controls` always resolves. History appears only when a completed make exists.
+- **Constraints:** when a reference removes a choice (a product, person, or scene makes one image at a time), show the constraint as a sentence instead of disabled options. The summary still reads `1 image`.
 - **Empty states:** one short explanation plus, before the first result, three tips that directly affect picture quality. No illustration dashboards, no counters.
 
 ### Result selection

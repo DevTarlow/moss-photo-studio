@@ -56,7 +56,8 @@ test('an example can use the selected product photo or stay as shown', async () 
     await expect(page.getByRole('switch', { name: 'Use my product photo in examples' })).toBeChecked()
     await page.getByRole('button', { name: /A product shot/ }).click()
     await expect(editor).toHaveValue(productScene.productText)
-    await expect(countTwo).toBeDisabled()
+    await expect(page.getByText('With a product, person, or scene, Moss makes one image at a time.')).toBeVisible()
+    await expect(page.getByRole('group', { name: 'How many images' })).toHaveCount(0)
 
     // Off: the example returns to its own product, and the reference is left out.
     await page.getByRole('switch', { name: 'Use my product photo in examples' }).click()

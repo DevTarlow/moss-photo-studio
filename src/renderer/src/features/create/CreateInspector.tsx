@@ -200,18 +200,18 @@ export function CreateInspector({
           <div id="create-output-settings" hidden={!settings.open} className="mt-4 space-y-4">
             <div>
               <p className="field-label">How many</p>
-              <Segmented
-                label="How many images"
-                value={String(settings.count) as '1' | '2' | '3' | '4'}
-                onChange={(value) => onCount(Number(value))}
-                options={[1, 2, 3, 4].map((value) => ({
-                  value: String(value) as '1' | '2' | '3' | '4',
-                  label: String(value),
-                  disabled: settings.hasReference && value !== 1
-                }))}
-              />
-              {settings.hasReference && (
-                <p className="hint mt-1">With a product, person, or scene, Moss makes one image at a time.</p>
+              {settings.hasReference ? (
+                <p className="hint">With a product, person, or scene, Moss makes one image at a time.</p>
+              ) : (
+                <Segmented
+                  label="How many images"
+                  value={String(settings.count) as '1' | '2' | '3' | '4'}
+                  onChange={(value) => onCount(Number(value))}
+                  options={[1, 2, 3, 4].map((value) => ({
+                    value: String(value) as '1' | '2' | '3' | '4',
+                    label: String(value)
+                  }))}
+                />
               )}
             </div>
             <div>
