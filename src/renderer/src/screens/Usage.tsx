@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BarChart3, Download } from 'lucide-react'
+import { BarChart3, ChevronDown, ChevronUp, Download } from 'lucide-react'
 import type { UsageEvent, UsageSummary } from '@shared/types'
 import { AppFrame } from '../components/ui/AppFrame'
 import { EmptyState } from '../components/ui/EmptyState'
@@ -46,6 +46,7 @@ export function Usage(): React.JSX.Element {
   const [loadingEvents, setLoadingEvents] = useState(false)
   const [budget, setBudget] = useState('')
   const [savingBudget, setSavingBudget] = useState(false)
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null)
   const months = useMemo(() => lastMonths(12), [])
 
   const load = async (): Promise<void> => {
@@ -61,6 +62,7 @@ export function Usage(): React.JSX.Element {
       setTotal(list.total)
       setPage(1)
       setProjectPage(1)
+      setExpandedEventId(null)
       setBudget(nextSummary.budgetCents === null ? '' : (nextSummary.budgetCents / 100).toFixed(2))
     } catch {
       setError('Could not load usage. Try again.')
@@ -89,6 +91,7 @@ export function Usage(): React.JSX.Element {
       setEvents(next.items)
       setTotal(next.total)
       setPage(target)
+      setExpandedEventId(null)
     } catch {
       toast.error('Could not load that usage page.')
     } finally {
@@ -260,10 +263,11 @@ export function Usage(): React.JSX.Element {
               </section>
 
               <section className="mt-8">
-                <div className="flex items-baseline justify-between">
+                <div className="flex items-baseline justify-between gap-3">
                   <h2 className="section-label">Every Image</h2>
                   <span className="meta-faint">{total} {total === 1 ? 'row' : 'rows'}</span>
                 </div>
+                <p className="hint mt-1">Expand a row for timing and billing details.</p>
                 {events.length === 0 ? (
                   <EmptyState icon={<Icon icon={BarChart3} size="lg" />} title="No images yet" line="Images you make and what they cost will show here." />
                 ) : (
@@ -271,42 +275,77 @@ export function Usage(): React.JSX.Element {
                     <table className="w-full min-w-[780px] border-collapse text-left">
                       <thead>
                         <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
-                          {['Date', 'Project', 'What Happened', 'Images', 'Cost', 'Duration', 'Outcome'].map((heading) => (
+                          {['Date', 'Project', 'What Happened', 'Images', 'Cost', 'Outcome'].map((heading) => (
                             <th key={heading} className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: 'var(--text-faint)' }}>
                               {heading}
                             </th>
                           ))}
+                          <th className="px-3 py-2">
+                            <span className="sr-only">Details</span>
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         {events.map((event) => {
                           const failed = event.result === 'failed'
+                          const expanded = expandedEventId === event.id
+                          const label = `${event.projectName || 'Deleted project'} on ${formatDateTime(event.at)}`
                           return (
-                            <tr key={event.id} className="border-b last:border-b-0" style={{ borderColor: 'var(--border)' }}>
-                              <td className="whitespace-nowrap px-3 py-2 text-[12px]" title={new Date(event.at).toISOString()}>{formatDateTime(event.at)}</td>
-                              <td className="max-w-[180px] truncate px-3 py-2 text-[12px]">{event.projectName || 'Deleted project'}</td>
-                              <td
-                                className="whitespace-nowrap px-3 py-2 text-[12px]"
-                                style={{ color: failed ? 'var(--danger)' : 'var(--text)' }}
-                                title={failed && event.errorCode ? errorMessage(event.errorCode as never) : undefined}
-                              >
-                                {failed ? 'Failed' : actionLabels[event.action]}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-2 text-[12px] tabular">
-                                {event.returned === event.requested ? event.returned : `${event.returned} of ${event.requested}`}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-2 text-[12px] tabular">
-                                {event.uncertainBilling ? 'Unknown' : event.action === 'adjust' ? 'Free' : event.action === 'listing' || event.action === 'analyze' || event.action === 'cutout' ? microsLabel(event.costMicros) : usd(event.costCents)}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-2 text-[12px] tabular">
-                                {event.durationMs === null ? '-' : `${(event.durationMs / 1000).toFixed(1)}s`}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-2 text-[12px]">
-                                <span className="badge" data-tone={failed ? 'danger' : 'success'}>
-                                  {failed ? 'Failed' : 'Made'}
-                                </span>
-                              </td>
-                            </tr>
+                            <Fragment key={event.id}>
+                              <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
+                                <td className="whitespace-nowrap px-3 py-2 text-[12px]" title={new Date(event.at).toISOString()}>{formatDateTime(event.at)}</td>
+                                <td className="max-w-[180px] truncate px-3 py-2 text-[12px]">{event.projectName || 'Deleted project'}</td>
+                                <td
+                                  className="whitespace-nowrap px-3 py-2 text-[12px]"
+                                  style={{ color: failed ? 'var(--danger)' : 'var(--text)' }}
+                                  title={failed && event.errorCode ? errorMessage(event.errorCode as never) : undefined}
+                                >
+                                  {failed ? 'Failed' : actionLabels[event.action]}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-2 text-[12px] tabular">
+                                  {event.returned === event.requested ? event.returned : `${event.returned} of ${event.requested}`}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-2 text-[12px] tabular">
+                                  {event.uncertainBilling ? 'Unknown' : event.action === 'adjust' ? 'Free' : event.action === 'listing' || event.action === 'analyze' || event.action === 'cutout' ? microsLabel(event.costMicros) : usd(event.costCents)}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-2 text-[12px]">
+                                  <span className="badge" data-tone={failed ? 'danger' : 'success'}>
+                                    {failed ? 'Failed' : 'Made'}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2 text-right">
+                                  <button
+                                    type="button"
+                                    className="icon-btn"
+                                    aria-label={`${expanded ? 'Hide' : 'Show'} details for ${label}`}
+                                    aria-expanded={expanded}
+                                    onClick={() => setExpandedEventId(expanded ? null : event.id)}
+                                  >
+                                    <Icon icon={expanded ? ChevronUp : ChevronDown} size="sm" />
+                                  </button>
+                                </td>
+                              </tr>
+                              {expanded && (
+                                <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
+                                  <td colSpan={7} className="px-3 pb-3 pt-0">
+                                    <div className="rounded-[8px] border p-3" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
+                                      <div className="flex flex-wrap gap-x-5 gap-y-1 text-[12px]">
+                                        <span><span className="meta">Requested</span> {event.requested}</span>
+                                        <span><span className="meta">Returned</span> {event.returned}</span>
+                                        <span><span className="meta">Duration</span> {event.durationMs === null ? '-' : `${(event.durationMs / 1000).toFixed(1)}s`}</span>
+                                        <span><span className="meta">Recorded</span> {formatDateTime(event.at)}</span>
+                                      </div>
+                                      {event.uncertainBilling && (
+                                        <p className="hint mt-2">Meta may have billed for this image even though it did not come back.</p>
+                                      )}
+                                      {failed && event.errorCode && (
+                                        <p className="mt-2 text-[12px]" style={{ color: 'var(--danger)' }}>{errorMessage(event.errorCode as never)}</p>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </Fragment>
                           )
                         })}
                       </tbody>

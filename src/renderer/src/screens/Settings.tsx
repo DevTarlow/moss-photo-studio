@@ -29,7 +29,7 @@ import { formatDateTime, relativeTime, usd } from '../lib/format'
 import { toast } from '../lib/toast'
 import { markUrl } from '../lib/assets'
 import { Skeleton } from '../components/ui/Skeleton'
-import { Card, Heading, Icon, Text } from '@astryxdesign/core'
+import { Card, Collapsible, Heading, Icon, Stack, Text } from '@astryxdesign/core'
 import { settingsSections } from '../lib/settingsSections'
 
 function SettingsTitle({ title, line }: { title: string; line: string }): React.JSX.Element {
@@ -671,30 +671,52 @@ function PrivacySection(): React.JSX.Element {
   }
   return (
     <div>
-      <SettingsTitle title="Privacy" line="What leaves this computer, and what never does." />
+      <SettingsTitle title="Privacy" line="Your work stays here. Only a paid image request and a license check contact anyone else." />
       <SectionCard>
-        <p className="text-[13px]">
-          Your photos and projects live on this computer. Two hosts receive anything: Meta gets the description and the image for a request, and the license center checks your key. Nothing else leaves.
-        </p>
-        <div className="mt-5 grid gap-3">
-          <div className="rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
-            <p className="text-[12px] font-semibold">api.meta.ai</p>
-            <p className="hint mt-1">Receives the description and the working image for a request, plus a random install ID. It never receives your name, email, license key, file names, or library path.</p>
-          </div>
-          <div className="rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
-            <p className="text-[12px] font-semibold">{LICENSE_API_HOST}</p>
-            <p className="hint mt-1">Receives your license key and machine label when you activate, validate, or deactivate. The key leaves the app only for those three license calls.</p>
-          </div>
-        </div>
-        <p className="hint mt-4">There is no telemetry, analytics, crash reporting, or cloud sync.</p>
-        <p className="hint mt-1">The app cannot see a request Meta billed but never answered. If Meta made an image after a timeout, it may appear on your Meta bill and not in this history.</p>
+        <Text weight="bold" display="block">Stays on this computer</Text>
+        <Text type="supporting" color="secondary" display="block" className="mt-1">
+          Your photos, projects, Sets, Products, descriptions, local adjustments, exports, and usage history live in the library folder. Moss has no account, cloud sync, telemetry, analytics, or crash reporting.
+        </Text>
+      </SectionCard>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <SectionCard>
+          <Text weight="bold" display="block">Goes to Meta only for a paid image</Text>
+          <Text type="supporting" color="secondary" display="block" className="mt-1">
+            Meta receives the description, the photos you chose, the requested shape and format, and a random install ID. It never receives your name, email, license key, file names, or library path.
+          </Text>
+          <p className="hint mt-2">If a request times out, Meta may still bill for an image that did not come back. That charge can appear on your Meta bill and not in Usage.</p>
+        </SectionCard>
+        <SectionCard>
+          <Text weight="bold" display="block">Goes to the license center only for licensing</Text>
+          <Text type="supporting" color="secondary" display="block" className="mt-1">
+            When you activate, validate, or remove a license, the license center receives the key and this computer's label. It never receives your photos or descriptions.
+          </Text>
+        </SectionCard>
+      </div>
+      <SectionCard className="mt-4">
+        <Collapsible defaultIsOpen={false} trigger={<Text weight="bold">Technical details</Text>}>
+          <Stack gap={3} className="pt-3">
+            <div className="rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
+              <p className="text-[12px] font-semibold">api.meta.ai</p>
+              <p className="hint mt-1">Receives the description and the working image for a request, plus a random install ID. It never receives your name, email, license key, file names, or library path.</p>
+            </div>
+            <div className="rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
+              <p className="text-[12px] font-semibold">{LICENSE_API_HOST}</p>
+              <p className="hint mt-1">Receives your license key and machine label when you activate, validate, or deactivate. The key leaves the app only for those three license calls.</p>
+            </div>
+            <div>
+              <p className="field-label">Install ID</p>
+              <p className="font-mono text-[11px]">{deviceId || 'Not set'}</p>
+              <p className="hint mt-1">A random ID created on first launch. It is not you. It helps Meta handle repeated requests.</p>
+            </div>
+          </Stack>
+        </Collapsible>
       </SectionCard>
       <SectionCard className="mt-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="field-label">Install ID</p>
-            <p className="font-mono text-[11px]">{deviceId || 'Not set'}</p>
-            <p className="hint mt-1">A random ID created on first launch. It is not you. It helps Meta handle repeated requests.</p>
+            <p className="field-label">Privacy controls</p>
+            <p className="hint mt-1">Usage history and local logs can be deleted here. Your images and projects stay.</p>
           </div>
           <Button variant="secondary" onClick={() => void window.moss.app.openPath({ kind: 'logs' })}>
             <Icon icon={FolderOpen} size="sm" /> Open Log Folder
@@ -878,11 +900,16 @@ function AboutSection(): React.JSX.Element {
           {appInfo?.fakeMode && <span className="badge" data-tone="danger">FAKE MODE</span>}
           {appInfo?.devUnlock && <span className="badge" data-tone="warning">DEV</span>}
         </div>
-        <dl className="mt-5 grid gap-3 sm:grid-cols-3">
-          <div><dt className="section-label">Electron</dt><dd className="mt-1 text-[12px] tabular">{appInfo?.releases.electron}</dd></div>
-          <div><dt className="section-label">Chromium</dt><dd className="mt-1 text-[12px] tabular">{appInfo?.releases.chromium}</dd></div>
-          <div><dt className="section-label">Node</dt><dd className="mt-1 text-[12px] tabular">{appInfo?.releases.node}</dd></div>
-        </dl>
+        <p className="hint mt-4">Your work stays in the library folder shown in Settings, Storage.</p>
+        <div className="mt-4">
+          <Collapsible defaultIsOpen={false} trigger={<Text weight="bold">Technical details</Text>}>
+            <dl className="grid gap-3 pt-3 sm:grid-cols-3">
+              <div><dt className="section-label">Electron</dt><dd className="mt-1 text-[12px] tabular">{appInfo?.releases.electron}</dd></div>
+              <div><dt className="section-label">Chromium</dt><dd className="mt-1 text-[12px] tabular">{appInfo?.releases.chromium}</dd></div>
+              <div><dt className="section-label">Node</dt><dd className="mt-1 text-[12px] tabular">{appInfo?.releases.node}</dd></div>
+            </dl>
+          </Collapsible>
+        </div>
         <p className="hint mt-5">Update controls are in Settings, Updates.</p>
         <p className="hint mt-2">Support: <span className="font-mono">{SUPPORT_EMAIL}</span></p>
         <p className="meta mt-5">
