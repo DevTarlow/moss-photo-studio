@@ -117,6 +117,13 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const handled = useRef<Set<string>>(new Set())
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
+  const photoViewUrl = (imageId: string): string => {
+    const next = new URLSearchParams(params)
+    next.set('view', 'photo')
+    next.set('image', imageId)
+    return `/project/${project.id}?${next.toString()}`
+  }
+
   const running = Object.values(jobs).find(
     (job) => job.projectId === project.id && job.status === 'running' && job.kind === 'create'
   ) ?? null
@@ -851,7 +858,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                       {index === 0 && !runFilter && <span className="badge absolute left-2 top-2" data-tone="canvas">Newest</span>}
                     </button>
                     <div className="flex flex-wrap items-center gap-1 border-t px-2 py-2" style={{ borderColor: 'var(--border)' }}>
-                      <Button variant="ghost" size="sm" onClick={() => navigate(`/project/${project.id}?view=photo&image=${image.id}`)}>
+                      <Button variant="ghost" size="sm" onClick={() => navigate(photoViewUrl(image.id))}>
                         <Icon icon={Pencil} size="xsm" /> Edit
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => void download(image)}>
@@ -868,7 +875,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
                           label={`More actions for ${image.label}`}
                           size="sm"
                           items={[
-                            { label: 'Save to Set', onClick: () => openSetPicker(image) },
+                            { label: 'Add to Set', onClick: () => openSetPicker(image) },
                             { label: 'Delete', onClick: () => void remove(image) }
                           ]}
                         />
@@ -969,7 +976,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         index={lightboxIndex ?? 0}
         onIndex={setLightboxIndex}
         onDownload={(image) => void download(image)}
-        onEdit={(image) => navigate(`/project/${project.id}?view=photo&image=${image.id}`)}
+        onEdit={(image) => navigate(photoViewUrl(image.id))}
         onSaveProduct={(image) => { setLightboxIndex(null); setSaveProductImage(image) }}
         onSavePerson={(image) => { setLightboxIndex(null); setSavePersonImage(image) }}
         onSaveToSet={(image) => { setLightboxIndex(null); openSetPicker(image) }}

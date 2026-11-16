@@ -19,6 +19,7 @@ export function Workspace(): React.JSX.Element {
   const selectImage = useWorkspaceStore((state) => state.selectImage)
   const imageParam = params.get('image')
   const view = params.get('view')
+  const fromSet = params.get('fromSet')
   const photoView = view === 'photo'
   const preferredPersonLook = params.get('look') ?? project?.personLook ?? null
 
@@ -33,8 +34,12 @@ export function Workspace(): React.JSX.Element {
   }, [imageParam, selectImage])
 
   const titleContent = project ? <ProjectNameEditor /> : undefined
-  const backTo = project?.productId ? `/product/${project.productId}` : '/library'
-  const backLabel = project?.productId ? 'Back to Product' : 'Back to All Work'
+  const backTo = fromSet
+    ? `/sets/${fromSet}`
+    : project?.productId
+      ? `/product/${project.productId}`
+      : '/library'
+  const backLabel = fromSet ? 'Back to Set' : project?.productId ? 'Back to Product' : 'Back to All Work'
   if (!id) {
     return (
       <AppFrame backTo="/products" backLabel="Back to Products">

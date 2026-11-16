@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Download, Loader2, Maximize2, PanelLeft, PanelRight, Plus } from 'lucide-react'
 import { Icon, Banner } from '@astryxdesign/core'
 import type { AdjustTransform, Image, Project } from '@shared/types'
@@ -69,6 +69,8 @@ export function PhotoWorkspace(): React.JSX.Element {
   const upsert = useJobsStore((state) => state.upsert)
   const confirm = useConfirm()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const fromSet = params.get('fromSet')
   const tier = useViewportTier()
   const leftHidden = tier === 'tiny'
   const rightHidden = !useIsWideWorkspace()
@@ -637,7 +639,7 @@ export function PhotoWorkspace(): React.JSX.Element {
 
   const backLabel = project.type === 'image' ? 'Back to Image Generator' : null
   const goBackToProject = (): void => {
-    void navigate(`/project/${project.id}`)
+    void navigate(`/project/${project.id}${fromSet ? `?fromSet=${encodeURIComponent(fromSet)}` : ''}`)
   }
 
   const rotate = tab === 'adjust' ? (adjust.rotate ?? 0) : 0

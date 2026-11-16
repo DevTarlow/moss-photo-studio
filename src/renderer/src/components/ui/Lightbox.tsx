@@ -149,7 +149,7 @@ export function Lightbox({
               )}
               {onSaveToSet && image && (
                 <Button variant="secondary" size="sm" className="pointer-events-auto" onClick={() => onSaveToSet(image)}>
-                  <Icon icon={FolderPlus} size="sm" /> Save to Set
+                  <Icon icon={FolderPlus} size="sm" /> Add to Set
                 </Button>
               )}
               {onDelete && image && (

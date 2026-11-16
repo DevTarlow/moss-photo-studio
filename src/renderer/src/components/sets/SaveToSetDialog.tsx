@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Check, Layers, Loader2 } from 'lucide-react'
 import { Icon } from '@astryxdesign/core'
 import type { SetSummary } from '@shared/types'
@@ -12,6 +13,7 @@ import { toast } from '../../lib/toast'
 export function SaveToSetDialog(): React.JSX.Element {
   const target = useSetPickerStore((state) => state.target)
   const close = useSetPickerStore((state) => state.close)
+  const navigate = useNavigate()
   const [sets, setSets] = useState<SetSummary[]>([])
   const currentSetId = target?.kind === 'image' ? target.image.setId : target?.product.setId ?? null
   const [loading, setLoading] = useState(false)
@@ -43,7 +45,7 @@ export function SaveToSetDialog(): React.JSX.Element {
         await unwrap(window.moss.products.assignSet({ productId: target.product.id, setId }))
       }
       target.onSaved?.(setId)
-      toast.status(label)
+      toast.status(label, setId ? { label: 'Open Set', onClick: () => navigate(`/sets/${setId}`) } : undefined)
       close()
     } catch (caught) {
       setError(messageOf(caught))
@@ -62,7 +64,7 @@ export function SaveToSetDialog(): React.JSX.Element {
     setError(null)
     try {
       const created = await unwrap(window.moss.sets.create({ name }))
-      await assign(created.id, `Saved to "${created.name}".`)
+      await assign(created.id, `Added to "${created.name}".`)
     } catch (caught) {
       setError(messageOf(caught))
       setBusy(false)
@@ -78,6 +80,23 @@ export function SaveToSetDialog(): React.JSX.Element {
       width={480}
       footer={<Button variant="ghost" onClick={close}>Cancel</Button>}
     >
+      {target && (
+        <div className="mb-3 flex items-center gap-2 rounded-[8px] border p-2" style={{ borderColor: 'var(--border)' }}>
+          {target.kind === 'image' ? (
+            target.image.thumbUrl ? (
+              <img src={target.image.thumbUrl} alt="" className="h-10 w-10 rounded object-cover" />
+            ) : (
+              <span className="h-10 w-10 rounded" style={{ background: 'var(--surface-2)' }} />
+            )
+          ) : (
+            <img src={target.product.thumbUrl} alt="" className="h-10 w-10 rounded object-cover" />
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[12px] font-medium">{target.kind === 'image' ? target.image.label : target.product.name}</p>
+            <p className="meta">{target.kind === 'image' ? 'Image' : 'Product photo'}</p>
+          </div>
+        </div>
+      )}
       {loading ? (
         <div className="flex items-center gap-2 py-4 text-[12px]" style={{ color: 'var(--text-muted)' }}>
           <Icon icon={Loader2} size="sm" className="animate-spin" /> Loading Sets...
@@ -99,7 +118,7 @@ export function SaveToSetDialog(): React.JSX.Element {
                   }}
                   aria-pressed={selected}
                   disabled={busy}
-                  onClick={() => void assign(set.id, `Saved to "${set.name}".`)}
+                  onClick={() => void assign(set.id, `Added to "${set.name}".`)}
                 >
                   {set.coverUrl ? (
                     <img src={set.coverUrl} alt="" className="h-9 w-9 shrink-0 rounded object-cover" />

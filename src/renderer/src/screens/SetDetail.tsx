@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Download, Image as ImageIcon, Layers, Loader2, MoreHorizontal, Pencil, Sparkles, Trash2, X } from 'lucide-react'
+import { Download, Image as ImageIcon, Layers, Loader2, MoreHorizontal, Pencil, Plus, Sparkles, Trash2, X } from 'lucide-react'
 import { Heading, Icon, Text } from '@astryxdesign/core'
 import { DropdownMenu } from 'radix-ui'
 import type { LibraryImage, SetDetail as SetDetailData } from '@shared/types'
@@ -10,6 +10,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Skeleton } from '../components/ui/Skeleton'
 import { SetNameDialog } from '../components/sets/SetNameDialog'
+import { AddToSetDialog } from '../components/sets/AddToSetDialog'
 import { useConfirm } from '../components/ui/ConfirmProvider'
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
@@ -27,6 +28,7 @@ export function SetDetail(): React.JSX.Element {
   const [busy, setBusy] = useState<string | null>(null)
   const [renameOpen, setRenameOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
 
   const load = async (): Promise<void> => {
     if (!id) return
@@ -49,13 +51,16 @@ export function SetDetail(): React.JSX.Element {
     setBusy(`${image.id}:${type}`)
     try {
       const project = await unwrap(window.moss.projects.createFromImage({ sourceImageId: image.id, type }))
-      navigate(`/project/${project.project.id}`)
+      navigate(projectUrl(project.project.id))
     } catch (caught) {
       toast.error(messageOf(caught))
     } finally {
       setBusy(null)
     }
   }
+
+  const projectUrl = (projectId: string): string =>
+    `/project/${projectId}${id ? `?fromSet=${encodeURIComponent(id)}` : ''}`
 
   const removeImage = async (image: LibraryImage): Promise<void> => {
     setBusy(`${image.id}:remove`)
@@ -74,7 +79,7 @@ export function SetDetail(): React.JSX.Element {
     setBusy(`product:${productId}:${type}`)
     try {
       const project = await unwrap(window.moss.products.createProject({ productId, type }))
-      navigate(`/project/${project.project.id}`)
+      navigate(projectUrl(project.project.id))
     } catch (caught) {
       toast.error(messageOf(caught))
     } finally {
@@ -168,6 +173,9 @@ export function SetDetail(): React.JSX.Element {
                   </Text>
                 </div>
                 <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                  <Button variant="primary" disabled={busy !== null} onClick={() => setAddOpen(true)}>
+                    <Icon icon={Plus} size="sm" /> Add to Set
+                  </Button>
                   <Button variant="secondary" disabled={busy !== null || detail.total === 0} onClick={() => void exportSet()}>
                     {busy === 'export' ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Download} size="sm" />} Export Set
                   </Button>
@@ -196,6 +204,7 @@ export function SetDetail(): React.JSX.Element {
                   icon={<Icon icon={Layers} size="lg" />}
                   title="This Set is empty"
                   line="Add a product photo or an image to this Set."
+                  action={<Button variant="primary" onClick={() => setAddOpen(true)}><Icon icon={Plus} size="sm" /> Add to Set</Button>}
                 />
               ) : (
                 <>
@@ -281,6 +290,15 @@ export function SetDetail(): React.JSX.Element {
           submitLabel="Save Name"
           onOpenChange={setRenameOpen}
           onSubmit={rename}
+        />
+      )}
+      {detail && (
+        <AddToSetDialog
+          open={addOpen}
+          setId={detail.set.id}
+          setName={detail.set.name}
+          onOpenChange={setAddOpen}
+          onAdded={() => void load()}
         />
       )}
     </AppFrame>

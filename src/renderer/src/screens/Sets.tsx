@@ -38,8 +38,8 @@ export function Sets(): React.JSX.Element {
 
   const create = async (name: string): Promise<void> => {
     const created = await unwrap(window.moss.sets.create({ name }))
-    setSets((current) => [created, ...current])
     toast.status(`Set "${created.name}" created.`)
+    navigate(`/sets/${created.id}`)
   }
 
   return (
@@ -70,7 +70,7 @@ export function Sets(): React.JSX.Element {
             <EmptyState
               icon={<Icon icon={Layers} size="lg" />}
               title="No Sets yet"
-              line="Open any image and choose Save to Set, or create a Set now and add images later."
+              line="Open any image or product and choose Add to Set, or create a Set now and add things to it."
               action={<Button variant="secondary" onClick={() => setCreateOpen(true)}>New Set</Button>}
             />
           ) : (

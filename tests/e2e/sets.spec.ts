@@ -84,7 +84,7 @@ test('a Set keeps images together and starts new work from them', async () => {
     await expect(page.getByRole('button', { name: /Open .* larger/ }).first()).toBeVisible({ timeout: 30_000 })
 
     await page.getByRole('button', { name: /Open .* larger/ }).first().click()
-    await page.getByRole('button', { name: 'Save to Set', exact: true }).click()
+    await page.getByRole('button', { name: 'Add to Set', exact: true }).click()
     await expect(page.getByRole('dialog', { name: 'Add to Set' })).toBeVisible()
     await page.locator('#save-to-new-set').fill('Spring collection')
     await screenshot(page, 'save-to-set')

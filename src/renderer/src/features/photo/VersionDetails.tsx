@@ -78,7 +78,7 @@ export function VersionDetails({
               )}
               {onSaveToSet && (
                 <Button variant="secondary" size="sm" onClick={onSaveToSet}>
-                  <Icon icon={FolderPlus} size="sm" /> Save to Set
+                  <Icon icon={FolderPlus} size="sm" /> Add to Set
                 </Button>
               )}
             </div>
