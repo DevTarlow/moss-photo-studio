@@ -182,7 +182,7 @@ export function ProductDetail(): React.JSX.Element {
       setLinkOpen(false)
       await load()
       await refreshProducts()
-      toast.status('Work linked to this product.')
+      toast.status('Project linked to this product.')
     } catch (caught) {
       toast.error(messageOf(caught))
     }
@@ -193,7 +193,7 @@ export function ProductDetail(): React.JSX.Element {
       await unwrap(window.moss.products.unlinkProject({ projectId }))
       await load()
       await refreshProducts()
-      toast.status('Work unlinked.')
+      toast.status('Project unlinked.')
     } catch (caught) {
       toast.error(messageOf(caught))
     }

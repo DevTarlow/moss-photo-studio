@@ -294,7 +294,7 @@ export function Library(): React.JSX.Element {
       }
       if (failed.length > 0) {
         setSelected(new Set(failed))
-        toast.error(`${failed.length === 1 ? 'One project' : `${failed.length} projects`} could not be deleted. Stop any run and try again.`)
+        toast.error(`${failed.length === 1 ? 'One project' : `${failed.length} projects`} could not be deleted. Wait for the current make to finish, then try again.`)
       } else {
         setSelected(new Set())
       }

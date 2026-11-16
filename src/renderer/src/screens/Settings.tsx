@@ -674,7 +674,7 @@ function PrivacySection(): React.JSX.Element {
       <SettingsTitle title="Privacy" line="What leaves this computer, and what never does." />
       <SectionCard>
         <p className="text-[13px]">
-          Your photos and projects live on this computer. Two hosts receive anything: Meta gets the words and the image for a run, and the license center checks your key. Nothing else leaves.
+          Your photos and projects live on this computer. Two hosts receive anything: Meta gets the description and the image for a request, and the license center checks your key. Nothing else leaves.
         </p>
         <div className="mt-5 grid gap-3">
           <div className="rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
