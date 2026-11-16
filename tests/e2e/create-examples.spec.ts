@@ -46,6 +46,7 @@ test('an example can use the selected product photo or stay as shown', async () 
     await expect(page.getByText('Click a photo to load a starting description.')).toBeVisible()
     await expect(page.getByRole('button', { name: /A new person/ })).toBeVisible()
 
+    await page.getByRole('button', { name: /Output Settings/ }).click()
     const editor = page.locator('textarea').first()
     const countTwo = page
       .getByRole('group', { name: 'How many images' })

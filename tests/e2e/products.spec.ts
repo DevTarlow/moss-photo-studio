@@ -72,6 +72,7 @@ test('a generated image becomes a reusable product across the editor and generat
     await page.getByRole('button', { name: 'See Maya larger' }).click()
     await expect(page.getByRole('dialog').getByRole('heading', { name: 'Maya' })).toBeVisible()
     await page.getByRole('button', { name: 'Close', exact: true }).first().click()
+    await page.getByRole('button', { name: /Output Settings/ }).click()
     await expect(page.getByRole('group', { name: 'How many images' }).getByRole('button', { name: '4', exact: true })).toBeDisabled()
     await page.locator('textarea').first().fill('holding the ceramic mug')
     await page.getByRole('button', { name: /Make 1 Image · \$0\.01/ }).click()
