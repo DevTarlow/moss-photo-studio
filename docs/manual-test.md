@@ -52,7 +52,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 ## Products
 
 - Products shows “20 included · N yours,” search, sort, and pagination.
-- Starter Products open with Edit This Photo and Make an Image with this Product, without Rename or Delete.
+- Starter Products open with Edit Photo and Make an Image with this Product, without Rename or Delete.
 - Generate Product Photo opens the Image Generator with the product prompt; Save as Product adds it under Your Products. Add Product Photo asks for a name before saving.
 - A product hub shows the source photo, Add to Set, Make an Image with this Product, linked projects, Link Existing Projects, archive, and delete. Clicking the product title renames it in place; Enter saves, Escape cancels, and clicking away saves.
 - **This build intentionally has no Listing Kit, listing copy, or Business profile.** Sets exist only as image organization; no rail item, menu item, or settings section should offer the retired tools.
@@ -61,7 +61,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 - Add any ready generated image, edited version, or saved product with Add to Set. Create a new Set from the same dialog. Open a Set and use Add to Set to bring in a product or image; Done closes the picker.
 - Sets lists each Set with its cover and count. Set detail shows member images and product photos, an Add to Set action, and a contextual back route that returns to the Set. Removing one leaves the image or product in place.
-- From a Set image or product source, Edit This Photo opens a new photo project and Make an Image with This Photo / This Product opens a new generator project. The imported source and all resulting images stay in the Set automatically.
+- From a Set image or product source, Edit Photo opens a new photo project and Make an Image with This Photo / This Product opens a new generator project. The imported source and all resulting images stay in the Set automatically.
 - Export Set creates a unique folder with numbered ready images and product sources, with no manifest. Open Folder opens the remembered Set export folder.
 - Delete a Set only removes the organization; images and projects remain.
 - An existing v11 pack library upgrades to v12 with its ready images preserved as ordinary image projects; old pack plans, pending rows, and pack jobs are removed.

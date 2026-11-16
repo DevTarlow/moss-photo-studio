@@ -389,7 +389,7 @@ export function Products(): React.JSX.Element {
               <p className="section-label">Start with This Product</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'photo')}>
-                  <Icon icon={ImageIcon} size="sm" /> Edit This Photo
+                  <Icon icon={ImageIcon} size="sm" /> Edit Photo
                 </Button>
                 <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'image')}>
                   <Icon icon={Sparkles} size="sm" /> Make an Image with this Product

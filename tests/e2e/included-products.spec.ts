@@ -26,7 +26,7 @@ test('included products start an editor and generator project, and Create a Prod
     const preview = page.getByRole('dialog')
     await expect(preview.getByRole('heading', { name: 'Amber dropper bottle' })).toBeVisible()
     await expect(preview.getByRole('button', { name: 'Rename' })).toHaveCount(0)
-    await preview.getByRole('button', { name: 'Edit This Photo' }).click()
+    await preview.getByRole('button', { name: 'Edit Photo' }).click()
     await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 20_000 })
     const photoSource = await page.evaluate(async () => {
       const id = window.location.hash.split('/project/')[1]?.split(/[?#]/)[0]
