@@ -31,6 +31,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 ## Image Editor
 
 - Start from a saved product, a library image, or a dropped file. The original is the first version.
+- Change Photo is marked AI; Adjust Photo is marked Free.
 - Choose a Quick Look or write a change. The button shows the price before the run; the first paid run shows the first-run confirmation and then disappears on later runs.
 - Person is optional on any change: the same picker as the generator shows portraits in a menu, the selected avatar opens a larger preview, and a chosen person is sent with the change.
 - Hold Space for the earlier version; compare with the slider, mouse divider, and keyboard.

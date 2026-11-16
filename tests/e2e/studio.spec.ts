@@ -244,6 +244,11 @@ test.describe.serial('Moss Photo Studio journey', () => {
   test('the editor makes a version, compares, and applies a free local adjust', async () => {
     await page.getByRole('button', { name: 'Edit This Photo' }).click()
     await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 20_000 })
+    const tabOverflow = await page.evaluate(() => {
+      const tabs = document.querySelector<HTMLElement>('.tabs')
+      return tabs ? tabs.scrollWidth - tabs.clientWidth : -1
+    })
+    expect(tabOverflow).toBeLessThanOrEqual(1)
     await expect(page.getByRole('button', { name: 'Listing Kit', exact: true })).toHaveCount(0)
     await expect.poll(() => menuEnabled('menu-copy-image')).toBe(true)
     expect(await menuEnabled('menu-export')).toBe(true)

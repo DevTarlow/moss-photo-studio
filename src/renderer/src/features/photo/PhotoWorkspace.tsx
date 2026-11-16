@@ -546,7 +546,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const leftPanel = (
     <div className="flex h-full flex-col">
       <div className="tabs px-4 pt-2">
-        <button type="button" data-selected={tab === 'change'} disabled={tabDisabled} onClick={() => setTab('change')}>Change Photo</button>
+        <button type="button" data-selected={tab === 'change'} disabled={tabDisabled} onClick={() => setTab('change')}>Change Photo <span className="ml-1 badge pill-sm">AI</span></button>
         <button type="button" data-selected={tab === 'adjust'} disabled={tabDisabled} onClick={() => setTab('adjust')}>Adjust Photo <span className="ml-1 badge pill-sm">Free</span></button>
       </div>
       {tab === 'change' && (!secrets?.hasKey || !canGenerate) && (
