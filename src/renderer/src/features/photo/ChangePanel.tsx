@@ -179,31 +179,34 @@ export function ChangePanel({
         </div>
       )}
 
-      <div className="mt-5 space-y-5">
-        {TEMPLATE_GROUPS.map((group) => (
-          <section key={group.id} aria-labelledby={`tile-group-${group.id}`}>
-            <h3 id={`tile-group-${group.id}`} className="text-[12px] font-semibold">{group.title}</h3>
-            <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>{group.intro}</p>
-            <div className="tile-grid mt-2">
-              {group.templates.map((template) => (
-                <button
-                  key={template.id}
-                  type="button"
-                  className="tile"
-                  data-armed={templateId === template.id}
-                  disabled={disabled || (group.id === 'model' && people.length === 0)}
-                  title={template.suits ?? template.label}
-                  aria-label={`${template.label}. ${template.suits ?? ''}`}
-                  onClick={() => chooseTile(tilePending(template))}
-                >
-                  <img src={tileImage(template)} alt="" loading="lazy" />
-                  <span className="tile-label">{template.label}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
+      <section className="mt-5" aria-labelledby="quick-looks-label">
+        <p id="quick-looks-label" className="section-label">Quick Looks</p>
+        <div className="mt-3 space-y-5">
+          {TEMPLATE_GROUPS.map((group) => (
+            <section key={group.id} aria-labelledby={`tile-group-${group.id}`}>
+              <h3 id={`tile-group-${group.id}`} className="text-[12px] font-semibold">{group.title}</h3>
+              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>{group.intro}</p>
+              <div className="tile-grid mt-2">
+                {group.templates.map((template) => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    className="tile"
+                    data-armed={templateId === template.id}
+                    disabled={disabled || (group.id === 'model' && people.length === 0)}
+                    title={template.suits ?? template.label}
+                    aria-label={`${template.label}. ${template.suits ?? ''}`}
+                    onClick={() => chooseTile(tilePending(template))}
+                  >
+                    <img src={tileImage(template)} alt="" loading="lazy" />
+                    <span className="tile-label">{template.label}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </section>
 
       {textSource === 'tile' && selectedTemplate && (
         <p className="mt-4 flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--text-faint)' }}>
