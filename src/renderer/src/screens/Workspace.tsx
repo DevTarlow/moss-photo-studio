@@ -13,7 +13,6 @@ export function Workspace(): React.JSX.Element {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const project = useWorkspaceStore((state) => state.project)
-  const loading = useWorkspaceStore((state) => state.loading)
   const error = useWorkspaceStore((state) => state.error)
   const load = useWorkspaceStore((state) => state.load)
   const selectImage = useWorkspaceStore((state) => state.selectImage)
@@ -21,7 +20,8 @@ export function Workspace(): React.JSX.Element {
   const view = params.get('view')
   const fromSet = params.get('fromSet')
   const photoView = view === 'photo'
-  const preferredPersonLook = params.get('look') ?? project?.personLook ?? null
+  const projectForRoute = project && project.id === id ? project : null
+  const preferredPersonLook = params.get('look') ?? projectForRoute?.personLook ?? null
 
   useEffect(() => {
     if (!id) return
@@ -33,13 +33,13 @@ export function Workspace(): React.JSX.Element {
     if (imageParam) selectImage(imageParam)
   }, [imageParam, selectImage])
 
-  const titleContent = project ? <ProjectNameEditor /> : undefined
+  const titleContent = projectForRoute ? <ProjectNameEditor /> : undefined
   const backTo = fromSet
     ? `/sets/${fromSet}`
-    : project?.productId
-      ? `/product/${project.productId}`
+    : projectForRoute?.productId
+      ? `/product/${projectForRoute.productId}`
       : '/library'
-  const backLabel = fromSet ? 'Back to Set' : project?.productId ? 'Back to Product' : 'Back to All Work'
+  const backLabel = fromSet ? 'Back to Set' : projectForRoute?.productId ? 'Back to Product' : 'Back to All Work'
   if (!id) {
     return (
       <AppFrame backTo="/products" backLabel="Back to Products">
@@ -47,7 +47,14 @@ export function Workspace(): React.JSX.Element {
       </AppFrame>
     )
   }
-  if (loading && !project) {
+  if (!projectForRoute) {
+    if (error) {
+      return (
+        <AppFrame backTo="/products" backLabel="Back to Products">
+          <ErrorState message={error} onRetry={() => void load(id)} />
+        </AppFrame>
+      )
+    }
     return (
       <AppFrame backTo="/products" backLabel="Back to Products">
         <div className="flex h-full gap-4 p-4">
@@ -58,25 +65,11 @@ export function Workspace(): React.JSX.Element {
       </AppFrame>
     )
   }
-  if (error && !project) {
-    return (
-      <AppFrame backTo="/products" backLabel="Back to Products">
-        <ErrorState message={error} onRetry={() => void load(id)} />
-      </AppFrame>
-    )
-  }
-  if (!project) {
-    return (
-      <AppFrame backTo="/products" backLabel="Back to Products">
-        <ErrorState message="Could not open that project. Nothing is lost. Try again." onRetry={() => void load(id)} />
-      </AppFrame>
-    )
-  }
-  const content = project.type === 'photo'
-    ? <PhotoWorkspace key="photo" />
+  const content = projectForRoute.type === 'photo'
+    ? <PhotoWorkspace key={`photo-${projectForRoute.id}`} />
     : photoView
-      ? <PhotoWorkspace key="image-photo" />
-      : <CreateWorkspace key="image" preferredPersonLook={preferredPersonLook} />
+      ? <PhotoWorkspace key={`image-photo-${projectForRoute.id}`} />
+      : <CreateWorkspace key={`create-${projectForRoute.id}`} preferredPersonLook={preferredPersonLook} />
 
   return (
     <AppFrame backTo={backTo} backLabel={backLabel} titleContent={titleContent}>
