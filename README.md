@@ -10,7 +10,7 @@ The desktop app has no account. A license key is required. Settings, Privacy exp
 
 ### Edit a photo
 
-The Image Editor has 32 Quick Looks in six groups, 24 bundled people, and a local adjust panel for crop, rotate, flip, brightness, contrast, saturation, warmth, sharpen, and vignette. A person is optional on any change: pick one to keep the same face and body, or describe the change without one. Adjustments make a new version and stay on your computer.
+The Image Editor has 32 Quick Looks in six groups, 24 bundled people, and a local adjust panel for crop, rotate, flip, brightness, contrast, saturation, warmth, sharpen, and vignette. A person is optional on any change: pick one to keep the same face and body, or describe the change without one. The version panel keeps each version's description, details, export format, and actions together. Adjustments make a new version and stay on your computer.
 
 Versions branch instead of overwrite. You can compare them, move through the filmstrip, export the one you want, or start from a file, a product, or a library image and add another source later.
 

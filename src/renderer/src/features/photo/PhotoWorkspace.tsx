@@ -625,9 +625,16 @@ export function PhotoWorkspace(): React.JSX.Element {
     <VersionDetails
       project={project}
       selected={selected}
+      parentId={parent?.id ?? null}
       parentLabel={parentLabel}
+      busy={isRunning || applyBusy}
       onNewVersion={startNewVersion}
       onFormatChange={(format) => { void useWorkspaceStore.getState().updateProject({ format }).catch(() => toast.error('The format could not be saved.')) }}
+      onSelectVersion={selectImage}
+      onOpenSet={selected?.setId ? () => navigate(`/sets/${selected.setId}`) : undefined}
+      onExport={selected ? () => setExportOpen(true) : undefined}
+      onCopy={selected ? () => void copySelected(selected) : undefined}
+      onDelete={selected && !selected.isOriginal ? () => void deleteSelected(selected) : undefined}
       onSaveProduct={selected ? () => setSaveProductImageId(selected.id) : undefined}
       onSavePerson={selected ? () => setSavePersonImageId(selected.id) : undefined}
       onSaveToSet={selected ? () => openSetPicker(selected) : undefined}

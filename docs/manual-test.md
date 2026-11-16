@@ -34,6 +34,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 - Change Photo is marked AI; Adjust Photo is marked Free.
 - Choose a Quick Look or write a change. The button shows the price before the run; the first paid run shows the first-run confirmation and then disappears on later runs.
 - Person is optional on any change: the same picker as the generator shows portraits in a menu, the selected avatar opens a larger preview, a chosen person is sent with the change, and the X clears it again.
+- Version panel: the selected version shows its status, description, details, and export format; Save as Product, Save as Person, Add to Set, Export Version, and Copy Image act on it; Delete Version appears only for versions other than the original, and New Version stays pinned at the bottom.
 - Hold Space for the earlier version; compare with the slider, mouse divider, and keyboard.
 - Adjust Photo: crop, rotate, flip, brightness, contrast, saturation, warmth, sharpen, vignette. Apply Adjustment is free and creates a version.
 - Batch color applies only color controls and creates one version per ready image, capped at 50.
