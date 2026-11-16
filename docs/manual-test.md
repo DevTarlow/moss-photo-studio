@@ -32,6 +32,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 - Start from a saved product, a library image, or a dropped file. The original is the first version.
 - Choose a tile or write a change. The button shows the price before the run; the first paid run shows the first-run confirmation and then disappears on later runs.
+- A model look shows the same person picker as the generator: portraits in a menu, the selected avatar opens a larger preview, and the person stays with the change.
 - Hold Space for the earlier version; compare with the slider, mouse divider, and keyboard.
 - Adjust Photo: crop, rotate, flip, brightness, contrast, saturation, warmth, sharpen, vignette. Apply Adjustment is free and creates a version.
 - Batch color applies only color controls and creates one version per ready image, capped at 50.

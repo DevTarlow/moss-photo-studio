@@ -60,6 +60,18 @@ test('a generated image becomes a reusable product across the editor and generat
     await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 20_000 })
     await expect(page.getByRole('button', { name: 'Save as Person' })).toBeVisible()
 
+    // The editor's person picker matches the generator: portraits in a menu and
+    // a larger preview from the selected avatar.
+    await page.getByRole('button', { name: /^Held\./ }).click()
+    await expect(page.getByRole('button', { name: 'Person: Maya' })).toBeVisible()
+    await page.getByRole('button', { name: 'Person: Maya' }).click()
+    await expect(page.getByRole('menuitem').filter({ hasText: 'Maya' })).toBeVisible()
+    await page.keyboard.press('Escape')
+    await page.getByRole('button', { name: 'See Maya larger' }).click()
+    const personPreview = page.getByRole('dialog', { name: 'Maya' })
+    await expect(personPreview).toBeVisible()
+    await personPreview.getByRole('button', { name: 'Close' }).last().click()
+
     await page.getByRole('link', { name: 'Products', exact: true }).click()
     await page.getByRole('button', { name: 'Open Ceramic Mug' }).click()
     await page.getByRole('button', { name: 'Make an Image with This Product' }).click()

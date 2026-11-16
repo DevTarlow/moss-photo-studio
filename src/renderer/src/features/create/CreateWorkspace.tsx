@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { DropdownMenu, Popover } from 'radix-ui'
+import { Popover } from 'radix-ui'
 import { Banner, Icon, MoreMenu } from '@astryxdesign/core'
-import { Check, ChevronDown, Download, Image as ImageIcon, Loader2, Mountain, Pencil, Sparkles, UserRound, X } from 'lucide-react'
+import { ChevronDown, Download, Image as ImageIcon, Loader2, Mountain, Pencil, Sparkles, X } from 'lucide-react'
 import type { Format, Image, JobState, Project, Shape } from '@shared/types'
 import { MAX_PROMPT } from '@shared/constants'
 import { isBundledProduct } from '@shared/products'
@@ -19,6 +19,7 @@ import { SourcePickerDialog } from '../../components/sources/SourcePickerDialog'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { SaveProductDialog } from '../../components/products/SaveProductDialog'
 import { SavePersonDialog } from '../../components/people/SavePersonDialog'
+import { PersonPicker } from '../../components/people/PersonPicker'
 import { useJobsStore } from '../../store/jobs'
 import { useIsWideWorkspace, useViewportTier } from '../../lib/viewport'
 import { usePanelWidth, WorkspaceResizeHandle } from '../../components/ui/WorkspaceResizeHandle'
@@ -29,7 +30,6 @@ import { Sheet } from '../../components/ui/Sheet'
 import { Progress } from '../../components/ui/Progress'
 import { Switch } from '../../components/ui/Switch'
 import { FirstRunConfirm } from '../../components/ui/FirstRunConfirm'
-import { Dialog } from '../../components/ui/Dialog'
 import { BudgetWarning } from '../../components/ui/BudgetWarning'
 import { TextareaCounter } from '../../components/ui/TextareaCounter'
 import { Lightbox } from '../../components/ui/Lightbox'
@@ -107,7 +107,6 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   }, [preferredPersonLook, project.id])
   const [saveProductImage, setSaveProductImage] = useState<Image | null>(null)
   const [savePersonImage, setSavePersonImage] = useState<Image | null>(null)
-  const [personPreviewOpen, setPersonPreviewOpen] = useState(false)
   const [createPersonMode, setCreatePersonMode] = useState(false)
   const [createProductMode, setCreateProductMode] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
@@ -652,61 +651,12 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
           <p className="hint">Add a person on the People page to use one here.</p>
         ) : (
           <>
-            <div className="flex items-center gap-2">
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <button
-                    type="button"
-                    className="field field-trigger min-w-0 flex-1"
-                    aria-label={selectedPerson ? `Person: ${selectedPerson.name}` : 'Choose a Person'}
-                  >
-                    <span className="truncate">
-                      {selectedPerson
-                        ? `${selectedPerson.name}${selectedPerson.ageBand ? ` · ${selectedPerson.ageBand}` : ''}${selectedLook ? ` · ${selectedLook.label}` : ''}`
-                        : 'Choose a Person'}
-                    </span>
-                    <Icon icon={ChevronDown} size="xsm" className="shrink-0" />
-                  </button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content className="menu-content min-w-[240px]" sideOffset={4}>
-                    {people.map((person) => (
-                      <DropdownMenu.Item
-                        key={person.id}
-                        className="menu-item"
-                        onSelect={() => { setPersonId(person.id); setPersonLook(null) }}
-                      >
-                        <img src={person.portraitUrl} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
-                        <span className="min-w-0 flex-1 truncate">{person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}</span>
-                        {person.id === selectedPerson?.id && <Icon icon={Check} size="sm" className="ml-auto shrink-0" />}
-                      </DropdownMenu.Item>
-                    ))}
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
-              {selectedPerson ? (
-                <>
-                  <button
-                    type="button"
-                    className="shrink-0 cursor-pointer rounded-full border-0 bg-transparent p-0 hover:opacity-80"
-                    aria-label={`See ${selectedPerson.name} larger`}
-                    onClick={() => setPersonPreviewOpen(true)}
-                  >
-                    <img
-                      src={selectedLook?.url ?? selectedPerson.portraitUrl}
-                      alt=""
-                      className="h-8 w-8 rounded-full object-cover"
-                      onError={(event) => { event.currentTarget.style.visibility = 'hidden' }}
-                    />
-                  </button>
-                  <button type="button" className="icon-btn" aria-label="Remove person" onClick={() => { setPersonId(null); setPersonLook(null) }}><Icon icon={X} size="sm" /></button>
-                </>
-              ) : (
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border" style={{ borderColor: 'var(--border)', color: 'var(--text-faint)' }} aria-hidden>
-                  <Icon icon={UserRound} size="sm" />
-                </span>
-              )}
-            </div>
+            <PersonPicker
+              people={people}
+              personId={personId}
+              personLook={personLook}
+              onPerson={(id, look) => { setPersonId(id); setPersonLook(look) }}
+            />
             {selectedPerson ? (
               <p className="hint mt-1">Sent with the request so the person stays the same.</p>
             ) : (
@@ -1048,22 +998,6 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         imageId={saveProductImage?.id ?? null}
         defaultName={project.name}
       />
-      {selectedPerson && (
-        <Dialog
-          open={personPreviewOpen}
-          onOpenChange={setPersonPreviewOpen}
-          title={selectedPerson.name}
-          description={selectedPerson.ageBand ?? undefined}
-          width={460}
-          footer={<Button variant="secondary" onClick={() => setPersonPreviewOpen(false)}>Close</Button>}
-        >
-          <img
-            src={selectedLook?.url ?? selectedPerson.portraitUrl}
-            alt={`${selectedPerson.name}${selectedLook ? ` ${selectedLook.label}` : ''} portrait`}
-            className="mx-auto max-h-[60vh] w-full rounded-[12px] object-contain"
-          />
-        </Dialog>
-      )}
       <SavePersonDialog
         open={Boolean(savePersonImage)}
         onOpenChange={(open) => { if (!open) setSavePersonImage(null) }}

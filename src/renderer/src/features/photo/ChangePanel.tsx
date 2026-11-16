@@ -9,6 +9,7 @@ import { isBundledPerson } from '@shared/people'
 import { PROMPT_MAX } from '@shared/prompts/guards'
 import type { ChangeKind } from '@shared/prompts/guards'
 import { Button } from '../../components/ui/Button'
+import { PersonPicker } from '../../components/people/PersonPicker'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { TextareaCounter } from '../../components/ui/TextareaCounter'
 
@@ -163,24 +164,17 @@ export function ChangePanel({
 
       {kind === 'model' && (
         <div className="mt-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
-          <label className="field-label" htmlFor="editor-person">Person</label>
+          <p className="field-label">Person</p>
           {people.length === 0 ? (
             <p className="hint">Add a person to use these looks.</p>
           ) : (
-            <div className="flex items-center gap-2">
-              {modelPerson?.portraitUrl && <img src={modelPerson.portraitUrl} alt="" className="h-8 w-8 rounded-full object-cover" />}
-              <select
-                id="editor-person"
-                className="field"
-                value={personId}
-                disabled={disabled}
-                onChange={(event) => onPerson(event.target.value)}
-              >
-                {people.map((person) => (
-                  <option key={person.id} value={person.id}>{person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}</option>
-                ))}
-              </select>
-            </div>
+            <PersonPicker
+              people={people}
+              personId={personId}
+              allowRemove={false}
+              disabled={disabled}
+              onPerson={(id) => { if (id) onPerson(id) }}
+            />
           )}
         </div>
       )}
