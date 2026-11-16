@@ -217,6 +217,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await expect(page.getByText('Saved as a Product')).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Continue', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Make it your own' })).toBeVisible()
+    await expect(page.getByText('Add a logo to preview the corner badge.')).toBeVisible()
     await screenshot('onboarding-customize')
     await assertNoSeriousA11y('onboarding-customize')
     await page.getByRole('button', { name: 'Continue', exact: true }).click()

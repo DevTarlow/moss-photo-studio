@@ -502,7 +502,14 @@ export function Onboarding(): React.JSX.Element {
                       <Stack gap={3}>
                         <Card padding={4}>
                           <Stack gap={3}>
-                            {brandDraft ? <BrandPreview brand={brandDraft} /> : <Skeleton className="h-48" />}
+                            <Stack gap={2}>
+                              {brandDraft ? <BrandPreview brand={brandDraft} /> : <Skeleton className="h-48" />}
+                              {brandDraft && !brandDraft.logoUrl && (
+                                <Text type="supporting" color="secondary" display="block">
+                                  Add a logo to preview the corner badge.
+                                </Text>
+                              )}
+                            </Stack>
                             <Stack direction="horizontal" gap={2} align="center" wrap="wrap">
                               <Badge label="Optional" variant="neutral" />
                               <Text type="supporting" color="secondary">Your logo, colors, and badge appear on images you make.</Text>
