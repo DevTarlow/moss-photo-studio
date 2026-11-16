@@ -30,7 +30,7 @@ import { MuseKeyGuideDialog } from '../components/ui/MuseKeyGuideDialog'
 
 const STEPS = [
   { label: 'Welcome', optional: false },
-  { label: 'Meta Key', optional: true },
+  { label: 'Meta Key', optional: false },
   { label: 'Product', optional: true },
   { label: 'Personalize', optional: true },
   { label: 'Ready', optional: false }
@@ -387,12 +387,12 @@ export function Onboarding(): React.JSX.Element {
                   {step === 1 && (
                     <>
                       <Stack gap={2}>
-                        <Text type="label" color="secondary">Step 2 of 5 · optional</Text>
+                        <Text type="label" color="secondary">Step 2 of 5</Text>
                         <Heading ref={headingRef} tabIndex={-1} level={1} className="step-heading">
                           Connect Meta
                         </Heading>
                         <Text type="body" color="secondary">
-                          Moss makes images with your Meta account. Meta charges you {usd(1)} for each image that comes back.
+                          Moss Photo Studio makes images with your API key. Meta charges you {usd(1)} for each image that comes back.
                         </Text>
                       </Stack>
                       <Banner
@@ -574,7 +574,7 @@ export function Onboarding(): React.JSX.Element {
                                 : 'Open a photo you already have, or describe a new image to make.'}
                             </Text>
                           </Stack>
-                          {!hasKey && <Badge label="Meta key optional" variant="neutral" />}
+                          {!hasKey && <Badge label="Meta key needed" variant="neutral" />}
                         </Stack>
                       </Card>
                     </>
