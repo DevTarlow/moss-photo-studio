@@ -4,7 +4,7 @@ Moss Photo Studio is a desktop app for people who sell physical things. Edit a p
 
 I built it for the part of selling that eats an afternoon: getting a bottle, a candle, or a pair of earrings to look right. The app handles the local edits, the image generation, and the reusable product references. You still decide what the product is and what the picture should say.
 
-The desktop app has no account. A license key is required. The separate license portal handles the buyer account, machine resets, and downloads.
+The desktop app has no account. A license key is required. Settings, Privacy explains exactly what stays on this computer and what goes to Meta or the license center. The separate license portal handles the buyer account, machine resets, and downloads.
 
 ## What it does
 
@@ -32,13 +32,13 @@ Sets also appear in **All work** under their own section. Choose the **Sets** fi
 
 ### Keep products handy
 
-Save a product photo as a Product, or start from one of the 20 clean, unbranded starter products. A Product opens in the Image Editor or the Image Generator as a reusable reference, and can be added to a Set. Categories, linked work, archive, and delete keep the collection tidy.
+Save a product photo as a Product, or start from one of the 20 clean, unbranded starter products. You can also add and name a product from the product picker while starting new work. A Product opens in the Image Editor or the Image Generator as a reusable reference, and can be added to a Set. Categories, linked work, archive, and delete keep the collection tidy.
 
 ### Keep the costs visible
 
 A returned image costs $0.01. The price is on the button before every run. A refusal costs nothing, and the app does not add a fee for any generations.
 
-The Usage page tracks returned images, shows the current month, supports a monthly limit, and exports to a spreadsheet. Adjust Photo and the local photo check are free.
+The Usage page tracks returned images, shows the current month, supports a monthly limit, and exports to a spreadsheet. Expand any row for request count, timing, and billing details. Adjust Photo and the local photo check are free.
 
 ## Get a license
 

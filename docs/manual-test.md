@@ -40,7 +40,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 ## Image Generator
 
 - Create a draft, describe the image, choose 1–4 images, shape, and format. The price is on the button.
-- Add a product reference, a person, and a scene reference. References make one image at a time. The scene supplies setting/light/props without its subject.
+- Add a product photo, a person, and a scene. A product can be added and named from the picker mid-flow. The scene supplies setting/light/props without its subject.
 - A generated image can be saved as a Product or a Person. Save Product appears on the Products page after a refresh.
 - Edit opens the result in the Image Editor. Download saves the image.
 - A policy refusal, a timeout, a short count, and a 429 each show the approved copy and do not overbill in Usage.
@@ -79,7 +79,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 ## Usage
 
-- The month card counts returned images at one cent each. There is no text-cost line.
+- The month card counts returned images at one cent each. There is no text-cost line. Every Image hides Duration by default; expanding a row shows Requested, Returned, Duration, and billing/error detail.
 - CSV export opens with the documented columns; cost rows sum to the displayed month spend.
 - Budget saves a monthly limit, shows the warning when a run would exceed it, and can be cleared.
 - Old historical `set`, `listing`, `analyze`, and `cutout` rows remain in Every Image with their recorded cost.
@@ -87,6 +87,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 ## Settings
 
 - Meta connection: Test Connection, Replace, Test and Save, and Remove with confirmation. The full key never appears after saving.
+- Privacy: the trust cards distinguish local data, Meta requests, and license calls; Technical details holds host names and Install ID. About: Technical details holds Electron/Chromium/Node versions.
 - Logo & Colors: colors, From a Photo, logo, badge corner/size/opacity, default look, preview.
 - **There is no Business section.** `/settings/business` redirects to the Meta connection page.
 - Storage: backup, restore, diagnostics, library path, and the backup status.
