@@ -29,7 +29,6 @@ function tilePending(template: TemplateType): PendingTile {
 export function ChangePanel({
   text,
   textSource,
-  kind,
   templateId,
   personId,
   people,
@@ -45,16 +44,15 @@ export function ChangePanel({
 }: {
   text: string
   textSource: TextSource
-  kind: ChangeKind
   templateId: string | null
-  personId: string
+  personId: string | null
   people: Person[]
   sceneRef: SourceChoice | null
   disabled: boolean
   onText: (text: string, source: TextSource) => void
   onKind: (kind: ChangeKind) => void
   onTemplate: (id: string | null) => void
-  onPerson: (id: string) => void
+  onPerson: (id: string | null) => void
   onChooseScene: () => void
   onClearScene: () => void
   onClear: () => void
@@ -162,22 +160,25 @@ export function ChangePanel({
         <p className="hint mt-1">Borrows the setting and light, never the subject.</p>
       </div>
 
-      {kind === 'model' && (
-        <div className="mt-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
-          <p className="field-label">Person</p>
-          {people.length === 0 ? (
-            <p className="hint">Add a person to use these looks.</p>
-          ) : (
+      <div className="mt-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
+        <p className="field-label">Person <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+        {people.length === 0 ? (
+          <p className="hint">Add a person to use one in this change.</p>
+        ) : (
+          <>
             <PersonPicker
               people={people}
               personId={personId}
               allowRemove={false}
               disabled={disabled}
-              onPerson={(id) => { if (id) onPerson(id) }}
+              onPerson={onPerson}
             />
-          )}
-        </div>
-      )}
+            <p className="hint mt-1">
+              {personId ? 'Sent with the change so the person stays the same.' : 'Pick a portrait to keep the same person in the change.'}
+            </p>
+          </>
+        )}
+      </div>
 
       <section className="mt-5" aria-labelledby="quick-looks-label">
         <p id="quick-looks-label" className="section-label">Quick Looks</p>

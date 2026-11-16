@@ -81,7 +81,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const [textSource, setTextSource] = useState<TextSource>('user')
   const [kind, setKind] = useState<ChangeKind>('')
   const [templateId, setTemplateId] = useState<string | null>(null)
-  const [personId, setPersonId] = useState('maya')
+  const [personId, setPersonId] = useState<string | null>(null)
   const [sceneRef, setSceneRef] = useState<SourceChoice | null>(null)
   const [scenePickerOpen, setScenePickerOpen] = useState(false)
   const [batchBusy, setBatchBusy] = useState(false)
@@ -119,7 +119,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const compareRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!people.some((person) => person.id === personId) && people[0]) setPersonId(people[0].id)
+    if (personId && !people.some((person) => person.id === personId)) setPersonId(null)
   }, [people, personId])
 
   const runningForProject = Object.values(jobs).find(
@@ -412,6 +412,8 @@ export function PhotoWorkspace(): React.JSX.Element {
     await executeChange()
   }
 
+  const selectedPerson = people.find((person) => person.id === personId) ?? null
+
   const executeChange = async (): Promise<void> => {
     if (!selected) return
     setError(null)
@@ -420,9 +422,9 @@ export function PhotoWorkspace(): React.JSX.Element {
         projectId: project.id,
         imageId: selected.id,
         change: text,
-        kind,
+        kind: selectedPerson ? 'model' : kind,
         templateId: templateId ?? undefined,
-        personId: kind === 'model' ? personId : undefined,
+        personId: selectedPerson ? selectedPerson.id : undefined,
         sceneImageId: sceneRef?.kind === 'image' ? sceneRef.imageId : undefined,
         palette: brand ? usedBrandColors(brand.colors) : undefined,
         isGiftShot: templateId === 'gift-ready'
@@ -569,7 +571,6 @@ export function PhotoWorkspace(): React.JSX.Element {
           <ChangePanel
             text={text}
             textSource={textSource}
-            kind={kind}
             templateId={templateId}
             personId={personId}
             people={people}
