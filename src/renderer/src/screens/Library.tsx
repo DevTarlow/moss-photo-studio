@@ -27,6 +27,7 @@ import { ProjectCard } from '../components/library/ProjectCard'
 import { ProductCard } from '../components/products/ProductCard'
 import { SetCard } from '../components/sets/SetCard'
 import { NewProjectDialog } from '../components/library/NewProjectDialog'
+import { AddProductDialog } from '../components/products/AddProductDialog'
 import { SetupBanner } from '../components/ui/SetupBanner'
 import { useConfirm } from '../components/ui/ConfirmProvider'
 import { unwrap, messageOf } from '../lib/ipc'
@@ -79,6 +80,7 @@ export function Library(): React.JSX.Element {
   const products = useAppStore((state) => state.products)
   const refreshProducts = useAppStore((state) => state.refreshProducts)
   const [newType, setNewType] = useState<'photo' | null>(null)
+  const [addProductOpen, setAddProductOpen] = useState(false)
   const [newPersonId, setNewPersonId] = useState<string | null>(null)
   const [newPersonLook, setNewPersonLook] = useState<string | null>(null)
   const [renameProject, setRenameProject] = useState<Project | null>(null)
@@ -99,6 +101,7 @@ export function Library(): React.JSX.Element {
   const [selectMode, setSelectMode] = useState(false)
   const [allTotal, setAllTotal] = useState(0)
   const [deleting, setDeleting] = useState(false)
+  const [showAllNotices, setShowAllNotices] = useState(false)
 
   useEffect(() => {
     void store.load()
@@ -409,7 +412,59 @@ export function Library(): React.JSX.Element {
   )
   const showSetup = Boolean(settings && !settings.onboardingDone)
   const showNoKey = Boolean(settings?.onboardingDone && secrets?.hasKey === false && license?.status !== 'expired')
-  const showBanners = license?.status === 'grace' || license?.status === 'expired' || showSetup || showNoKey
+  const notices: React.ReactNode[] = []
+  if (license?.status === 'expired') {
+    notices.push(
+      <Banner
+        key="expired"
+        status="error"
+        title="Reactivate to make images"
+        description="Your library, edits, and exports still work."
+        endContent={<Button label="Open License" variant="secondary" size="sm" onClick={() => navigate('/settings/license')} />}
+        collapsible={false}
+      />
+    )
+  }
+  if (showNoKey) {
+    notices.push(
+      <Banner
+        key="no-key"
+        status="warning"
+        title="Add your Meta key"
+        description="Making images needs a Meta key. Your library and local edits still work."
+        endContent={<Button label="Open Settings" variant="secondary" size="sm" onClick={() => navigate('/settings/studio')} />}
+        collapsible={false}
+      />
+    )
+  }
+  if (showSetup) notices.push(<SetupBanner key="setup" />)
+  if (license?.status === 'grace') {
+    notices.push(
+      <Banner
+        key="grace"
+        status="warning"
+        title="Working offline"
+        description="License checks resume when you're connected."
+        endContent={
+          <Button
+            label="Check Now"
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              void unwrap(window.moss.license.validate())
+                .then((state) => {
+                  applyLicense(state)
+                  if (state.status === 'licensed') toast.status('License checked.')
+                })
+                .catch(() => toast.error('Could not reach the license server. Try again.'))
+            }}
+          />
+        }
+        collapsible={false}
+      />
+    )
+  }
+  const shownNotices = showAllNotices ? notices : notices.slice(0, 1)
 
   useEffect(() => {
     if (productPage > productPages) setProductPage(productPages)
@@ -517,49 +572,18 @@ export function Library(): React.JSX.Element {
             </div>
           </div>
 
-          {showBanners && (
+          {notices.length > 0 && (
             <div className="mt-4 flex flex-col gap-2">
-              {license?.status === 'grace' && (
-                <Banner
-                  status="warning"
-                  title="Working offline"
-                  description="License checks resume when you're connected."
-                  endContent={
-                    <Button
-                      label="Check Now"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        void unwrap(window.moss.license.validate())
-                          .then((state) => {
-                            applyLicense(state)
-                            if (state.status === 'licensed') toast.status('License checked.')
-                          })
-                          .catch(() => toast.error('Could not reach the license server. Try again.'))
-                      }}
-                    />
-                  }
-                  collapsible={false}
-                />
-              )}
-              {license?.status === 'expired' && (
-                <Banner
-                  status="error"
-                  title="Reactivate to make images"
-                  description="Your library, edits, and exports still work."
-                  endContent={<Button label="Open License" variant="secondary" size="sm" onClick={() => navigate('/settings/license')} />}
-                  collapsible={false}
-                />
-              )}
-              {showSetup && <SetupBanner />}
-              {showNoKey && (
-                <Banner
-                  status="warning"
-                  title="Add your Meta key"
-                  description="Making images needs a Meta key. Your library and local edits still work."
-                  endContent={<Button label="Open Settings" variant="secondary" size="sm" onClick={() => navigate('/settings/studio')} />}
-                  collapsible={false}
-                />
+              {shownNotices}
+              {notices.length > 1 && (
+                <button
+                  type="button"
+                  className="self-start text-[11px] underline"
+                  style={{ color: 'var(--text-muted)' }}
+                  onClick={() => setShowAllNotices((value) => !value)}
+                >
+                  {showAllNotices ? 'Show Less' : `Show ${notices.length - 1} More`}
+                </button>
               )}
             </div>
           )}
@@ -804,8 +828,9 @@ export function Library(): React.JSX.Element {
               ) : (
                 <div>
                   <Text type="supporting" color="secondary" className="text-center">Start with a photo, an idea, or a Set.</Text>
-                  <Grid columns={{ minWidth: 220, max: 3 }} gap={4} className="mx-auto mt-4 max-w-[900px]">
+                  <Grid columns={{ minWidth: 240, max: 2 }} gap={4} className="mx-auto mt-4 max-w-[640px]">
                     {[
+                      { type: 'product' as const, icon: Package, title: 'Add a Product Photo', line: 'Save a reusable product to use in new images.' },
                       { type: 'photo' as const, icon: ImageIcon, title: 'Image Editor', line: 'Change a photo you already have.' },
                       { type: 'image' as const, icon: Sparkles, title: 'Image Generator', line: 'Describe the picture and make it.' },
                       { type: 'sets' as const, icon: Layers, title: 'Sets', line: 'Keep related images together.' }
@@ -814,7 +839,13 @@ export function Library(): React.JSX.Element {
                         <ClickableCard
                           key={card.type}
                           label={card.title}
-                          onClick={card.type === 'sets' ? () => navigate('/sets') : () => openNew(card.type)}
+                          onClick={
+                            card.type === 'sets'
+                              ? () => navigate('/sets')
+                              : card.type === 'product'
+                                ? () => setAddProductOpen(true)
+                                : () => openNew(card.type)
+                          }
                           padding={5}
                           elevation="low"
                         >
@@ -863,6 +894,8 @@ export function Library(): React.JSX.Element {
           </div>
         )}
       </div>
+
+      <AddProductDialog open={addProductOpen} onOpenChange={setAddProductOpen} />
 
       <NewProjectDialog
         open={Boolean(newType)}
