@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { DropdownMenu } from 'radix-ui'
 import {
@@ -10,6 +10,7 @@ import {
   Link2,
   Loader2,
   Package,
+  Pencil,
   Sparkles,
   Trash2
 } from 'lucide-react'
@@ -19,7 +20,6 @@ import { Button } from '../components/ui/Button'
 import { Dialog } from '../components/ui/Dialog'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
-import { Field } from '../components/ui/Field'
 import { Skeleton } from '../components/ui/Skeleton'
 import { useConfirm } from '../components/ui/ConfirmProvider'
 import { useAppStore } from '../store/app'
@@ -78,8 +78,11 @@ export function ProductDetail(): React.JSX.Element {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [renaming, setRenaming] = useState(false)
+  const [editingTitle, setEditingTitle] = useState(false)
   const [renameValue, setRenameValue] = useState('')
+  const titleButtonRef = useRef<HTMLButtonElement>(null)
+  const renameBusy = useRef(false)
+  const renameCancelled = useRef(false)
   const [linkOpen, setLinkOpen] = useState(false)
   const [unfiled, setUnfiled] = useState<Project[]>([])
 
@@ -115,16 +118,44 @@ export function ProductDetail(): React.JSX.Element {
     }
   }
 
-  const rename = async (): Promise<void> => {
-    if (!detail || !renameValue.trim()) return
+  const startRename = (): void => {
+    if (!detail) return
+    renameCancelled.current = false
+    setRenameValue(detail.product.name)
+    setEditingTitle(true)
+  }
+
+  const cancelRename = (): void => {
+    renameCancelled.current = true
+    setEditingTitle(false)
+    setRenameValue(detail?.product.name ?? '')
+    window.requestAnimationFrame(() => {
+      titleButtonRef.current?.focus()
+      renameCancelled.current = false
+    })
+  }
+
+  const commitRename = async (refocus = false): Promise<void> => {
+    if (!detail || renameBusy.current || renameCancelled.current) return
+    const current = detail.product.name
+    const value = renameValue.trim()
+    setEditingTitle(false)
+    if (refocus) window.requestAnimationFrame(() => titleButtonRef.current?.focus())
+    if (!value || value === current) {
+      setRenameValue(current)
+      return
+    }
+    renameBusy.current = true
     try {
-      const updated = await unwrap(window.moss.products.update({ id: detail.product.id, patch: { name: renameValue.trim() } }))
-      setDetail({ ...detail, product: { ...detail.product, name: updated.name } })
-      setRenaming(false)
+      const updated = await unwrap(window.moss.products.update({ id: detail.product.id, patch: { name: value } }))
+      setDetail((previous) => (previous ? { ...previous, product: { ...previous.product, name: updated.name } } : previous))
       await refreshProducts()
       toast.status('Product renamed.')
     } catch (caught) {
+      setRenameValue(current)
       toast.error(messageOf(caught))
+    } finally {
+      renameBusy.current = false
     }
   }
 
@@ -244,7 +275,34 @@ export function ProductDetail(): React.JSX.Element {
             <div className="min-w-0">
               <div className="flex flex-wrap items-start gap-2">
                 <div className="min-w-0 flex-1">
-                  <Heading level={1}>{product.name}</Heading>
+                  <Heading level={1}>
+                    {editingTitle ? (
+                      <input
+                        className="title-rename-input"
+                        aria-label="Product name"
+                        value={renameValue}
+                        maxLength={80}
+                        autoFocus
+                        onChange={(event) => setRenameValue(event.target.value)}
+                        onFocus={(event) => event.currentTarget.select()}
+                        onBlur={() => void commitRename()}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault()
+                            void commitRename(true)
+                          } else if (event.key === 'Escape') {
+                            event.preventDefault()
+                            cancelRename()
+                          }
+                        }}
+                      />
+                    ) : (
+                      <button ref={titleButtonRef} type="button" className="title-rename" title="Rename product" onClick={startRename}>
+                        <span className="min-w-0 truncate">{product.name}</span>
+                        <Icon icon={Pencil} size="sm" className="title-rename-icon" />
+                      </button>
+                    )}
+                  </Heading>
                   <Text type="supporting" color="secondary" className="mt-1 block">
                     Saved {formatDateTime(product.createdAt)}
                   </Text>
@@ -260,7 +318,7 @@ export function ProductDetail(): React.JSX.Element {
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Portal>
                     <DropdownMenu.Content className="menu-content" align="end" sideOffset={4}>
-                      <DropdownMenu.Item className="menu-item" onSelect={() => setRenaming(true)}>Rename</DropdownMenu.Item>
+                      <DropdownMenu.Item className="menu-item" onSelect={startRename}>Rename</DropdownMenu.Item>
                       <DropdownMenu.Item className="menu-item" onSelect={() => void archive()}><Icon icon={Archive} size="sm" /> Archive</DropdownMenu.Item>
                       <DropdownMenu.Item className="menu-item" data-danger="true" onSelect={() => void remove()}><Icon icon={Trash2} size="sm" /> Delete</DropdownMenu.Item>
                     </DropdownMenu.Content>
@@ -314,20 +372,6 @@ export function ProductDetail(): React.JSX.Element {
           </section>
         </div>
       </div>
-
-      <Dialog
-        open={renaming}
-        onOpenChange={setRenaming}
-        title="Rename product"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setRenaming(false)}>Cancel</Button>
-            <Button variant="primary" onClick={() => void rename()}>Save Name</Button>
-          </>
-        }
-      >
-        <Field label="Product name" value={renameValue} maxLength={80} onChange={(event) => setRenameValue(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void rename() }} autoFocus />
-      </Dialog>
 
       <Dialog
         open={linkOpen}

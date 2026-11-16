@@ -80,6 +80,23 @@ test('a generated image becomes a reusable product across the editor and generat
 
     await page.getByRole('link', { name: 'Products', exact: true }).click()
     await page.getByRole('button', { name: 'Open Ceramic Mug' }).click()
+
+    // Clicking the title renames in place; Enter saves and Escape leaves the name alone.
+    await page.getByRole('button', { name: 'Ceramic Mug', exact: true }).click()
+    const productName = page.getByRole('textbox', { name: 'Product name' })
+    await expect(productName).toBeFocused()
+    await productName.fill('Studio Mug')
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('heading', { name: 'Studio Mug', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Studio Mug', exact: true }).click()
+    await productName.fill('Discarded')
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('heading', { name: 'Studio Mug', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Studio Mug', exact: true }).click()
+    await productName.fill('Ceramic Mug')
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('heading', { name: 'Ceramic Mug', exact: true })).toBeVisible()
+
     await page.getByRole('button', { name: 'Make an Image with This Product' }).click()
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
 

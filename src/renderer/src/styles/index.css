@@ -112,6 +112,13 @@ input, textarea, select { accent-color: var(--accent); }
 .meta { font-size: 12px; color: var(--text-muted); }
 .meta-faint { font-size: 12px; color: var(--text-faint); }
 .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint); }
+
+/* The product title is the rename affordance: click it to edit in place. */
+.title-rename { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; margin: -2px -6px; padding: 2px 6px; border: 0; border-radius: 8px; background: transparent; color: inherit; text-align: left; }
+.title-rename:hover { background: var(--surface-2); }
+.title-rename-icon { flex: none; color: var(--text-faint); opacity: 0.45; transition: opacity 120ms var(--ease-moss); }
+.title-rename:hover .title-rename-icon, .title-rename:focus-visible .title-rename-icon { color: var(--text-muted); opacity: 1; }
+.title-rename-input { display: block; width: min(100%, 520px); margin: -2px -7px; padding: 1px 6px; border: 1px solid var(--accent); border-radius: 8px; background: var(--surface); color: var(--text); }
 .version-description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
 .wordmark { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; font-weight: 800; font-size: 13px; letter-spacing: -0.01em; }
 .display-xl { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; font-weight: 700; font-size: 28px; line-height: 1.15; letter-spacing: -0.02em; }
