@@ -34,16 +34,17 @@ export function Workspace(): React.JSX.Element {
 
   const titleContent = project ? <ProjectNameEditor /> : undefined
   const backTo = project?.productId ? `/product/${project.productId}` : '/library'
+  const backLabel = project?.productId ? 'Back to Product' : 'Back to All Work'
   if (!id) {
     return (
-      <AppFrame backTo="/products">
+      <AppFrame backTo="/products" backLabel="Back to Products">
         <ErrorState message="That project is not here anymore." onRetry={() => navigate('/library')} />
       </AppFrame>
     )
   }
   if (loading && !project) {
     return (
-      <AppFrame backTo="/products">
+      <AppFrame backTo="/products" backLabel="Back to Products">
         <div className="flex h-full gap-4 p-4">
           <Skeleton className="h-full w-[300px]" />
           <Skeleton className="h-full flex-1" />
@@ -54,14 +55,14 @@ export function Workspace(): React.JSX.Element {
   }
   if (error && !project) {
     return (
-      <AppFrame backTo="/products">
+      <AppFrame backTo="/products" backLabel="Back to Products">
         <ErrorState message={error} onRetry={() => void load(id)} />
       </AppFrame>
     )
   }
   if (!project) {
     return (
-      <AppFrame backTo="/products">
+      <AppFrame backTo="/products" backLabel="Back to Products">
         <ErrorState message="Could not open that project. Nothing is lost. Try again." onRetry={() => void load(id)} />
       </AppFrame>
     )
@@ -73,7 +74,7 @@ export function Workspace(): React.JSX.Element {
       : <CreateWorkspace key="image" preferredPersonLook={preferredPersonLook} />
 
   return (
-    <AppFrame backTo={backTo} titleContent={titleContent}>
+    <AppFrame backTo={backTo} backLabel={backLabel} titleContent={titleContent}>
       {content}
     </AppFrame>
   )

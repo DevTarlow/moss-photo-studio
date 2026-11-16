@@ -29,7 +29,7 @@ function titleForPath(pathname: string): string {
   if (pathname.startsWith('/project/')) return 'Project · Moss Photo Studio'
   const section = pathname.split('/')[1] || 'studio'
   const labels: Record<string, string> = {
-    library: 'Library',
+    library: 'All Work',
     products: 'Products',
     people: 'People',
     sets: 'Sets',
@@ -261,6 +261,7 @@ export function RootLayout(): React.JSX.Element {
   const metaKeyOpen = useUiStore((state) => state.metaKeyOpen)
   const setMetaKeyOpen = useUiStore((state) => state.setMetaKeyOpen)
   const jobsRevision = useJobsStore((state) => state.revision)
+  const projectName = useWorkspaceStore((state) => state.project?.name ?? null)
   const navigate = useNavigate()
   const location = useLocation()
   const previousLicense = useRef<string | null>(null)
@@ -273,8 +274,10 @@ export function RootLayout(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
-    document.title = titleForPath(location.pathname)
-  }, [location.pathname])
+    document.title = location.pathname.startsWith('/project/') && projectName
+      ? `${projectName} · Moss Photo Studio`
+      : titleForPath(location.pathname)
+  }, [location.pathname, projectName])
 
   useEffect(() => {
     if (!booted) return

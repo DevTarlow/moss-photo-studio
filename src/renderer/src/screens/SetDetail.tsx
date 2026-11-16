@@ -146,7 +146,7 @@ export function SetDetail(): React.JSX.Element {
   }
 
   return (
-    <AppFrame backTo="/sets" title="Set">
+    <AppFrame backTo="/sets" backLabel="Back to Sets" title="Set">
       <div className="page-scroll">
         <div className="page-pad page-max">
           {loading && !detail ? (

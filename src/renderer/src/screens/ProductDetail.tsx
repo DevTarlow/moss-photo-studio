@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { DropdownMenu } from 'radix-ui'
 import {
   Archive,
-  ArrowLeft,
   ArrowUpRight,
   FolderPlus,
   Image as ImageIcon,
@@ -202,7 +201,7 @@ export function ProductDetail(): React.JSX.Element {
 
   if (loading && !detail) {
     return (
-      <AppFrame backTo="/products">
+      <AppFrame backTo="/products" backLabel="Back to Products">
         <div className="page-scroll">
           <div className="page-pad page-max">
             <Skeleton className="h-8 w-40" />
@@ -215,7 +214,7 @@ export function ProductDetail(): React.JSX.Element {
 
   if (error || !detail) {
     return (
-      <AppFrame backTo="/products">
+      <AppFrame backTo="/products" backLabel="Back to Products">
         <div className="page-scroll">
           <div className="page-pad page-max">
             <ErrorState message={error ?? 'That product is not here anymore.'} onRetry={() => void load()} />
@@ -228,13 +227,9 @@ export function ProductDetail(): React.JSX.Element {
   const { product, projects, counts } = detail
 
   return (
-    <AppFrame backTo="/products">
+    <AppFrame backTo="/products" backLabel="Back to Products">
       <div className="page-scroll">
         <div className="page-pad page-max">
-          <button type="button" className="inline-flex items-center gap-1.5 text-[12px] font-medium" style={{ color: 'var(--text-muted)' }} onClick={() => navigate('/products')}>
-            <Icon icon={ArrowLeft} size="sm" /> Products
-          </button>
-
           <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
             <div>
               <div className="overflow-hidden rounded-[14px] border" style={{ borderColor: 'var(--border)', background: 'var(--canvas)' }}>

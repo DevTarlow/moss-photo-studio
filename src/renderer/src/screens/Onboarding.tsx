@@ -30,9 +30,9 @@ import { MuseKeyGuideDialog } from '../components/ui/MuseKeyGuideDialog'
 
 const STEPS = [
   { label: 'Welcome', optional: false },
-  { label: 'Connect Meta', optional: true },
-  { label: 'Add product', optional: true },
-  { label: 'Make it your own', optional: true },
+  { label: 'Meta Key', optional: true },
+  { label: 'Product', optional: true },
+  { label: 'Personalize', optional: true },
   { label: 'Ready', optional: false }
 ] as const
 
@@ -312,7 +312,7 @@ export function Onboarding(): React.JSX.Element {
                   horizontalOptions={{ minimumStepWidth: 170, collapsedVariant: 'withLabel' }}
                 >
                   {STEPS.map((entry, index) => (
-                    <Step key={entry.label} step={index} label={entry.label} isOptional={entry.optional} isDisabled={index > step} />
+                    <Step key={entry.label} step={index} label={entry.label} isDisabled={index > step} />
                   ))}
                 </Stepper>
               </div>

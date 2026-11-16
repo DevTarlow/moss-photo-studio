@@ -146,9 +146,10 @@ export function CommandPalette(): React.JSX.Element {
     ;[
       ['Meta connection', '/settings/studio'],
       ['Logo & Colors', '/settings/brand'],
-      ['Library', '/settings/library'],
+      ['Storage', '/settings/library'],
       ['Appearance', '/settings/appearance'],
       ['License', '/settings/license'],
+      ['Updates', '/settings/updates'],
       ['Privacy', '/settings/privacy'],
       ['About', '/settings/about']
     ].forEach(([label, to]) => {
