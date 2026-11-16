@@ -2,6 +2,7 @@ import { test, expect, _electron as electron } from '@playwright/test'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { assertNoSeriousA11y } from './a11y'
 
 const productPhoto = path.resolve(__dirname, '../../resources/tiles/examples/product.webp')
 
@@ -21,6 +22,8 @@ test('a Set can take a product from its own page and return to it', async () => 
 
     await page.getByRole('button', { name: 'Add Product Photo' }).click()
     const addProduct = page.getByRole('dialog')
+    await expect(addProduct).toBeVisible()
+    await assertNoSeriousA11y(page, 'add-product-dialog')
     await addProduct.locator('input[type=file]').setInputFiles(productPhoto)
     await addProduct.getByLabel('Product name').fill('Test Mug')
     await addProduct.getByRole('button', { name: 'Add Product' }).click()
@@ -36,6 +39,7 @@ test('a Set can take a product from its own page and return to it', async () => 
     await page.getByRole('button', { name: 'Add to Set', exact: true }).first().click()
     const addTo = page.getByRole('dialog')
     await expect(addTo.getByRole('heading', { name: 'Add to Spring picks' })).toBeVisible()
+    await assertNoSeriousA11y(page, 'add-to-set-dialog')
     await addTo.getByRole('button', { name: 'Add Test Mug to Spring picks' }).click()
     await addTo.getByRole('button', { name: 'Done', exact: true }).click()
     await expect(addTo).toHaveCount(0)

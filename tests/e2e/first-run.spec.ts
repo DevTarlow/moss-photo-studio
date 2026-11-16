@@ -2,6 +2,7 @@ import { test, expect, _electron as electron } from '@playwright/test'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { assertNoSeriousA11y } from './a11y'
 
 async function launch(userData: string) {
   const app = await electron.launch({
@@ -46,6 +47,7 @@ test('a missing Meta key offers the connection dialog in the generator', async (
     await page.getByRole('button', { name: 'Connect Meta to Make Images' }).click()
     const dialog = page.getByRole('dialog', { name: 'Connect Meta' })
     await expect(dialog).toBeVisible()
+    await assertNoSeriousA11y(page, 'meta-key-dialog')
     await dialog.getByLabel('Meta key').fill('LLM|e2e-meta-prompt')
     await dialog.getByRole('button', { name: 'Save Meta Key' }).click()
     await expect(page.getByText('Meta key saved. You can make images now.')).toBeVisible({ timeout: 20_000 })
