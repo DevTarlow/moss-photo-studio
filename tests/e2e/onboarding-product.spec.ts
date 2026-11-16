@@ -49,6 +49,9 @@ test('onboarding saves the first photo as a Product without creating a project',
 
     await page.getByRole('button', { name: 'Continue', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Make it your own' })).toBeVisible()
+    await expect(page.getByText('Preview · product')).toBeVisible()
+    await expect(page.getByText('Your product.')).toBeVisible()
+    await expect(page.getByText('Corner badge', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Continue', exact: true }).click()
     await expect(page.getByRole('heading', { name: "You're ready to make photos." })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Finish Setup' }).click()
@@ -87,6 +90,7 @@ test('onboarding lets the seller skip the product step and finish in Products', 
     await page.getByRole('heading', { name: 'Add your first product' }).waitFor({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Skip for now', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Make it your own' })).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByText('A sample product.')).toBeVisible()
     await page.getByRole('button', { name: 'Continue', exact: true }).click()
     await expect(page.getByRole('heading', { name: "You're ready to make photos." })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('No product yet')).toBeVisible()
@@ -96,6 +100,32 @@ test('onboarding lets the seller skip the product step and finish in Products', 
     await expect(page.getByRole('heading', { name: "You're ready to make photos." })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Finish Setup' }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible({ timeout: 20_000 })
+    expect(pageErrors).toEqual([])
+  } finally {
+    await app.close().catch(() => undefined)
+    fs.rmSync(userData, { recursive: true, force: true })
+  }
+})
+
+test('onboarding brand step previews the newest product after a restart', async () => {
+  const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-onboarding-preview-'))
+  const { app, page } = await launch(userData)
+
+  try {
+    const pageErrors: string[] = []
+    page.on('pageerror', (error) => pageErrors.push(error.message))
+    await page.waitForTimeout(800)
+    const bytes = Array.from(fs.readFileSync(productPhoto))
+    await page.evaluate(async (photoBytes) => {
+      await window.moss.secrets.setMuseKey({ key: 'LLM|e2e-onboarding-preview' })
+      await window.moss.products.createFromBytes({ bytes: new Uint8Array(photoBytes), name: 'Resumed Mug' })
+      await window.moss.settings.set({ key: 'onboardingDone', value: false })
+      await window.moss.settings.set({ key: 'onboardingStep', value: 3 })
+    }, bytes)
+    await page.reload()
+    await page.getByRole('heading', { name: 'Make it your own' }).waitFor({ timeout: 20_000 })
+    await expect(page.getByText('Preview · Resumed Mug')).toBeVisible()
+    await expect(page.getByText('Your product.')).toBeVisible()
     expect(pageErrors).toEqual([])
   } finally {
     await app.close().catch(() => undefined)

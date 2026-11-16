@@ -26,11 +26,17 @@ function cssColor(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
 
-export function BrandPreview({ brand }: { brand: Brand }): React.JSX.Element {
+export function BrandPreview({
+  brand,
+  imageUrl
+}: {
+  brand: Brand
+  imageUrl?: string
+}): React.JSX.Element {
   const size = brand.badgeScale === 's' ? '8%' : brand.badgeScale === 'l' ? '18%' : '12%'
   return (
     <div className="brand-preview">
-      <img src={exampleUrl('product')} alt="" className="sample" />
+      <img src={imageUrl ?? exampleUrl('product')} alt="" className="sample" />
       {brand.badgeEnabled && brand.logoUrl && (
         <img
           src={brand.logoUrl}

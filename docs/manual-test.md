@@ -24,7 +24,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 - Connect Meta: the step is not marked optional, because most of the app needs the key; Add key later still continues. A bad key shows a plain error; a saved key shows only its last four characters.
 - Add product: a JPEG, PNG, or WebP saves as a Product. A photo under 800 px is allowed with the small-photo warning.
 - Skip product: the optional step continues to Make it your own.
-- Make it your own: the preview asks for a logo until one is added; logo, colors, badge, and default look save; skip also continues.
+- Make it your own: the preview shows the product saved in the previous step (or a sample when it was skipped) and asks for a logo until one is added; the page names the three brand features; logo, colors, badge, and default look save; skip also continues.
 - Ready: Edit This Product starts a photo project from the saved product; Open a Photo opens the photo picker. Finish Setup still exits to the product hub, or Products when no product was saved.
 - Restart during setup: the app resumes a safe step and never traps the user on a removed step.
 

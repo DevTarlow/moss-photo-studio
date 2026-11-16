@@ -253,6 +253,8 @@ export function Onboarding(): React.JSX.Element {
   }
 
   const hasKey = Boolean(secrets?.hasKey)
+  // Onboarding can resume straight on the brand step; fall back to the newest product.
+  const previewProduct = product ?? products[0] ?? null
   const primaryLabel =
     step === 0
       ? 'Set Up AI Images'
@@ -496,31 +498,53 @@ export function Onboarding(): React.JSX.Element {
                           Make it your own
                         </Heading>
                         <Text type="body" color="secondary">
-                          Add a logo and colors now, or change them later in Settings.
+                          Add a logo, colors, and a default look now. You can change them later in Settings.
                         </Text>
                       </Stack>
                       <Stack gap={3}>
                         <Card padding={4}>
-                          <Stack gap={3}>
+                          <div className="grid gap-5 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
                             <Stack gap={2}>
-                              {brandDraft ? <BrandPreview brand={brandDraft} /> : <Skeleton className="h-48" />}
-                              {brandDraft && !brandDraft.logoUrl && (
-                                <Text type="supporting" color="secondary" display="block">
-                                  Add a logo to preview the corner badge.
-                                </Text>
-                              )}
+                              <Text type="label" color="secondary">
+                                {previewProduct ? `Preview · ${previewProduct.name}` : 'Preview · sample product'}
+                              </Text>
+                              {brandDraft ? <BrandPreview brand={brandDraft} imageUrl={previewProduct?.imageUrl} /> : <Skeleton className="h-48" />}
+                              <Text type="supporting" color="secondary" display="block">
+                                {previewProduct ? 'Your product.' : 'A sample product.'}{' '}
+                                {!brandDraft?.logoUrl
+                                  ? 'Add a logo to see the corner badge.'
+                                  : brandDraft.badgeEnabled
+                                    ? 'The badge sits exactly where it will on a made image.'
+                                    : 'Your logo is saved. Turn on the corner badge in brand options to add it to images.'}
+                              </Text>
                             </Stack>
-                            <Stack direction="horizontal" gap={2} align="center" wrap="wrap">
-                              <Badge label="Optional" variant="neutral" />
-                              <Text type="supporting" color="secondary">Your logo, colors, and badge appear on images you make.</Text>
+                            <Stack gap={4}>
+                              <Stack gap={0.5}>
+                                <Text weight="bold">Branding for the images you make</Text>
+                                <Text type="supporting" color="secondary">It never changes the product itself.</Text>
+                              </Stack>
+                              <Stack gap={2}>
+                                <Stack gap={0.5}>
+                                  <Text weight="bold">Corner badge</Text>
+                                  <Text type="supporting" color="secondary">Your logo on every made image. It is free.</Text>
+                                </Stack>
+                                <Stack gap={0.5}>
+                                  <Text weight="bold">Brand colors</Text>
+                                  <Text type="supporting" color="secondary">They steer backgrounds and props, never the product.</Text>
+                                </Stack>
+                                <Stack gap={0.5}>
+                                  <Text weight="bold">Default look</Text>
+                                  <Text type="supporting" color="secondary">One look on every image, so a batch feels related.</Text>
+                                </Stack>
+                              </Stack>
+                              <Button
+                                label={brandAdvanced ? 'Hide Brand Options' : 'Add Logo and Colors'}
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setBrandAdvanced((value) => !value)}
+                              />
                             </Stack>
-                            <Button
-                              label={brandAdvanced ? 'Hide Brand Options' : 'Customize Brand'}
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => setBrandAdvanced((value) => !value)}
-                            />
-                          </Stack>
+                          </div>
                         </Card>
                         {brandAdvanced && (brandDraft ? <BrandFields value={brandDraft} onChange={setBrandDraft} showPreview={false} /> : <Skeleton className="h-96" />)}
                       </Stack>
