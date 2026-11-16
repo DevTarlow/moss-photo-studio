@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { SCENES, SCENE_CATEGORIES } from '@shared/prompts/scenes'
 import { ALL_TEMPLATES, TEMPLATE_GROUPS, QUICK_FIX, templateAsset, templateById } from '@shared/prompts/templates'
-import { CREATE_PERSON_PROMPT, CREATE_PRODUCT_PROMPT, EXAMPLE_SCENES, STARTERS, exampleTextFor } from '@shared/starters'
+import { CREATE_PERSON_PROMPT, CREATE_PRODUCT_PROMPT, EXAMPLE_SCENES, PERSON_HOLDING_EXAMPLE, STARTERS, exampleTextFor } from '@shared/starters'
 import { BUNDLED_PEOPLE, BUNDLED_PERSON_LOOKS } from '@shared/people'
 import { BUNDLED_PRODUCT_SIZE, BUNDLED_PRODUCTS, bundledProductCards, isBundledProduct } from '@shared/products'
 import { wrapScenePrompt, wrapModelPrompt, PROMPT_MAX } from '@shared/prompts/guards'
@@ -109,7 +109,9 @@ describe('image generator examples', () => {
       expect(scene.productText.length).toBeLessThanOrEqual(240)
       expect(fs.existsSync(path.join(root, 'resources', 'tiles', 'examples', `${scene.key}.webp`))).toBe(true)
     }
-    expect(EXAMPLE_SCENES.find((scene) => scene.key === 'person')?.exampleText).toBe(CREATE_PERSON_PROMPT)
+    expect(EXAMPLE_SCENES.find((scene) => scene.key === 'person')?.exampleText).toBe(PERSON_HOLDING_EXAMPLE)
+    expect(PERSON_HOLDING_EXAMPLE).toContain('holding a ceramic cup')
+    expect(PERSON_HOLDING_EXAMPLE.length).toBeLessThanOrEqual(240)
     expect(CREATE_PERSON_PROMPT.length).toBeGreaterThan(0)
     expect(CREATE_PERSON_PROMPT.length).toBeLessThanOrEqual(240)
   })

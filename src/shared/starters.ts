@@ -199,9 +199,13 @@ export interface ExampleScene {
   productText: string
 }
 
-/** The starting text for Create a Person and the person example card. */
+/** The starting text for Create a Person. */
 export const CREATE_PERSON_PROMPT =
   'A candid full-body photo of a smiling person in their thirties with short curly hair, wearing a mustard sweater and jeans, in a bright room with a plain warm background, natural daylight, head to toe, realistic photo.'
+
+/** The person example card shows a person holding a cup. */
+export const PERSON_HOLDING_EXAMPLE =
+  'A candid full-body photo of a smiling person holding a ceramic cup, wearing a mustard sweater and jeans, in a bright room with a plain warm background, natural daylight, head to toe, realistic photo.'
 
 /** The starting text for Create a Product. */
 export const CREATE_PRODUCT_PROMPT =
@@ -218,8 +222,8 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
   },
   {
     key: 'person',
-    label: 'A new person',
-    exampleText: CREATE_PERSON_PROMPT,
+    label: 'A person holding product',
+    exampleText: PERSON_HOLDING_EXAMPLE,
     productText:
       'A candid full-body photo of a smiling person holding the product, wearing a mustard sweater and jeans, in a bright room with a plain warm background, natural daylight, head to toe, realistic photo.'
   },

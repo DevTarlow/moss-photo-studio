@@ -37,7 +37,7 @@ test('Create a Person opens the generator and saves a generated image as a perso
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('Make a new person')).toBeVisible()
     await expect(page.getByText('Click a photo to load a starting description.')).toBeVisible()
-    await expect(page.getByRole('button', { name: /A new person/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: /A person holding product/ })).toBeVisible()
     await expect(page.locator('textarea').first()).toHaveValue(CREATE_PERSON_PROMPT)
 
     await page.getByRole('button', { name: /Make 1 Image/ }).click()

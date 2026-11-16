@@ -77,7 +77,7 @@ Put a real product photo in `lab/sources/` and pass its path to `edit` or `creat
 
 The Image Generator examples in `resources/tiles/examples/` mix the original product scenes with outputs from this lab:
 
-- `person.webp` — generated for `CREATE_PERSON_PROMPT` with `npm run lab -- create --text "<prompt>" --shape landscape --yes` (1¢).
+- `person.webp` — generated for the person example prompt (a smiling person holding a ceramic cup) with `npm run lab -- create --text "<prompt>" --shape landscape --yes` (1¢).
 - `worn.webp` — a person wearing the product.
 - `home.webp` — a product in a room setting.
 - `jewelry.webp` — a jewelry close-up.
