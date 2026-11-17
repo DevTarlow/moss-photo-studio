@@ -33,25 +33,25 @@ export const BUNDLED_SCENE_PRESETS: readonly BundledScenePreset[] = [
     id: 'white-seamless',
     name: 'White seamless studio',
     category: 'Studio backdrops',
-    blurb: 'A bright white backdrop with a soft floor crease for any product.'
+    blurb: 'A bright white backdrop with a very faint floor transition.'
   },
   {
     id: 'warm-grey-sweep',
     name: 'Warm grey studio',
     category: 'Studio backdrops',
-    blurb: 'A warm-grey backdrop with a soft floor crease for neutral products.'
+    blurb: 'A warm-grey backdrop with a very faint floor transition.'
   },
   {
     id: 'blush-paper',
     name: 'Blush paper backdrop',
     category: 'Studio backdrops',
-    blurb: 'A blush backdrop with a soft floor crease for beauty and gifts.'
+    blurb: 'A blush backdrop with a very faint floor transition.'
   },
   {
     id: 'charcoal-sweep',
     name: 'Charcoal studio',
     category: 'Studio backdrops',
-    blurb: 'A charcoal backdrop with a soft floor crease for jewelry and glassware.'
+    blurb: 'A charcoal backdrop with a very faint floor transition.'
   },
   {
     id: 'stone-plinth',

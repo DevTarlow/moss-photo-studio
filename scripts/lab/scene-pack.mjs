@@ -17,25 +17,25 @@ export const SCENE_PACK = [
     id: 'white-seamless',
     name: 'White seamless studio',
     category: 'Studio backdrops',
-    prompt: `A straight-on studio backdrop with a soft, gently rolling floor-to-wall crease low in the frame, a seamless bright white paper surface with a subtle paper texture, the wall above and the floor below clearly divided by the crease, soft even studio lighting, no harsh shadows, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
+    prompt: `A straight-on studio backdrop with a very soft, out-of-focus, barely visible floor-to-wall transition low in the frame, no visible crease, roll, edge, line, horizon or shadow, a seamless bright white paper wall and floor that are almost the same tone with only a very slight change in brightness and texture, the floor only slightly lighter than the wall, soft even studio lighting, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
   },
   {
     id: 'warm-grey-sweep',
     name: 'Warm grey studio',
     category: 'Studio backdrops',
-    prompt: `A straight-on studio backdrop with a soft, gently rolling floor-to-wall crease low in the frame, a seamless warm grey paper surface with a subtle paper texture, the wall above and the floor below clearly divided by the crease, soft even studio lighting, no harsh shadows, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
+    prompt: `A straight-on studio backdrop with a very soft, out-of-focus, barely visible floor-to-wall transition low in the frame, no visible crease, roll, edge, line, horizon or shadow, a seamless warm grey paper wall and floor that are almost the same tone with only a very slight change in brightness and texture, the floor only slightly lighter than the wall, soft even studio lighting, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
   },
   {
     id: 'blush-paper',
     name: 'Blush paper backdrop',
     category: 'Studio backdrops',
-    prompt: `A straight-on studio backdrop with a soft, gently rolling floor-to-wall crease low in the frame, a seamless pale blush pink paper surface with a subtle paper texture, the wall above and the floor below clearly divided by the crease, soft even studio lighting, no harsh shadows, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
+    prompt: `A straight-on studio backdrop with a very soft, out-of-focus, barely visible floor-to-wall transition low in the frame, no visible crease, roll, edge, line, horizon or shadow, a seamless pale blush pink paper wall and floor that are almost the same tone with only a very slight change in brightness and texture, the floor only slightly lighter than the wall, soft even studio lighting, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
   },
   {
     id: 'charcoal-sweep',
     name: 'Charcoal studio',
     category: 'Studio backdrops',
-    prompt: `A straight-on studio backdrop with a soft, gently rolling floor-to-wall crease low in the frame, a seamless deep charcoal paper surface with a subtle paper texture, the wall above and the floor below clearly divided by the crease, soft even studio lighting, no harsh shadows, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
+    prompt: `A straight-on studio backdrop with a very soft, out-of-focus, barely visible floor-to-wall transition low in the frame, no visible crease, roll, edge, line, horizon or shadow, a seamless deep charcoal paper wall and floor that are almost the same tone with only a very slight change in brightness and texture, the floor only slightly lighter than the wall, soft even studio lighting, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
   },
   {
     id: 'stone-plinth',
