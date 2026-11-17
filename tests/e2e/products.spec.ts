@@ -147,10 +147,11 @@ test('a generated image becomes a reusable product across the editor and generat
       }
     })
     await page.getByRole('link', { name: 'Products', exact: true }).click()
-    await expect(page.getByText('Page 1 of 2', { exact: false })).toBeVisible()
+    const yourProductPages = page.getByRole('navigation', { name: 'Your product pages' })
+    await expect(yourProductPages.getByText('Page 1 of 2', { exact: false })).toBeVisible()
     await expect(page.getByRole('button', { name: /^Open Paged product/ })).toHaveCount(20)
-    await page.getByRole('button', { name: 'Next', exact: true }).click()
-    await expect(page.getByText('Page 2 of 2', { exact: false })).toBeVisible()
+    await yourProductPages.getByRole('button', { name: 'Next', exact: true }).click()
+    await expect(yourProductPages.getByText('Page 2 of 2', { exact: false })).toBeVisible()
     await expect(page.getByRole('button', { name: /^Open Paged product/ })).toHaveCount(1)
   } finally {
     await app.close().catch(() => undefined)
