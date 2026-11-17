@@ -52,7 +52,6 @@ The application data folder contains:
 - `license.json`: the license key, instance id, and local machine fingerprint, encrypted.
 - `logs/`: local logs. They contain request ids, status codes, counts, durations, and error codes. They do not contain keys, prompts, or full responses. Log rotation keeps the last two files.
 - A backup folder you choose in **Settings, Storage**: a consistent database snapshot, a copy of `library/`, a manifest, and a README. It excludes `secrets.bin` and `license.json`; the database keeps an encrypted license row, so a restore may ask you to re-activate. Backups are never uploaded.
-- A diagnostics folder you choose to create in **Settings, Storage**: app version, build, schema, library counts, and a copy of `logs/`. It contains no keys, prompts, images, or full file contents. It is opened in the system file manager and is only shared if you share it.
 
 Encrypted files are readable only by your operating-system user. The fallback key is mode `0600`. An administrator or someone with your unlocked user account can access the data, as with any desktop app.
 
@@ -63,7 +62,7 @@ Encrypted files are readable only by your operating-system user. The fallback ke
 - **Delete an image** removes the working files and thumbnail for that version. The original product photo stays until the project is deleted.
 - **Delete all usage history** removes the ledger rows. It does not delete images or projects.
 - **Delete logs** removes the local log files.
-- **Backups and diagnostics** live in folders you chose. Delete them with the system file manager when you no longer need them.
+- **Backups** live in folders you chose. Delete them with the system file manager when you no longer need them.
 - **Remove the Muse key** deletes `secrets.bin` and the cached validation time and last four characters.
 - **Deactivate** tells the license center to release this computer, then clears local license data. If the portal cannot be reached, the app does not pretend deactivation succeeded.
 - **Reset App** is a development-only control in Settings, Privacy. In an unpackaged build it deletes all local app data, settings, license, and saved keys, then closes the app. Packaged builds hide the control and refuse the channel so a renderer compromise cannot wipe a seller's data.

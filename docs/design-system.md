@@ -43,7 +43,6 @@ The interface should describe what changes in the user's picture, not how the mo
 | Starter Products, Starter People | included | Starter content is a starting point, not a separate product tier. |
 | All Work | Library (as a page name) | The page is All Work; the library is the folder on disk. |
 | Add to Set | Save to Set | One action for images and products; an item belongs to one Set at a time. |
-| Support report | diagnostics | Support reports are for people, not developers. |
 
 Do not expose model/provider internals, API hosts, install IDs, or timing columns in primary UI. Put them behind a Details/advanced disclosure. Do not use “reference”, “tile”, “run”, or “ledger” as user-facing nouns.
 

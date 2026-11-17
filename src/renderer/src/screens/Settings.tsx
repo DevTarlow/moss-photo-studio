@@ -11,7 +11,6 @@ import {
   Loader2,
   RotateCcw,
   ShieldCheck,
-  Stethoscope,
   Trash2,
   UserRound
 } from 'lucide-react'
@@ -292,7 +291,6 @@ function LibrarySection(): React.JSX.Element {
   const [busy, setBusy] = useState(false)
   const [backingUp, setBackingUp] = useState(false)
   const [restoring, setRestoring] = useState(false)
-  const [diagnosing, setDiagnosing] = useState(false)
 
   const refreshStats = async (): Promise<void> => {
     try {
@@ -374,18 +372,6 @@ function LibrarySection(): React.JSX.Element {
     }
   }
 
-  const diagnostics = async (): Promise<void> => {
-    setDiagnosing(true)
-    try {
-      const result = await unwrap(window.moss.diagnostics.create())
-      toast.status(`Support report saved in ${result.folderName}.`)
-    } catch (caught) {
-      toast.error(messageOf(caught))
-    } finally {
-      setDiagnosing(false)
-    }
-  }
-
   return (
     <div>
       <SettingsTitle title="Storage" line="Everything the studio saves lives in one folder on this computer." />
@@ -435,15 +421,6 @@ function LibrarySection(): React.JSX.Element {
         <p className="hint mt-3">
           {settings?.lastBackupAt ? `Last backup ${relativeTime(settings.lastBackupAt)}.` : 'No backup has been made yet.'}
         </p>
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
-          <div>
-            <p className="field-label">Support Report</p>
-            <p className="hint mt-1">App information, library counts and local logs for support. No keys, prompts or images.</p>
-          </div>
-          <Button variant="secondary" disabled={diagnosing} onClick={() => void diagnostics()}>
-            {diagnosing ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Stethoscope} size="sm" />} Create Support Report
-          </Button>
-        </div>
       </SectionCard>
     </div>
   )

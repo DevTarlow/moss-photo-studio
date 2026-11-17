@@ -110,7 +110,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 - Privacy: the trust cards distinguish local data, Meta requests, and license calls; Technical details holds host names and Install ID. In an unpackaged build, Reset App opens a destructive confirmation and is not present in the rail. About: Technical details holds Electron/Chromium/Node versions.
 - Logo & Colors: colors, From a Photo, logo, badge corner/size/opacity, default look, preview.
 - **There is no Business section.** `/settings/business` redirects to the Meta connection page.
-- Storage: backup, restore, diagnostics, library path, and the backup status.
+- Storage: backup, restore, library path, and the backup status.
 - Appearance: theme and density; preferences persist after restart.
 - License, Updates, Privacy, and About work as before. About uses the Meta AI Studio link.
 
