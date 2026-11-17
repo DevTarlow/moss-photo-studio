@@ -1,11 +1,12 @@
 /**
- * The 30 unbranded preset scenes included with Moss. Each entry generates one
+ * The 33 unbranded preset scenes included with Moss. Each entry generates one
  * square scene photo on an empty surface; the lab writes a 1024x1024 image and
  * a 480x480 thumb.
  *
- * A scene is setting, light and props only. Keep the photos free of a hero
+ * Most scenes are setting, light and props only. Keep them free of a hero
  * product, people, readable text and logos so the subject is never copied into
- * a generated image.
+ * a generated image. The packaged sheet set is the one deliberate product-style
+ * mock-up, with a blank label area for a seller logo.
  *
  * Ids, names and categories must stay in sync with src/shared/scene-presets.ts.
  */
@@ -17,25 +18,25 @@ export const SCENE_PACK = [
     id: 'white-seamless',
     name: 'White seamless studio',
     category: 'Studio backdrops',
-    prompt: `A bright white seamless studio sweep with a soft shadow on the empty surface, photographed at a low three-quarter angle, ${SCENE_RULES}`
+    prompt: `A straight-on front view of a seamless bright white studio backdrop, a flat even white surface filling the frame with no visible backdrop edge, roll, curve, seam or shadow, soft even studio lighting, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
   },
   {
     id: 'warm-grey-sweep',
     name: 'Warm grey studio',
     category: 'Studio backdrops',
-    prompt: `A seamless warm grey studio backdrop with a smooth surface and a soft shadow, photographed at a low three-quarter angle, ${SCENE_RULES}`
+    prompt: `A perfectly flat, evenly lit warm grey studio backdrop filling the entire frame, a uniform matte warm grey seamless paper surface with no floor line, no horizon, no backdrop edge, no roll, no curve, no gradient, no vignette, no shadow, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
   },
   {
     id: 'blush-paper',
     name: 'Blush paper backdrop',
     category: 'Studio backdrops',
-    prompt: `A pale blush pink seamless paper backdrop with a soft shadow on the empty surface, photographed at a low three-quarter angle, ${SCENE_RULES}`
+    prompt: `A straight-on front view of a pale blush pink seamless paper backdrop, a flat even blush surface filling the frame with no visible backdrop edge, roll, curve, seam or shadow, soft even studio lighting, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
   },
   {
     id: 'charcoal-sweep',
     name: 'Charcoal studio',
     category: 'Studio backdrops',
-    prompt: `A deep charcoal seamless studio sweep lit by a single soft spotlight, with a gentle shadow on the empty surface, photographed at a low three-quarter angle, ${SCENE_RULES}`
+    prompt: `A straight-on front view of a deep charcoal seamless studio backdrop, a flat even charcoal surface filling the frame with no visible backdrop edge, roll, curve, seam or shadow, soft even studio lighting, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
   },
   {
     id: 'stone-plinth',
@@ -50,10 +51,10 @@ export const SCENE_PACK = [
     prompt: `A warm oak side table beside a linen armchair in a bright living room, with a small lamp, a book and a plant just out of focus behind, soft window light, ${SCENE_RULES}`
   },
   {
-    id: 'linen-bed',
-    name: 'Linen bed',
+    id: 'packaged-sheet-set',
+    name: 'Packaged sheet set',
     category: 'Lifestyle rooms',
-    prompt: `A bed made with rumpled natural linen sheets in a calm bedroom, soft morning light from a window, an empty area on the linen, ${SCENE_RULES}`
+    prompt: `A neatly folded cream sheet set inside a clear plastic zip case, with a large blank white label area on the front for a logo and no writing, resting on a pale wooden table in a bright simple bedroom, soft even daylight, no people, no text, no logos, realistic product photograph, square.`
   },
   {
     id: 'living-room-console',
@@ -162,6 +163,24 @@ export const SCENE_PACK = [
     name: 'Sunlit balcony',
     category: 'Outdoor spaces',
     prompt: `A small city balcony with a bistro table, potted plants and morning sunlight, an empty tabletop, ${SCENE_RULES}`
+  },
+  {
+    id: 'backyard-wall',
+    name: 'Backyard wall',
+    category: 'Outdoor spaces',
+    prompt: `A side view of a pale rendered backyard wall with a clear empty area in the centre where a wall lamp would hang, no lamp and no product in the frame, climbing plants at the edges, warm afternoon sunlight, no people, no text, no logos, realistic exterior photograph, square.`
+  },
+  {
+    id: 'garden-wall',
+    name: 'Garden wall',
+    category: 'Outdoor spaces',
+    prompt: `A side portion of a natural stone garden wall with a clear empty area where a wall lamp would hang, no lamp and no product in the frame, soft greenery at the edges, soft daylight, no people, no text, no logos, realistic exterior photograph, square.`
+  },
+  {
+    id: 'brick-wall-nook',
+    name: 'Brick wall nook',
+    category: 'Outdoor spaces',
+    prompt: `A side view of a warm red brick backyard wall with a clear empty area where a hanging wall lamp would be mounted, no lamp and no product in the frame, a few potted plants at the base, warm evening light, no people, no text, no logos, realistic exterior photograph, square.`
   },
   {
     id: 'gift-wrapping-table',

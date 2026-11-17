@@ -21,9 +21,10 @@ export const BUNDLED_SCENE_CATEGORIES: readonly string[] = [
 ]
 
 /**
- * Clean, product-free scene photos included with Moss as starting points: 30
- * settings across six categories. A scene supplies the setting, light and props
- * for another image; its subject is never copied. The matching generation
+ * Clean scene photos included with Moss as starting points: 33 settings across
+ * six categories. Most are product-free; the packaged sheet set is a product
+ * mock-up with a blank label area. A scene supplies the setting, light and
+ * props for another image; its subject is never copied. The matching generation
  * prompts live in scripts/lab/scene-pack.mjs; keep ids, names and categories in
  * sync with it (the unit test checks that). The images are
  * resources/scenes/<id>.webp with a 480x480 <id>-thumb.webp.
@@ -33,25 +34,25 @@ export const BUNDLED_SCENE_PRESETS: readonly BundledScenePreset[] = [
     id: 'white-seamless',
     name: 'White seamless studio',
     category: 'Studio backdrops',
-    blurb: 'A bright white sweep for any product.'
+    blurb: 'A flat white backdrop for any product.'
   },
   {
     id: 'warm-grey-sweep',
     name: 'Warm grey studio',
     category: 'Studio backdrops',
-    blurb: 'A soft warm-grey backdrop for neutral products.'
+    blurb: 'A flat warm-grey backdrop for neutral products.'
   },
   {
     id: 'blush-paper',
     name: 'Blush paper backdrop',
     category: 'Studio backdrops',
-    blurb: 'Pale blush paper for beauty and gifts.'
+    blurb: 'A flat blush backdrop for beauty and gifts.'
   },
   {
     id: 'charcoal-sweep',
     name: 'Charcoal studio',
     category: 'Studio backdrops',
-    blurb: 'Deep charcoal for jewelry, glassware and premium packaging.'
+    blurb: 'A flat charcoal backdrop for jewelry and glassware.'
   },
   {
     id: 'stone-plinth',
@@ -66,10 +67,10 @@ export const BUNDLED_SCENE_PRESETS: readonly BundledScenePreset[] = [
     blurb: 'Warm wood, a lamp and soft window light for homeware and candles.'
   },
   {
-    id: 'linen-bed',
-    name: 'Linen bed',
+    id: 'packaged-sheet-set',
+    name: 'Packaged sheet set',
     category: 'Lifestyle rooms',
-    blurb: 'Rumpled linen and morning light for textiles and gifts.'
+    blurb: 'A folded sheet set in a clear case with a blank label for a logo.'
   },
   {
     id: 'living-room-console',
@@ -178,6 +179,24 @@ export const BUNDLED_SCENE_PRESETS: readonly BundledScenePreset[] = [
     name: 'Sunlit balcony',
     category: 'Outdoor spaces',
     blurb: 'A morning balcony for drinkware, plants and small homeware.'
+  },
+  {
+    id: 'backyard-wall',
+    name: 'Backyard wall',
+    category: 'Outdoor spaces',
+    blurb: 'A sunlit side wall for a hanging lamp or planter.'
+  },
+  {
+    id: 'garden-wall',
+    name: 'Garden wall',
+    category: 'Outdoor spaces',
+    blurb: 'A stone garden wall with an empty bracket space.'
+  },
+  {
+    id: 'brick-wall-nook',
+    name: 'Brick wall nook',
+    category: 'Outdoor spaces',
+    blurb: 'A warm brick wall for an outdoor lamp.'
   },
   {
     id: 'gift-wrapping-table',

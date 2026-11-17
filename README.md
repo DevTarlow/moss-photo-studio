@@ -40,7 +40,7 @@ A product page keeps Products active in the sidebar, adds a Products back button
 
 ### Scenes
 
-Scenes are reusable settings: the surface, background, light, and props for a photo, without a product of their own. The Scenes page has 30 starter scenes in six categories — studio backdrops, lifestyle rooms, kitchen and table, bath and spa, outdoor spaces, and seasonal sets — and you can add your own scene photo on the same page.
+Scenes are reusable settings: the surface, background, light, and props for a photo. Most are without a product of their own. The Scenes page has 33 starter scenes in six categories — studio backdrops, lifestyle rooms, kitchen and table, bath and spa, outdoor spaces, and seasonal sets — and you can add your own scene photo on the same page.
 
 The Image Editor and Image Generator both have **Choose a Scene**. The dialog has three tabs: **Presets** for the bundled scenes, **Your Scenes** for photos you added, and **Projects** for any ready image already in your library. Scenes are borrowed for their setting and light; their subject is never copied.
 

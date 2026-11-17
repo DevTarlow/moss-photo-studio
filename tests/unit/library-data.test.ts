@@ -145,9 +145,9 @@ describe('starters and people', () => {
 })
 
 describe('bundled scene presets', () => {
-  it('ships thirty product-free scenes across six categories', () => {
-    expect(BUNDLED_SCENE_PRESETS).toHaveLength(30)
-    expect(new Set(BUNDLED_SCENE_PRESETS.map((scene) => scene.id)).size).toBe(30)
+  it('ships thirty-three scenes across six categories', () => {
+    expect(BUNDLED_SCENE_PRESETS).toHaveLength(33)
+    expect(new Set(BUNDLED_SCENE_PRESETS.map((scene) => scene.id)).size).toBe(33)
     expect(BUNDLED_SCENE_SIZE).toBe(1024)
     expect(BUNDLED_SCENE_CATEGORIES).toHaveLength(6)
     for (const scene of BUNDLED_SCENE_PRESETS) {
@@ -157,8 +157,9 @@ describe('bundled scene presets', () => {
       expect(isBundledScenePreset(scene.id)).toBe(true)
     }
     for (const category of BUNDLED_SCENE_CATEGORIES) {
-      expect(BUNDLED_SCENE_PRESETS.filter((scene) => scene.category === category)).toHaveLength(5)
+      expect(BUNDLED_SCENE_PRESETS.filter((scene) => scene.category === category).length, category).toBeGreaterThanOrEqual(5)
     }
+    expect(BUNDLED_SCENE_PRESETS.filter((scene) => scene.category === 'Outdoor spaces')).toHaveLength(8)
     expect(isBundledScenePreset('not-a-bundled-scene')).toBe(false)
   })
 
@@ -178,13 +179,17 @@ describe('bundled scene presets', () => {
       expect(entry?.name).toBe(scene.name)
       expect(entry?.category).toBe(scene.category)
       expect(entry?.prompt.length ?? 0).toBeGreaterThan(0)
-      expect(entry?.prompt).toContain('no product in the frame')
+      if (scene.id === 'packaged-sheet-set') {
+        expect(entry?.prompt).toContain('blank')
+      } else {
+        expect(entry?.prompt).toContain('no product in the frame')
+      }
     }
   })
 
   it('maps bundled scenes to resources without a saved row', () => {
     const cards = bundledSceneCards()
-    expect(cards).toHaveLength(30)
+    expect(cards).toHaveLength(33)
     for (const card of cards) {
       expect(card.source).toBe('bundled')
       expect(card.width).toBe(1024)

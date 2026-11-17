@@ -335,3 +335,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Starter people catalog
 
 141. **The starter cast is 50 people, evenly spread across six age bands, and the starter grid pages 20 at a time.** The original 24 people and their ids stay unchanged; 26 new synthetic people bring each band to 8–9 (20s 8, 30s 9, 40s 8, 50s 8, 60s 9, 70s 8). Every bundled person keeps the full-body reference, square portrait and four studio looks; the new references and looks were generated through the lab and reviewed for identity, framing and a plain studio. The lab people pack and the catalog are checked against each other by the unit suite, and the People page pages the starter grid 20 at a time so 50 cards do not make one long scroll. User-added people are unchanged.
+
+## Scene revisions
+
+142. **Studio backdrops are straight-on and shadow-free, the linen bed is replaced by a packaged sheet set, and Outdoor spaces adds three wall facades.** The four studio backdrop presets are flat, evenly lit front views with no visible backdrop edge, roll, curve or shadow so a product image can be placed on them. The packaged sheet set is the one deliberate product-style scene, with a clear case and a blank label area for a seller logo. The three wall facades are side portions of backyard walls with an empty space for a hanging lamp and no lamp in the frame. The scene pack and catalog stay in sync, and the scene page counts and screenshots are updated.

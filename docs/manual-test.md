@@ -70,7 +70,8 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 ## Scenes
 
-- Scenes shows “30 starter scenes · N of yours,” search, sort, category pills, and pagination. The starter scenes are filtered by six categories; Your Scenes pages separately.
+- Scenes shows “33 starter scenes · N of yours,” search, sort, category pills, and pagination. The starter scenes are filtered by six categories; Your Scenes pages separately.
+- The four studio backdrops are straight-on, flat, and shadow-free, with no visible backdrop edge; the packaged sheet set has a clear case and a blank label area; the three Outdoor spaces wall facades have an empty space for a hanging lamp and no lamp in the frame.
 - Add Scene Photo saves a photo with a name; user scenes can be renamed or deleted. Opening a scene shows the full image and Make an Image with this Scene, which opens the Image Generator with the scene chip ready for a product photo.
 - Choose a Scene in the Image Editor or Image Generator opens a dialog with Presets, Your Scenes, and Projects. Presets and Your Scenes use the scene reference path; Projects keeps the existing ready-image scene reference. The setting and light are borrowed; the subject is never copied.
 - The Scenes page and the scene picker are included in the axe pass.
