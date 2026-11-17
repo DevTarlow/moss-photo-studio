@@ -1,5 +1,5 @@
 /**
- * The 100 unbranded starter products included with Moss. Each entry generates
+ * The 101 unbranded starter products included with Moss. Each entry generates
  * one square product photo on a pure white seamless background; the lab writes
  * a 1024x1024 image and a 480x480 thumb.
  *
@@ -435,6 +435,12 @@ export const PRODUCT_PACK = [
     name: 'Oven mitt',
     category: 'Textiles and soft furnishings',
     prompt: `A single quilted cotton oven mitt in natural linen with a simple hanging loop, no text and no label, lying flat, ${WHITE_STUDIO}`
+  },
+  {
+    id: 'packaged-sheet-set',
+    name: 'Packaged sheet set',
+    category: 'Textiles and soft furnishings',
+    prompt: `A neatly folded cream sheet set inside a clear plastic zip case with a large blank white label area on the front and no writing, lying flat, ${WHITE_STUDIO}`
   },
   {
     id: 'ribbed-tumbler',

@@ -21,10 +21,9 @@ export const BUNDLED_SCENE_CATEGORIES: readonly string[] = [
 ]
 
 /**
- * Clean scene photos included with Moss as starting points: 33 settings across
- * six categories. Most are product-free; the packaged sheet set is a product
- * mock-up with a blank label area. A scene supplies the setting, light and
- * props for another image; its subject is never copied. The matching generation
+ * Clean, product-free scene photos included with Moss as starting points: 33
+ * settings across six categories. A scene supplies the setting, light and props
+ * for another image; its subject is never copied. The matching generation
  * prompts live in scripts/lab/scene-pack.mjs; keep ids, names and categories in
  * sync with it (the unit test checks that). The images are
  * resources/scenes/<id>.webp with a 480x480 <id>-thumb.webp.
@@ -34,25 +33,25 @@ export const BUNDLED_SCENE_PRESETS: readonly BundledScenePreset[] = [
     id: 'white-seamless',
     name: 'White seamless studio',
     category: 'Studio backdrops',
-    blurb: 'A flat white backdrop for any product.'
+    blurb: 'A bright white backdrop with a soft floor crease for any product.'
   },
   {
     id: 'warm-grey-sweep',
     name: 'Warm grey studio',
     category: 'Studio backdrops',
-    blurb: 'A flat warm-grey backdrop for neutral products.'
+    blurb: 'A warm-grey backdrop with a soft floor crease for neutral products.'
   },
   {
     id: 'blush-paper',
     name: 'Blush paper backdrop',
     category: 'Studio backdrops',
-    blurb: 'A flat blush backdrop for beauty and gifts.'
+    blurb: 'A blush backdrop with a soft floor crease for beauty and gifts.'
   },
   {
     id: 'charcoal-sweep',
     name: 'Charcoal studio',
     category: 'Studio backdrops',
-    blurb: 'A flat charcoal backdrop for jewelry and glassware.'
+    blurb: 'A charcoal backdrop with a soft floor crease for jewelry and glassware.'
   },
   {
     id: 'stone-plinth',
@@ -67,10 +66,10 @@ export const BUNDLED_SCENE_PRESETS: readonly BundledScenePreset[] = [
     blurb: 'Warm wood, a lamp and soft window light for homeware and candles.'
   },
   {
-    id: 'packaged-sheet-set',
-    name: 'Packaged sheet set',
+    id: 'bedroom-dresser',
+    name: 'Bedroom dresser',
     category: 'Lifestyle rooms',
-    blurb: 'A folded sheet set in a clear case with a blank label for a logo.'
+    blurb: 'A warm wood dresser with morning light for small products.'
   },
   {
     id: 'living-room-console',

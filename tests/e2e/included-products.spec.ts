@@ -18,7 +18,7 @@ test('included products start an editor and generator project, and Create a Prod
     await page.getByRole('button', { name: 'Skip for Now' }).click()
     await page.getByRole('link', { name: 'Products', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()
-    await expect(page.getByText('100 starter products · 0 of yours')).toBeVisible()
+    await expect(page.getByText('101 starter products · 0 of yours')).toBeVisible()
     await expect(page.getByText('Starter Products', { exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Open Amber dropper bottle' })).toBeVisible()
     await page.getByRole('button', { name: 'Ceramics and pottery', exact: true }).click()

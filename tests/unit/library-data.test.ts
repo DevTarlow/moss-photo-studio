@@ -179,11 +179,7 @@ describe('bundled scene presets', () => {
       expect(entry?.name).toBe(scene.name)
       expect(entry?.category).toBe(scene.category)
       expect(entry?.prompt.length ?? 0).toBeGreaterThan(0)
-      if (scene.id === 'packaged-sheet-set') {
-        expect(entry?.prompt).toContain('blank')
-      } else {
-        expect(entry?.prompt).toContain('no product in the frame')
-      }
+      expect(entry?.prompt).toContain('no product in the frame')
     }
   })
 
@@ -303,9 +299,9 @@ describe('cost and file naming', () => {
 })
 
 describe('bundled products', () => {
-  it('ships one hundred unique unbranded starter products across nineteen categories', () => {
-    expect(BUNDLED_PRODUCTS).toHaveLength(100)
-    expect(new Set(BUNDLED_PRODUCTS.map((product) => product.id)).size).toBe(100)
+  it('ships one hundred and one unique unbranded starter products across nineteen categories', () => {
+    expect(BUNDLED_PRODUCTS).toHaveLength(101)
+    expect(new Set(BUNDLED_PRODUCTS.map((product) => product.id)).size).toBe(101)
     expect(BUNDLED_PRODUCT_SIZE).toBe(1024)
     expect(BUNDLED_PRODUCTS.some((product) => product.name === 'Speckled mug')).toBe(true)
     const categories = Array.from(new Set(BUNDLED_PRODUCTS.map((product) => product.category)))
@@ -347,7 +343,7 @@ describe('bundled products', () => {
 
   it('maps bundled products to resources without a saved row', () => {
     const cards = bundledProductCards()
-    expect(cards).toHaveLength(100)
+    expect(cards).toHaveLength(101)
     for (const card of cards) {
       expect(card.source).toBe('bundled')
       expect(card.width).toBe(1024)

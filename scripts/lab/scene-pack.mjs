@@ -3,10 +3,9 @@
  * square scene photo on an empty surface; the lab writes a 1024x1024 image and
  * a 480x480 thumb.
  *
- * Most scenes are setting, light and props only. Keep them free of a hero
+ * A scene is setting, light and props only. Keep the photos free of a hero
  * product, people, readable text and logos so the subject is never copied into
- * a generated image. The packaged sheet set is the one deliberate product-style
- * mock-up, with a blank label area for a seller logo.
+ * a generated image.
  *
  * Ids, names and categories must stay in sync with src/shared/scene-presets.ts.
  */
@@ -18,25 +17,25 @@ export const SCENE_PACK = [
     id: 'white-seamless',
     name: 'White seamless studio',
     category: 'Studio backdrops',
-    prompt: `A straight-on front view of a seamless bright white studio backdrop, a flat even white surface filling the frame with no visible backdrop edge, roll, curve, seam or shadow, soft even studio lighting, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
+    prompt: `A straight-on studio backdrop with a soft, gently rolling floor-to-wall crease low in the frame, a seamless bright white paper surface with a subtle paper texture, the wall above and the floor below clearly divided by the crease, soft even studio lighting, no harsh shadows, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
   },
   {
     id: 'warm-grey-sweep',
     name: 'Warm grey studio',
     category: 'Studio backdrops',
-    prompt: `A perfectly flat, evenly lit warm grey studio backdrop filling the entire frame, a uniform matte warm grey seamless paper surface with no floor line, no horizon, no backdrop edge, no roll, no curve, no gradient, no vignette, no shadow, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
+    prompt: `A straight-on studio backdrop with a soft, gently rolling floor-to-wall crease low in the frame, a seamless warm grey paper surface with a subtle paper texture, the wall above and the floor below clearly divided by the crease, soft even studio lighting, no harsh shadows, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
   },
   {
     id: 'blush-paper',
     name: 'Blush paper backdrop',
     category: 'Studio backdrops',
-    prompt: `A straight-on front view of a pale blush pink seamless paper backdrop, a flat even blush surface filling the frame with no visible backdrop edge, roll, curve, seam or shadow, soft even studio lighting, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
+    prompt: `A straight-on studio backdrop with a soft, gently rolling floor-to-wall crease low in the frame, a seamless pale blush pink paper surface with a subtle paper texture, the wall above and the floor below clearly divided by the crease, soft even studio lighting, no harsh shadows, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
   },
   {
     id: 'charcoal-sweep',
     name: 'Charcoal studio',
     category: 'Studio backdrops',
-    prompt: `A straight-on front view of a deep charcoal seamless studio backdrop, a flat even charcoal surface filling the frame with no visible backdrop edge, roll, curve, seam or shadow, soft even studio lighting, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
+    prompt: `A straight-on studio backdrop with a soft, gently rolling floor-to-wall crease low in the frame, a seamless deep charcoal paper surface with a subtle paper texture, the wall above and the floor below clearly divided by the crease, soft even studio lighting, no harsh shadows, no product in the frame, no people, no text, no logos, realistic studio photograph, square.`
   },
   {
     id: 'stone-plinth',
@@ -51,10 +50,10 @@ export const SCENE_PACK = [
     prompt: `A warm oak side table beside a linen armchair in a bright living room, with a small lamp, a book and a plant just out of focus behind, soft window light, ${SCENE_RULES}`
   },
   {
-    id: 'packaged-sheet-set',
-    name: 'Packaged sheet set',
+    id: 'bedroom-dresser',
+    name: 'Bedroom dresser',
     category: 'Lifestyle rooms',
-    prompt: `A neatly folded cream sheet set inside a clear plastic zip case, with a large blank white label area on the front for a logo and no writing, resting on a pale wooden table in a bright simple bedroom, soft even daylight, no people, no text, no logos, realistic product photograph, square.`
+    prompt: `A warm oak bedroom dresser with a soft arched mirror above, a small plant and a folded linen cloth at the edge, soft morning light from a window, an empty space on the dresser top, ${SCENE_RULES}`
   },
   {
     id: 'living-room-console',

@@ -16,9 +16,11 @@ import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
 import { fileToBytes } from '../lib/files'
 import { toast } from '../lib/toast'
-import { COLLECTION_PAGE_SIZE } from '@shared/constants'
 import { DropdownMenu } from 'radix-ui'
 import { Heading, Icon, Selector, Text, TextInput, ToggleButton, ToggleButtonGroup } from '@astryxdesign/core'
+
+/** 24 fills three rows of the eight-column starter grid at 1440. */
+const PEOPLE_PAGE_SIZE = 24
 
 function PersonCard({
   person,
@@ -127,16 +129,16 @@ export function People(): React.JSX.Element {
   }
   const included = sortPeople(matching.filter((person) => person.source === 'bundled'))
   const yours = sortPeople(matching.filter((person) => person.source === 'user'))
-  const visibleYours = yours.slice((yoursPage - 1) * COLLECTION_PAGE_SIZE, yoursPage * COLLECTION_PAGE_SIZE)
-  const visibleIncluded = included.slice((starterPage - 1) * COLLECTION_PAGE_SIZE, starterPage * COLLECTION_PAGE_SIZE)
+  const visibleYours = yours.slice((yoursPage - 1) * PEOPLE_PAGE_SIZE, yoursPage * PEOPLE_PAGE_SIZE)
+  const visibleIncluded = included.slice((starterPage - 1) * PEOPLE_PAGE_SIZE, starterPage * PEOPLE_PAGE_SIZE)
 
   useEffect(() => {
-    const pages = Math.max(1, Math.ceil(yours.length / COLLECTION_PAGE_SIZE))
+    const pages = Math.max(1, Math.ceil(yours.length / PEOPLE_PAGE_SIZE))
     if (yoursPage > pages) setYoursPage(pages)
   }, [yours.length, yoursPage])
 
   useEffect(() => {
-    const pages = Math.max(1, Math.ceil(included.length / COLLECTION_PAGE_SIZE))
+    const pages = Math.max(1, Math.ceil(included.length / PEOPLE_PAGE_SIZE))
     if (starterPage > pages) setStarterPage(pages)
   }, [included.length, starterPage])
 
@@ -359,6 +361,7 @@ export function People(): React.JSX.Element {
             <Pagination
               page={yoursPage}
               total={yours.length}
+              pageSize={PEOPLE_PAGE_SIZE}
               onPage={setYoursPage}
               label="Your people pages"
             />
@@ -377,6 +380,7 @@ export function People(): React.JSX.Element {
             <Pagination
               page={starterPage}
               total={included.length}
+              pageSize={PEOPLE_PAGE_SIZE}
               onPage={setStarterPage}
               label="Starter people pages"
             />

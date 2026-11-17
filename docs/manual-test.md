@@ -62,7 +62,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 ## Products
 
-- Products shows “100 starter products · N of yours,” search, sort, category pills, and pagination. The starter list pages 20 at a time; category pills filter Starter Products only.
+- Products shows “101 starter products · N of yours,” search, sort, category pills, and pagination. The starter list pages 20 at a time; category pills filter Starter Products only.
 - Starter Products open with Edit Photo and Make an Image with this Product, without Rename or Delete. Hovering a starter card offers Use in Generator and Try in Editor; hovering a saved product offers Generate Scene, Edit Photo, and View Projects.
 - Generate Product Photo opens the Image Generator with the product prompt; Save as Product adds it under Your Products. Add Product Photo asks for a name before saving.
 - A product hub keeps Products selected in the left navigation, shows a contextual Products back button, and puts the product name in the window title. It shows the source photo, Product notes, Add to Set, Make an Image with this Product, linked projects, Link Existing Projects, archive, and delete. Clicking the product title renames it in place; Enter saves, Escape cancels, and clicking away saves. Notes save locally and are added to later image prompts only when this product is selected. The empty project state offers Edit Photo (Free) and Make an Image.
@@ -71,7 +71,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 ## Scenes
 
 - Scenes shows “33 starter scenes · N of yours,” search, sort, category pills, and pagination. The starter scenes are filtered by six categories; Your Scenes pages separately.
-- The four studio backdrops are straight-on, flat, and shadow-free, with no visible backdrop edge; the packaged sheet set has a clear case and a blank label area; the three Outdoor spaces wall facades have an empty space for a hanging lamp and no lamp in the frame.
+- The four studio backdrops are straight-on with a soft floor-to-wall crease low in the frame, no visible paper roll or side edge, and no harsh shadows; the three Outdoor spaces wall facades have an empty space for a hanging lamp and no lamp in the frame.
 - Add Scene Photo saves a photo with a name; user scenes can be renamed or deleted. Opening a scene shows the full image and Make an Image with this Scene, which opens the Image Generator with the scene chip ready for a product photo.
 - Choose a Scene in the Image Editor or Image Generator opens a dialog with Presets, Your Scenes, and Projects. Presets and Your Scenes use the scene reference path; Projects keeps the existing ready-image scene reference. The setting and light are borrowed; the subject is never copied.
 - The Scenes page and the scene picker are included in the axe pass.
@@ -99,7 +99,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 ## People
 
-- People lists Your People first and the first 20 of 50 starter synthetic people, paged 20 at a time. The starter grid still stays above the fold at 1440 × 900. An empty Your People section is a single compact line, not a large empty card.
+- People lists Your People first and the first 24 of 50 starter synthetic people, paged 24 at a time. The starter grid still stays above the fold at 1440 × 900. An empty Your People section is a single compact line, not a large empty card.
 - Age chips All, 20s, and 30s+ filter the casting grid; Default, Name, and Most used sort it.
 - Starter people open with four studio looks; the original can be restored. Clicking a look selects it, the active ring is visible, and the dialog explains how the chosen angle guides pose and framing.
 - Make an Image with This Person seeds the generator with the person and look.
