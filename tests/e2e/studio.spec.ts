@@ -224,9 +224,9 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await expect(page.getByRole('heading', { name: "You're ready to make photos." })).toBeVisible()
     await screenshot('onboarding-ready')
     await assertNoSeriousA11y('onboarding-ready')
-    await page.getByRole('button', { name: 'Finish Setup' }).click()
+    await page.getByRole('button', { name: 'View Product' }).click()
     await expect(page.getByRole('heading', { name: 'product', exact: true })).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByRole('button', { name: 'Edit Photo' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Edit Photo', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Make an Image with this Product' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Add to Set' })).toBeVisible()
     await expect(page.getByText('Listing Kit', { exact: true })).toHaveCount(0)
@@ -242,7 +242,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
   })
 
   test('the editor makes a version, compares, and applies a free local adjust', async () => {
-    await page.getByRole('button', { name: 'Edit Photo' }).click()
+    await page.getByRole('button', { name: 'Edit Photo', exact: true }).click()
     await expect(page.getByText('CHANGE THIS PHOTO')).toBeVisible({ timeout: 20_000 })
     const tabOverflow = await page.evaluate(() => {
       const tabs = document.querySelector<HTMLElement>('.tabs')

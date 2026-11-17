@@ -26,6 +26,28 @@ export function safeBaseName(input: string, fallback = 'image'): string {
   return name
 }
 
+/**
+ * Turn a camera filename into a starting product name. Files such as
+ * `PXL_20240101_123456.jpg` carry no useful words, so they fall back to a
+ * friendly placeholder rather than reaching the product list raw.
+ */
+export function cleanProductName(fileName: string): string {
+  const base = String(fileName ?? '').replace(/\.[^.]+$/, '')
+  const spaced = base
+    .replace(/[_]+/g, ' ')
+    .replace(/-+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const withoutCameraPrefix = spaced
+    .replace(/\b(?:IMG|DSC|PXL|DCIM|MVIMG|Screenshot|Screen Shot)\b[\s._-]*\d.*$/i, '')
+    .replace(/\b(?:copy|final|edited)\b\s*\(?\d*\)?$/i, '')
+    .trim()
+  const withoutTrailingNumber = withoutCameraPrefix.replace(/[\s._-]+\d{3,}$/g, '').trim()
+  const candidate = withoutTrailingNumber || withoutCameraPrefix
+  if (!/[A-Za-z]/.test(candidate)) return 'Product photo'
+  return candidate.slice(0, 80).trim() || 'Product photo'
+}
+
 export function numberedFileName(index: number, fileLabel: string, extension: string): string {
   return `${String(index).padStart(2, '0')}-${fileLabel}.${extension}`
 }

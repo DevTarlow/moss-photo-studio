@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
   BarChart3,
@@ -12,17 +11,14 @@ import {
   Package,
   Palette,
   RefreshCw,
-  RotateCcw,
   Settings,
   ShieldCheck,
   Sparkles,
   Users
 } from 'lucide-react'
 import { Icon, SideNav, SideNavItem, SideNavSection } from '@astryxdesign/core'
-import { useAppStore } from '../../store/app'
 import { settingsSections } from '../../lib/settingsSections'
-import { toast } from '../../lib/toast'
-import { useConfirm } from './ConfirmProvider'
+import { useWorkspaceStore } from '../../store/workspace'
 
 const settingsIcons = {
   studio: <Icon icon={KeyRound} size="md" strokeWidth={1.75} />,
@@ -44,8 +40,8 @@ const items = [
 ]
 
 const tools = [
-  { to: '/library?new=photo', label: 'Image Editor', icon: <Icon icon={ImageIcon} size="md" strokeWidth={1.75} /> },
-  { to: '/library?new=image', label: 'Image Generator', icon: <Icon icon={Sparkles} size="md" strokeWidth={1.75} /> }
+  { id: 'editor', to: '/library?new=photo', label: 'Image Editor', icon: <Icon icon={ImageIcon} size="md" strokeWidth={1.75} /> },
+  { id: 'generator', to: '/library?new=image', label: 'Image Generator', icon: <Icon icon={Sparkles} size="md" strokeWidth={1.75} /> }
 ]
 
 export function Rail({
@@ -57,50 +53,35 @@ export function Rail({
 }): React.JSX.Element {
   const location = useLocation()
   const inSettings = location.pathname.startsWith('/settings')
-  const appInfo = useAppStore((state) => state.appInfo)
-  const confirm = useConfirm()
-  const [resetting, setResetting] = useState(false)
+  const project = useWorkspaceStore((state) => state.project)
+  const inWorkspace = location.pathname.startsWith('/project/')
+  const viewingPhoto = new URLSearchParams(location.search).get('view') === 'photo'
+  const editorActive = inWorkspace && Boolean(project) && (project?.type === 'photo' || viewingPhoto)
+  const generatorActive = inWorkspace && Boolean(project) && !editorActive
 
-  const resetApp = async (): Promise<void> => {
-    const confirmed = await confirm({
-      title: 'Reset Moss Photo Studio?',
-      body: 'This deletes all local app data, settings, license, and saved keys, then closes the app. It cannot be undone.',
-      confirmLabel: 'Reset and Close',
-      danger: true
-    })
-    if (!confirmed) return
-    setResetting(true)
-    const result = await window.moss.app.reset().catch(() => null)
-    if (!result?.ok) {
-      setResetting(false)
-      toast.error('The app could not be reset.')
+  const isSelected = (to: string): boolean => {
+    if (to === '/products') {
+      return location.pathname === '/products' || location.pathname.startsWith('/product/')
     }
+    return location.pathname === to || location.pathname.startsWith(`${to}/`)
   }
 
   return (
     <SideNav
       className="app-side-nav"
-      collapsible={{ isCollapsed: collapsed, onCollapsedChange: onToggle }}
+      collapsible={{ isCollapsed: collapsed, onCollapsedChange: onToggle, hasButton: false }}
       resizable={{ defaultWidth: 232, minWidth: 200, maxWidth: 320, autoSaveId: 'moss-side-nav' }}
       footer={
-        <div className="flex flex-col gap-1">
-          {appInfo && !appInfo.isPackaged && !appInfo.e2e && (
-            <SideNavItem
-              label="Reset App"
-              icon={<Icon icon={RotateCcw} size="md" strokeWidth={1.75} />}
-              onClick={() => void resetApp()}
-              isDisabled={resetting}
-            />
-          )}
-          {!inSettings && (
+        !inSettings ? (
+          <div className="flex flex-col gap-1">
             <SideNavItem
               label="Settings"
               icon={<Icon icon={Settings} size="md" strokeWidth={1.75} />}
               href="/settings/studio"
               isSelected={false}
             />
-          )}
-        </div>
+          </div>
+        ) : null
       }
     >
       <SideNavSection title="Studio">
@@ -110,7 +91,7 @@ export function Rail({
             label={item.label}
             icon={item.icon}
             href={item.to}
-            isSelected={location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)}
+            isSelected={isSelected(item.to)}
           />
         ))}
       </SideNavSection>
@@ -121,7 +102,7 @@ export function Rail({
             label={tool.label}
             icon={tool.icon}
             href={tool.to}
-            isSelected={location.pathname === tool.to}
+            isSelected={tool.id === 'editor' ? editorActive : generatorActive}
           />
         ))}
       </SideNavSection>

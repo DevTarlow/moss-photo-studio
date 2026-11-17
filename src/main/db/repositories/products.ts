@@ -12,6 +12,7 @@ interface ProductRow {
   created_at: number
   updated_at: number
   category: string | null
+  notes: string | null
   set_id: string | null
   set_name: string | null
   status: string
@@ -32,6 +33,7 @@ function mapProduct(row: ProductRow): Product {
     updatedAt: Number(row.updated_at),
     source: 'user',
     blurb: null,
+    notes: row.notes,
     category: row.category,
     setId: row.set_id,
     setName: row.set_name,
@@ -108,6 +110,7 @@ export class ProductRepository {
   update(id: string, patch: {
     name?: string
     category?: string | null
+    notes?: string | null
     status?: 'active' | 'archived'
   }): Product | null {
     if (!this.getRow(id)) return null
@@ -120,6 +123,11 @@ export class ProductRepository {
     if (patch.category !== undefined) {
       fields.push('category = ?')
       values.push(patch.category)
+    }
+    if (patch.notes !== undefined) {
+      const notes = patch.notes === null ? null : patch.notes.trim()
+      fields.push('notes = ?')
+      values.push(notes ? notes : null)
     }
     if (patch.status !== undefined) {
       fields.push('status = ?', 'archived_at = ?')

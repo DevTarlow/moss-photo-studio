@@ -287,11 +287,18 @@ export function BrandFields({
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[12px] font-semibold">Corner badge</p>
-              <p className="hint">Put your logo on every image the studio makes.</p>
+              <p className="hint">
+                {value.logoUrl ? 'Put your logo on every image the studio makes.' : 'Upload a logo first.'}
+              </p>
             </div>
-            <Switch checked={value.badgeEnabled} onCheckedChange={(checked) => patch({ badgeEnabled: checked })} label="Logo badge" />
+            <Switch
+              checked={value.badgeEnabled}
+              onCheckedChange={(checked) => patch({ badgeEnabled: checked })}
+              label="Logo badge"
+              disabled={!value.logoUrl}
+            />
           </div>
-          {value.badgeEnabled && (
+          {value.logoUrl && value.badgeEnabled && (
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="field-label" htmlFor="badge-corner">Corner</label>

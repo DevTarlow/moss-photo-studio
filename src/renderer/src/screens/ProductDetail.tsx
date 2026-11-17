@@ -27,7 +27,7 @@ import { unwrap, messageOf } from '../lib/ipc'
 import { formatDateTime, relativeTime } from '../lib/format'
 import { toast } from '../lib/toast'
 import { openProductSetPicker } from '../store/setPicker'
-import { Heading, Icon, Text } from '@astryxdesign/core'
+import { Heading, Icon, Text, TextArea } from '@astryxdesign/core'
 
 const typeLabel: Record<ProjectType, string> = {
   photo: 'Photo edit',
@@ -85,6 +85,9 @@ export function ProductDetail(): React.JSX.Element {
   const renameCancelled = useRef(false)
   const [linkOpen, setLinkOpen] = useState(false)
   const [unfiled, setUnfiled] = useState<Project[]>([])
+  const [notesValue, setNotesValue] = useState('')
+  const [notesSaved, setNotesSaved] = useState('')
+  const [notesBusy, setNotesBusy] = useState(false)
 
   const load = async (): Promise<void> => {
     if (!id) return
@@ -94,6 +97,8 @@ export function ProductDetail(): React.JSX.Element {
       const next = await unwrap(window.moss.products.detail({ id }))
       setDetail(next)
       setRenameValue(next.product.name)
+      setNotesValue(next.product.notes ?? '')
+      setNotesSaved(next.product.notes ?? '')
     } catch (caught) {
       setError(messageOf(caught))
     } finally {
@@ -105,8 +110,34 @@ export function ProductDetail(): React.JSX.Element {
     void load()
   }, [id])
 
+  const notesDirty = notesValue.trim() !== notesSaved.trim()
+
+  const persistNotes = async (announce = true): Promise<boolean> => {
+    if (!detail || !notesDirty) return true
+    setNotesBusy(true)
+    try {
+      const value = notesValue.trim()
+      const updated = await unwrap(window.moss.products.update({
+        id: detail.product.id,
+        patch: { notes: value ? value : null }
+      }))
+      setDetail((previous) => (previous ? { ...previous, product: { ...previous.product, notes: updated.notes } } : previous))
+      setNotesValue(updated.notes ?? '')
+      setNotesSaved(updated.notes ?? '')
+      await refreshProducts()
+      if (announce) toast.status('Product notes saved.')
+      return true
+    } catch (caught) {
+      toast.error(messageOf(caught))
+      return false
+    } finally {
+      setNotesBusy(false)
+    }
+  }
+
   const start = async (type: ProjectType): Promise<void> => {
     if (!detail) return
+    if (!(await persistNotes(false))) return
     setBusy(true)
     try {
       const created = await unwrap(window.moss.products.createProject({ productId: detail.product.id, type }))
@@ -258,7 +289,7 @@ export function ProductDetail(): React.JSX.Element {
   const { product, projects, counts } = detail
 
   return (
-    <AppFrame backTo="/products" backLabel="Back to Products">
+    <AppFrame backTo="/products" backLabel="Back to Products" backText="Products">
       <div className="page-scroll">
         <div className="page-pad page-max">
           <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
@@ -326,6 +357,29 @@ export function ProductDetail(): React.JSX.Element {
                 </DropdownMenu.Root>
               </div>
 
+              <div className="mt-4 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
+                <TextArea
+                  label="Product notes"
+                  value={notesValue}
+                  onChange={setNotesValue}
+                  rows={3}
+                  maxLength={500}
+                  placeholder="Material, colour, style, or anything that should stay true in images."
+                  description="Stored on this computer. Added to the description only for images you make with this product."
+                  width="100%"
+                />
+                <div className="mt-2 flex items-center justify-end gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={!notesDirty || notesBusy}
+                    onClick={() => void persistNotes(true)}
+                  >
+                    {notesBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Save Notes
+                  </Button>
+                </div>
+              </div>
+
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button variant="primary" disabled={busy} onClick={() => void start('photo')}>
                   {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={ImageIcon} size="sm" />} Edit Photo
@@ -352,8 +406,17 @@ export function ProductDetail(): React.JSX.Element {
                 <EmptyState
                   icon={<Icon icon={Package} size="lg" />}
                   title="No projects yet"
-                  line="Make an image from the source photo, or link an existing project."
-                  action={<Button variant="secondary" onClick={() => void start('image')}>Make the First Image</Button>}
+                  line="Edit the source photo for free, or make a new image with it as the product."
+                  action={
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <Button variant="primary" disabled={busy} onClick={() => void start('photo')}>
+                        <Icon icon={ImageIcon} size="sm" /> Edit Photo (Free)
+                      </Button>
+                      <Button variant="secondary" disabled={busy} onClick={() => void start('image')}>
+                        <Icon icon={Sparkles} size="sm" /> Make an Image
+                      </Button>
+                    </div>
+                  }
                   compact
                 />
               </div>

@@ -15,7 +15,7 @@ import type {
 import { estimateCents, monthBounds, monthKey } from '@shared/cost'
 import { MAX_CREATE_VARIANTS, MAX_PROMPT } from '@shared/constants'
 import { usedBrandColors } from '@shared/brandColors'
-import { appendWithinCap, composeChange, composeCreatePrompt, PROMPT_MAX } from '@shared/prompts/guards'
+import { appendWithinCap, composeChange, composeCreatePrompt, productNotesClause, PROMPT_MAX } from '@shared/prompts/guards'
 import { styleClause } from '@shared/stylePresets'
 import { nextCountedLabel } from '@shared/labels'
 import { templateById, templateWord } from '@shared/prompts/templates'
@@ -203,7 +203,15 @@ export class JobQueue {
     if ((hasPerson || hasProduct || hasScene) && input.count !== 1) {
       throw new JobStartError('invalid_payload', 'A product, person, or scene makes one image at a time.')
     }
-    const prompt = composeCreatePrompt({ text, hasProduct, hasPerson, hasScene })
+    const productNotes = input.productId
+      ? this.deps.products.getRow(input.productId)?.notes ?? null
+      : project.productId
+        ? this.deps.products.getRow(project.productId)?.notes ?? null
+        : null
+    const prompt = appendWithinCap(
+      composeCreatePrompt({ text, hasProduct, hasPerson, hasScene }),
+      productNotesClause(productNotes)
+    )
     if (prompt.length > PROMPT_MAX) {
       throw new JobStartError(
         'invalid_payload',
@@ -283,15 +291,18 @@ export class JobQueue {
     const palette = brand.colorsEnabled
       ? usedBrandColors(input.palette?.length ? input.palette : brand.colors)
       : []
-    const prompt = composeChange({
-      text,
-      kind: input.kind,
-      hasReference: true,
-      hasPerson: Boolean(input.personId),
-      hasScene: Boolean(input.sceneImageId),
-      isGiftShot: Boolean(input.isGiftShot || input.templateId === 'gift-ready'),
-      palette
-    })
+    const prompt = appendWithinCap(
+      composeChange({
+        text,
+        kind: input.kind,
+        hasReference: true,
+        hasPerson: Boolean(input.personId),
+        hasScene: Boolean(input.sceneImageId),
+        isGiftShot: Boolean(input.isGiftShot || input.templateId === 'gift-ready'),
+        palette
+      }),
+      productNotesClause(project.productId ? this.deps.products.getRow(project.productId)?.notes : null)
+    )
     if (prompt.length > PROMPT_MAX) {
       throw new JobStartError(
         'invalid_payload',

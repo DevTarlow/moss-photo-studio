@@ -627,6 +627,15 @@ const migrations: Migration[] = [
       `)
     }
   },
+  {
+    version: 14,
+    up(db) {
+      db.exec(`
+        ALTER TABLE products ADD COLUMN notes TEXT;
+        INSERT OR REPLACE INTO meta (key, value) VALUES ('schemaVersion', '14');
+      `)
+    }
+  },
 ]
 
 export const SCHEMA_VERSION = migrations[migrations.length - 1]!.version

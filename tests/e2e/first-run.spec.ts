@@ -20,8 +20,17 @@ test('onboarding starts with setup and resumes from Products', async () => {
   try {
     await expect(page.getByRole('heading', { name: 'Your personal photo studio.' })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByRole('button', { name: 'Open a Photo' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Start with a Photo · Free' })).toBeVisible()
     await page.getByRole('button', { name: 'Set Up AI Images' }).click()
     await expect(page.getByRole('heading', { name: 'Connect Meta' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Test and connect' })).toBeDisabled()
+    await expect(page.getByRole('listitem').filter({ hasText: 'Welcome' })).toContainText('Completed')
+    await page.getByRole('button', { name: 'Back' }).click()
+    await expect(page.getByRole('heading', { name: 'Your personal photo studio.' })).toBeVisible()
+    await page.getByRole('button', { name: 'Start with a Photo · Free' }).click()
+    await expect(page.getByRole('heading', { name: 'Add your first product' })).toBeVisible()
+    await expect(page.getByRole('listitem').filter({ hasText: 'Meta Key' })).toContainText('Skipped')
+    await page.getByRole('button', { name: 'Back' }).click()
     await page.getByRole('button', { name: 'Back' }).click()
     await expect(page.getByRole('heading', { name: 'Your personal photo studio.' })).toBeVisible()
 

@@ -39,6 +39,11 @@ test('onboarding saves the first photo as a Product without creating a project',
     await page.getByRole('heading', { name: 'Add your first product' }).waitFor({ timeout: 20_000 })
     await page.locator('input[type=file]').first().setInputFiles(productPhoto)
     await expect(page.getByText('Saved as a Product')).toBeVisible({ timeout: 20_000 })
+    const productName = page.getByRole('textbox', { name: 'Product name' })
+    await expect(productName).toBeFocused()
+    await productName.fill('First product')
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('textbox', { name: 'Product name' })).toHaveValue('First product')
 
     const afterProduct = await page.evaluate(async () => {
       const products = await window.moss.products.list()
@@ -49,14 +54,14 @@ test('onboarding saves the first photo as a Product without creating a project',
 
     await page.getByRole('button', { name: 'Continue', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Make it your own' })).toBeVisible()
-    await expect(page.getByText('Preview · product')).toBeVisible()
+    await expect(page.getByText('Preview · First product')).toBeVisible()
     await expect(page.getByText('Your product.')).toBeVisible()
     await expect(page.getByText('Corner badge', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Continue', exact: true }).click()
     await expect(page.getByRole('heading', { name: "You're ready to make photos." })).toBeVisible({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Finish Setup' }).click()
-    await expect(page.getByRole('heading', { name: 'product', exact: true })).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByRole('button', { name: 'Edit Photo' })).toBeVisible()
+    await page.getByRole('button', { name: 'View Product' }).click()
+    await expect(page.getByRole('heading', { name: 'First product', exact: true })).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByRole('button', { name: 'Edit Photo', exact: true })).toBeVisible()
     await expect(page.getByText('No projects yet')).toBeVisible()
 
     const afterSave = await page.evaluate(async () => {
@@ -98,7 +103,7 @@ test('onboarding lets the seller skip the product step and finish in Products', 
     await expect(page.getByRole('heading', { name: 'Make it your own' })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Continue', exact: true }).click()
     await expect(page.getByRole('heading', { name: "You're ready to make photos." })).toBeVisible({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Finish Setup' }).click()
+    await page.getByRole('button', { name: 'Open Studio' }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible({ timeout: 20_000 })
     expect(pageErrors).toEqual([])
   } finally {

@@ -181,6 +181,8 @@ export interface Product {
   updatedAt: number
   source: 'bundled' | 'user'
   blurb: string | null
+  /** Seller-written material, colour, style, or other details used in prompts. */
+  notes: string | null
   category: string | null
   /** The Set this product source belongs to, or null when unfiled. */
   setId: string | null

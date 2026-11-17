@@ -11,6 +11,7 @@ import {
   paletteClause,
   composeChange,
   composeCreatePrompt,
+  productNotesClause,
   SCENE_REF_GUARD
 } from '@shared/prompts/guards'
 
@@ -43,6 +44,13 @@ describe('the preservation guards', () => {
     const base = 'x'.repeat(PROMPT_MAX)
     expect(appendWithinCap(base, ' tiny')).toBe(base)
     expect(appendWithinCap('a'.repeat(PROMPT_MAX - 5), '12345')).toBe(`${'a'.repeat(PROMPT_MAX - 5)}12345`)
+  })
+
+  it('adds seller product notes as a short, whitespace-safe clause', () => {
+    expect(productNotesClause(null)).toBe('')
+    expect(productNotesClause('   ')).toBe('')
+    expect(productNotesClause('  matte ceramic\n  in oatmeal ')).toBe(' Keep these product details in mind: matte ceramic in oatmeal.')
+    expect(productNotesClause('x'.repeat(400)).length).toBeLessThan(340)
   })
 
   it('keeps gift composition for an open box and visible product', () => {

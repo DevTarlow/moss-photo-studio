@@ -61,6 +61,17 @@ export function appendWithinCap(base: string, addition: string): string {
 }
 
 /**
+ * Seller-written product details (material, colour, style) are context for the
+ * picture, not a replacement for the seller's description. Keep them short and
+ * drop them silently when they would push the request over the cap.
+ */
+export function productNotesClause(notes: string | null | undefined): string {
+  const clean = String(notes ?? '').replace(/\s+/g, ' ').trim()
+  if (!clean) return ''
+  return ` Keep these product details in mind: ${clean.slice(0, 300)}.`
+}
+
+/**
  * Used for a set or an edit when saved colors exist. The clause may
  * steer backgrounds and props only; it must never tint the product.
  */

@@ -117,7 +117,7 @@ export interface IpcChannels {
   'products:update': {
     request: {
       id: string
-      patch: { name?: string; category?: string | null; status?: 'active' | 'archived' }
+      patch: { name?: string; category?: string | null; notes?: string | null; status?: 'active' | 'archived' }
     }
     response: Product
   }

@@ -1,23 +1,32 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Keyboard, Search } from 'lucide-react'
-import { Button, Icon, IconButton, Kbd, TopNav, TopNavHeading } from '@astryxdesign/core'
+import { Button, Icon, IconButton, Kbd, SideNavCollapseButton, TopNav, TopNavHeading } from '@astryxdesign/core'
 import { markUrl } from '../../lib/assets'
 import { useViewportTier } from '../../lib/viewport'
 import { useUiStore } from '../../store/ui'
 import { NewProjectButton } from '../library/NewProjectButton'
+import { Tooltip } from './Tooltip'
 
 export function TopBar({
   title,
   titleContent,
   backTo,
   backLabel = 'Back',
+  backText,
+  railCollapsed = false,
+  onToggleRail,
+  canToggleRail = false,
   right
 }: {
   title?: string
   titleContent?: ReactNode
   backTo?: string
   backLabel?: string
+  backText?: string
+  railCollapsed?: boolean
+  onToggleRail?: () => void
+  canToggleRail?: boolean
   right?: ReactNode
 }): React.JSX.Element {
   const navigate = useNavigate()
@@ -36,11 +45,32 @@ export function TopBar({
             logoLabel="Moss Photo Studio"
             heading={compact ? undefined : 'Moss Photo Studio'}
             headingHref="/library"
+            headerEndContent={
+              canToggleRail && onToggleRail ? (
+                <span className="no-drag inline-flex">
+                  <Tooltip label={railCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+                    <SideNavCollapseButton
+                      collapsible={{ isCollapsed: railCollapsed, onCollapsedChange: () => onToggleRail() }}
+                      size="sm"
+                    />
+                  </Tooltip>
+                </span>
+              ) : undefined
+            }
           />
         }
         startContent={
           <div className={`no-drag flex min-w-0 items-center gap-2${compact ? ' max-w-[45vw]' : ''}`}>
-            {backTo && (
+            {backTo && (backText ? (
+              <Button
+                label={backText}
+                aria-label={backLabel}
+                variant="ghost"
+                size="sm"
+                icon={<Icon icon={ArrowLeft} size="sm" />}
+                onClick={() => navigate(backTo)}
+              />
+            ) : (
               <IconButton
                 label={backLabel}
                 icon={<Icon icon={ArrowLeft} size="sm" />}
@@ -48,7 +78,7 @@ export function TopBar({
                 size="sm"
                 onClick={() => navigate(backTo)}
               />
-            )}
+            ))}
             {titleContent ? (
               <div className="min-w-0">{titleContent}</div>
             ) : title ? (

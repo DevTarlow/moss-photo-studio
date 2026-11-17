@@ -155,6 +155,25 @@ describe('job queue create', () => {
     expect(String(server.requests()[0]?.body?.prompt)).toContain('Keep the setting clean and studio-like')
   })
 
+  it('adds the selected product notes to the run prompt', async () => {
+    const product = await productService.addFromBytes({
+      bytes: await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 180, g: 170, b: 150 } } }).jpeg().toBuffer(),
+      name: 'Mug'
+    })
+    products.update(product.id, { notes: 'matte ceramic, oatmeal glaze' })
+    const project = imageProject()
+    const { jobId } = await queue.startCreate({
+      projectId: project.id,
+      prompt: 'On a warm table',
+      count: 1,
+      shape: 'square',
+      format: 'webp',
+      productId: product.id
+    })
+    await waitForJob(jobId)
+    expect(String(server.requests()[0]?.body?.prompt)).toContain('matte ceramic, oatmeal glaze')
+  })
+
   it('sends a product and a scene reference, with the scene named as the second image', async () => {
     const sourceProject = imageProject('Source')
     const source = await media.importSource({

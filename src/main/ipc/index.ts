@@ -702,6 +702,7 @@ export function registerIpcHandlers(context: AppContext): void {
       patch: z.object({
         name: z.string().trim().min(1).max(80).optional(),
         category: z.string().max(40).nullable().optional(),
+        notes: z.string().trim().max(500).nullable().optional(),
         status: z.enum(['active', 'archived']).optional()
       })
     }),

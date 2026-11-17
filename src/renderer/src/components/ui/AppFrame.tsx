@@ -12,6 +12,7 @@ export function AppFrame({
   titleContent,
   backTo,
   backLabel,
+  backText,
   topbarRight
 }: {
   children: ReactNode
@@ -19,6 +20,7 @@ export function AppFrame({
   titleContent?: ReactNode
   backTo?: string
   backLabel?: string
+  backText?: string
   topbarRight?: ReactNode
 }): React.JSX.Element {
   const tier = useViewportTier()
@@ -33,7 +35,19 @@ export function AppFrame({
       variant="section"
       contentPadding={0}
       mobileNav={{ breakpoint: 'sm' }}
-      topNav={<TopBar title={title} titleContent={titleContent} backTo={backTo} backLabel={backLabel} right={topbarRight} />}
+      topNav={
+        <TopBar
+          title={title}
+          titleContent={titleContent}
+          backTo={backTo}
+          backLabel={backLabel}
+          backText={backText}
+          railCollapsed={collapsed}
+          onToggleRail={toggleRail}
+          canToggleRail={tier === 'wide'}
+          right={topbarRight}
+        />
+      }
       sideNav={<Rail collapsed={collapsed} onToggle={toggleRail} />}
     >
       <div key={location.pathname} className="flex h-full min-h-0 flex-col">

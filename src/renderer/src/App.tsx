@@ -265,6 +265,7 @@ export function RootLayout(): React.JSX.Element {
   const setBudgetOpen = useUiStore((state) => state.setBudgetOpen)
   const jobsRevision = useJobsStore((state) => state.revision)
   const projectName = useWorkspaceStore((state) => state.project?.name ?? null)
+  const products = useAppStore((state) => state.products)
   const navigate = useNavigate()
   const location = useLocation()
   const previousLicense = useRef<string | null>(null)
@@ -277,10 +278,16 @@ export function RootLayout(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
+    const productMatch = /^\/product\/([^/?#]+)/.exec(location.pathname)
+    const productName = productMatch?.[1]
+      ? products.find((product) => product.id === productMatch[1])?.name ?? null
+      : null
     document.title = location.pathname.startsWith('/project/') && projectName
       ? `${projectName} · Moss Photo Studio`
-      : titleForPath(location.pathname)
-  }, [location.pathname, projectName])
+      : productName
+        ? `${productName} · Moss Photo Studio`
+        : titleForPath(location.pathname)
+  }, [location.pathname, projectName, products])
 
   useEffect(() => {
     if (!booted) return

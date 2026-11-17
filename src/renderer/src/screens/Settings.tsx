@@ -9,6 +9,7 @@ import {
   FolderOpen,
   HardDriveDownload,
   Loader2,
+  RotateCcw,
   ShieldCheck,
   Stethoscope,
   Trash2,
@@ -632,7 +633,9 @@ function LicenseSection(): React.JSX.Element {
 
 function PrivacySection(): React.JSX.Element {
   const settings = useAppStore((state) => state.settings)
+  const appInfo = useAppStore((state) => state.appInfo)
   const confirm = useConfirm()
+  const [resetting, setResetting] = useState(false)
   const [deviceId, setDeviceId] = useState('')
   useEffect(() => {
     void unwrap(window.moss.settings.get({ key: 'deviceId' }))
@@ -652,6 +655,21 @@ function PrivacySection(): React.JSX.Element {
       toast.status('Usage history deleted.')
     } catch {
       toast.error('Usage history could not be deleted.')
+    }
+  }
+  const resetApp = async (): Promise<void> => {
+    const ok = await confirm({
+      title: 'Reset Moss Photo Studio?',
+      body: 'This deletes all local app data, settings, license, and saved keys, then closes the app. It cannot be undone.',
+      confirmLabel: 'Reset and Close',
+      danger: true
+    })
+    if (!ok) return
+    setResetting(true)
+    const result = await window.moss.app.reset().catch(() => null)
+    if (!result?.ok) {
+      setResetting(false)
+      toast.error('The app could not be reset.')
     }
   }
   const deleteLogs = async (): Promise<void> => {
@@ -731,6 +749,22 @@ function PrivacySection(): React.JSX.Element {
           </Button>
         </div>
       </SectionCard>
+      {appInfo && !appInfo.isPackaged && (
+        <SectionCard className="mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="field-label">Reset this app</p>
+              <p className="hint mt-1">
+                Deletes all local app data, settings, license, and saved keys on this computer, then closes Moss.
+                This cannot be undone.
+              </p>
+            </div>
+            <Button variant="secondary" disabled={resetting} onClick={() => void resetApp()}>
+              <Icon icon={RotateCcw} size="sm" /> Reset App
+            </Button>
+          </div>
+        </SectionCard>
+      )}
       <p className="hint mt-3">Library folder: <span className="font-mono">{settings?.libraryPath ?? ''}</span></p>
     </div>
   )

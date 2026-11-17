@@ -9,10 +9,25 @@ import { BUNDLED_PRODUCT_SIZE, BUNDLED_PRODUCTS, bundledProductCards, isBundledP
 import { wrapScenePrompt, wrapModelPrompt, PROMPT_MAX } from '@shared/prompts/guards'
 import { nextCountedLabel } from '@shared/labels'
 import { shapeForImage, sizeForShape } from '@shared/shapes'
-import { safeBaseName, uniqueFileName, numberedFileName } from '@shared/files'
+import { cleanProductName, safeBaseName, uniqueFileName, numberedFileName } from '@shared/files'
 import { usd, estimateCents, monthBounds, monthKey } from '@shared/cost'
 
 const root = path.resolve(__dirname, '../..')
+
+describe('product names from files', () => {
+  it('keeps readable words and replaces camera filenames', () => {
+    expect(cleanProductName('product.webp')).toBe('product')
+    expect(cleanProductName('speckled-mug.jpg')).toBe('speckled mug')
+    expect(cleanProductName('linen_tote_final.png')).toBe('linen tote')
+    expect(cleanProductName('PXL_20240101_123456.jpg')).toBe('Product photo')
+    expect(cleanProductName('IMG_4821.jpeg')).toBe('Product photo')
+    expect(cleanProductName('  ')).toBe('Product photo')
+  })
+
+  it('keeps names inside the product limit', () => {
+    expect(cleanProductName(`${'a'.repeat(120)}.jpg`).length).toBeLessThanOrEqual(80)
+  })
+})
 
 describe('scenes', () => {
   it('has eight unique scenes in four categories', () => {
