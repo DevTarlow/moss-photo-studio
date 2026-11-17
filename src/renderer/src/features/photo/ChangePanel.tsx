@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Mountain, Sparkles, X } from 'lucide-react'
-import { DropdownMenu, Icon } from '@astryxdesign/core'
+import { Icon, Selector } from '@astryxdesign/core'
 import type { Person } from '@shared/types'
 import type { Template as TemplateType } from '@shared/prompts/templates'
 import { TEMPLATE_GROUPS, templateAsset, templateById } from '@shared/prompts/templates'
@@ -15,9 +15,10 @@ import { TextareaCounter } from '../../components/ui/TextareaCounter'
 
 type TextSource = 'user' | 'tile'
 
-// A studio prompt is a whole sentence the user can add without editing it.
-// Each one targets a different photo property, so they suit clothing, hard
-// goods, food, and packaged products alike and can be combined safely.
+// A studio prompt is a whole description the user can apply without editing
+// it. Each one targets a different photo property, so they suit clothing, hard
+// goods, food, and packaged products alike. Choosing one replaces the
+// description; the options are never appended to each other.
 const STUDIO_PROMPTS = [
   {
     label: 'Clean studio background',
@@ -87,6 +88,9 @@ export function ChangePanel({
   const selectedTemplate = templateId ? templateById(templateId) : undefined
   const modelPerson = people.find((person) => person.id === personId) ?? people[0]
   const over = text.length > PROMPT_MAX
+  // The selector mirrors the description exactly, so editing the text clears
+  // the chosen prompt and choosing another prompt replaces the old one.
+  const selectedStudioPrompt = STUDIO_PROMPTS.find((prompt) => prompt.text === text)
 
   const applyTile = (tile: PendingTile): void => {
     onText(tile.prompt, 'tile')
@@ -108,8 +112,9 @@ export function ChangePanel({
     applyTile(tile)
   }
 
-  const addStudioPrompt = (prompt: typeof STUDIO_PROMPTS[number]): void => {
-    onText(text.trim() ? `${text.trim().replace(/[.\s]+$/, '')}. ${prompt.text}` : prompt.text, 'user')
+  const chooseStudioPrompt = (value: string): void => {
+    const prompt = STUDIO_PROMPTS.find((entry) => entry.text === value)
+    if (prompt) onText(prompt.text, 'user')
   }
 
   const tileImage = (template: TemplateType): string => {
@@ -175,30 +180,23 @@ export function ChangePanel({
       </div>
 
       <div className="mt-3">
-        <p className="field-label">Studio prompts <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
-        <DropdownMenu
-          button={{
-            label: 'Add a studio prompt',
-            children: 'Add a studio prompt',
-            variant: 'secondary',
-            size: 'sm',
-            width: '100%',
-            icon: <Icon icon={Sparkles} size="sm" />,
-            isDisabled: disabled
-          }}
-          menuWidth={320}
-          items={STUDIO_PROMPTS.map((prompt) => {
-            const added = text.toLowerCase().includes(prompt.text.toLowerCase())
-            return {
-              id: prompt.label,
-              label: prompt.label,
-              description: added ? 'Already in your description' : prompt.description,
-              isDisabled: added,
-              onClick: () => addStudioPrompt(prompt)
-            }
-          })}
+        <Selector
+          label="Studio prompt"
+          isOptional
+          isDisabled={disabled}
+          size="sm"
+          width="100%"
+          startIcon={<Icon icon={Sparkles} size="sm" />}
+          placeholder="Choose a phrase"
+          value={selectedStudioPrompt?.text}
+          onChange={chooseStudioPrompt}
+          options={STUDIO_PROMPTS.map((prompt) => ({
+            value: prompt.text,
+            label: prompt.label,
+            description: prompt.description
+          }))}
         />
-        <p className="hint mt-1">Adds a ready-made phrase to your description.</p>
+        <p className="hint mt-1">Replaces your description with the chosen phrase.</p>
       </div>
 
       <div className="mt-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>

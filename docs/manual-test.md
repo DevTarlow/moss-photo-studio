@@ -33,7 +33,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 - Start from a saved product, a library image, or a dropped file. The original is the first version.
 - Change Photo is marked AI; Adjust Photo is marked Free.
-- Change Photo offers an optional Studio prompts dropdown under the description with Clean studio background, Soft, natural light, True-to-life detail, and Remove clutter; each adds a generic, studio-ready phrase without rewriting existing words and refuses a phrase already present. Quick Looks remain visible without clipped labels.
+- Change Photo offers an optional Studio prompt dropdown under the description with Clean studio background, Soft, natural light, True-to-life detail, and Remove clutter; choosing one replaces the description with that generic, studio-ready phrase, only one can be chosen at a time, and editing the description clears the choice. Quick Looks remain visible without clipped labels.
 - Choose a Quick Look or write a change. The button shows the price before the run; the first paid run shows the first-run confirmation and then disappears on later runs.
 - Person is optional on any change: the same picker as the generator shows portraits in a menu, the selected avatar opens a larger preview, a chosen person is sent with the change, and the X clears it again.
 - The canvas toolbar floats over the stage: zoom out, Fit, 100%, zoom in, a live readout, undo/redo for the current adjust preview, and Compare. Compare is available whenever the selected version has a parent. Scrolling over the stage zooms under the pointer, the stage scrolls at 100% instead of clipping, and holding the middle mouse button drags the zoomed photo around it.

@@ -10,7 +10,7 @@ AI uses your own Meta key. A license key is required to use the app. Settings, P
 
 ### Edit a photo
 
-The Image Editor has 32 Quick Looks in six groups, 24 bundled people, and an optional studio-prompt menu for generic, ready-to-use phrases.
+The Image Editor has 32 Quick Looks in six groups, 24 bundled people, and an optional studio-prompt dropdown that replaces the description with a generic, ready-to-use phrase.
 
 The local adjust panel covers Free, 1:1, 4:5, and 16:9 crop, rotate, flip, exposure, contrast, highlights, shadows, warmth, saturation, sharpness, and vignette. Double-click a slider to reset it.
 
