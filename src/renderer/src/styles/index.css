@@ -378,6 +378,7 @@ svg.lucide { stroke-width: 1.75; }
 .ws-toolbar { position: absolute; top: 10px; right: 12px; display: flex; gap: 6px; z-index: 5; }
 .canvas-wrap { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; }
 .canvas-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.canvas-stage[data-panning='true'] { cursor: grabbing; user-select: none; }
 .canvas-image { max-width: 92%; max-height: 92%; object-fit: contain; box-shadow: var(--shadow-dark); }
 .shot-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 18px; overflow-y: auto; }
 @media (max-width: 1100px) { .shot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

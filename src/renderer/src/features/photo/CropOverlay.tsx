@@ -19,6 +19,8 @@ export function CropOverlay({
   const host = useRef<HTMLDivElement>(null)
 
   const start = (event: ReactPointerEvent, handle: Handle | 'move'): void => {
+    // Leave other buttons to the canvas, which pans on the middle button.
+    if (event.button !== 0) return
     event.preventDefault()
     onBegin()
     const parent = host.current?.parentElement

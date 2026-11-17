@@ -125,6 +125,8 @@ export function PhotoWorkspace(): React.JSX.Element {
   const handledJob = useRef<string | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
   const compareRef = useRef<HTMLDivElement>(null)
+  const panRef = useRef<{ pointerId: number; x: number; y: number; left: number; top: number } | null>(null)
+  const [panning, setPanning] = useState(false)
 
   useEffect(() => {
     if (personId && !people.some((person) => person.id === personId)) setPersonId(null)
@@ -737,6 +739,7 @@ export function PhotoWorkspace(): React.JSX.Element {
     setCompareValue(Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100)))
   }
   const startCompareDrag = (event: React.PointerEvent<HTMLDivElement>): void => {
+    if (event.button !== 0) return
     event.preventDefault()
     updateCompare(event.clientX)
     const move = (moveEvent: PointerEvent): void => updateCompare(moveEvent.clientX)
@@ -746,6 +749,44 @@ export function PhotoWorkspace(): React.JSX.Element {
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
+  }
+
+  // Middle-button drag pans the canvas. The photo is a scaled box inside the
+  // scroll container, so panning moves the stage's scroll offsets, never a
+  // transform; at Fit there is nothing to scroll and the drag is ignored.
+  const startPan = (event: React.PointerEvent<HTMLDivElement>): void => {
+    if (event.button !== 1 || panRef.current) return
+    // Cancel the middle-click default everywhere on the canvas, so a platform
+    // autoscroll never starts; only a scrollable stage actually pans.
+    event.preventDefault()
+    const stage = event.currentTarget
+    if (stage.scrollWidth <= stage.clientWidth && stage.scrollHeight <= stage.clientHeight) return
+    panRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      left: stage.scrollLeft,
+      top: stage.scrollTop
+    }
+    stage.setPointerCapture(event.pointerId)
+    setPanning(true)
+  }
+
+  const movePan = (event: React.PointerEvent<HTMLDivElement>): void => {
+    const pan = panRef.current
+    if (!pan || pan.pointerId !== event.pointerId) return
+    const stage = event.currentTarget
+    stage.scrollLeft = pan.left - (event.clientX - pan.x)
+    stage.scrollTop = pan.top - (event.clientY - pan.y)
+  }
+
+  const endPan = (event: React.PointerEvent<HTMLDivElement>): void => {
+    const pan = panRef.current
+    if (!pan || pan.pointerId !== event.pointerId) return
+    panRef.current = null
+    setPanning(false)
+    const stage = event.currentTarget
+    if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId)
   }
 
   return (
@@ -813,9 +854,15 @@ export function PhotoWorkspace(): React.JSX.Element {
               aria-label="Photo canvas. Use arrow keys to change version. Hold Space to see the original."
               className="canvas-stage outline-none"
               data-zoomed={zoom > 1.001}
+              data-panning={panning ? 'true' : undefined}
               onKeyDown={onCanvasKeyDown}
               onKeyUp={onCanvasKeyUp}
               onBlur={() => setShowOriginal(false)}
+              onPointerDown={startPan}
+              onPointerMove={movePan}
+              onPointerUp={endPan}
+              onPointerCancel={endPan}
+              onLostPointerCapture={endPan}
             >
               {displayImage?.url && fit > 0 ? (
                 <div
@@ -913,7 +960,7 @@ export function PhotoWorkspace(): React.JSX.Element {
             )}
             {!compare && (
               <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px]" style={{ color: 'var(--white-60)' }}>
-                {selected?.width && selected?.height ? `${selected.width} × ${selected.height}` : ''} {fit > 0 ? `· ${Math.round(fit * zoom * 100)}%` : ''} · {shapeLabel(project.shape)}
+                {selected?.width && selected?.height ? `${selected.width} × ${selected.height}` : ''} {fit > 0 ? `· ${Math.round(fit * zoom * 100)}%` : ''} · {shapeLabel(project.shape)}{zoom > 1.001 ? ' · Middle-drag to pan' : ''}
               </div>
             )}
           </div>
