@@ -111,7 +111,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 - Logo & Colors: colors, From a Photo, logo, badge corner/size/opacity, default look, preview.
 - **There is no Business section.** `/settings/business` redirects to the Meta connection page.
 - Storage: backup, restore, diagnostics, library path, and the backup status.
-- Appearance: theme, density, reduced motion; preferences persist after restart.
+- Appearance: theme and density; preferences persist after restart.
 - License, Updates, Privacy, and About work as before. About uses the Meta AI Studio link.
 
 ## License and offline behavior

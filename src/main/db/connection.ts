@@ -790,7 +790,6 @@ function seedDefaults(db: Db, libraryPath: string): void {
     set.run('exportFolders', JSON.stringify({}))
     set.run('windowState', JSON.stringify(null))
     set.run('licenseGraceNotified', JSON.stringify(false))
-    set.run('reduceMotion', JSON.stringify('system'))
     db.prepare('INSERT OR IGNORE INTO brand (id, updated_at) VALUES (?, ?)').run('default', Date.now())
     db.prepare('INSERT OR IGNORE INTO meta (key, value) VALUES (?, ?)').run('schemaVersion', String(SCHEMA_VERSION))
   })

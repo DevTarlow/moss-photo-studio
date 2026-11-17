@@ -80,7 +80,7 @@ const brandPatchSchema = z.object({
 const rendererSettingKeys = [
   'theme', 'density', 'onboardingStep', 'onboardingDone', 'onboardingDismissed', 'setupDismissed',
   'firstRunConfirmShown', 'licenseGraceNotified', 'concurrency', 'budgetCents',
-  'defaultFormat', 'defaultShape', 'lastProjectId', 'exportDefaults', 'reduceMotion'
+  'defaultFormat', 'defaultShape', 'lastProjectId', 'exportDefaults'
 ] as const
 
 const settingSchemas: Partial<Record<SettingKey, z.ZodTypeAny>> = {
@@ -98,7 +98,6 @@ const settingSchemas: Partial<Record<SettingKey, z.ZodTypeAny>> = {
   defaultShape: shapeSchema,
   lastProjectId: z.string().nullable(),
   exportDefaults: exportOptionsSchema,
-  reduceMotion: z.enum(['system', 'reduce', 'full']),
   windowState: z.object({
     x: z.number().optional(),
     y: z.number().optional(),

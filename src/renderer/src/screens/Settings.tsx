@@ -454,7 +454,7 @@ function AppearanceSection(): React.JSX.Element {
   const refreshSettings = useAppStore((state) => state.refreshSettings)
   const setTheme = useAppStore((state) => state.setTheme)
   if (!settings) return <Skeleton className="h-64" />
-  const setSetting = async (key: 'density' | 'reduceMotion', value: unknown): Promise<void> => {
+  const setSetting = async (key: 'density', value: unknown): Promise<void> => {
     try {
       await unwrap(window.moss.settings.set({ key, value }))
       await refreshSettings()
@@ -491,24 +491,6 @@ function AppearanceSection(): React.JSX.Element {
               value={settings.density}
               onChange={(value) => void setSetting('density', value)}
               options={[{ value: 'comfortable' as const, label: 'Comfortable' }, { value: 'compact' as const, label: 'Compact' }]}
-            />
-          </div>
-        </SectionCard>
-        <SectionCard>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="field-label mb-0">Reduce motion</p>
-              <p className="hint">Use the system preference, or choose for this app.</p>
-            </div>
-            <Segmented
-              label="Reduce motion"
-              value={settings.reduceMotion}
-              onChange={(value) => void setSetting('reduceMotion', value)}
-              options={[
-                { value: 'system' as const, label: 'System' },
-                { value: 'reduce' as const, label: 'Reduce' },
-                { value: 'full' as const, label: 'Full' }
-              ]}
             />
           </div>
         </SectionCard>

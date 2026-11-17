@@ -21,7 +21,7 @@ Astryx is beta. Pin exact versions and commit the lockfile; do not upgrade casua
 - **Text:** `#1C1A17` / `#E9E4D6` primary; `#5C574E` / `#B9B3A2` secondary; disabled values are dark enough for AA.
 - **Typography:** Inter body, Plus Jakarta Sans headings; base 14px, ratio 1.2.
 - **Radii:** 6px inner, 8px element, 12px container, 16px page.
-- **Motion:** fast 120ms, medium 240ms, slow 400ms; the Astryx theme honors reduced motion when the app setting follows the system.
+- **Motion:** fast 120ms, medium 240ms, slow 400ms; the app follows the OS Reduced Motion preference and has no in-app motion override.
 - **Canvas:** local `--moss-canvas` / `--moss-canvas-text` tokens for the dark editor stage.
 
 The theme is applied by `src/renderer/src/theme/MossThemeProvider.tsx`. It resolves the saved `theme` setting, including the OS preference for `system`, passes it to Astryx `Theme`, and wires `LinkProvider` to a small React Router adapter so Astryx links stay inside the hash router.

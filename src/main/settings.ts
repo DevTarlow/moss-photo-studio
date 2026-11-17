@@ -28,7 +28,6 @@ export const SETTING_KEYS = [
   'exportFolders',
   'windowState',
   'licenseGraceNotified',
-  'reduceMotion',
   'lastBackupAt',
   'lastBackupDir',
   'lastDiagnosticsDir'
@@ -111,7 +110,6 @@ export class SettingsStore {
     const density = this.get<DensitySetting>('density', 'comfortable')
     const defaultFormat = this.get<Format>('defaultFormat', 'webp')
     const defaultShape = this.get<Shape>('defaultShape', 'square')
-    const reduceMotion = this.get<'system' | 'reduce' | 'full'>('reduceMotion', 'system')
     return {
       theme: ['system', 'light', 'dark'].includes(theme) ? theme : 'light',
       density: density === 'compact' ? 'compact' : 'comfortable',
@@ -134,7 +132,6 @@ export class SettingsStore {
       },
       windowState: this.windowState(),
       licenseGraceNotified: this.get<boolean>('licenseGraceNotified', false),
-      reduceMotion: ['system', 'reduce', 'full'].includes(reduceMotion) ? reduceMotion : 'system',
       lastBackupAt: this.get<number | null>('lastBackupAt', null)
     }
   }

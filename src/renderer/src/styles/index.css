@@ -255,18 +255,21 @@ svg.lucide { stroke-width: 1.75; }
 @media (max-width: 999px) {
   .page-pad { padding: 16px 20px 36px; }
 }
+/* The OS Reduced Motion preference is the only motion setting: no in-app
+   override. These rules also reach Astryx's CSS animations because an
+   `!important` longhand beats a normal shorthand regardless of specificity. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; }
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+  .shimmer-block::after,
+  .skeleton::after { animation: none !important; opacity: 0; }
+  .shimmer-block,
+  .skeleton { background: var(--surface-2); }
 }
-html[data-motion='reduce'] *, html[data-motion='reduce'] *::before, html[data-motion='reduce'] *::after {
-  animation-duration: 1ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 1ms !important;
-}
-html[data-motion='reduce'] .shimmer-block::after,
-html[data-motion='reduce'] .skeleton::after { animation: none !important; opacity: 0; }
-html[data-motion='reduce'] .shimmer-block,
-html[data-motion='reduce'] .skeleton { background: var(--surface-2); }
 
 /* Toasts */
 .toast-viewport { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }

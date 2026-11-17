@@ -54,7 +54,6 @@ The redesign keeps the Moss identity and the custom canvas, and adopts Astryx fo
 - Lightbox + confirm stacking leaves the lightbox’s key handlers active. The menu keyboard highlight is 1.15:1, the project-name focus border 1.55:1, and the light-theme lightbox focus ring 1.79–2.30:1.
 - The switch track and thumb are 1.65:1. The warning badge is 4.44:1 at 11px. The token audit does not test these state pairs.
 - Toasts are nested live regions and auto-dismiss without pause on focus. The command palette is a combobox/listbox hybrid whose options are real buttons. Crop is pointer-only.
-- `reduceMotion: 'system'` writes `data-motion="system"`, but the CSS only reduces motion for `data-motion="reduce"`; the OS preference is not honored by default.
 - Axe currently filters to serious/critical only, and several dialogs, the palette, the dropzone, and save-product flows are not in the axe matrix.
 
 ## Highest-impact fixes

@@ -420,7 +420,6 @@ export interface SettingsAll {
   exportDefaults: ExportOptions
   windowState: WindowState | null
   licenseGraceNotified: boolean
-  reduceMotion: 'system' | 'reduce' | 'full'
   lastBackupAt: number | null
 }
 
