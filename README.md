@@ -4,7 +4,7 @@ Moss Photo Studio is a local-first desktop photo studio for shops and resellers.
 
 I built it for the part of shop work that eats an afternoon: getting a bottle, a candle, or a pair of earrings to look right. It is a full AI image generator and editor. The product, person, and Set tools are shaped by that work, but the editor and generator work for any image. Use the Image Editor on a photo you already have, or describe a new scene in the Image Generator. Both can use saved product and person references. And both keep every result as a version you can compare, export, or build on.
 
-AI uses your own Meta key. There is no account, no cloud library, and no telemetry. A license key is required to use the app. Settings, Privacy lists what stays here and what goes to Meta or the license center. The separate license portal handles the buyer account, machine resets, and downloads.
+AI uses your own Meta key. A license key is required to use the app. Settings, Privacy lists what stays here and what goes to Meta or the license center. The separate license portal handles the buyer account, machine resets, and downloads.
 
 ## What you can do
 

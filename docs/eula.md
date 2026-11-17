@@ -7,7 +7,7 @@ Last updated: 2026-11-16
 
 ## 1. The product
 
-Moss Photo Studio is desktop software from Moss Toolbox ("Moss", "we", "us").
+Moss Photo Studio is desktop software from Moss AI Studio ("Moss", "we", "us").
 It runs on your computer, keeps your library in a folder you choose, and
 contacts Meta for paid image requests and the Moss license center for license
 checks. The app has no Moss account.
@@ -112,4 +112,4 @@ exclusive jurisdiction, except where consumer law gives you a different forum.
 
 ## 13. Contact
 
-Moss Toolbox, tarlow@mossaistudio.com, https://mossphotostudio.com.
+Moss AI Studio, tarlow@mossaistudio.com, https://mossphotostudio.com.
