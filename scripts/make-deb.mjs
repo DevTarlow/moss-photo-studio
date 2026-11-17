@@ -60,14 +60,14 @@ Version: ${version}
 Section: graphics
 Priority: optional
 Architecture: ${arch}
-Maintainer: Moss Toolbox <tarlow@mossaistudio.com>
+Maintainer: Moss AI Studio <tarlow@mossaistudio.com>
 Installed-Size: ${installedKb}
 Depends: libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0
 Homepage: ${pkg.homepage}
-Description: A photo studio for people who sell things
- Turn one product photo into a full listing set, change a photo you already
- have, or describe a new image. The studio runs on this computer and keeps
- the library in a folder you own.
+Description: A local-first photo studio for shops and resellers
+ Make an AI image from text or change a photo you already have, with product,
+ person, and scene references. The studio runs on this computer and keeps the
+ library in a folder you own.
 `
 fs.writeFileSync(path.join(stage, 'DEBIAN', 'control'), control, { mode: 0o644 })
 fs.chmodSync(path.join(stage, 'DEBIAN'), 0o755)

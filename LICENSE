@@ -1,12 +1,13 @@
-Copyright (c) 2026 Moss Toolbox. All rights reserved.
+Copyright (c) 2026 Moss AI Studio. All rights reserved.
 
-Moss Photo Studio is proprietary software.
+Moss Photo Studio is proprietary software from Moss AI Studio (mossaistudio.com).
+It is sold at mossphotostudio.com.
 
 The source code in this repository is published so that buyers can inspect what
 runs on their computer. Publication is not a grant of rights. No license or
 right is granted to use, copy, modify, merge, publish, distribute, sublicense,
 sell, or build this software for use, in source or binary form, except under a
-paid license agreement with Moss Toolbox.
+paid license agreement with Moss AI Studio.
 
 A license key purchased from https://mossphotostudio.com is required to use the
 app. The end-user terms are in docs/eula.md.
@@ -14,8 +15,8 @@ app. The end-user terms are in docs/eula.md.
 Third-party components and fonts are licensed under their own terms. See
 LICENSES.md for the notices that ship with the app.
 
-"Moss", "Moss Toolbox", "Moss Photo Studio", and the Moss marks are trademarks
-of Moss Toolbox. No trademark rights are granted by this notice.
+"Moss", "Moss AI Studio", "Moss Photo Studio", and the Moss marks are
+trademarks of Moss AI Studio. No trademark rights are granted by this notice.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,

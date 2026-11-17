@@ -1,6 +1,8 @@
 import type { MenuContext } from './types'
 
 export const APP_NAME = 'Moss Photo Studio'
+// Stable bundle id and fingerprint salt. Do not rename it with the brand:
+// changing it would break existing installs and saved licenses.
 export const APP_ID = 'com.mosstoolbox.photostudio'
 export const APP_SLUG = 'moss-photo-studio'
 export const APP_VERSION = '1.0.4'

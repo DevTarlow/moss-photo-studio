@@ -1,11 +1,12 @@
 {
   "name": "moss-photo-studio",
   "version": "1.0.4",
-  "description": "A photo studio for people who sell things.",
+  "description": "A local-first desktop photo studio for shops and resellers.",
   "main": "./out/main/index.js",
   "author": {
-    "name": "Moss Toolbox",
-    "email": "tarlow@mossaistudio.com"
+    "name": "Moss AI Studio",
+    "email": "tarlow@mossaistudio.com",
+    "url": "https://mossaistudio.com"
   },
   "license": "SEE LICENSE IN LICENSE",
   "private": true,

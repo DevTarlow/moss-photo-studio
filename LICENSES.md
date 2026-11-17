@@ -1,6 +1,6 @@
 # Licenses and provenance
 
-Moss Photo Studio is proprietary software from Moss Toolbox. Copyright (c) 2026 Moss Toolbox. All rights reserved. The source is published for inspection only; using the app requires a paid license under [docs/eula.md](docs/eula.md). See [LICENSE](LICENSE). You may not redistribute the source, a modified build, or the bundled reference imagery as your own. Third-party components keep the licenses below.
+Moss Photo Studio is proprietary software from Moss AI Studio (mossaistudio.com), sold at mossphotostudio.com. Copyright (c) 2026 Moss AI Studio. All rights reserved. The source is published for inspection only; using the app requires a paid license under [docs/eula.md](docs/eula.md). See [LICENSE](LICENSE). You may not redistribute the source, a modified build, or the bundled reference imagery as your own. Third-party components keep the licenses below.
 
 Third-party components keep their own licenses. The full text of each package's license is included in its npm package and, for the packaged application, in the application archive. The fonts and their OFL texts are also copied to `resources/licenses` and packaged with the app.
 
@@ -49,12 +49,12 @@ Both families are self-hosted. The app has no font CDN request.
 
 | Asset | Provenance | License |
 | --- | --- | --- |
-| `resources/brand/mark.png`, `icon.png`, `512x512.png`, `icon-256.png`, `icon.icns`, `icon.ico` | The Moss mark and icon renditions generated from it for this app | © 2026 Moss Toolbox, supplied with the app |
-| `resources/tiles/*.webp` (16 editor examples) | Reference renders made for the Moss Photo Studio interface | © 2026 Moss Toolbox, supplied with the app |
-| `resources/tiles/scenes/*.webp` (8 scene examples) | Reference renders made for the Moss Photo Studio interface | © 2026 Moss Toolbox, supplied with the app |
-| `resources/tiles/models/<person>/*.webp` (96 model references) | Synthetic people reference renders, one set per bundled person, made for the Moss Photo Studio interface. They are not photographs of real customers | © 2026 Moss Toolbox, supplied with the app |
-| `resources/tiles/examples/*.webp` (8 empty state and starter examples) | Reference renders made for the Moss Photo Studio interface | © 2026 Moss Toolbox, supplied with the app |
-| `resources/people/*.webp` and `*-portrait.webp` (12 people, 24 files) | Synthetic reference people made for the app. Names and one-line descriptions are fictional | © 2026 Moss Toolbox, supplied with the app |
+| `resources/brand/mark.png`, `icon.png`, `512x512.png`, `icon-256.png`, `icon.icns`, `icon.ico` | The Moss mark and icon renditions generated from it for this app | © 2026 Moss AI Studio, supplied with the app |
+| `resources/tiles/*.webp` (16 editor examples) | Reference renders made for the Moss Photo Studio interface | © 2026 Moss AI Studio, supplied with the app |
+| `resources/tiles/scenes/*.webp` (8 scene examples) | Reference renders made for the Moss Photo Studio interface | © 2026 Moss AI Studio, supplied with the app |
+| `resources/tiles/models/<person>/*.webp` (96 model references) | Synthetic people reference renders, one set per bundled person, made for the Moss Photo Studio interface. They are not photographs of real customers | © 2026 Moss AI Studio, supplied with the app |
+| `resources/tiles/examples/*.webp` (8 empty state and starter examples) | Reference renders made for the Moss Photo Studio interface | © 2026 Moss AI Studio, supplied with the app |
+| `resources/people/*.webp` and `*-portrait.webp` (12 people, 24 files) | Synthetic reference people made for the app. Names and one-line descriptions are fictional | © 2026 Moss AI Studio, supplied with the app |
 
 The app's interface labels these as examples and synthetic. They are not sold as stock imagery and are not a license for a seller's own product photography.
 

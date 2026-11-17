@@ -154,4 +154,4 @@ More detail lives in [docs/licensing.md](docs/licensing.md), [docs/checkout-inte
 
 ## License
 
-Moss Photo Studio is proprietary software. Copyright (c) 2026 Moss Toolbox. All rights reserved. The source is published for inspection only; using the app requires a paid license under [docs/eula.md](docs/eula.md). See [LICENSE](LICENSE). Third-party components and fonts keep their own licenses; see [LICENSES.md](LICENSES.md).
+Moss Photo Studio is proprietary software from Moss AI Studio (mossaistudio.com), sold at mossphotostudio.com. Copyright (c) 2026 Moss AI Studio. All rights reserved. The source is published for inspection only; using the app requires a paid license under [docs/eula.md](docs/eula.md). See [LICENSE](LICENSE). Third-party components and fonts keep their own licenses; see [LICENSES.md](LICENSES.md).

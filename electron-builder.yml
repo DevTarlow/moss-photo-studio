@@ -1,6 +1,6 @@
 appId: com.mosstoolbox.photostudio
 productName: Moss Photo Studio
-copyright: Copyright © 2026 Moss Toolbox
+copyright: Copyright © 2026 Moss AI Studio
 directories:
   buildResources: resources/brand
   output: release
