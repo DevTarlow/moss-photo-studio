@@ -189,10 +189,48 @@ export type ExampleSceneKey =
   | 'gift'
   | 'home'
   | 'jewelry'
+  | 'sneaker-on-white'
+  | 'perfume-on-white'
+  | 'tote-on-white'
+  | 'coffee-counter'
+  | 'reading-chair'
+  | 'using-it'
+  | 'jewelry-flatlay'
+  | 'clothing-flatlay'
+  | 'beauty-flatlay'
+  | 'glaze-close-up'
+  | 'knit-detail'
+  | 'label-detail'
+  | 'beauty-gift'
+  | 'jewelry-gift'
+  | 'holiday-table'
+  | 'mug-in-hand'
+  | 'garment-held-up'
+  | 'jewelry-ruler'
+  | 'forest-still-life'
+  | 'cloud-pedestal'
+  | 'water-light'
 
-export type ExampleGroup = 'White Backdrop' | 'Lifestyle' | 'On Model' | 'Flat Lay'
+export type ExampleGroup =
+  | 'White Backdrop'
+  | 'Lifestyle'
+  | 'On Model'
+  | 'Flat Lay'
+  | 'Close-up'
+  | 'Gifts & seasonal'
+  | 'Size reference'
+  | 'Creative'
 
-export const EXAMPLE_GROUPS: readonly ExampleGroup[] = ['White Backdrop', 'Lifestyle', 'On Model', 'Flat Lay']
+export const EXAMPLE_GROUPS: readonly ExampleGroup[] = [
+  'White Backdrop',
+  'Lifestyle',
+  'On Model',
+  'Flat Lay',
+  'Close-up',
+  'Gifts & seasonal',
+  'Size reference',
+  'Creative'
+]
 
 export interface ExampleScene {
   key: ExampleSceneKey
@@ -244,15 +282,6 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
       'The product on a wooden bedside table beside a book and dried flowers, warm evening light, cosy handmade style, product photo.'
   },
   {
-    key: 'worn',
-    group: 'On Model',
-    label: 'Someone wearing it',
-    exampleText:
-      'A smiling woman wearing a light blue patterned blouse and blue jeans, standing in a bright room, full body, natural daylight, realistic photo.',
-    productText:
-      'A smiling person wearing the product, full body, standing in a bright room, natural daylight, realistic photo.'
-  },
-  {
     key: 'flatlay',
     group: 'Flat Lay',
     label: 'A flat lay',
@@ -262,13 +291,66 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
       'A flat lay of the product on a checked cloth with a few small props, soft daylight, empty space at the top for text, square photo.'
   },
   {
+    key: 'forest-still-life',
+    group: 'Creative',
+    label: 'A forest still life',
+    exampleText:
+      'A ceramic mug resting on a mossy stone in a misty forest clearing with ferns, soft morning light, shallow depth of field, product photo.',
+    productText:
+      'The product resting on a mossy stone in a misty forest clearing with ferns, soft morning light, shallow depth of field, product photo.'
+  },
+  {
+    key: 'glaze-close-up',
+    group: 'Close-up',
+    label: 'A glaze close-up',
+    exampleText:
+      "A close-up of a speckled ceramic mug's rim and handle, soft directional light, plain background, detail photo.",
+    productText: "A close-up of the product's edge and texture, soft directional light, plain background, detail photo."
+  },
+  {
     key: 'gift',
-    group: 'Lifestyle',
+    group: 'Gifts & seasonal',
     label: 'A gift shot',
     exampleText:
       'A lit scented candle sitting inside an open black gift box lined with white tissue paper, warm festive light, shallow depth of field, product photo.',
     productText:
       'The product sitting inside an open gift box lined with white tissue paper, warm festive light, shallow depth of field, product photo.'
+  },
+  {
+    key: 'mug-in-hand',
+    group: 'Size reference',
+    label: 'A mug in hand',
+    exampleText:
+      "A person's hand holding a ceramic mug by the handle against a plain white background, the whole mug in frame, natural light, scale photo.",
+    productText:
+      "A person's hand holding the product against a plain white background, the whole product in frame, natural light, scale photo."
+  },
+  {
+    key: 'sneaker-on-white',
+    group: 'White Backdrop',
+    label: 'A sneaker on white',
+    exampleText:
+      'A single cream canvas sneaker alone on a pure white background, side view, centred with white space around the whole shoe, no props or text, soft even lighting, product photo.',
+    productText:
+      'A single product alone on a pure white background, side view, centred with white space around it, no props or text, soft even lighting, catalogue product photo.'
+  },
+  {
+    key: 'perfume-on-white',
+    group: 'White Backdrop',
+    label: 'A perfume bottle on white',
+    exampleText:
+      'A clear faceted perfume bottle with a gold cap alone on a pure white background, centred and filling most of the frame, no props or text, soft even lighting, product photo.',
+    productText:
+      'A single product alone on a pure white background, centred and filling most of the frame, no props or text, soft even lighting, catalogue product photo.'
+  },
+  {
+    key: 'tote-on-white',
+    group: 'White Backdrop',
+    label: 'A tote bag on white',
+    exampleText:
+      'A natural canvas tote bag with two handles alone on a pure white background, centred and filling most of the frame, no props or text, soft even lighting, product photo.',
+    productText:
+      'A single product alone on a pure white background, centred and filling most of the frame, no props or text, soft even lighting, catalogue product photo.'
   },
   {
     key: 'home',
@@ -280,6 +362,33 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
       'The product in a bright living room beside a sofa, a plant and a woven rug, soft daylight, home lifestyle photo.'
   },
   {
+    key: 'coffee-counter',
+    group: 'Lifestyle',
+    label: 'A coffee bag on a counter',
+    exampleText:
+      'A plain kraft bag of coffee beans with no label or readable text on a cafe counter beside a ceramic cup, warm morning light, shallow depth of field, product photo.',
+    productText:
+      'The product on a cafe counter beside a cup, warm morning light, shallow depth of field, product photo.'
+  },
+  {
+    key: 'reading-chair',
+    group: 'Lifestyle',
+    label: 'A throw on a reading chair',
+    exampleText:
+      'A folded wool throw over a linen armchair beside a stack of plain books and a cup, soft afternoon light, cosy home photo.',
+    productText:
+      'The product over a linen armchair beside a stack of plain books and a cup, soft afternoon light, cosy home photo.'
+  },
+  {
+    key: 'worn',
+    group: 'On Model',
+    label: 'Someone wearing it',
+    exampleText:
+      'A smiling woman wearing a light blue patterned blouse and blue jeans, standing in a bright room, full body, natural daylight, realistic photo.',
+    productText:
+      'A smiling person wearing the product, full body, standing in a bright room, natural daylight, realistic photo.'
+  },
+  {
     key: 'jewelry',
     group: 'On Model',
     label: 'A jewelry close-up',
@@ -287,6 +396,120 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
       'A close-up of a person wearing a delicate gold pendant necklace, the pendant in focus, soft neutral background, natural light, jewelry photo.',
     productText:
       'A close-up of the product from the photo worn by a person, the piece in focus, soft neutral background, natural light, jewelry photo.'
+  },
+  {
+    key: 'using-it',
+    group: 'On Model',
+    label: 'A person using it',
+    exampleText:
+      'A smiling person sitting at a bright kitchen table using a ceramic mug, relaxed everyday photo, the mug clearly visible, natural daylight.',
+    productText:
+      'A smiling person using the product at a bright kitchen table, relaxed everyday photo, the product clearly visible, natural daylight.'
+  },
+  {
+    key: 'jewelry-flatlay',
+    group: 'Flat Lay',
+    label: 'A jewelry flat lay',
+    exampleText:
+      'A flat lay of a gold necklace and hoop earrings on pale linen with dried flowers, the whole set visible, soft daylight, square photo.',
+    productText:
+      'A flat lay of the product on pale linen with dried flowers, the whole product visible, soft daylight, square photo.'
+  },
+  {
+    key: 'clothing-flatlay',
+    group: 'Flat Lay',
+    label: 'A clothing flat lay',
+    exampleText:
+      'A flat lay of a folded knitted cardigan on a pale background with a straw hat and a linen bag, soft daylight, square photo.',
+    productText:
+      'A flat lay of the product on a pale background with a straw hat and a linen bag, soft daylight, square photo.'
+  },
+  {
+    key: 'beauty-flatlay',
+    group: 'Flat Lay',
+    label: 'A beauty flat lay',
+    exampleText:
+      'A flat lay of a plain amber serum bottle with no label, a cotton towel and a sprig of eucalyptus on pale marble, soft daylight, square photo.',
+    productText:
+      'A flat lay of the product with a cotton towel and a sprig of eucalyptus on pale marble, soft daylight, square photo.'
+  },
+  {
+    key: 'knit-detail',
+    group: 'Close-up',
+    label: 'A knit detail',
+    exampleText:
+      "A close-up of a cream cable-knit cardigan's buttons and stitch texture, soft daylight, plain background, detail photo.",
+    productText: "A close-up of the product's buttons and stitch texture, soft daylight, plain background, detail photo."
+  },
+  {
+    key: 'label-detail',
+    group: 'Close-up',
+    label: 'A label detail',
+    exampleText:
+      'A close-up of a kraft paper candle label on an amber glass jar, warm side light, plain background, detail photo.',
+    productText: "A close-up of the product's label area, warm side light, plain background, detail photo."
+  },
+  {
+    key: 'beauty-gift',
+    group: 'Gifts & seasonal',
+    label: 'A beauty gift box',
+    exampleText:
+      'An open black gift box lined with cream tissue paper holding a plain amber serum bottle with no label, warm light, shallow depth of field, product photo.',
+    productText:
+      'An open gift box lined with cream tissue paper holding the product, warm light, shallow depth of field, product photo.'
+  },
+  {
+    key: 'jewelry-gift',
+    group: 'Gifts & seasonal',
+    label: 'A jewelry gift box',
+    exampleText:
+      'An open black gift box lined with white tissue paper holding a delicate gold necklace, warm light, shallow depth of field, product photo.',
+    productText:
+      'An open gift box lined with white tissue paper holding the product, warm light, shallow depth of field, product photo.'
+  },
+  {
+    key: 'holiday-table',
+    group: 'Gifts & seasonal',
+    label: 'A holiday table setting',
+    exampleText:
+      'A simple holiday table setting with a lit candle, a folded napkin and a sprig of pine, warm evening light, soft background, festive photo.',
+    productText:
+      'A simple holiday table setting with the product, a folded napkin and a sprig of pine, warm evening light, soft background, festive photo.'
+  },
+  {
+    key: 'garment-held-up',
+    group: 'Size reference',
+    label: 'A garment held up',
+    exampleText:
+      'A person holding a blue patterned blouse up by the shoulders against a plain studio wall, the whole blouse in frame, even light, scale photo.',
+    productText:
+      'A person holding the product up against a plain studio wall, the whole product in frame, even light, scale photo.'
+  },
+  {
+    key: 'jewelry-ruler',
+    group: 'Size reference',
+    label: 'A jewelry ruler shot',
+    exampleText:
+      'A delicate gold necklace laid above a metal ruler on a plain white surface, even light, close-up scale photo.',
+    productText: 'The product laid above a metal ruler on a plain white surface, even light, close-up scale photo.'
+  },
+  {
+    key: 'cloud-pedestal',
+    group: 'Creative',
+    label: 'Above the clouds',
+    exampleText:
+      'A plain glass perfume bottle with a gold cap on a small stone pedestal floating above soft pink clouds at sunrise, dreamy pastel sky, product photo.',
+    productText:
+      'The product on a small stone pedestal floating above soft pink clouds at sunrise, dreamy pastel sky, product photo.'
+  },
+  {
+    key: 'water-light',
+    group: 'Creative',
+    label: 'A water-light close-up',
+    exampleText:
+      'Gold hoop earrings floating just above a calm water surface with gentle ripples, warm sunset light, close-up jewelry photo.',
+    productText:
+      'A close-up of the product floating just above a calm water surface with gentle ripples, warm sunset light, jewelry photo.'
   }
 ]
 

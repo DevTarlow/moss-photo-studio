@@ -29,7 +29,8 @@ const PEOPLE_DIR = path.join(LAB, 'people')
 const LOOKS_DIR = path.join(LAB, 'looks')
 const PRODUCTS_DIR = path.join(LAB, 'products')
 const SCENES_DIR = path.join(LAB, 'scenes')
-const COMMANDS = new Set(['edit', 'create', 'sources', 'people', 'looks', 'products', 'scenes', 'help'])
+const EXAMPLES_DIR = path.join(LAB, 'examples')
+const COMMANDS = new Set(['edit', 'create', 'sources', 'people', 'looks', 'products', 'scenes', 'examples', 'help'])
 
 class LabError extends Error {}
 
@@ -89,6 +90,7 @@ Usage:
   npm run lab -- looks   [--ids maya,omar] [--looks front,seated] [--force] --yes
   npm run lab -- products [--ids dropper-bottle,speckled-mug] [--force] --yes
   npm run lab -- scenes  [--ids white-seamless,oak-side-table] [--force] --yes
+  npm run lab -- examples [--ids product,forest-still-life] [--force] --yes
 
 Common options:
   --shape square|portrait|landscape   default: from the source photo
@@ -111,6 +113,7 @@ Output:
   lab/looks/            reviewed alternate studio looks, <id>-<look>.webp
   lab/products/         reviewed unbranded starter products and thumbs
   lab/scenes/           reviewed product-free preset scenes and thumbs
+  lab/examples/         reviewed generator example cards for resources/
   lab/runs/<stamp>-...  images, thumbs, manifest.json, index.html, sheet.webp, review.md
   lab/spend.json        cumulative actual returned-image cost
 `)
@@ -197,6 +200,7 @@ async function loadModules() {
     shapes: await load('/src/shared/shapes.ts'),
     cost: await load('/src/shared/cost.ts'),
     constants: await load('/src/shared/constants.ts'),
+    starters: await load('/src/shared/starters.ts'),
     media: await load('/src/main/media/import.ts'),
     muse: await load('/src/main/muse/client.ts')
   }
@@ -1186,6 +1190,106 @@ async function scenesCommand({ S, client, baseUrl, opts, budget }) {
   return result
 }
 
+/**
+ * Generate the Image Generator example cards. Each request sends the card's own
+ * exampleText through the same prompt builder the app uses, so the thumbnail and
+ * the starting description cannot drift. Approved 800x600 cards are copied into
+ * resources/tiles/examples/ by hand after review.
+ */
+async function examplesCommand({ S, client, baseUrl, opts, budget }) {
+  const catalog = S.starters.EXAMPLE_SCENES
+  const wanted = opts.ids
+    ? new Set(
+        String(opts.ids)
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean)
+      )
+    : null
+  if (wanted) {
+    for (const key of wanted) {
+      if (!catalog.some((scene) => scene.key === key)) {
+        fail(`Unknown example "${key}". Use one of: ${catalog.map((scene) => scene.key).join(', ')}.`)
+      }
+    }
+  }
+  const pending = catalog.filter((scene) => {
+    if (wanted && !wanted.has(scene.key)) return false
+    if (opts.force) return true
+    return !fs.existsSync(path.join(ROOT, 'resources/tiles/examples', `${scene.key}.webp`))
+  })
+  if (!pending.length) {
+    console.log('All requested example cards already have images. Add --force to regenerate them.')
+    return { skipped: true }
+  }
+  const runDir = path.join(LAB, 'runs', `${stamp()}-examples`)
+  const requests = pending.map((scene, order) => ({
+    order,
+    group: 'examples',
+    key: scene.key,
+    label: `${scene.label} · ${scene.group}`,
+    prompt: S.guards.composeCreatePrompt({ text: scene.exampleText, hasProduct: false, hasPerson: false }),
+    endpoint: 'generate',
+    images: [],
+    count: 1,
+    shape: 'landscape',
+    format: 'webp',
+    personId: null,
+    hasSource: false
+  }))
+  const meta = {
+    command: 'examples',
+    label: `Example pack · ${pending.length}`,
+    category: 'examples',
+    palette: [],
+    shape: 'landscape',
+    format: 'webp',
+    source: null,
+    sources: {}
+  }
+  const result = await executeRun({ S, client, baseUrl, requests, runDir, meta, budget, opts })
+  if (result.skipped) return result
+  await ensureDir(EXAMPLES_DIR)
+  const generated = []
+  for (const item of result.manifest.items) {
+    if (item.status !== 'ok' || !item.files?.[0]) continue
+    const scene = pending.find((entry) => entry.key === item.key)
+    if (!scene) continue
+    const raw = path.join(runDir, item.files[0].file)
+    const fullPath = path.join(EXAMPLES_DIR, `${scene.key}.webp`)
+    const cardPath = path.join(EXAMPLES_DIR, `${scene.key}-card.webp`)
+    await sharp(raw).webp({ quality: 90, effort: 4 }).toFile(fullPath)
+    await sharp(raw)
+      .resize({ width: 800, height: 600, fit: 'cover', position: 'centre' })
+      .webp({ quality: 82 })
+      .toFile(cardPath)
+    generated.push({
+      key: scene.key,
+      label: scene.label,
+      group: scene.group,
+      prompt: item.prompt,
+      run: path.relative(ROOT, runDir).split(path.sep).join('/'),
+      files: [fullPath, cardPath].map((file) => path.relative(ROOT, file).split(path.sep).join('/')),
+      costCents: item.costCents
+    })
+    console.log(`  ${path.relative(ROOT, fullPath)}`)
+    console.log(`  ${path.relative(ROOT, cardPath)}`)
+  }
+  let manifest = { examples: [] }
+  try {
+    manifest = JSON.parse(await fsp.readFile(path.join(EXAMPLES_DIR, 'manifest.json'), 'utf8'))
+  } catch {
+    // First example run.
+  }
+  const byKey = new Map((manifest.examples ?? []).map((entry) => [entry.key, entry]))
+  for (const entry of generated) byKey.set(entry.key, entry)
+  await fsp.writeFile(
+    path.join(EXAMPLES_DIR, 'manifest.json'),
+    `${JSON.stringify({ createdAt: new Date().toISOString(), examples: [...byKey.values()] }, null, 2)}\n`
+  )
+  return result
+}
+
 async function sourcesCommand({ S, client, baseUrl, opts, budget }) {
   const missing = SOURCE_PACK.filter((entry) => opts.force || !findSource(entry.category))
   if (!missing.length) {
@@ -1395,6 +1499,7 @@ async function main() {
     else if (command === 'looks') await looksCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'products') await productsCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'scenes') await scenesCommand({ S, client, baseUrl, opts, budget })
+    else if (command === 'examples') await examplesCommand({ S, client, baseUrl, opts, budget })
   } finally {
     await S.loader.close()
   }

@@ -7,6 +7,7 @@ import { EXAMPLE_SCENES } from '../../src/shared/starters'
 
 const productPhoto = path.resolve(__dirname, '../../resources/tiles/examples/product.webp')
 const productScene = EXAMPLE_SCENES.find((scene) => scene.key === 'product')!
+const creativeScene = EXAMPLE_SCENES.find((scene) => scene.key === 'forest-still-life')!
 
 test('an example can use the selected product photo or stay as shown', async () => {
   const muse = await startFakeMuse({ delayMs: 10 })
@@ -50,6 +51,10 @@ test('an example can use the selected product photo or stay as shown', async () 
     await page.getByRole('button', { name: 'Flat Lay', exact: true }).click()
     await expect(page.getByRole('button', { name: /A flat lay/ })).toBeVisible()
     await expect(page.getByRole('button', { name: /A product shot/ })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Creative', exact: true }).click()
+    await page.getByRole('button', { name: /A forest still life/ }).click()
+    const editor = page.locator('textarea').first()
+    await expect(editor).toHaveValue(creativeScene.productText)
     await page.getByRole('button', { name: 'All', exact: true }).click()
     await expect(page.getByRole('button', { name: /A product shot/ })).toBeVisible()
 
@@ -59,7 +64,6 @@ test('an example can use the selected product photo or stay as shown', async () 
     await page.getByRole('radio', { name: /Portrait/ }).click()
     await expect(page.getByRole('radio', { name: /Portrait/ })).toHaveAttribute('aria-checked', 'true')
     await page.getByRole('radio', { name: /Square/ }).click()
-    const editor = page.locator('textarea').first()
     const countTwo = page
       .getByRole('group', { name: 'How many images' })
       .getByRole('button', { name: '2', exact: true })

@@ -353,3 +353,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Oven mitt removed
 
 146. **The oven mitt is removed from the starter products.** It was the only product in Textiles and soft furnishings that did not fit the category's textiles focus, and the user asked for it to go. The packaged sheet set remains in that category, the catalog returns to 100 products across 19 categories, and the product pack, assets, tests, pages and screenshots follow the new count. This supersedes the 101-product count in Decision 143.
+
+## Image Generator examples expansion
+
+147. **The Image Generator example gallery is 29 cards in eight groups, generated from the card copy.** White Backdrop, Lifestyle, On Model, Flat Lay, Close-up, Gifts & seasonal, Size reference, and Creative each hold 3–4 cards; the gallery opens with one card from each group so the first scroll shows the breadth. The 21 new images come from the lab's `examples` command, which sends each card's own `exampleText` through the same prompt builder the app uses, so the thumbnail and the starting description cannot drift; the existing eight assets stay. The command skips cards that already have a resource, writes reviewed 800×600 cards to `lab/examples/`, and the unit suite fails if a catalog key has no asset. This supersedes the eight-example grid and the four group bounds in Decision 82.

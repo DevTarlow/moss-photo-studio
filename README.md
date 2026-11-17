@@ -22,7 +22,7 @@ Versions branch instead of overwrite. Compare them, move through the filmstrip, 
 
 ### Make a new image
 
-The Image Generator has 30 starters and eight examples, filtered to All, White Backdrop, Lifestyle, On Model, or Flat Lay. Generate 1 to 4 images in three shapes and three formats.
+The Image Generator has 30 starters and 29 examples across eight groups — White Backdrop, Lifestyle, On Model, Flat Lay, Close-up, Gifts & seasonal, Size reference, and Creative. All opens with one card from each group. Generate 1 to 4 images in three shapes and three formats.
 
 A product reference and a person reference can go together, so a person can hold the product. An optional scene reference supplies the setting, light, and props without asking the model to copy its subject. You can browse scenes before choosing a product.
 

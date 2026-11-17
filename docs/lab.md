@@ -29,6 +29,7 @@ npm run lab -- sources --yes
 npm run lab -- people  [--ids maya,omar] [--force] --yes
 npm run lab -- looks   [--ids maya,omar] [--looks front,seated] [--force] --yes
 npm run lab -- products [--ids dropper-bottle,speckled-mug] [--force] --yes
+npm run lab -- examples [--ids product,forest-still-life] [--force] --yes
 ```
 
 Common options:
@@ -77,16 +78,9 @@ Put a real product photo in `lab/sources/` and pass its path to `edit` or `creat
 
 `npm run lab -- scenes` generates the 33 included preset scenes from `scripts/lab/scene-pack.mjs` (33 images, $0.33) into `lab/scenes/`. Each request is a square generation of a setting with an empty surface and no product subject; the lab writes a 1024×1024 WebP and a 480×480 `<id>-thumb.webp`. The four studio backdrops must be straight-on with only a very faint, soft floor-to-wall tonal transition; no visible roll, crease, line or shadow. The three Outdoor spaces wall facades must show the empty wall where a lamp would hang and must not include the lamp. `--ids` and `--force` narrow or replace the batch. Generate in batches of 8–12 and review each run's `sheet.webp` for a product, people, readable text or logos, a clear empty surface and the right category mood; regenerate with a stronger no-product clause or use a reserve scene if one keeps a subject. Copy only approved files into `resources/scenes/`; `src/shared/scene-presets.ts` holds the catalog and the asset test checks every full and thumb file. The unit test also fails if the pack and the catalog disagree on an id, name or category. Scenes are reference photos, not the eight prompt-based scene looks in Quick Looks.
 
-## Example images
+## Example pack
 
-The Image Generator examples in `resources/tiles/examples/` mix the original product scenes with outputs from this lab:
-
-- `person.webp` — generated for the person example prompt (a smiling person holding a ceramic cup) with `npm run lab -- create --text "<prompt>" --shape landscape --yes` (1¢).
-- `worn.webp` — a person wearing the product.
-- `home.webp` — a product in a room setting.
-- `jewelry.webp` — a jewelry close-up.
-
-All four are cropped to 800×600 and committed so the optional `scripts/copy-assets.mjs` reference list does not need the lab runs. Re-generate and re-crop them if the example copy changes.
+`npm run lab -- examples [--ids product,forest-still-life] [--force] --yes` generates any Image Generator example card that is missing from `resources/tiles/examples/`. Each request sends the card's own `exampleText` through the same prompt builder the app uses, so the picture and the starting description cannot drift. The lab writes a full `lab/examples/<key>.webp` and an 800×600 `lab/examples/<key>-card.webp`, plus `lab/examples/manifest.json`; review the run's `sheet.webp`, then copy approved cards into `resources/tiles/examples/` with the catalog key as the filename. There are 29 cards at 1¢ each; the eight existing cards are skipped by default, so the first full expansion is 21 images ($0.21). Generate in batches of 6–8 with `--ids`; `--force` re-rolls a card after its copy changes. The unit suite fails when a catalog key has no asset. The original eight cards keep their committed assets.
 
 ## Output
 
@@ -105,6 +99,9 @@ lab/
   scenes/<id>.webp               # reviewed product-free preset scene, 1024 square
   scenes/<id>-thumb.webp         # 480 square card thumb
   scenes/manifest.json           # prompts and provenance for scenes
+  examples/<key>.webp            # full returned Image Generator example
+  examples/<key>-card.webp       # reviewed 800x600 card for resources/
+  examples/manifest.json         # prompts and provenance for examples
   spend.json                     # cumulative actual returned-image cost
   runs/<stamp>-<command>-<slug>/
     manifest.json                # prompts, revised prompts, IDs, usage, cost, hashes

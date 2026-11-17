@@ -199,15 +199,22 @@ describe('bundled scene presets', () => {
 })
 
 describe('image generator examples', () => {
-  it('ships eight example scenes with unique keys, assets and short copy', () => {
-    expect(EXAMPLE_SCENES).toHaveLength(8)
-    expect(new Set(EXAMPLE_SCENES.map((scene) => scene.key)).size).toBe(8)
+  it('ships twenty-nine example scenes across eight groups with unique keys and assets', () => {
+    expect(EXAMPLE_SCENES).toHaveLength(29)
+    expect(new Set(EXAMPLE_SCENES.map((scene) => scene.key)).size).toBe(29)
+    expect(new Set(EXAMPLE_SCENES.map((scene) => scene.label)).size).toBe(29)
     expect(new Set(EXAMPLE_SCENES.map((scene) => scene.group))).toEqual(new Set(EXAMPLE_GROUPS))
+    for (const group of EXAMPLE_GROUPS) {
+      expect(EXAMPLE_SCENES.filter((scene) => scene.group === group).length, group).toBeGreaterThanOrEqual(3)
+    }
     for (const scene of EXAMPLE_SCENES) {
       expect(scene.exampleText.length).toBeGreaterThan(0)
       expect(scene.exampleText.length).toBeLessThanOrEqual(240)
       expect(scene.productText.length).toBeGreaterThan(0)
       expect(scene.productText.length).toBeLessThanOrEqual(240)
+      expect(scene.exampleText).not.toBe(scene.productText)
+    }
+    for (const scene of EXAMPLE_SCENES) {
       expect(fs.existsSync(path.join(root, 'resources', 'tiles', 'examples', `${scene.key}.webp`))).toBe(true)
     }
     expect(EXAMPLE_SCENES.find((scene) => scene.key === 'person')?.exampleText).toBe(PERSON_HOLDING_EXAMPLE)
@@ -215,6 +222,12 @@ describe('image generator examples', () => {
     expect(PERSON_HOLDING_EXAMPLE.length).toBeLessThanOrEqual(240)
     expect(CREATE_PERSON_PROMPT.length).toBeGreaterThan(0)
     expect(CREATE_PERSON_PROMPT.length).toBeLessThanOrEqual(240)
+  })
+
+  it('opens the All view with one card from every group', () => {
+    expect(new Set(EXAMPLE_SCENES.slice(0, EXAMPLE_GROUPS.length).map((scene) => scene.group))).toEqual(
+      new Set(EXAMPLE_GROUPS)
+    )
   })
 
   it('writes the product variant for any product, not the example object', () => {

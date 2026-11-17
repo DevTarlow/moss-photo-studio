@@ -50,7 +50,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 - Create a draft, describe the image, choose 1–4 images, shape, and format. The price is on the button and the month budget stays with it under the left inputs.
 - Attached Product, Person, and Scene references appear as removable visual chips in a Shot recipe row. Scene can be browsed before a product exists; the chip waits with a clear Add a product photo to use this scene prompt.
-- Examples can be filtered to All, White Backdrop, Lifestyle, On Model, or Flat Lay. The page says when an example will use the selected product, and each example card carries a Your product badge in that state.
+- Examples can be filtered to All, White Backdrop, Lifestyle, On Model, Flat Lay, Close-up, Gifts & seasonal, Size reference, or Creative. The 29 cards open with one from each group in All; the page says when an example will use the selected product, and each example card carries a Your product badge in that state.
 - Output settings use proportional Shape cards with 1:1 Storefront, 2:3 Social, and 3:2 Banner hints. Setting How many to 2–4 without a reference shows matching placeholder frames in THIS IMAGE.
 - The Details panel is present before the first image and shows three short description tips; they disappear after the first result. Output settings (count, shape, format) live in the same panel; at 1024–1439 the Details button opens them as a sheet.
 - Select a result by opening it: the inspector shows its label, description, size, cost, created time, Set link, and Edit, Download, Save as Product, Save as Person, Add to Set, and Delete. The newest result is selected by default.
