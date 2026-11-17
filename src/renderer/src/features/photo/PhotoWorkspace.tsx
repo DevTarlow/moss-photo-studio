@@ -23,6 +23,7 @@ import { BudgetWarning } from '../../components/ui/BudgetWarning'
 import { ChangePanel } from './ChangePanel'
 import { AdjustPanel } from './AdjustPanel'
 import { VersionDetails } from './VersionDetails'
+import { CommitFooter } from '../../components/workspace/CommitFooter'
 import { ExportDialog } from './ExportDialog'
 import { CropOverlay } from './CropOverlay'
 import { Lightbox } from '../../components/ui/Lightbox'
@@ -543,6 +544,26 @@ export function PhotoWorkspace(): React.JSX.Element {
     (!selected || !text.trim() || text.length > 2000 || !secrets?.hasKey || !canGenerate || (kind === 'model' && !people.some((person) => person.id === personId)))
   const applyDisabled = isIdentity(adjust) || isRunning || applyBusy
 
+  const commitAction = tab === 'adjust' ? (
+    <Button variant="primary" disabled={applyDisabled} onClick={() => void applyAdjust()}>
+      {applyBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Apply Adjustment · Free
+    </Button>
+  ) : overBudget ? (
+    <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => setBudgetOpen(true)} />
+  ) : !secrets?.hasKey ? (
+    <Button variant="primary" onClick={() => setMetaKeyOpen(true)}>
+      Connect Meta to Make Images
+    </Button>
+  ) : !canGenerate ? (
+    <Button variant="primary" onClick={() => navigate('/settings/license')}>
+      Reactivate to Make Images
+    </Button>
+  ) : (
+    <Button variant="primary" disabled={changePrimaryDisabled || isRunning} onClick={() => void startChange()}>
+      Make This Change · {usdMoney(estimateCents(1))}
+    </Button>
+  )
+
   const leftPanel = (
     <div className="flex h-full flex-col">
       <div className="tabs px-4 pt-2">
@@ -618,6 +639,10 @@ export function PhotoWorkspace(): React.JSX.Element {
           />
         )}
       </div>
+      {error && <div className="ws-commit-error" role="alert">{error}</div>}
+      <CommitFooter monthCents={monthCents} budgetCents={settings?.budgetCents ?? null}>
+        {commitAction}
+      </CommitFooter>
     </div>
   )
 
@@ -718,9 +743,6 @@ export function PhotoWorkspace(): React.JSX.Element {
                 {compare ? 'Done Comparing' : 'Compare'}
               </Button>
             )}
-            <Button variant="ghost" size="sm" disabled={!selected || isRunning} onClick={() => setExportOpen(true)}>
-              <Icon icon={Download} size="sm" /> Export
-            </Button>
           </div>
           <div className="canvas-wrap canvas-surface">
             <div
@@ -860,6 +882,20 @@ export function PhotoWorkspace(): React.JSX.Element {
               )
             })}
           </div>
+          <div className="ws-canvas-footer">
+            <div className="min-w-0">
+              <p className="truncate text-[12px] font-medium">{selected?.label ?? 'No version'}</p>
+              <p className="meta">{formatDate(selected?.createdAt ?? Date.now())}{isRunning ? ' · making' : ''}</p>
+            </div>
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <Button variant="ghost" size="sm" disabled={isRunning} onClick={() => setAddPhotoOpen(true)}>
+                <Icon icon={Plus} size="sm" /> Add Photo
+              </Button>
+              <Button variant="ghost" size="sm" disabled={!selected || isRunning} onClick={() => setExportOpen(true)}>
+                <Icon icon={Download} size="sm" /> Export
+              </Button>
+            </div>
+          </div>
         </section>
         {!rightHidden && !rightCollapsed && (
           <>
@@ -871,39 +907,6 @@ export function PhotoWorkspace(): React.JSX.Element {
 
       <Sheet open={leftSheet} onOpenChange={setLeftSheet} side="left" title="Edit">{leftPanel}</Sheet>
       <Sheet open={rightSheet} onOpenChange={setRightSheet} side="right" title="Version">{rightPanel}</Sheet>
-
-      <div className="ws-bottom">
-        <div className="min-w-0">
-          <p className="truncate text-[12px] font-medium">{selected?.label ?? 'No version'}</p>
-          <p className="meta">{formatDate(selected?.createdAt ?? Date.now())}{isRunning ? ' · making' : ''}</p>
-          <p className="meta tabular">Month {usd(monthCents)}{settings?.budgetCents != null ? ` of ${usd(settings.budgetCents)}` : ''}</p>
-        </div>
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          <Button variant="ghost" size="sm" disabled={isRunning} onClick={() => setAddPhotoOpen(true)}>
-            <Icon icon={Plus} size="sm" /> Add Photo
-          </Button>
-          {tab === 'adjust' ? (
-            <Button variant="primary" disabled={applyDisabled} onClick={() => void applyAdjust()}>
-              {applyBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Apply Adjustment · Free
-            </Button>
-          ) : overBudget ? (
-            <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => setBudgetOpen(true)} />
-          ) : !secrets?.hasKey ? (
-            <Button variant="primary" onClick={() => setMetaKeyOpen(true)}>
-              Connect Meta to Make Images
-            </Button>
-          ) : !canGenerate ? (
-            <Button variant="primary" onClick={() => navigate('/settings/license')}>
-              Reactivate to Make Images
-            </Button>
-          ) : (
-            <Button variant="primary" disabled={changePrimaryDisabled || isRunning} onClick={() => void startChange()}>
-              Make This Change · {usdMoney(estimateCents(1))}
-            </Button>
-          )}
-        </div>
-      </div>
-      {error && <div className="px-4 pb-2 text-[12px]" style={{ color: 'var(--danger)' }} role="alert">{error}</div>}
 
       <FirstRunConfirm
         open={confirmFirst}

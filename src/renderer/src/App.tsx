@@ -354,7 +354,7 @@ export function RootLayout(): React.JSX.Element {
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
         event.preventDefault()
         if (!location.pathname.startsWith('/project/')) return
-        const primary = document.querySelector<HTMLButtonElement>('.ws-bottom .btn-primary:not([disabled])')
+        const primary = document.querySelector<HTMLButtonElement>('[data-commit-action] .btn-primary:not([disabled])')
         if (primary) primary.click()
         else toast.error('There is no action to run here yet.')
         return

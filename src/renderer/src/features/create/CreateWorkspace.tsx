@@ -16,6 +16,7 @@ import { useWorkspaceStore } from '../../store/workspace'
 import { useAppStore } from '../../store/app'
 import { useUiStore } from '../../store/ui'
 import { CreateInspector } from './CreateInspector'
+import { CommitFooter } from '../../components/workspace/CommitFooter'
 import { SourcePickerDialog } from '../../components/sources/SourcePickerDialog'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { SaveProductDialog } from '../../components/products/SaveProductDialog'
@@ -564,8 +565,30 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
     }
   }
 
+  const commitAction = overBudget ? (
+    <BudgetWarning
+      limitCents={settings?.budgetCents ?? 0}
+      onRaise={() => setBudgetOpen(true)}
+      onFewer={requestedCount > 1 ? () => setCount((current) => Math.max(1, current - 1)) : undefined}
+    />
+  ) : !secrets?.hasKey ? (
+    <Button variant="primary" onClick={() => setMetaKeyOpen(true)}>
+      Connect Meta to Make Images
+    </Button>
+  ) : !canGenerate ? (
+    <Button variant="primary" onClick={() => navigate('/settings/license')}>
+      Reactivate to Make Images
+    </Button>
+  ) : (
+    <Button variant="primary" disabled={!canSubmit || isRunning || promptTooLongForReference} onClick={() => void submit()}>
+      {isRunning ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null}
+      {makeActionLabel}
+    </Button>
+  )
+
   const leftPanel = (
-    <div className="scroll-area p-4">
+    <div className="flex h-full flex-col">
+      <div className="scroll-area min-h-0 flex-1 p-4">
       <div className="flex items-center justify-between">
         <p className="section-label">Describe the image</p>
         {prompt && <button type="button" className="text-[11px]" style={{ color: 'var(--text-faint)' }} onClick={() => { setPrompt(''); setPromptSource('user'); setLoadedExample(null); setPendingApply(null) }}>Clear</button>}
@@ -723,6 +746,10 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       {hasReference && (
         <p className="hint mt-2">You can add a product, a person, and a scene. With any of them, Moss makes one image at a time.</p>
       )}
+      </div>
+      <CommitFooter monthCents={monthCents} budgetCents={settings?.budgetCents ?? null}>
+        {commitAction}
+      </CommitFooter>
     </div>
   )
 
@@ -925,6 +952,14 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
               </div>
             )}
           </div>
+          <div className="ws-canvas-footer">
+            <p className="min-w-0 flex-1 truncate text-[12px] font-medium tabular">
+              {[imageCountLabel(requestedCount), shapeLabel(shape), usd(estimateCents(requestedCount))].filter(Boolean).join(' · ')}
+            </p>
+            {runFilter && (
+              <Button variant="ghost" size="sm" onClick={showAllResults}>Show all</Button>
+            )}
+          </div>
         </section>
         {!rightHidden && !rightCollapsed && (
           <>
@@ -935,31 +970,6 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
       </div>
       <Sheet open={leftSheet} onOpenChange={setLeftSheet} side="left" title="Describe">{leftPanel}</Sheet>
       <Sheet open={rightSheet} onOpenChange={setRightSheet} side="right" title="Details">{rightPanel}</Sheet>
-
-      <div className="ws-bottom">
-        <button type="button" className="min-w-0 text-left" onClick={() => navigate('/usage')}>
-          <p className="truncate text-[12px] font-medium tabular">{[imageCountLabel(requestedCount), shapeLabel(shape), usd(estimateCents(requestedCount))].filter(Boolean).join(' · ')}</p>
-          <p className="meta tabular">Month {usd(monthCents)}{settings?.budgetCents != null ? ` of ${usd(settings.budgetCents)}` : ''}</p>
-        </button>
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          {overBudget ? (
-            <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => setBudgetOpen(true)} onFewer={requestedCount > 1 ? () => setCount((current) => Math.max(1, current - 1)) : undefined} />
-          ) : !secrets?.hasKey ? (
-            <Button variant="primary" onClick={() => setMetaKeyOpen(true)}>
-              Connect Meta to Make Images
-            </Button>
-          ) : !canGenerate ? (
-            <Button variant="primary" onClick={() => navigate('/settings/license')}>
-              Reactivate to Make Images
-            </Button>
-          ) : (
-            <Button variant="primary" disabled={!canSubmit || isRunning || promptTooLongForReference} onClick={() => void submit()}>
-              {isRunning ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null}
-              {makeActionLabel}
-            </Button>
-          )}
-        </div>
-      </div>
 
       <SourcePickerDialog
         open={pickerOpen}

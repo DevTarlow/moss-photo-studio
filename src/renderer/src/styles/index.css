@@ -343,7 +343,17 @@ html[data-motion='reduce'] .skeleton { background: var(--surface-2); }
 .plan-board-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 @media (max-width: 1100px) { .plan-board-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .plan-shot { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 12px; min-height: 132px; }
-.ws-bottom { height: 64px; min-height: 64px; border-top: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 12px; padding: 0 16px; }
+/* The priced action lives under the inputs that drive it. The canvas keeps
+   its own footer for version and canvas actions. */
+.ws-commit { flex: none; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 12px; border-top: 1px solid var(--border); background: var(--surface); }
+.ws-commit-budget { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 0; border: 0; background: transparent; color: var(--text-muted); font-size: 11px; line-height: 1.3; text-align: left; cursor: pointer; }
+.ws-commit-budget:hover { color: var(--text); }
+.ws-commit-budget:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.ws-commit-action { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ws-commit-action > .btn { flex: 1 1 100%; justify-content: center; }
+.ws-commit-action > .btn.btn-sm { flex: 0 1 auto; }
+.ws-commit-error { flex: none; padding: 6px 12px 0; color: var(--danger); font-size: 12px; }
+.ws-canvas-footer { flex: none; min-height: 48px; border-top: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 10px; padding: 6px 12px; flex-wrap: wrap; }
 .ws-filmstrip { border-top: 1px solid var(--canvas-line); background: var(--canvas); padding: 10px 14px; display: flex; gap: 8px; overflow-x: auto; align-items: stretch; }
 .ws-film-card { position: relative; width: 92px; min-width: 92px; border-radius: 6px; overflow: hidden; border: 2px solid transparent; background: var(--white-08); color: var(--canvas-text); text-align: left; padding: 0; }
 .ws-film-card[data-selected='true'] { border-color: var(--canvas-text); }
@@ -433,7 +443,6 @@ html[data-density='compact'] .rail-item { height: 30px; }
 html[data-density='compact'] .settings-row { padding-top: 6px; padding-bottom: 6px; }
 
 @media (max-width: 839px) {
-  .ws-bottom { height: auto; min-height: 64px; flex-wrap: wrap; padding-top: 8px; padding-bottom: 8px; }
   .app-topbar { gap: 8px; padding-right: 8px; }
 }
 html[data-density='compact'] .lib-list-row { height: 44px; }
