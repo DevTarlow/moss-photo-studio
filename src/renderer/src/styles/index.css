@@ -791,6 +791,7 @@ html[data-density='compact'] .lib-list-row { height: 44px; }
     display: flex;
     align-items: center;
     gap: 3px;
+    width: max-content;
     max-width: calc(100% - 24px);
     padding: 4px;
     border: 1px solid var(--canvas-line);
@@ -799,8 +800,8 @@ html[data-density='compact'] .lib-list-row { height: 44px; }
     box-shadow: var(--shadow);
     backdrop-filter: blur(8px);
     overflow-x: auto;
-    flex-wrap: wrap;
-    justify-content: center;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
   }
   .canvas-toolbar .icon-btn { color: var(--text-muted); }
   .canvas-toolbar .icon-btn:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }

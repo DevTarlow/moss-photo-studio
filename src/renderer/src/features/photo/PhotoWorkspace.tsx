@@ -892,15 +892,15 @@ export function PhotoWorkspace(): React.JSX.Element {
               <IconButton label="Redo" disabled={tab !== 'adjust' || redoStack.length === 0} onClick={redo}>
                 <Icon icon={Redo2} size="sm" />
               </IconButton>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="canvas-toolbar-btn"
+              <IconButton
+                label={compare ? 'Done comparing' : 'Compare'}
+                active={compare}
+                aria-pressed={compare}
                 disabled={!parent || isRunning}
                 onClick={() => { setCompare((value) => !value); setShowOriginal(false) }}
               >
-                <Icon icon={Columns2} size="sm" /> {compare ? 'Done Comparing' : 'Compare'}
-              </Button>
+                <Icon icon={Columns2} size="sm" />
+              </IconButton>
             </div>
             <div
               ref={canvasRef}

@@ -140,7 +140,7 @@ The editor and the generator share one workspace grammar: the left column holds 
 
 ### Canvas toolbar
 
-The editor keeps one floating canvas toolbar for view actions: zoom out, `Fit`, `100%`, zoom in, the actual zoom readout, undo/redo for the adjust preview, and before/after compare. Compare is available whenever the selected version has a parent. The toolbar wraps or scrolls at narrow widths instead of pushing the canvas. At 100% the zoom box reserves the scaled layout size so the stage can scroll. The wheel zooms under the pointer, and holding the middle button pans the stage while the photo overflows.
+The editor keeps one floating canvas toolbar for view actions: zoom out, `Fit`, `100%`, zoom in, the actual zoom readout, undo/redo for the adjust preview, and before/after compare. Compare is available whenever the selected version has a parent and is an icon toggle beside undo and redo. The toolbar stays on one row at every width and scrolls horizontally instead of wrapping or pushing the canvas. At 100% the zoom box reserves the scaled layout size so the stage can scroll. The wheel zooms under the pointer, and holding the middle button pans the stage while the photo overflows.
 
 The filmstrip labels every saved version with a type badge: `Original`, `Adjusted`, or `AI`. The badge text is part of the card's accessible name; do not add a separate aria-label that omits it.
 

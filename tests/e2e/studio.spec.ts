@@ -340,7 +340,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.keyboard.press('End')
     expect(Number(await slider.inputValue())).toBe(100)
     await screenshot('photo-compare')
-    await page.getByRole('button', { name: 'Done Comparing' }).click()
+    await page.getByRole('button', { name: 'Done comparing' }).click()
     const canvas = page.getByRole('group', { name: /Photo canvas/ })
     await canvas.focus()
     await page.keyboard.down('Space')
