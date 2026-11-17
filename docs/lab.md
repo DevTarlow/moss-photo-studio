@@ -73,6 +73,10 @@ Put a real product photo in `lab/sources/` and pass its path to `edit` or `creat
 
 `npm run lab -- products` generates the 100 included starter products (10 expanded categories plus 9 new ones) from `scripts/lab/product-pack.mjs` (100 images, $1.00) into `lab/products/`. Each request is a square generation on a pure white seamless background; the lab writes a 1024×1024 WebP and a 480×480 `<id>-thumb.webp`. `--ids` and `--force` narrow or replace the batch. Generate the pack in batches of 8–12 ids rather than one long request set: each run's `sheet.webp` stays readable, a failure only affects one batch, and the ledger is predictable. The default cap is $5.00 and a full pack plus retries is about $1.20, so check the current total before starting and stop if the cap is reached. Start with a four-product pilot (`--ids perfume-bottle,pullover-hoodie,phone-case,art-poster`), review the run's `sheet.webp` for readable labels or text, framing, white background and a complete product, then run the rest. Copy only approved files into `resources/products/`; `src/shared/products.ts` holds the catalog and the asset test checks every full and thumb file. The unit test also fails if the pack and the catalog disagree on an id, name or category.
 
+## Scene pack
+
+`npm run lab -- scenes` generates the 30 included preset scenes from `scripts/lab/scene-pack.mjs` (30 images, $0.30) into `lab/scenes/`. Each request is a square generation of a setting with an empty surface and no product subject; the lab writes a 1024×1024 WebP and a 480×480 `<id>-thumb.webp`. `--ids` and `--force` narrow or replace the batch. Generate in batches of 8–12 and review each run's `sheet.webp` for a product, people, readable text or logos, a clear empty surface and the right category mood; regenerate with a stronger no-product clause or use a reserve scene if one keeps a subject. Copy only approved files into `resources/scenes/`; `src/shared/scene-presets.ts` holds the catalog and the asset test checks every full and thumb file. The unit test also fails if the pack and the catalog disagree on an id, name or category. Scenes are reference photos, not the eight prompt-based scene looks in Quick Looks.
+
 ## Example images
 
 The Image Generator examples in `resources/tiles/examples/` mix the original product scenes with outputs from this lab:
@@ -98,6 +102,9 @@ lab/
   products/<id>.webp             # reviewed unbranded starter product, 1024 square
   products/<id>-thumb.webp       # 480 square card thumb
   products/manifest.json         # prompts and provenance for products
+  scenes/<id>.webp               # reviewed product-free preset scene, 1024 square
+  scenes/<id>-thumb.webp         # 480 square card thumb
+  scenes/manifest.json           # prompts and provenance for scenes
   spend.json                     # cumulative actual returned-image cost
   runs/<stamp>-<command>-<slug>/
     manifest.json                # prompts, revised prompts, IDs, usage, cost, hashes

@@ -7,12 +7,14 @@ import type { ProjectRepository } from '../db/repositories/projects'
 import type { ImageRepository } from '../db/repositories/images'
 import type { PeopleRepository } from '../db/repositories/people'
 import type { BrandRepository } from '../db/repositories/brand'
+import type { SceneRepository } from '../db/repositories/scenes'
 import type { Logger } from '../logger'
 import {
   ImageImportError,
   assertImportable,
   normaliseLogo,
   normalisePersonReference,
+  normaliseScene,
   normaliseToWorking,
   writeOriginal
 } from './import'
@@ -26,6 +28,7 @@ export class MediaService {
       projects: ProjectRepository
       images: ImageRepository
       people: PeopleRepository
+      scenes: SceneRepository
       brand: BrandRepository
       libraryPath: () => string
       logger: Logger
@@ -258,6 +261,31 @@ export class MediaService {
       thumb: normalised.thumb
     })
     return { personId: id }
+  }
+
+  async importScene(input: { name: string; bytes: Uint8Array }): Promise<{ sceneId: string }> {
+    assertImportable(input.bytes)
+    const id = crypto.randomUUID()
+    const normalised = await normaliseScene({
+      libraryPath: this.deps.libraryPath(),
+      sceneId: id,
+      bytes: input.bytes
+    })
+    try {
+      this.deps.scenes.create({
+        id,
+        name: input.name.trim().slice(0, 80) || 'New scene',
+        file: normalised.file,
+        thumb: normalised.thumb,
+        width: normalised.width,
+        height: normalised.height
+      })
+    } catch (error) {
+      await fs.rm(absoluteInLibrary(this.deps.libraryPath(), normalised.file), { force: true }).catch(() => undefined)
+      await fs.rm(absoluteInLibrary(this.deps.libraryPath(), normalised.thumb), { force: true }).catch(() => undefined)
+      throw error
+    }
+    return { sceneId: id }
   }
 
   async setLogo(input: { bytes: Uint8Array; mime: string }): Promise<{ logoFile: string }> {

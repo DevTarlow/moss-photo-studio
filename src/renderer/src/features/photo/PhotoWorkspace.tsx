@@ -29,6 +29,8 @@ import { CropOverlay } from './CropOverlay'
 import { Lightbox } from '../../components/ui/Lightbox'
 import { SourcePickerDialog } from '../../components/sources/SourcePickerDialog'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
+import { ScenePickerDialog } from '../../components/sources/ScenePickerDialog'
+import type { SceneChoice } from '../../components/sources/ScenePickerDialog'
 import { SaveProductDialog } from '../../components/products/SaveProductDialog'
 import { SavePersonDialog } from '../../components/people/SavePersonDialog'
 import { unwrap, messageOf } from '../../lib/ipc'
@@ -101,7 +103,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const [kind, setKind] = useState<ChangeKind>('')
   const [templateId, setTemplateId] = useState<string | null>(null)
   const [personId, setPersonId] = useState<string | null>(null)
-  const [sceneRef, setSceneRef] = useState<SourceChoice | null>(null)
+  const [sceneRef, setSceneRef] = useState<SceneChoice | null>(null)
   const [scenePickerOpen, setScenePickerOpen] = useState(false)
   const [batchBusy, setBatchBusy] = useState(false)
   const [labelBusy, setLabelBusy] = useState(false)
@@ -503,6 +505,7 @@ export function PhotoWorkspace(): React.JSX.Element {
         templateId: templateId ?? undefined,
         personId: selectedPerson ? selectedPerson.id : undefined,
         sceneImageId: sceneRef?.kind === 'image' ? sceneRef.imageId : undefined,
+        sceneId: sceneRef?.kind === 'scene' ? sceneRef.sceneId : undefined,
         palette: brand ? usedBrandColors(brand.colors) : undefined,
         isGiftShot: templateId === 'gift-ready'
       }))
@@ -1098,13 +1101,10 @@ export function PhotoWorkspace(): React.JSX.Element {
         title="Add a Photo"
         description="Use a saved product or any ready image in your library."
       />
-      <SourcePickerDialog
+      <ScenePickerDialog
         open={scenePickerOpen}
         onOpenChange={setScenePickerOpen}
-        onChoose={(choice) => { if (choice.kind === 'image') setSceneRef(choice) }}
-        title="Choose a Scene"
-        description="Use a ready image for the setting, light, and props. Its subject is never copied."
-        libraryOnly
+        onChoose={setSceneRef}
       />
       <SaveProductDialog
         open={Boolean(saveProductImageId)}

@@ -44,7 +44,9 @@ export const LICENSE_REQUIRED_CHANNELS: ReadonlySet<IpcChannel> = new Set([
   'people:create',
   'people:createFromImage',
   'people:createImageProject',
-  'people:rename'
+  'people:rename',
+  'scenes:create',
+  'scenes:rename'
 ] satisfies IpcChannel[])
 
 export function requiresActiveLicense(channel: IpcChannel): boolean {

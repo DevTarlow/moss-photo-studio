@@ -17,7 +17,9 @@ describe('license IPC policy', () => {
       'sets:create',
       'products:createFromBytes',
       'products:createProject',
-      'people:create'
+      'people:create',
+      'scenes:create',
+      'scenes:rename'
     ] as const) {
       expect(requiresActiveLicense(channel)).toBe(true)
     }
@@ -35,6 +37,8 @@ describe('license IPC policy', () => {
       'projects:delete',
       'images:list',
       'images:delete',
+      'scenes:list',
+      'scenes:delete',
       'export:images',
       'sets:export',
       'backup:create',

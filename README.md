@@ -38,6 +38,12 @@ Save a product photo as a Product, or start from one of the 100 clean, unbranded
 
 A product page keeps Products active in the sidebar, adds a Products back button and the product name in the window title, and renames inline. **Product notes** hold material, colour, style, or other details that should stay true. The notes stay on this computer and join the image prompt only when that product is selected.
 
+### Scenes
+
+Scenes are reusable settings: the surface, background, light, and props for a photo, without a product of their own. The Scenes page has 30 starter scenes in six categories — studio backdrops, lifestyle rooms, kitchen and table, bath and spa, outdoor spaces, and seasonal sets — and you can add your own scene photo on the same page.
+
+The Image Editor and Image Generator both have **Choose a Scene**. The dialog has three tabs: **Presets** for the bundled scenes, **Your Scenes** for photos you added, and **Projects** for any ready image already in your library. Scenes are borrowed for their setting and light; their subject is never copied.
+
 ### People
 
 The app includes 24 bundled people, and you can add your own portraits. A person reference keeps a face and body consistent across an edit or a generated scene. You can leave the person out of any change. People are stored in the library with the rest of your work.

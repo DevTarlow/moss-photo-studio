@@ -68,6 +68,13 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 - A product hub keeps Products selected in the left navigation, shows a contextual Products back button, and puts the product name in the window title. It shows the source photo, Product notes, Add to Set, Make an Image with this Product, linked projects, Link Existing Projects, archive, and delete. Clicking the product title renames it in place; Enter saves, Escape cancels, and clicking away saves. Notes save locally and are added to later image prompts only when this product is selected. The empty project state offers Edit Photo (Free) and Make an Image.
 - **This build intentionally has no Listing Kit, listing copy, or Business profile.** Sets exist only as image organization; no rail item, menu item, or settings section should offer the retired tools.
 
+## Scenes
+
+- Scenes shows “30 starter scenes · N of yours,” search, sort, category pills, and pagination. The starter scenes are filtered by six categories; Your Scenes pages separately.
+- Add Scene Photo saves a photo with a name; user scenes can be renamed or deleted. Opening a scene shows the full image and Make an Image with this Scene, which opens the Image Generator with the scene chip ready for a product photo.
+- Choose a Scene in the Image Editor or Image Generator opens a dialog with Presets, Your Scenes, and Projects. Presets and Your Scenes use the scene reference path; Projects keeps the existing ready-image scene reference. The setting and light are borrowed; the subject is never copied.
+- The Scenes page and the scene picker are included in the axe pass.
+
 ## Sets
 
 - Add any ready generated image, edited version, or saved product with Add to Set. Create a new Set from the same dialog. Open a Set and use Add to Set to bring in a product or image; Done closes the picker.
@@ -126,7 +133,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 ## Accessibility and layout
 
-- Run axe on activation, onboarding, product hub, editor, adjust preview, generator results, usage, people, settings, library, Set detail, and open modal/lightbox surfaces. No serious or critical findings. While any modal is open, #root is inert and aria-hidden; closing the last modal restores it.
+- Run axe on activation, onboarding, product hub, editor, adjust preview, generator results, usage, people, scenes, settings, library, Set detail, and open modal/lightbox surfaces. No serious or critical findings. While any modal is open, #root is inert and aria-hidden; closing the last modal restores it.
 - Keyboard: Ctrl/Cmd+K palette, Ctrl/Cmd+1 Image Editor, Ctrl/Cmd+2 Image Generator, Ctrl/Cmd+F search, Ctrl/Cmd+E export, Ctrl/Cmd+Enter primary action, Ctrl/Cmd+B rail, Space original, arrows versions, brackets sliders, double-click sliders to reset, Escape close, ? shortcuts.
 - Check 1440×900, 1024×700, 150% zoom, and 200% zoom with no horizontal overflow, including filtered product and example pills, the canvas toolbar, and left-column commit footers.
 - Check light and dark themes on every main screen.

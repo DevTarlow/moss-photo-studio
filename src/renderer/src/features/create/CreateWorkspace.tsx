@@ -19,6 +19,8 @@ import { CreateInspector } from './CreateInspector'
 import { CommitFooter } from '../../components/workspace/CommitFooter'
 import { SourcePickerDialog } from '../../components/sources/SourcePickerDialog'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
+import { ScenePickerDialog } from '../../components/sources/ScenePickerDialog'
+import type { SceneChoice } from '../../components/sources/ScenePickerDialog'
 import { SaveProductDialog } from '../../components/products/SaveProductDialog'
 import { SavePersonDialog } from '../../components/people/SavePersonDialog'
 import { PersonPicker } from '../../components/people/PersonPicker'
@@ -63,6 +65,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const settings = useAppStore((state) => state.settings)
   const secrets = useAppStore((state) => state.secrets)
   const people = useAppStore((state) => state.people)
+  const scenes = useAppStore((state) => state.scenes)
   const canGenerate = useAppStore((state) => state.canGenerate)
   const refreshSettings = useAppStore((state) => state.refreshSettings)
   const setMetaKeyOpen = useUiStore((state) => state.setMetaKeyOpen)
@@ -73,6 +76,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const [params, setParams] = useSearchParams()
   const seededCreatePerson = useRef(false)
   const seededCreateProduct = useRef(false)
+  const seededScene = useRef(false)
   const confirm = useConfirm()
   const tier = useViewportTier()
   const leftHidden = tier === 'tiny'
@@ -90,7 +94,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const [format, setFormat] = useState<Format>(project.format ?? settings?.defaultFormat ?? 'webp')
   const [productRef, setProductRef] = useState<SourceChoice | null>(null)
   const [personId, setPersonId] = useState<string | null>(null)
-  const [sceneRef, setSceneRef] = useState<SourceChoice | null>(null)
+  const [sceneRef, setSceneRef] = useState<SceneChoice | null>(null)
   const [scenePickerOpen, setScenePickerOpen] = useState(false)
   const [personLook, setPersonLook] = useState<string | null>(
     preferredPersonLook && preferredPersonLook !== 'original' ? preferredPersonLook : null
@@ -246,6 +250,25 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
     next.delete('createProduct')
     setParams(next, { replace: true })
   }, [params, setParams])
+
+  useEffect(() => {
+    const sceneId = params.get('scene')
+    if (seededScene.current || !sceneId || !scenes.length) return
+    seededScene.current = true
+    const scene = scenes.find((entry) => entry.id === sceneId)
+    if (scene) {
+      setSceneRef({
+        kind: 'scene',
+        sceneId: scene.id,
+        name: scene.name,
+        category: scene.category,
+        thumbUrl: scene.thumbUrl
+      })
+    }
+    const next = new URLSearchParams(params)
+    next.delete('scene')
+    setParams(next, { replace: true })
+  }, [params, scenes, setParams])
 
   useEffect(() => {
     void loadMonth()
@@ -452,7 +475,8 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         productId: activeProductRef?.kind === 'product' ? activeProductRef.productId : undefined,
         personId: personId ?? undefined,
         personLook: selectedLook?.key,
-        sceneImageId: hasScene && sceneRef?.kind === 'image' ? sceneRef.imageId : undefined
+        sceneImageId: hasScene && sceneRef?.kind === 'image' ? sceneRef.imageId : undefined,
+        sceneId: hasScene && sceneRef?.kind === 'scene' ? sceneRef.sceneId : undefined
       }))
       const state = await unwrap(window.moss.jobs.state({ jobId: result.jobId }))
       upsert(state)
@@ -775,11 +799,11 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
 
       <div className="mt-4">
         <p className="field-label">Scene <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
-        {sceneRef?.kind === 'image' ? (
+        {sceneRef ? (
           <div className="flex items-center gap-2 rounded-[8px] border p-2" style={{ borderColor: 'var(--border)' }}>
             <img src={sceneRef.thumbUrl ?? ''} alt="" className="h-10 w-10 rounded object-cover" style={{ background: 'var(--surface-2)' }} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[11px] font-medium">{sceneRef.label}</p>
+              <p className="truncate text-[11px] font-medium">{sceneRef.kind === 'image' ? sceneRef.label : sceneRef.name}</p>
               <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
                 {activeProductRef
                   ? 'The setting and light are borrowed; its subject is not.'
@@ -1058,13 +1082,10 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         title="Choose a Product Photo"
         description="Use a saved product or any ready image in your library."
       />
-      <SourcePickerDialog
+      <ScenePickerDialog
         open={scenePickerOpen}
         onOpenChange={setScenePickerOpen}
-        onChoose={(choice) => { if (choice.kind === 'image') setSceneRef(choice) }}
-        title="Choose a Scene"
-        description="Use a ready image for the setting, light, and props. Its subject is never copied."
-        libraryOnly
+        onChoose={setSceneRef}
       />
       <SaveProductDialog
         open={Boolean(saveProductImage)}

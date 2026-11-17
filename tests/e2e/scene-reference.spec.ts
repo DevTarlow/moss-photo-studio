@@ -60,6 +60,7 @@ test('a scene reference is sent as the second image and never as the product', a
     await page.getByRole('button', { name: 'Choose a Scene' }).click()
     const dialog = page.getByRole('dialog', { name: 'Choose a Scene' })
     await expect(dialog).toBeVisible()
+    await dialog.getByRole('button', { name: 'Projects', exact: true }).click()
     await dialog.getByRole('button', { name: /Use .* from Windowsill/ }).click()
     await expect(page.getByText('Add a product photo to use this scene.')).toBeVisible()
     await expect(page.getByRole('button', { name: /Remove scene reference/ })).toBeVisible()

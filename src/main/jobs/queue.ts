@@ -30,6 +30,7 @@ import type { UsageRepository } from '../db/repositories/usage'
 import type { BrandRepository } from '../db/repositories/brand'
 import type { PeopleRepository } from '../db/repositories/people'
 import type { ProductRepository } from '../db/repositories/products'
+import type { SceneRepository } from '../db/repositories/scenes'
 import type { SettingsStore } from '../settings'
 import type { SecretStore } from '../secrets'
 import type { LicenseController } from '../license/controller'
@@ -61,6 +62,7 @@ interface WorkItemSpec {
   personId: string | null
   personLook: string | null
   sceneImageId: string | null
+  sceneId: string | null
   shape: Shape
   format: Format
   userText: string
@@ -108,6 +110,7 @@ interface QueueDeps {
   brand: BrandRepository
   people: PeopleRepository
   products: ProductRepository
+  scenes: SceneRepository
   settings: SettingsStore
   secrets: SecretStore
   license: LicenseController
@@ -192,14 +195,21 @@ export class JobQueue {
     const legacyPerson = !input.personId && Boolean(source?.personId)
     const hasPerson = Boolean(input.personId) || legacyPerson
     const hasProduct = Boolean(source || input.productId) && !legacyPerson
+    if (input.sceneId && input.sceneImageId) {
+      throw new JobStartError('invalid_payload', 'Choose one scene.')
+    }
+    const sceneAsset = input.sceneId ? this.deps.scenes.refFor(input.sceneId) : null
+    if (input.sceneId && !sceneAsset) {
+      throw new JobStartError('invalid_payload', 'That scene is not here anymore.')
+    }
     const scene = input.sceneImageId ? this.deps.images.get(input.sceneImageId) : null
     if (input.sceneImageId && (!scene || scene.status !== 'ready')) {
       throw new JobStartError('invalid_payload', 'That scene is not here anymore.')
     }
-    if (input.sceneImageId && !hasProduct) {
+    const hasScene = Boolean(input.sceneId || input.sceneImageId)
+    if (hasScene && !hasProduct) {
       throw new JobStartError('invalid_payload', 'Choose a product photo before adding a scene.')
     }
-    const hasScene = Boolean(input.sceneImageId)
     if ((hasPerson || hasProduct || hasScene) && input.count !== 1) {
       throw new JobStartError('invalid_payload', 'A product, person, or scene makes one image at a time.')
     }
@@ -236,6 +246,7 @@ export class JobQueue {
           personId: input.personId ?? null,
           personLook: input.personLook ?? null,
           sceneImageId: input.sceneImageId ?? null,
+          sceneId: input.sceneId ?? null,
           shape: input.shape,
           format: input.format,
           userText: text,
@@ -280,6 +291,12 @@ export class JobQueue {
     if (input.personId && !this.deps.people.exists(input.personId)) {
       throw new JobStartError('invalid_payload', 'Choose a person for this change.')
     }
+    if (input.sceneId && input.sceneImageId) {
+      throw new JobStartError('invalid_payload', 'Choose one scene.')
+    }
+    if (input.sceneId && !this.deps.scenes.refFor(input.sceneId)) {
+      throw new JobStartError('invalid_payload', 'That scene is not here anymore.')
+    }
     if (input.sceneImageId) {
       const scene = this.deps.images.get(input.sceneImageId)
       if (!scene || scene.status !== 'ready') {
@@ -297,7 +314,7 @@ export class JobQueue {
         kind: input.kind,
         hasReference: true,
         hasPerson: Boolean(input.personId),
-        hasScene: Boolean(input.sceneImageId),
+        hasScene: Boolean(input.sceneId || input.sceneImageId),
         isGiftShot: Boolean(input.isGiftShot || input.templateId === 'gift-ready'),
         palette
       }),
@@ -328,6 +345,7 @@ export class JobQueue {
           personId: input.personId ?? null,
           personLook: null,
           sceneImageId: input.sceneImageId ?? null,
+          sceneId: input.sceneId ?? null,
           shape: project.shape,
           format: project.format,
           userText: text,
@@ -636,7 +654,12 @@ export class JobQueue {
       if (item.spec.personId) {
         images.push(await fs.readFile(this.personPath(item.spec.personId, item.spec.personLook)))
       }
-      if (item.spec.sceneImageId) {
+      if (item.spec.sceneId) {
+        const scene = this.deps.scenes.refFor(item.spec.sceneId)
+        if (!scene) throw new Error('scene_missing')
+        const root = scene.root === 'bundled' ? this.deps.resourceRoot() : this.deps.libraryPath()
+        images.push(await fs.readFile(path.join(root, scene.file)))
+      } else if (item.spec.sceneImageId) {
         const scene = this.deps.images.get(item.spec.sceneImageId)
         if (!scene || scene.status !== 'ready') throw new Error('scene_missing')
         images.push(await fs.readFile(workingFor(this.deps.libraryPath(), scene.projectId, scene.id)))
@@ -648,7 +671,7 @@ export class JobQueue {
         this.persist(run)
         this.deps.onUpdate(this.snapshotState(run))
       }
-      const result = item.spec.createMode && !item.spec.sourceImageId && !item.spec.productId && !item.spec.personId && !item.spec.sceneImageId
+      const result = item.spec.createMode && !item.spec.sourceImageId && !item.spec.productId && !item.spec.personId && !item.spec.sceneImageId && !item.spec.sceneId
         ? await this.deps.provider.generate({
             prompt: item.spec.prompt,
             count: item.spec.requested,

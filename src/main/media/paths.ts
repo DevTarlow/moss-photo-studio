@@ -35,6 +35,14 @@ export function productThumbRelative(productId: string): string {
   return path.posix.join('products', `${productId}-thumb.webp`)
 }
 
+export function sceneRelative(sceneId: string): string {
+  return path.posix.join('scenes', `${sceneId}.webp`)
+}
+
+export function sceneThumbRelative(sceneId: string): string {
+  return path.posix.join('scenes', `${sceneId}-thumb.webp`)
+}
+
 export function absoluteInLibrary(libraryPath: string, relative: string): string {
   const root = path.resolve(libraryPath)
   const resolved = path.resolve(root, relative)

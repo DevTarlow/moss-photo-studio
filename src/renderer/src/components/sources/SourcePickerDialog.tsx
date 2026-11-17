@@ -23,8 +23,7 @@ export function SourcePickerDialog({
   onChoose,
   onUpload,
   title = 'Choose a Photo',
-  description = 'Use a saved product or any ready image in your library.',
-  libraryOnly = false
+  description = 'Use a saved product or any ready image in your library.'
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -32,11 +31,10 @@ export function SourcePickerDialog({
   onUpload?: () => void
   title?: string
   description?: string
-  libraryOnly?: boolean
 }): React.JSX.Element {
   const products = useAppStore((state) => state.products)
   const starterProducts = bundledProductCards()
-  const [tab, setTab] = useState<'products' | 'library'>(libraryOnly ? 'library' : 'products')
+  const [tab, setTab] = useState<'products' | 'library'>('products')
   const [search, setSearch] = useState('')
   const [items, setItems] = useState<LibraryImage[]>([])
   const [total, setTotal] = useState(0)
@@ -73,14 +71,14 @@ export function SourcePickerDialog({
 
   useEffect(() => {
     if (!open) return
-    setTab(libraryOnly ? 'library' : 'products')
+    setTab('products')
     setSearch('')
     setLibraryPage(1)
     setProductPage(1)
     setStarterPage(1)
     setAddProductOpen(false)
     void loadLibrary('', 1)
-  }, [open, libraryOnly])
+  }, [open])
 
   useEffect(() => {
     setProductPage(1)
@@ -149,17 +147,15 @@ export function SourcePickerDialog({
       }
     >
       <div className="flex flex-wrap items-center gap-3">
-        {!libraryOnly && (
-          <Segmented
-            label="Source type"
-            value={tab}
-            onChange={setTab}
-            options={[
-              { value: 'products', label: `Products (${products.length})` },
-              { value: 'library', label: 'Library' }
-            ]}
-          />
-        )}
+        <Segmented
+          label="Source type"
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'products', label: `Products (${products.length})` },
+            { value: 'library', label: 'Library' }
+          ]}
+        />
         <div className="relative min-w-[200px] flex-1">
           <Icon icon={Search} size="sm" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-faint)' }} aria-hidden />
           <input

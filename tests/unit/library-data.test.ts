@@ -5,6 +5,13 @@ import { SCENES, SCENE_CATEGORIES } from '@shared/prompts/scenes'
 import { ALL_TEMPLATES, TEMPLATE_GROUPS, QUICK_FIX, templateAsset, templateById } from '@shared/prompts/templates'
 import { CREATE_PERSON_PROMPT, CREATE_PRODUCT_PROMPT, EXAMPLE_GROUPS, EXAMPLE_SCENES, PERSON_HOLDING_EXAMPLE, STARTERS, exampleTextFor } from '@shared/starters'
 import { BUNDLED_PEOPLE, BUNDLED_PERSON_LOOKS } from '@shared/people'
+import {
+  BUNDLED_SCENE_CATEGORIES,
+  BUNDLED_SCENE_PRESETS,
+  BUNDLED_SCENE_SIZE,
+  bundledSceneCards,
+  isBundledScenePreset
+} from '@shared/scene-presets'
 import { BUNDLED_PRODUCT_SIZE, BUNDLED_PRODUCTS, bundledProductCards, isBundledProduct } from '@shared/products'
 import { wrapScenePrompt, wrapModelPrompt, PROMPT_MAX } from '@shared/prompts/guards'
 import { nextCountedLabel } from '@shared/labels'
@@ -12,6 +19,7 @@ import { shapeForImage, sizeForShape } from '@shared/shapes'
 import { cleanProductName, safeBaseName, uniqueFileName, numberedFileName } from '@shared/files'
 import { usd, estimateCents, monthBounds, monthKey } from '@shared/cost'
 import { PRODUCT_PACK } from '../../scripts/lab/product-pack.mjs'
+import { SCENE_PACK } from '../../scripts/lab/scene-pack.mjs'
 
 const root = path.resolve(__dirname, '../..')
 
@@ -110,6 +118,59 @@ describe('starters and people', () => {
         const file = path.join(root, 'resources', 'people', `${person.id}-${look.key}.webp`)
         expect(fs.existsSync(file), `${person.id}-${look.key}.webp`).toBe(true)
       }
+    }
+  })
+})
+
+describe('bundled scene presets', () => {
+  it('ships thirty product-free scenes across six categories', () => {
+    expect(BUNDLED_SCENE_PRESETS).toHaveLength(30)
+    expect(new Set(BUNDLED_SCENE_PRESETS.map((scene) => scene.id)).size).toBe(30)
+    expect(BUNDLED_SCENE_SIZE).toBe(1024)
+    expect(BUNDLED_SCENE_CATEGORIES).toHaveLength(6)
+    for (const scene of BUNDLED_SCENE_PRESETS) {
+      expect(scene.name.length).toBeGreaterThan(0)
+      expect(scene.blurb.length).toBeGreaterThan(0)
+      expect(BUNDLED_SCENE_CATEGORIES).toContain(scene.category)
+      expect(isBundledScenePreset(scene.id)).toBe(true)
+    }
+    for (const category of BUNDLED_SCENE_CATEGORIES) {
+      expect(BUNDLED_SCENE_PRESETS.filter((scene) => scene.category === category)).toHaveLength(5)
+    }
+    expect(isBundledScenePreset('not-a-bundled-scene')).toBe(false)
+  })
+
+  it('has full and thumb assets for every scene preset', () => {
+    for (const scene of BUNDLED_SCENE_PRESETS) {
+      expect(fs.existsSync(path.join(root, 'resources', 'scenes', `${scene.id}.webp`))).toBe(true)
+      expect(fs.existsSync(path.join(root, 'resources', 'scenes', `${scene.id}-thumb.webp`))).toBe(true)
+    }
+  })
+
+  it('keeps the lab scene pack in sync with the catalog', () => {
+    expect(SCENE_PACK).toHaveLength(BUNDLED_SCENE_PRESETS.length)
+    expect(SCENE_PACK.map((entry) => entry.id)).toEqual(BUNDLED_SCENE_PRESETS.map((scene) => scene.id))
+    const packById = new Map(SCENE_PACK.map((entry) => [entry.id, entry]))
+    for (const scene of BUNDLED_SCENE_PRESETS) {
+      const entry = packById.get(scene.id)
+      expect(entry?.name).toBe(scene.name)
+      expect(entry?.category).toBe(scene.category)
+      expect(entry?.prompt.length ?? 0).toBeGreaterThan(0)
+      expect(entry?.prompt).toContain('no product in the frame')
+    }
+  })
+
+  it('maps bundled scenes to resources without a saved row', () => {
+    const cards = bundledSceneCards()
+    expect(cards).toHaveLength(30)
+    for (const card of cards) {
+      expect(card.source).toBe('bundled')
+      expect(card.width).toBe(1024)
+      expect(card.height).toBe(1024)
+      expect(card.blurb).toBeTruthy()
+      expect(card.category).toBeTruthy()
+      expect(card.imageUrl).toMatch(/^moss-media:\/\/bundled\/scenes\//)
+      expect(card.thumbUrl).toMatch(/^moss-media:\/\/bundled\/scenes\//)
     }
   })
 })

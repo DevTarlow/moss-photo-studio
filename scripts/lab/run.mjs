@@ -8,6 +8,7 @@ import { createLabLoader } from './loader.mjs'
 import { PEOPLE_PACK } from './people-pack.mjs'
 import { PERSON_LOOKS_PACK } from './person-looks.mjs'
 import { PRODUCT_PACK } from './product-pack.mjs'
+import { SCENE_PACK } from './scene-pack.mjs'
 import { SOURCE_PACK, sourcePromptFor } from './source-pack.mjs'
 import {
   addSpend,
@@ -27,7 +28,8 @@ const SOURCES = path.join(LAB, 'sources')
 const PEOPLE_DIR = path.join(LAB, 'people')
 const LOOKS_DIR = path.join(LAB, 'looks')
 const PRODUCTS_DIR = path.join(LAB, 'products')
-const COMMANDS = new Set(['edit', 'create', 'sources', 'people', 'looks', 'products', 'help'])
+const SCENES_DIR = path.join(LAB, 'scenes')
+const COMMANDS = new Set(['edit', 'create', 'sources', 'people', 'looks', 'products', 'scenes', 'help'])
 
 class LabError extends Error {}
 
@@ -86,6 +88,7 @@ Usage:
   npm run lab -- people  [--ids maya,omar] [--force] --yes
   npm run lab -- looks   [--ids maya,omar] [--looks front,seated] [--force] --yes
   npm run lab -- products [--ids dropper-bottle,speckled-mug] [--force] --yes
+  npm run lab -- scenes  [--ids white-seamless,oak-side-table] [--force] --yes
 
 Common options:
   --shape square|portrait|landscape   default: from the source photo
@@ -107,6 +110,7 @@ Output:
   lab/people/           reviewed full-body and portrait people assets
   lab/looks/            reviewed alternate studio looks, <id>-<look>.webp
   lab/products/         reviewed unbranded starter products and thumbs
+  lab/scenes/           reviewed product-free preset scenes and thumbs
   lab/runs/<stamp>-...  images, thumbs, manifest.json, index.html, sheet.webp, review.md
   lab/spend.json        cumulative actual returned-image cost
 `)
@@ -1083,6 +1087,105 @@ async function productsCommand({ S, client, baseUrl, opts, budget }) {
   return result
 }
 
+async function scenesCommand({ S, client, baseUrl, opts, budget }) {
+  const wanted = opts.ids
+    ? new Set(
+        String(opts.ids)
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean)
+      )
+    : null
+  if (wanted) {
+    for (const id of wanted) {
+      if (!SCENE_PACK.some((scene) => scene.id === id)) {
+        fail(`Unknown bundled scene "${id}". Use one of: ${SCENE_PACK.map((scene) => scene.id).join(', ')}.`)
+      }
+    }
+  }
+  const pending = SCENE_PACK.filter((scene) => {
+    if (wanted && !wanted.has(scene.id)) return false
+    if (opts.force) return true
+    return (
+      !fs.existsSync(path.join(SCENES_DIR, `${scene.id}.webp`)) ||
+      !fs.existsSync(path.join(SCENES_DIR, `${scene.id}-thumb.webp`))
+    )
+  })
+  if (!pending.length) {
+    console.log('All requested bundled scenes already have images. Add --force to regenerate them.')
+    return { skipped: true }
+  }
+  const runDir = path.join(LAB, 'runs', `${stamp()}-scenes`)
+  const requests = pending.map((scene, order) => ({
+    order,
+    group: 'scenes',
+    key: scene.id,
+    label: `${scene.name} · ${scene.category}`,
+    prompt: scene.prompt,
+    endpoint: 'generate',
+    images: [],
+    count: 1,
+    shape: 'square',
+    format: 'webp',
+    personId: null,
+    hasSource: false
+  }))
+  const meta = {
+    command: 'scenes',
+    label: `Scene pack · ${pending.length}`,
+    category: 'scenes',
+    palette: [],
+    shape: 'square',
+    format: 'webp',
+    source: null,
+    sources: {}
+  }
+  const result = await executeRun({ S, client, baseUrl, requests, runDir, meta, budget, opts })
+  if (result.skipped) return result
+  await ensureDir(SCENES_DIR)
+  const generated = []
+  for (const item of result.manifest.items) {
+    if (item.status !== 'ok' || !item.files?.[0]) continue
+    const scene = pending.find((entry) => entry.id === item.key)
+    if (!scene) continue
+    const raw = path.join(runDir, item.files[0].file)
+    const fullPath = path.join(SCENES_DIR, `${scene.id}.webp`)
+    const thumbPath = path.join(SCENES_DIR, `${scene.id}-thumb.webp`)
+    await sharp(raw)
+      .resize({ width: 1024, height: 1024, fit: 'cover', position: 'centre' })
+      .webp({ quality: 90, effort: 4 })
+      .toFile(fullPath)
+    await sharp(raw)
+      .resize({ width: 480, height: 480, fit: 'cover' })
+      .webp({ quality: 82 })
+      .toFile(thumbPath)
+    generated.push({
+      id: scene.id,
+      name: scene.name,
+      category: scene.category,
+      prompt: item.prompt,
+      run: path.relative(ROOT, runDir).split(path.sep).join('/'),
+      files: [fullPath, thumbPath].map((file) => path.relative(ROOT, file).split(path.sep).join('/')),
+      costCents: item.costCents
+    })
+    console.log(`  ${path.relative(ROOT, fullPath)}`)
+    console.log(`  ${path.relative(ROOT, thumbPath)}`)
+  }
+  let manifest = { scenes: [] }
+  try {
+    manifest = JSON.parse(await fsp.readFile(path.join(SCENES_DIR, 'manifest.json'), 'utf8'))
+  } catch {
+    // First scene run.
+  }
+  const byId = new Map((manifest.scenes ?? []).map((scene) => [scene.id, scene]))
+  for (const scene of generated) byId.set(scene.id, scene)
+  await fsp.writeFile(
+    path.join(SCENES_DIR, 'manifest.json'),
+    `${JSON.stringify({ createdAt: new Date().toISOString(), scenes: [...byId.values()] }, null, 2)}\n`
+  )
+  return result
+}
+
 async function sourcesCommand({ S, client, baseUrl, opts, budget }) {
   const missing = SOURCE_PACK.filter((entry) => opts.force || !findSource(entry.category))
   if (!missing.length) {
@@ -1291,6 +1394,7 @@ async function main() {
     else if (command === 'people') await peopleCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'looks') await looksCommand({ S, client, baseUrl, opts, budget })
     else if (command === 'products') await productsCommand({ S, client, baseUrl, opts, budget })
+    else if (command === 'scenes') await scenesCommand({ S, client, baseUrl, opts, budget })
   } finally {
     await S.loader.close()
   }

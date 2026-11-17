@@ -12,6 +12,7 @@ import { ImageRepository } from '@main/db/repositories/images'
 import { BrandRepository } from '@main/db/repositories/brand'
 import { PeopleRepository } from '@main/db/repositories/people'
 import { MediaService } from '@main/media/service'
+import { SceneRepository } from '@main/db/repositories/scenes'
 import { SetRepository } from '@main/db/repositories/sets'
 import { ImageImportError, assertImportable, normaliseToWorking } from '@main/media/import'
 
@@ -30,11 +31,13 @@ beforeEach(() => {
   images = new ImageRepository(db)
   const brand = new BrandRepository(db)
   const people = new PeopleRepository(db)
+  const scenes = new SceneRepository(db)
   sets = new SetRepository(db)
   media = new MediaService({
     projects,
     images,
     people,
+    scenes,
     brand,
     libraryPath: () => path.join(dir, 'library'),
     logger

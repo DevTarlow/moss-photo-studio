@@ -15,6 +15,7 @@ import { UsageRepository } from './db/repositories/usage'
 import { BrandRepository } from './db/repositories/brand'
 import { PeopleRepository } from './db/repositories/people'
 import { ProductRepository } from './db/repositories/products'
+import { SceneRepository } from './db/repositories/scenes'
 import { SetRepository } from './db/repositories/sets'
 import { ProductService } from './products/service'
 import { LicenseRepository } from './db/repositories/license'
@@ -174,6 +175,7 @@ async function boot(): Promise<void> {
   const brand = new BrandRepository(db)
   const people = new PeopleRepository(db)
   const products = new ProductRepository(db)
+  const scenes = new SceneRepository(db)
   const sets = new SetRepository(db)
   const licenseRepo = new LicenseRepository(db)
   const cipher = new SafeTextCipher(userDataDir)
@@ -222,6 +224,7 @@ async function boot(): Promise<void> {
     projects,
     images,
     people,
+    scenes,
     brand,
     libraryPath,
     logger
@@ -244,6 +247,7 @@ async function boot(): Promise<void> {
     brand,
     people,
     products,
+    scenes,
     settings,
     secrets,
     license,
@@ -268,6 +272,7 @@ async function boot(): Promise<void> {
     brand,
     people,
     products,
+    scenes,
     sets,
     productService,
     media,

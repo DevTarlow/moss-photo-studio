@@ -91,6 +91,12 @@ const api: MossApi = {
     createProject: invoke('products:createProject'),
     importIntoProject: invoke('products:importIntoProject')
   },
+  scenes: {
+    list: invokeVoid('scenes:list'),
+    create: invoke('scenes:create'),
+    rename: invoke('scenes:rename'),
+    delete: invoke('scenes:delete')
+  },
   projects: {
     list: invoke('projects:list'),
     get: invoke('projects:get'),

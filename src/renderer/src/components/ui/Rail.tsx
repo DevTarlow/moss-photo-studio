@@ -8,6 +8,7 @@ import {
   KeyRound,
   Layers,
   Monitor,
+  Mountain,
   Package,
   Palette,
   RefreshCw,
@@ -35,6 +36,7 @@ const settingsIcons = {
 const items = [
   { to: '/library', label: 'All work', icon: <Icon icon={Images} size="md" strokeWidth={1.75} /> },
   { to: '/products', label: 'Products', icon: <Icon icon={Package} size="md" strokeWidth={1.75} /> },
+  { to: '/scenes', label: 'Scenes', icon: <Icon icon={Mountain} size="md" strokeWidth={1.75} /> },
   { to: '/sets', label: 'Sets', icon: <Icon icon={Layers} size="md" strokeWidth={1.75} /> },
   { to: '/people', label: 'People', icon: <Icon icon={Users} size="md" strokeWidth={1.75} /> },
   { to: '/usage', label: 'Usage', icon: <Icon icon={BarChart3} size="md" strokeWidth={1.75} /> }

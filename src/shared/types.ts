@@ -162,6 +162,19 @@ export interface Person {
   usedIn: number
 }
 
+export interface ScenePreset {
+  id: string
+  name: string
+  category: string | null
+  blurb: string | null
+  source: 'bundled' | 'user'
+  imageUrl: string
+  thumbUrl: string
+  width: number
+  height: number
+  createdAt: number
+}
+
 export interface PhotoWarning {
   code: 'small' | 'dark' | 'low_contrast' | 'soft'
   message: string
@@ -513,6 +526,7 @@ export interface CreateJobInput {
   personId?: string
   personLook?: string
   sceneImageId?: string
+  sceneId?: string
 }
 
 export interface EditJobInput {
@@ -523,6 +537,7 @@ export interface EditJobInput {
   templateId?: string
   personId?: string
   sceneImageId?: string
+  sceneId?: string
   palette?: string[]
   isGiftShot?: boolean
 }

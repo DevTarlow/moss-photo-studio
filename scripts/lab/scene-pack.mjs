@@ -1,0 +1,196 @@
+/**
+ * The 30 unbranded preset scenes included with Moss. Each entry generates one
+ * square scene photo on an empty surface; the lab writes a 1024x1024 image and
+ * a 480x480 thumb.
+ *
+ * A scene is setting, light and props only. Keep the photos free of a hero
+ * product, people, readable text and logos so the subject is never copied into
+ * a generated image.
+ *
+ * Ids, names and categories must stay in sync with src/shared/scene-presets.ts.
+ */
+const SCENE_RULES =
+  'with an empty surface in the centre where a product would sit, no product in the frame, no people, no text, no logos, realistic interior photograph, square.'
+
+export const SCENE_PACK = [
+  {
+    id: 'white-seamless',
+    name: 'White seamless studio',
+    category: 'Studio backdrops',
+    prompt: `A bright white seamless studio sweep with a soft shadow on the empty surface, photographed at a low three-quarter angle, ${SCENE_RULES}`
+  },
+  {
+    id: 'warm-grey-sweep',
+    name: 'Warm grey studio',
+    category: 'Studio backdrops',
+    prompt: `A seamless warm grey studio backdrop with a smooth surface and a soft shadow, photographed at a low three-quarter angle, ${SCENE_RULES}`
+  },
+  {
+    id: 'blush-paper',
+    name: 'Blush paper backdrop',
+    category: 'Studio backdrops',
+    prompt: `A pale blush pink seamless paper backdrop with a soft shadow on the empty surface, photographed at a low three-quarter angle, ${SCENE_RULES}`
+  },
+  {
+    id: 'charcoal-sweep',
+    name: 'Charcoal studio',
+    category: 'Studio backdrops',
+    prompt: `A deep charcoal seamless studio sweep lit by a single soft spotlight, with a gentle shadow on the empty surface, photographed at a low three-quarter angle, ${SCENE_RULES}`
+  },
+  {
+    id: 'stone-plinth',
+    name: 'Stone plinth',
+    category: 'Studio backdrops',
+    prompt: `A smooth grey concrete plinth in a minimal studio with a pale gradient backdrop and directional side light, an empty top surface, ${SCENE_RULES}`
+  },
+  {
+    id: 'oak-side-table',
+    name: 'Oak side table',
+    category: 'Lifestyle rooms',
+    prompt: `A warm oak side table beside a linen armchair in a bright living room, with a small lamp, a book and a plant just out of focus behind, soft window light, ${SCENE_RULES}`
+  },
+  {
+    id: 'linen-bed',
+    name: 'Linen bed',
+    category: 'Lifestyle rooms',
+    prompt: `A bed made with rumpled natural linen sheets in a calm bedroom, soft morning light from a window, an empty area on the linen, ${SCENE_RULES}`
+  },
+  {
+    id: 'living-room-console',
+    name: 'Living room console',
+    category: 'Lifestyle rooms',
+    prompt: `An oak console table against a warm plaster wall in a living room, with a ceramic vase of dried stems and a stack of books out of focus, soft afternoon light, ${SCENE_RULES}`
+  },
+  {
+    id: 'cosy-shelf',
+    name: 'Cosy shelf',
+    category: 'Lifestyle rooms',
+    prompt: `A wooden shelf in a cosy room with books, a small plant and a ceramic candle holder out of focus at the edges, warm lamplight, an empty space in the centre, ${SCENE_RULES}`
+  },
+  {
+    id: 'reading-corner',
+    name: 'Reading corner',
+    category: 'Lifestyle rooms',
+    prompt: `A quiet reading corner with a linen armchair, a side table and a soft throw, warm window light, an empty side table surface, ${SCENE_RULES}`
+  },
+  {
+    id: 'marble-counter',
+    name: 'Marble counter',
+    category: 'Kitchen and table',
+    prompt: `A pale marble kitchen counter with a softly blurred kitchen behind, a folded linen towel and a small plant out of focus, soft daylight from a window, ${SCENE_RULES}`
+  },
+  {
+    id: 'warm-kitchen-table',
+    name: 'Warm kitchen table',
+    category: 'Kitchen and table',
+    prompt: `A warm oak kitchen table in soft morning light, with a linen napkin and a plain ceramic cup out of focus behind, an empty area in the centre, ${SCENE_RULES}`
+  },
+  {
+    id: 'breakfast-bar',
+    name: 'Breakfast bar',
+    category: 'Kitchen and table',
+    prompt: `A pale stone breakfast bar with two wooden stools behind and a bright window, an empty counter surface, ${SCENE_RULES}`
+  },
+  {
+    id: 'pantry-shelf',
+    name: 'Pantry shelf',
+    category: 'Kitchen and table',
+    prompt: `A wooden pantry shelf with plain unlabelled glass jars, woven baskets and a linen cloth, warm soft light, an empty space in the centre, ${SCENE_RULES}`
+  },
+  {
+    id: 'dining-table-runner',
+    name: 'Dining table runner',
+    category: 'Kitchen and table',
+    prompt: `A dining table with a natural linen runner, pale ceramic plates out of focus at the edges and soft daylight, an empty centre on the runner, ${SCENE_RULES}`
+  },
+  {
+    id: 'marble-vanity',
+    name: 'Marble vanity',
+    category: 'Bath and spa',
+    prompt: `A pale marble bathroom vanity with folded white towels, a small green plant and a soft-focus mirror, bright daylight, an empty counter surface, ${SCENE_RULES}`
+  },
+  {
+    id: 'tiled-bath-shelf',
+    name: 'Tiled bath shelf',
+    category: 'Bath and spa',
+    prompt: `A white tiled bathroom shelf with a sprig of eucalyptus, a rolled towel and a small stone dish, soft daylight, an empty space in the centre, ${SCENE_RULES}`
+  },
+  {
+    id: 'wooden-bath-tray',
+    name: 'Wooden bath tray',
+    category: 'Bath and spa',
+    prompt: `A teak bath tray across a white bathtub, with a lit candle and a folded towel out of focus, warm spa light, an empty space on the tray, ${SCENE_RULES}`
+  },
+  {
+    id: 'stone-sink',
+    name: 'Stone sink',
+    category: 'Bath and spa',
+    prompt: `A pale stone bathroom sink with a folded linen towel and a small plant, soft daylight, an empty rim, ${SCENE_RULES}`
+  },
+  {
+    id: 'spa-towel-bench',
+    name: 'Spa towel bench',
+    category: 'Bath and spa',
+    prompt: `A wooden bench in a spa-like bathroom with stacked white towels and eucalyptus, soft diffused light, an empty space on the bench, ${SCENE_RULES}`
+  },
+  {
+    id: 'garden-table',
+    name: 'Garden table',
+    category: 'Outdoor spaces',
+    prompt: `A weathered wooden garden table under trees with dappled sunlight, a small potted plant and a linen cloth out of focus, an empty tabletop, ${SCENE_RULES}`
+  },
+  {
+    id: 'stone-patio',
+    name: 'Stone patio',
+    category: 'Outdoor spaces',
+    prompt: `A pale stone patio with potted plants and a low table, warm late afternoon light, an empty tabletop, ${SCENE_RULES}`
+  },
+  {
+    id: 'picnic-blanket',
+    name: 'Picnic blanket',
+    category: 'Outdoor spaces',
+    prompt: `A checked linen picnic blanket on green grass with a woven basket out of focus at the edge, soft daylight, an empty centre on the blanket, ${SCENE_RULES}`
+  },
+  {
+    id: 'greenhouse-shelf',
+    name: 'Greenhouse shelf',
+    category: 'Outdoor spaces',
+    prompt: `A wooden shelf in a greenhouse with terracotta pots, small plants and soft glass-filtered light, an empty space in the centre, ${SCENE_RULES}`
+  },
+  {
+    id: 'sunlit-balcony',
+    name: 'Sunlit balcony',
+    category: 'Outdoor spaces',
+    prompt: `A small city balcony with a bistro table, potted plants and morning sunlight, an empty tabletop, ${SCENE_RULES}`
+  },
+  {
+    id: 'gift-wrapping-table',
+    name: 'Gift wrapping table',
+    category: 'Seasonal sets',
+    prompt: `A wooden table set for gift wrapping with kraft paper, ribbon, tissue paper and an open plain gift box, warm soft light, an empty space in the centre, ${SCENE_RULES}`
+  },
+  {
+    id: 'festive-mantel',
+    name: 'Festive mantel',
+    category: 'Seasonal sets',
+    prompt: `A rustic mantel decorated with evergreen garland, warm fairy lights and plain stockings in a cosy winter room, an empty space in the centre, ${SCENE_RULES}`
+  },
+  {
+    id: 'autumn-table',
+    name: 'Autumn table',
+    category: 'Seasonal sets',
+    prompt: `An autumn table with dried leaves, amber glass and a linen cloth, warm low light, an empty centre, ${SCENE_RULES}`
+  },
+  {
+    id: 'spring-table',
+    name: 'Spring table',
+    category: 'Seasonal sets',
+    prompt: `A spring table with fresh white and yellow flowers, pale linen and bright soft light, an empty centre, ${SCENE_RULES}`
+  },
+  {
+    id: 'neutral-holiday-table',
+    name: 'Neutral holiday table',
+    category: 'Seasonal sets',
+    prompt: `A neutral holiday gift table with kraft wrapping paper, cotton twine, blank gift tags and dried oranges, soft warm light, an empty centre, ${SCENE_RULES}`
+  }
+]

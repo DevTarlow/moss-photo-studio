@@ -10,7 +10,7 @@ import { PROMPT_MAX } from '@shared/prompts/guards'
 import type { ChangeKind } from '@shared/prompts/guards'
 import { Button } from '../../components/ui/Button'
 import { PersonPicker } from '../../components/people/PersonPicker'
-import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
+import type { SceneChoice } from '../../components/sources/ScenePickerDialog'
 import { TextareaCounter } from '../../components/ui/TextareaCounter'
 
 type TextSource = 'user' | 'tile'
@@ -74,7 +74,7 @@ export function ChangePanel({
   templateId: string | null
   personId: string | null
   people: Person[]
-  sceneRef: SourceChoice | null
+  sceneRef: SceneChoice | null
   disabled: boolean
   onText: (text: string, source: TextSource) => void
   onKind: (kind: ChangeKind) => void
@@ -201,10 +201,10 @@ export function ChangePanel({
 
       <div className="mt-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
         <p className="field-label">Scene <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
-        {sceneRef?.kind === 'image' ? (
+        {sceneRef ? (
           <div className="flex items-center gap-2">
             <img src={sceneRef.thumbUrl ?? ''} alt="" className="h-8 w-8 rounded object-cover" style={{ background: 'var(--surface-2)' }} />
-            <p className="min-w-0 flex-1 truncate text-[11px]">{sceneRef.label}</p>
+            <p className="min-w-0 flex-1 truncate text-[11px]">{sceneRef.kind === 'image' ? sceneRef.label : sceneRef.name}</p>
             <button type="button" className="icon-btn" aria-label="Remove scene" disabled={disabled} onClick={onClearScene}><Icon icon={X} size="xsm" /></button>
           </div>
         ) : (

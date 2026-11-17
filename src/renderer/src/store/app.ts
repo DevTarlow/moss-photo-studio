@@ -5,6 +5,7 @@ import type {
   LicenseState,
   Person,
   Product,
+  ScenePreset,
   SettingsAll,
   ThemeSetting,
   Format,
@@ -29,6 +30,7 @@ interface AppStore {
   brand: Brand | null
   people: Person[]
   products: Product[]
+  scenes: ScenePreset[]
   readonlyBypass: boolean
   onboardingBypass: boolean
   initialLicenseValid: boolean
@@ -41,6 +43,7 @@ interface AppStore {
   refreshBrand: () => Promise<void>
   refreshPeople: () => Promise<void>
   refreshProducts: () => Promise<void>
+  refreshScenes: () => Promise<void>
   setTheme: (theme: ThemeSetting) => Promise<void>
   setDefaultFormat: (format: Format) => Promise<void>
   setDefaultShape: (shape: Shape) => Promise<void>
@@ -70,6 +73,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   brand: null,
   people: [],
   products: [],
+  scenes: [],
   readonlyBypass: false,
   onboardingBypass: false,
   initialLicenseValid: false,
@@ -77,14 +81,15 @@ export const useAppStore = create<AppStore>((set, get) => ({
   canUseStudio: false,
   boot: async () => {
     try {
-      const [appInfo, settings, license, secrets, brand, people, products] = await Promise.all([
+      const [appInfo, settings, license, secrets, brand, people, products, scenes] = await Promise.all([
         unwrap(window.moss.app.info()),
         unwrap(window.moss.settings.all()),
         unwrap(window.moss.license.state()),
         unwrap(window.moss.secrets.status()),
         unwrap(window.moss.brand.get()),
         unwrap(window.moss.people.list()),
-        unwrap(window.moss.products.list())
+        unwrap(window.moss.products.list()),
+        unwrap(window.moss.scenes.list())
       ])
       applyThemeToDocument(settings.theme)
       document.documentElement.dataset.density = settings.density
@@ -98,6 +103,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         brand,
         people,
         products,
+        scenes,
         canGenerate: license.status === 'licensed' || license.status === 'grace',
         canUseStudio: license.status === 'licensed' || license.status === 'grace',
         initialLicenseValid: license.status === 'licensed' || license.status === 'grace'
@@ -137,6 +143,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
   refreshProducts: async () => {
     set({ products: await unwrap(window.moss.products.list()) })
+  },
+  refreshScenes: async () => {
+    set({ scenes: await unwrap(window.moss.scenes.list()) })
   },
   setTheme: async (theme) => {
     await unwrap(window.moss.settings.set({ key: 'theme', value: theme }))

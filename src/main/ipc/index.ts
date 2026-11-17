@@ -1136,7 +1136,8 @@ export function registerIpcHandlers(context: AppContext): void {
       productId: z.string().optional(),
       personId: z.string().optional(),
       personLook: z.string().max(80).optional(),
-      sceneImageId: z.string().optional()
+      sceneImageId: z.string().optional(),
+      sceneId: z.string().max(120).optional()
     }),
     (request) => context.queue.startCreate(request)
   )
@@ -1151,6 +1152,7 @@ export function registerIpcHandlers(context: AppContext): void {
       templateId: z.string().max(80).optional(),
       personId: z.string().max(80).optional(),
       sceneImageId: z.string().optional(),
+      sceneId: z.string().max(120).optional(),
       palette: z.array(z.string()).max(3).optional(),
       isGiftShot: z.boolean().optional()
     }),
@@ -1414,6 +1416,37 @@ export function registerIpcHandlers(context: AppContext): void {
       }
     }
   )
+
+  registerIpc(context, 'scenes:list', voidSchema, () => context.scenes.list())
+  registerIpc(
+    context,
+    'scenes:create',
+    z.object({ name: z.string().trim().min(1).max(80), bytes: bytesSchema }),
+    async ({ name, bytes }) => {
+      const created = await context.media.importScene({ name, bytes })
+      const scene = context.scenes.getUser(created.sceneId)
+      if (!scene) throw new IpcFault('unknown')
+      return scene
+    }
+  )
+  registerIpc(
+    context,
+    'scenes:rename',
+    z.object({ id: idSchema, name: z.string().trim().min(1).max(80) }),
+    ({ id, name }) => {
+      const scene = context.scenes.rename(id, name)
+      if (!scene) throw new IpcFault('not_found')
+      return scene
+    }
+  )
+  registerIpc(context, 'scenes:delete', z.object({ id: idSchema }), async ({ id }) => {
+    const result = context.scenes.delete(id)
+    if (!result) throw new IpcFault('not_found')
+    for (const file of result.files) {
+      await fs.rm(path.join(context.libraryPath(), file), { force: true }).catch(() => undefined)
+    }
+    return { ok: true as const }
+  })
 
   registerIpc(context, 'usage:summary', z.object({ month: monthSchema }), ({ month }) => {
     const bounds = monthBounds(month)

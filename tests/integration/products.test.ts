@@ -11,6 +11,7 @@ import { ImageRepository } from '@main/db/repositories/images'
 import { BrandRepository } from '@main/db/repositories/brand'
 import { PeopleRepository } from '@main/db/repositories/people'
 import { ProductRepository } from '@main/db/repositories/products'
+import { SceneRepository } from '@main/db/repositories/scenes'
 import { SetRepository } from '@main/db/repositories/sets'
 import { MediaService } from '@main/media/service'
 import { ProductService } from '@main/products/service'
@@ -34,9 +35,10 @@ beforeEach(() => {
   images = new ImageRepository(db)
   const brand = new BrandRepository(db)
   const people = new PeopleRepository(db)
+  const scenes = new SceneRepository(db)
   products = new ProductRepository(db)
   sets = new SetRepository(db)
-  media = new MediaService({ projects, images, people, brand, libraryPath, logger })
+  media = new MediaService({ projects, images, people, scenes, brand, libraryPath, logger })
   productService = new ProductService({
     products,
     images,

@@ -6,6 +6,7 @@ import type { UsageRepository } from './db/repositories/usage'
 import type { BrandRepository } from './db/repositories/brand'
 import type { PeopleRepository } from './db/repositories/people'
 import type { ProductRepository } from './db/repositories/products'
+import type { SceneRepository } from './db/repositories/scenes'
 import type { SetRepository } from './db/repositories/sets'
 import type { ProductService } from './products/service'
 import type { SettingsStore } from './settings'
@@ -32,6 +33,7 @@ export interface AppContext {
   brand: BrandRepository
   people: PeopleRepository
   products: ProductRepository
+  scenes: SceneRepository
   sets: SetRepository
   productService: ProductService
   media: MediaService

@@ -5,6 +5,7 @@ import { Onboarding } from './screens/Onboarding'
 import { Library } from './screens/Library'
 import { People } from './screens/People'
 import { Products } from './screens/Products'
+import { Scenes } from './screens/Scenes'
 import { Sets } from './screens/Sets'
 import { SetDetail } from './screens/SetDetail'
 import { ProductDetail } from './screens/ProductDetail'
@@ -20,6 +21,7 @@ const children = [
   { path: 'library', element: <Library /> },
   { path: 'people', element: <People /> },
   { path: 'products', element: <Products /> },
+  { path: 'scenes', element: <Scenes /> },
   { path: 'sets', element: <Sets /> },
   { path: 'sets/:id', element: <SetDetail /> },
   { path: 'product/:id', element: <ProductDetail /> },

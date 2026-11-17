@@ -17,6 +17,7 @@ import type {
   SetSummary,
   Product,
   ProductDetail,
+  ScenePreset,
   LibraryImage,
   Project,
   ProjectDetail,
@@ -224,6 +225,10 @@ export interface IpcChannels {
     request: { id: string; look?: string }
     response: { projectId: string; imageId: string }
   }
+  'scenes:list': { request: undefined; response: ScenePreset[] }
+  'scenes:create': { request: { name: string; bytes: Uint8Array }; response: ScenePreset }
+  'scenes:rename': { request: { id: string; name: string }; response: ScenePreset }
+  'scenes:delete': { request: { id: string }; response: { ok: true } }
   'usage:summary': { request: { month: string }; response: UsageSummary }
   'usage:list': {
     request: { month: string; projectId?: string; limit?: number; offset?: number }
@@ -329,6 +334,12 @@ export interface MossApi {
     delete: Call<'products:delete'>
     createProject: Call<'products:createProject'>
     importIntoProject: Call<'products:importIntoProject'>
+  }
+  scenes: {
+    list: CallVoid<'scenes:list'>
+    create: Call<'scenes:create'>
+    rename: Call<'scenes:rename'>
+    delete: Call<'scenes:delete'>
   }
   dialogs: {
     importImage: Call<'dialog:importImage'>

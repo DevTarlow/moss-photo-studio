@@ -15,6 +15,7 @@ import { UsageRepository } from '@main/db/repositories/usage'
 import { BrandRepository } from '@main/db/repositories/brand'
 import { PeopleRepository } from '@main/db/repositories/people'
 import { ProductRepository } from '@main/db/repositories/products'
+import { SceneRepository } from '@main/db/repositories/scenes'
 import { SetRepository } from '@main/db/repositories/sets'
 import { ProductService } from '@main/products/service'
 import { MediaService } from '@main/media/service'
@@ -38,6 +39,7 @@ let usage: UsageRepository
 let brand: BrandRepository
 let people: PeopleRepository
 let products: ProductRepository
+let scenes: SceneRepository
 let sets: SetRepository
 let productService: ProductService
 let media: MediaService
@@ -68,8 +70,9 @@ beforeEach(async () => {
   brand = new BrandRepository(db)
   people = new PeopleRepository(db)
   products = new ProductRepository(db)
+  scenes = new SceneRepository(db)
   sets = new SetRepository(db)
-  media = new MediaService({ projects, images, people, brand, libraryPath, logger })
+  media = new MediaService({ projects, images, people, scenes, brand, libraryPath, logger })
   productService = new ProductService({
     products,
     images,
@@ -95,6 +98,7 @@ beforeEach(async () => {
     brand,
     people,
     products,
+    scenes,
     settings,
     secrets: {
       hasKey: () => keyPresent,
@@ -202,6 +206,91 @@ describe('job queue create', () => {
     const request = server.requests()[0]!
     expect((request.body?.images as unknown[]).length).toBe(2)
     expect(String(request.body?.prompt)).toContain('@Image2 as the scene reference')
+  })
+
+  it('sends a bundled preset scene from the resources folder', async () => {
+    const product = await productService.addFromBytes({
+      bytes: await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 140, g: 120, b: 100 } } }).jpeg().toBuffer(),
+      name: 'Ceramic mug'
+    })
+    const project = imageProject()
+    const { jobId } = await queue.startCreate({
+      projectId: project.id,
+      prompt: 'On a marble counter',
+      count: 1,
+      shape: 'square',
+      format: 'webp',
+      productId: product.id,
+      sceneId: 'marble-counter'
+    })
+    const state = await waitForJob(jobId)
+    expect(state.status).toBe('done')
+    const request = server.requests()[0]!
+    const sentImages = (request.body ?? {}).images as Array<{ image_url: string }>
+    expect(sentImages).toHaveLength(2)
+    expect(String((request.body ?? {}).prompt)).toContain('@Image2 as the scene reference')
+    const sent = Buffer.from(sentImages[1]!.image_url.split(',')[1]!, 'base64')
+    expect(sent.equals(fs.readFileSync(path.resolve(__dirname, '../../resources/scenes/marble-counter.webp')))).toBe(true)
+  })
+
+  it('sends a saved scene and rejects two scenes or a scene without a product', async () => {
+    const { sceneId } = await media.importScene({
+      name: 'Studio corner',
+      bytes: await sharp({ create: { width: 800, height: 800, channels: 3, background: { r: 70, g: 90, b: 110 } } }).jpeg().toBuffer()
+    })
+    const product = await productService.addFromBytes({
+      bytes: await sharp({ create: { width: 640, height: 640, channels: 3, background: { r: 140, g: 120, b: 100 } } }).jpeg().toBuffer(),
+      name: 'Ceramic mug'
+    })
+    const project = imageProject()
+    const { jobId } = await queue.startCreate({
+      projectId: project.id,
+      prompt: 'In a studio corner',
+      count: 1,
+      shape: 'square',
+      format: 'webp',
+      productId: product.id,
+      sceneId
+    })
+    expect((await waitForJob(jobId)).status).toBe('done')
+    const request = server.requests()[0]!
+    expect((request.body ?? {}).images as unknown[]).toHaveLength(2)
+    expect(String((request.body ?? {}).prompt)).toContain('@Image2 as the scene reference')
+
+    const rejectedProject = imageProject('Rejects scenes')
+    await expect(
+      queue.startCreate({
+        projectId: rejectedProject.id,
+        prompt: 'Two scenes',
+        count: 1,
+        shape: 'square',
+        format: 'webp',
+        productId: product.id,
+        sceneId,
+        sceneImageId: 'any-image'
+      })
+    ).rejects.toMatchObject({ code: 'invalid_payload' })
+    await expect(
+      queue.startCreate({
+        projectId: rejectedProject.id,
+        prompt: 'Missing scene',
+        count: 1,
+        shape: 'square',
+        format: 'webp',
+        productId: product.id,
+        sceneId: 'not-a-scene'
+      })
+    ).rejects.toMatchObject({ code: 'invalid_payload' })
+    await expect(
+      queue.startCreate({
+        projectId: rejectedProject.id,
+        prompt: 'Scene without a product',
+        count: 1,
+        shape: 'square',
+        format: 'webp',
+        sceneId
+      })
+    ).rejects.toMatchObject({ code: 'invalid_payload' })
   })
 
   it('makes four images, writes four files, and records one four-cent row', async () => {
@@ -542,6 +631,21 @@ describe('job queue edit scene', () => {
       change: 'warmer light from the left',
       kind: 'edit',
       sceneImageId: scene.imageId!
+    })
+    await waitForJob(jobId)
+    const request = server.requests()[0]!
+    expect((request.body?.images as unknown[]).length).toBe(2)
+    expect(String(request.body?.prompt)).toContain('Use @Image2 as the scene reference.')
+  })
+
+  it('sends a bundled preset scene for an edit', async () => {
+    const project = await photoProject()
+    const { jobId } = await queue.startEdit({
+      projectId: project.id,
+      imageId: project.sourceImageId!,
+      change: 'warmer light from the left',
+      kind: 'scene',
+      sceneId: 'marble-counter'
     })
     await waitForJob(jobId)
     const request = server.requests()[0]!
