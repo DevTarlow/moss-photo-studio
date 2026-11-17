@@ -20,6 +20,7 @@ import { cleanProductName, safeBaseName, uniqueFileName, numberedFileName } from
 import { usd, estimateCents, monthBounds, monthKey } from '@shared/cost'
 import { PRODUCT_PACK } from '../../scripts/lab/product-pack.mjs'
 import { SCENE_PACK } from '../../scripts/lab/scene-pack.mjs'
+import { PEOPLE_PACK } from '../../scripts/lab/people-pack.mjs'
 
 const root = path.resolve(__dirname, '../..')
 
@@ -98,15 +99,36 @@ describe('starters and people', () => {
     )
   })
 
-  it('ships twenty-four adults with stable ids, descriptions and assets', () => {
-    expect(BUNDLED_PEOPLE).toHaveLength(24)
+  it('ships fifty adults across six age bands with stable ids, descriptions and assets', () => {
+    expect(BUNDLED_PEOPLE).toHaveLength(50)
     expect(BUNDLED_PEOPLE[0]).toEqual({ id: 'maya', name: 'Maya', ageBand: '20s', blurb: 'A woman in her twenties with dark shoulder-length hair.' })
-    expect(new Set(BUNDLED_PEOPLE.map((person) => person.id)).size).toBe(24)
+    expect(new Set(BUNDLED_PEOPLE.map((person) => person.id)).size).toBe(50)
+    const bands = ['20s', '30s', '40s', '50s', '60s', '70s']
+    for (const band of bands) {
+      const count = BUNDLED_PEOPLE.filter((person) => person.ageBand === band).length
+      expect(count, band).toBeGreaterThanOrEqual(8)
+      expect(count, band).toBeLessThanOrEqual(9)
+    }
     for (const person of BUNDLED_PEOPLE) {
       expect(person.name.length).toBeGreaterThan(0)
       expect(person.blurb.length).toBeGreaterThan(0)
+      expect(bands).toContain(person.ageBand)
       expect(fs.existsSync(path.join(root, 'resources', 'people', `${person.id}.webp`))).toBe(true)
       expect(fs.existsSync(path.join(root, 'resources', 'people', `${person.id}-portrait.webp`))).toBe(true)
+    }
+  })
+
+  it('keeps the lab people pack in sync with the catalog', () => {
+    expect(PEOPLE_PACK).toHaveLength(BUNDLED_PEOPLE.length)
+    expect(PEOPLE_PACK.map((entry) => entry.id)).toEqual(BUNDLED_PEOPLE.map((person) => person.id))
+    const packById = new Map(PEOPLE_PACK.map((entry) => [entry.id, entry]))
+    for (const person of BUNDLED_PEOPLE) {
+      const entry = packById.get(person.id)
+      expect(entry?.name).toBe(person.name)
+      expect(entry?.ageBand).toBe(person.ageBand)
+      expect(entry?.blurb).toBe(person.blurb)
+      expect(entry?.prompt.length ?? 0).toBeGreaterThan(0)
+      expect(entry?.prompt).toContain('head to toe')
     }
   })
 

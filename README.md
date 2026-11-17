@@ -10,7 +10,7 @@ AI uses your own Meta key. A license key is required to use the app. Settings, P
 
 ### Edit a photo
 
-The Image Editor has 32 Quick Looks in six groups, 24 bundled people, and an optional studio-prompt dropdown that replaces the description with a generic, ready-to-use phrase.
+The Image Editor has 32 Quick Looks in six groups, 50 bundled people, and an optional studio-prompt dropdown that replaces the description with a generic, ready-to-use phrase.
 
 The local adjust panel covers Free, 1:1, 4:5, and 16:9 crop, rotate, flip, exposure, contrast, highlights, shadows, warmth, saturation, sharpness, and vignette. Double-click a slider to reset it.
 
@@ -46,7 +46,7 @@ The Image Editor and Image Generator both have **Choose a Scene**. The dialog ha
 
 ### People
 
-The app includes 24 bundled people, and you can add your own portraits. A person reference keeps a face and body consistent across an edit or a generated scene. You can leave the person out of any change. People are stored in the library with the rest of your work.
+The app includes 50 bundled people across the 20s–70s, and you can add your own portraits. A person reference keeps a face and body consistent across an edit or a generated scene. You can leave the person out of any change. People are stored in the library with the rest of your work.
 
 ### Sets
 

@@ -98,7 +98,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 ## People
 
-- People lists Your People first and all 24 starter synthetic people in a dense grid that stays above the fold at 1440 × 900. An empty Your People section is a single compact line, not a large empty card.
+- People lists Your People first and the first 20 of 50 starter synthetic people, paged 20 at a time. The starter grid still stays above the fold at 1440 × 900. An empty Your People section is a single compact line, not a large empty card.
 - Age chips All, 20s, and 30s+ filter the casting grid; Default, Name, and Most used sort it.
 - Starter people open with four studio looks; the original can be restored. Clicking a look selects it, the active ring is visible, and the dialog explains how the chosen angle guides pose and framing.
 - Make an Image with This Person seeds the generator with the person and look.

@@ -18,6 +18,15 @@ test('a person opens larger, keeps a studio look, and seeds the image generator'
     await page.getByRole('button', { name: 'Skip for Now' }).click()
     await page.getByRole('link', { name: 'People', exact: true }).click()
 
+    const starterPages = page.getByRole('navigation', { name: 'Starter people pages' })
+    await expect(starterPages.getByText(/Page 1 of 3/)).toBeVisible()
+    await starterPages.getByRole('button', { name: 'Next' }).click()
+    await starterPages.getByRole('button', { name: 'Next' }).click()
+    await expect(page.getByRole('button', { name: 'Open Rita larger' })).toBeVisible()
+    await starterPages.getByRole('button', { name: 'Previous' }).click()
+    await starterPages.getByRole('button', { name: 'Previous' }).click()
+    await expect(page.getByRole('button', { name: 'Open Omar larger' })).toBeVisible()
+
     await page.getByRole('button', { name: 'Open Omar larger' }).click()
     const preview = page.getByRole('dialog')
     await expect(preview.getByRole('heading', { name: 'Omar · 20s' })).toBeVisible()

@@ -1,5 +1,5 @@
 /**
- * The 24 bundled people. Each entry generates one full-body reference photo;
+ * The 50 bundled people. Each entry generates one full-body reference photo;
  * the lab crops a square portrait from it. Ids, names and age bands must stay
  * in sync with src/shared/people.ts.
  *
@@ -39,6 +39,38 @@ export const PEOPLE_PACK = [
     blurb: 'A man in his twenties with light-brown wavy hair and round glasses.',
     prompt:
       'A candid full-body lifestyle photograph of a cheerful young man in his twenties with light-brown wavy hair and round glasses, wearing a denim jacket, white t-shirt, dark jeans and sneakers, laughing while walking through a sunlit city street, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'zara',
+    name: 'Zara',
+    ageBand: '20s',
+    blurb: 'A woman in her twenties with box braids.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful Black woman in her twenties with box braids, wearing a rust knit cardigan, cream trousers and white sneakers, smiling in a bright art studio with plants, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'mateo',
+    name: 'Mateo',
+    ageBand: '20s',
+    blurb: 'A man in his twenties with short dark hair and a light beard.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful Latino man in his twenties with short dark hair and a light beard, wearing a light blue overshirt, a white t-shirt, dark jeans and brown boots, laughing on a sunlit city street, warm daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'chloe',
+    name: 'Chloe',
+    ageBand: '20s',
+    blurb: 'A woman in her twenties with a blonde bob.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful white woman in her twenties with a blonde bob, wearing a sage green midi dress and sandals, smiling in the doorway of a bright cafe, warm daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'aden',
+    name: 'Aden',
+    ageBand: '20s',
+    blurb: 'A person in their twenties with short locs.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful Black person in their twenties with short locs, wearing a mustard sweatshirt, black jeans and white sneakers, smiling in a green park with trees, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
   },
   {
     id: 'jordan',
@@ -81,6 +113,38 @@ export const PEOPLE_PACK = [
       'A candid full-body lifestyle photograph of a cheerful androgynous person in their thirties with short curly hair, wearing a mustard cardigan, dark jeans and canvas sneakers, laughing in a bright apartment with plants, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
   },
   {
+    id: 'ibrahim',
+    name: 'Ibrahim',
+    ageBand: '30s',
+    blurb: 'A man in his thirties with a short beard and glasses.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful Middle Eastern man in his thirties with a short beard and glasses, wearing a navy linen shirt, chinos and loafers, standing outside a brick cafe, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'nadia',
+    name: 'Nadia',
+    ageBand: '30s',
+    blurb: 'A woman in her thirties with curly dark hair.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful South Asian woman in her thirties with curly dark hair, wearing a terracotta blouse, wide-leg trousers and sandals, smiling in a sunlit bookstore, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'ben',
+    name: 'Ben',
+    ageBand: '30s',
+    blurb: 'A man in his thirties with red hair.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful white man in his thirties with red hair, wearing a green field jacket, a grey sweater, jeans and boots, laughing on a woodland path, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'sana',
+    name: 'Sana',
+    ageBand: '30s',
+    blurb: 'A woman in her thirties with long dark hair.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful East Asian woman in her thirties with long dark hair, wearing a cream trench coat, black trousers and white sneakers, walking in a bright city square, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
     id: 'priya',
     name: 'Priya',
     ageBand: '40s',
@@ -111,6 +175,38 @@ export const PEOPLE_PACK = [
     blurb: 'A man in his forties with salt-and-pepper hair and a short beard.',
     prompt:
       'A candid full-body lifestyle photograph of a cheerful South Asian man in his forties with salt-and-pepper hair and a short beard, wearing a chambray shirt, olive chinos and brown shoes, laughing on a wooden porch, warm daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'leila',
+    name: 'Leila',
+    ageBand: '40s',
+    blurb: 'A woman in her forties wearing a hijab.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful Muslim woman in her forties wearing a soft beige hijab, a navy longline cardigan, cream trousers and flats, smiling in a bright community garden, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'daniel',
+    name: 'Daniel',
+    ageBand: '40s',
+    blurb: 'A man in his forties with light hair and glasses.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful white man in his forties with light hair and glasses, wearing a grey overshirt, a white t-shirt, dark trousers and sneakers, standing outside a cafe, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'maeve',
+    name: 'Maeve',
+    ageBand: '40s',
+    blurb: 'A woman in her forties with auburn hair.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful white woman in her forties with auburn hair, wearing a rust linen dress, a woven bag and sandals, smiling in a sunlit courtyard, warm daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'kenji',
+    name: 'Kenji',
+    ageBand: '40s',
+    blurb: 'A man in his forties with short black hair.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful Japanese man in his forties with short black hair, wearing a charcoal knit polo, beige chinos and sneakers, standing in a bright design studio, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
   },
   {
     id: 'tom',
@@ -145,6 +241,38 @@ export const PEOPLE_PACK = [
       'A candid full-body lifestyle photograph of a cheerful Black woman in her fifties with a natural afro, wearing a bold printed dress and flat sandals, laughing in a flower garden, warm daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
   },
   {
+    id: 'ruth',
+    name: 'Ruth',
+    ageBand: '50s',
+    blurb: 'A woman in her fifties with a silver bob.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful white woman in her fifties with a silver bob, wearing a teal blouse, dark jeans and loafers, smiling in a bright library, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'diego',
+    name: 'Diego',
+    ageBand: '50s',
+    blurb: 'A man in his fifties with a gray beard.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful Latino man in his fifties with a gray beard, wearing a denim shirt, olive chinos and boots, laughing on a city sidewalk, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'noor',
+    name: 'Noor',
+    ageBand: '50s',
+    blurb: 'A woman in her fifties wearing a hijab.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful Muslim woman in her fifties wearing a patterned hijab, a long olive cardigan, black trousers and flats, smiling in a garden, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'carmen',
+    name: 'Carmen',
+    ageBand: '50s',
+    blurb: 'A woman in her fifties with curly hair.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful Latina woman in her fifties with curly hair, wearing a red blouse, dark trousers and sandals, smiling on a sunny porch, warm daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
     id: 'grace',
     name: 'Grace',
     ageBand: '60s',
@@ -177,6 +305,46 @@ export const PEOPLE_PACK = [
       'A candid full-body lifestyle photograph of a cheerful Black man in his sixties, bald with a short gray beard, wearing a navy crewneck sweater, tan trousers and brown shoes, laughing on a city street, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
   },
   {
+    id: 'walter',
+    name: 'Walter',
+    ageBand: '60s',
+    blurb: 'A man in his sixties with white hair and glasses.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful white man in his sixties with white hair and glasses, wearing a blue blazer, a light shirt, grey trousers and brown shoes, standing in a bright bookstore, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'linda',
+    name: 'Linda',
+    ageBand: '60s',
+    blurb: 'A woman in her sixties with a blonde bob.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful white woman in her sixties with a blonde bob, wearing a coral blouse, white trousers and sandals, smiling on a garden patio, warm daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'iris',
+    name: 'Iris',
+    ageBand: '60s',
+    blurb: 'A woman in her sixties with gray curls.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful Black woman in her sixties with gray curls, wearing a purple cardigan, dark trousers and flats, smiling in a bright living room, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'frank',
+    name: 'Frank',
+    ageBand: '60s',
+    blurb: 'A man in his sixties, bald with a mustache.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful white man in his sixties, bald with a mustache, wearing a navy jacket, a checked shirt, jeans and boots, laughing outside a workshop, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'bea',
+    name: 'Bea',
+    ageBand: '60s',
+    blurb: 'A woman in her sixties with short gray hair.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful white woman in her sixties with short gray hair, wearing a mustard sweater, navy trousers and sneakers, smiling at a farmers market, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
     id: 'nina',
     name: 'Nina',
     ageBand: '70s',
@@ -199,5 +367,45 @@ export const PEOPLE_PACK = [
     blurb: 'A woman in her seventies with short silver curls.',
     prompt:
       'A candid full-body lifestyle photograph of a cheerful Black woman in her seventies with short silver curls, wearing a denim jacket, white t-shirt, dark trousers and sneakers, smiling on a sunny porch with a watering can, warm daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'arthur',
+    name: 'Arthur',
+    ageBand: '70s',
+    blurb: 'A man in his seventies with a white beard.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful white man in his seventies with a white beard, wearing a tweed jacket, a cream sweater, dark trousers and brown shoes, standing in a garden, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'doris',
+    name: 'Doris',
+    ageBand: '70s',
+    blurb: 'A woman in her seventies with a silver bob.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful white woman in her seventies with a silver bob, wearing a soft green blouse, beige trousers and loafers, smiling in a bright living room, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'malik',
+    name: 'Malik',
+    ageBand: '70s',
+    blurb: 'A man in his seventies with a gray beard and glasses.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful Black man in his seventies with a gray beard and glasses, wearing a tan overshirt, a white t-shirt, dark trousers and sneakers, standing on a porch, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'eun',
+    name: 'Eun',
+    ageBand: '70s',
+    blurb: 'A woman in her seventies with short gray hair.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful East Asian woman in her seventies with short gray hair, wearing a lavender cardigan, dark trousers and flats, smiling in a sunny garden, soft daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
+  },
+  {
+    id: 'rita',
+    name: 'Rita',
+    ageBand: '70s',
+    blurb: 'A woman in her seventies with curly gray hair.',
+    prompt:
+      'A candid full-body lifestyle photograph of a cheerful Latina woman in her seventies with curly gray hair, wearing a red blouse, black trousers and sandals, smiling in a bright kitchen, warm daylight, one person alone, head to toe in frame, vertical portrait, realistic skin texture, no text, no logos.'
   }
 ]

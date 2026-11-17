@@ -83,6 +83,7 @@ export function People(): React.JSX.Element {
   const [loading, setLoading] = useState(people.length === 0)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [yoursPage, setYoursPage] = useState(1)
+  const [starterPage, setStarterPage] = useState(1)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'default' | 'name' | 'used'>('default')
   const [age, setAge] = useState<'all' | '20s' | '30s+'>('all')
@@ -127,6 +128,7 @@ export function People(): React.JSX.Element {
   const included = sortPeople(matching.filter((person) => person.source === 'bundled'))
   const yours = sortPeople(matching.filter((person) => person.source === 'user'))
   const visibleYours = yours.slice((yoursPage - 1) * COLLECTION_PAGE_SIZE, yoursPage * COLLECTION_PAGE_SIZE)
+  const visibleIncluded = included.slice((starterPage - 1) * COLLECTION_PAGE_SIZE, starterPage * COLLECTION_PAGE_SIZE)
 
   useEffect(() => {
     const pages = Math.max(1, Math.ceil(yours.length / COLLECTION_PAGE_SIZE))
@@ -134,7 +136,13 @@ export function People(): React.JSX.Element {
   }, [yours.length, yoursPage])
 
   useEffect(() => {
+    const pages = Math.max(1, Math.ceil(included.length / COLLECTION_PAGE_SIZE))
+    if (starterPage > pages) setStarterPage(pages)
+  }, [included.length, starterPage])
+
+  useEffect(() => {
     setYoursPage(1)
+    setStarterPage(1)
   }, [search, sort, age])
 
   const addWithPicker = async (): Promise<void> => {
@@ -362,10 +370,16 @@ export function People(): React.JSX.Element {
               <span className="meta-faint">{included.length}</span>
             </div>
             <div className="people-grid mt-3">
-              {included.map((person) => (
+              {visibleIncluded.map((person) => (
                 <PersonCard key={person.id} person={person} compact onOpen={() => setPreviewPerson(person)} />
               ))}
             </div>
+            <Pagination
+              page={starterPage}
+              total={included.length}
+              onPage={setStarterPage}
+              label="Starter people pages"
+            />
             <p className="hint mt-3">Starter people made for Moss. They are not photographs of real people.</p>
           </section>
           </>
