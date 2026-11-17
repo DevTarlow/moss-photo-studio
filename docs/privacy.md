@@ -15,7 +15,7 @@ The app turns off Chromium's background networking, component updates, domain re
 
 - The product photo reference (an uploaded photo, a saved Product, or a ready library image), normalised to WebP with the long edge at most 2,048 pixels.
 - An optional person reference and an optional scene reference, normalised the same way. Product, person, and scene references can be sent together (at most three images).
-- The composed prompt. It contains the words you typed and the guard text that tells the model to keep the product unchanged.
+- The composed prompt. It contains the words you typed, the guard text that tells the model to keep the product unchanged, and, when you make an image with a saved Product that has Product notes, those notes. Product notes stay on this computer and are only included when that product is selected.
 - The model, shape, output format, and image count.
 - Your Muse key in an authorization header.
 - A random per-installation `user` id.
@@ -44,7 +44,7 @@ The license validation request happens no more than once per 24 hours automatica
 
 The application data folder contains:
 
-- `library.sqlite` and its WAL and backup files: projects, images, Set names and membership, jobs, usage, products, people, brand, settings, and license metadata.
+- `library.sqlite` and its WAL and backup files: projects, images, Set names and membership, jobs, usage, products (including Product notes), people, brand, settings, and license metadata.
 - `library/`: all original and working images, saved Products, and exports made inside the library.
 - `secrets.bin`: the Muse key, encrypted with the system keyring, or with the documented AES-256-GCM fallback if no keyring is available.
 - `license.json`: the license key and instance id, encrypted.
@@ -57,13 +57,14 @@ Encrypted files are readable only by your operating-system user. The fallback ke
 ## Deleting data
 
 - **Delete a project** removes its folder and database rows. Usage rows remain, because the ledger is an accounting record, and they keep the project name that was recorded at the time of the action. Use **Delete all usage history** in Privacy if you need the ledger removed.
-- **Delete a Product** removes only its saved copy under `library/products/`. Projects and images already made from it stay.
+- **Delete a Product** removes only its saved copy under `library/products/` and its Product notes. Projects and images already made from it stay.
 - **Delete an image** removes the working files and thumbnail for that version. The original product photo stays until the project is deleted.
 - **Delete all usage history** removes the ledger rows. It does not delete images or projects.
 - **Delete logs** removes the local log files.
 - **Backups and diagnostics** live in folders you chose. Delete them with the system file manager when you no longer need them.
 - **Remove the Muse key** deletes `secrets.bin` and the cached validation time and last four characters.
 - **Deactivate** tells the license center to release this computer, then clears local license data. If the portal cannot be reached, the app does not pretend deactivation succeeded.
+- **Reset App** is a development-only control in Settings, Privacy. In an unpackaged build it deletes all local app data, settings, license, and saved keys, then closes the app. Packaged builds hide the control and refuse the channel so a renderer compromise cannot wipe a seller's data.
 
 ## Children and accounts
 

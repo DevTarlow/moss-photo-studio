@@ -97,7 +97,12 @@ CSP is unchanged: all Astryx CSS, fonts, and icons are bundled; there are no rem
 | Toast, Tooltip, Progress, Spinner, Skeleton | Toast/useToast, Tooltip/InfoTip, ProgressBar, Spinner, Skeleton | Use the primitive’s live-region/loading semantics. |
 | EmptyState, ErrorState, Pagination | EmptyState, Banner/EmptyState, Pagination | Preserve the copy and 20/page behavior. |
 | Card/panel/plan-card | Card, ClickableCard, SelectableCard, Section | Whole-card open target; nested actions stay independent. |
-| Onboarding dots | Stepper/Step | Ordered-list semantics; optional steps show Optional. |
+| Set image/product preview | `MediaLightbox` | Read-only viewer with previous/next and optional source comparison. Uses `useModalInert`. |
+| Workspace priced action | `CommitFooter` | Pinned under the left inputs with the month budget. The canvas footer is for canvas and version actions only. |
+| Generator shape choice | `ShapePicker` | Radio group with proportional outline icons and true output proportions. |
+| Product notes | Astryx `TextArea` | Stored locally; appended to create and edit prompts only when that Product is selected. |
+| Modal background | `useModalInert` | Shared `inert` + `aria-hidden` counter. Every portal modal (Dialog, Sheet, Lightbox, MediaLightbox) must use it. |
+| Onboarding progress | Custom `SetupStepper` (`components/onboarding/SetupStepper`) | Ordered-list semantics. Completed and skipped must stay visually and semantically distinct; Astryx `Step` has no skipped state. |
 | File dropzone | FileInput | Use dropzone mode; keep the custom global drag overlay. |
 | Photo/Create canvas | Custom | Keep the stage, compare, filmstrip, crop overlay, and zoom. Re-skin chrome with Astryx tokens. |
 | Brand badge preview | Custom | Keep the sample preview and color compositing. |
@@ -110,8 +115,16 @@ CSP is unchanged: all Astryx CSS, fonts, and icons are bundled; there are no rem
 4. Replace class-based test selectors with roles, labels, or stable test IDs as each surface moves.
 5. Keep the existing behavior contracts from `DECISIONS.md`: pricing, confirmations, 20/page pagination, delete copy, product saved-copy semantics, plan autosave, local adjust.
 6. Update screenshot baselines intentionally after inspecting the result; do not chase incidental churn.
-7. Add axe coverage for portals, dialogs, the command palette, dropzones, and reduced-motion states.
+7. Add axe coverage for portals, dialogs, the command palette, dropzones, and reduced-motion states. Every portal modal must call `useModalInert` so the app root is one inert, `aria-hidden` surface; nested modals share the counter.
 8. Before a release, build the theme statically and measure the renderer bundle and first paint.
+
+## Onboarding pattern
+
+- The setup card is sticky on wide screens.
+- `SetupStepper` reports four honest states: completed, skipped, current, and not started. The active step is `aria-current="step"`; completed and skipped states also reach assistive tech as text.
+- Completion is derived from real state, not position: a Meta key exists, a product exists, and branding has a logo, colour, default look, or enabled badge. A step the seller skipped stays neutral.
+- Step 4 keeps a compact live `BrandPreview` sticky while the brand fields are expanded, with saved colour dots, the default look, and the corner-badge state.
+- Step 3 names the product inline with a cleaned filename or placeholder; `Replace photo` sits under the thumbnail.
 
 ## Workspace inspector pattern
 
@@ -121,9 +134,16 @@ The editor and the generator share one workspace grammar: the left column holds 
 - **Sections:** `.section-label` (11px, 600, uppercase, `--text-faint`) names each block. Sections separate with `mt-4 border-t pt-4` and `--border`. Do not add nested cards inside the rail; the inspector is already a surface.
 - **Copy:** result headings use 15px/600; `.meta` and `.hint` carry dates and costs; `.field-label` labels settings controls. The description uses the shared `DescriptionPreview` clamp and its `Show more` control.
 - **Actions:** full-width secondary `Button size="sm"` rows with a 16px `Icon`; destructive actions are ghost with `--danger`. Keep the same order in both tools: use the output, then read its description/details, then delete.
+- **Priced actions:** the paid commit button and the compact month budget live in a `CommitFooter` at the bottom of the left control column, under the inputs that drive them. The canvas footer carries version/canvas actions instead. The Ctrl/Cmd+Enter shortcut targets `[data-commit-action] .btn-primary`.
 - **Disclosure:** the output settings show a one-line summary at all times and open their controls on demand. The content stays in the DOM with `hidden` so `aria-controls` always resolves. History appears only when a completed make exists.
 - **Constraints:** when a reference removes a choice (a product, person, or scene makes one image at a time), show the constraint as a sentence instead of disabled options. The summary leaves out the count for one image and still shows the frame and format.
 - **Empty states:** one short explanation plus, before the first result, three tips that directly affect picture quality. No illustration dashboards, no counters.
+
+### Canvas toolbar
+
+The editor keeps one floating canvas toolbar for view actions: zoom out, `Fit`, `100%`, zoom in, the actual zoom readout, undo/redo for the adjust preview, and before/after compare. Compare is available whenever the selected version has a parent. The toolbar wraps or scrolls at narrow widths instead of pushing the canvas. At 100% the zoom box reserves the scaled layout size so the stage can scroll.
+
+The filmstrip labels every saved version with a type badge: `Original`, `Adjusted`, or `AI`. The badge text is part of the card's accessible name; do not add a separate aria-label that omits it.
 
 ### Result selection
 
@@ -137,6 +157,10 @@ The generator keeps the editor's selection model: the newest result is selected 
 - The theme ships as static CSS: `npm run theme:build` regenerates `moss-theme.css` and the built module beside it, and release builds refuse to package a stale copy.
 - The app shell's surfaces come from theme targets, so the rail, header, and top nav no longer depend on `.astryx-*` class selectors in `index.css`.
 - Activation is the first surface fully off the homegrown primitives: Astryx `TextInput` and `Button` replace the local `Field` and `Button` there.
-- Sets use collection cards with a cover/count and a detail grid for images and product sources with explicit Edit Photo, New Image from Reference, and remove actions. SaveToSetDialog is a small dialog mounted once at the app root and opened from image actions. Onboarding is redesigned with a Welcome screen and setup steps for the key, an optional product, an optional logo and colors, and Ready. Key-later and sticky actions are unchanged.
-- The Astryx AppShell, TopNav, and SideNav now wrap the app; Library, Products, People, Usage, and Settings use Astryx controls and shared collection patterns.
-- Photo has a fitted canvas, exporter-aligned rotate/crop preview, a draggable compare divider, and keyboard crop controls. Create has a persistent Details inspector with the selected image's description/details/actions, the Output settings disclosure, and History; it becomes a Details sheet below 1440. Create results keep their persistent Edit, Download, Save as Product, and More actions plus a lightbox. The version and result panels share `DescriptionPreview`. Workspace panels can be resized and persist their widths. The custom canvas, crop overlay, filmstrip, and brand preview remain custom.
+- Sets use collection cards with a cover/count and a detail grid for images and product sources with explicit Edit Photo, New Image from Reference, and remove actions. Set detail filters source Products from finished work, opens a high-resolution `MediaLightbox` on a card image, moves removal into a card menu with an undo toast, and exports with Original, Square 1:1, and Portrait 4:5 presets. SaveToSetDialog is a small dialog mounted once at the app root and opened from image actions.
+- Onboarding uses a Welcome screen and setup steps for the key, an optional product, an optional logo and colors, and Ready. It shows honest completed/skipped states, a local-first Welcome shortcut, inline product naming, a sticky live brand preview, and accurate View Product / Open Studio / Meta-key-needed actions.
+- The Astryx AppShell, TopNav, and SideNav now wrap the app. The sidebar collapse toggle sits beside the wordmark in the header; Reset App is a development-only Privacy action, not a rail item. Library, Products, People, Usage, and Settings use Astryx controls and shared collection patterns.
+- Product detail keeps Products selected in the rail, restores the `Products` back button, uses the product name in the window title, renames inline, stores Product notes locally and adds them to prompts only when that product is selected, and offers both free and paid paths from the empty project state.
+- Library cards handle zero-image work as informative drafts with prompt snippets, product/person pills, inline renaming, and hover actions. Products adds starter category filters and card quick actions. People uses a dense casting grid with age chips and look guidance, and Usage separates paid images from free adjustments.
+- Photo has a fitted canvas, exporter-aligned rotate/crop preview, a draggable compare divider, a floating zoom/undo/redo/compare toolbar, and keyboard crop controls. Adjust Photo now covers exposure, contrast, highlights, shadows, warmth, saturation, sharpness, vignette, crop presets, rotate, and flip; highlights and shadows use a real luminance tone pass in main and an approximate CSS preview. The filmstrip types every version.
+- Create has removable Product/Person/Scene recipe chips, scene browsing before a product is chosen, grouped example filters, a proportional ShapePicker, multi-image placeholder frames, and a persistent Details inspector with the selected image's description/details/actions, Output settings, and History; it becomes a Details sheet below 1440. Create results keep their persistent Edit, Download, Save as Product, and More actions plus a lightbox. The version and result panels share `DescriptionPreview`. Workspace panels can be resized and persist their widths. The custom canvas, crop overlay, filmstrip, and brand preview remain custom.

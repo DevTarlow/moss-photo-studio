@@ -10,13 +10,17 @@ The desktop app has no account. A license key is required. Settings, Privacy exp
 
 ### Edit a photo
 
-The Image Editor has 32 Quick Looks in six groups, 24 bundled people, and a local adjust panel for crop, rotate, flip, brightness, contrast, saturation, warmth, sharpen, and vignette. A person is optional on any change: pick one to keep the same face and body, or describe the change without one. The version panel keeps each version's description, details, export format, and actions together. Adjustments make a new version and stay on your computer.
+The Image Editor has 32 Quick Looks in six groups, 24 bundled people, one-click studio prompt chips, and a complete local adjust panel: Free/1:1/4:5/16:9 crop, rotate, flip, exposure, contrast, highlights, shadows, warmth, saturation, sharpness, and vignette. Double-click a slider to reset it. A person is optional on any change: pick one to keep the same face and body, or describe the change without one. The version panel keeps each version's description, details, export format, and actions together. Adjustments make a new version and stay on your computer.
+
+A floating canvas toolbar handles zoom (Fit/100%), undo/redo, and before/after compare. The filmstrip labels every version Original, Adjusted, or AI. The priced action and month budget stay pinned under the left inputs, while the canvas footer keeps Add Photo and Export.
 
 Versions branch instead of overwrite. You can compare them, move through the filmstrip, export the one you want, or start from a file, a product, or a library image and add another source later.
 
 ### Make a new image
 
-The Image Generator has 30 starters, including person ideas for holding, wearing, and using an item. Generate 1 to 4 images in three shapes and three formats. A product reference and a person reference can go together, so a person can hold the product. An optional scene reference supplies the setting, light, and props without asking the model to copy its subject.
+The Image Generator has 30 starters and eight examples you can filter to All, White Backdrop, Lifestyle, On Model, or Flat Lay. Generate 1 to 4 images in three shapes and three formats. A product reference and a person reference can go together, so a person can hold the product. An optional scene reference supplies the setting, light, and props without asking the model to copy its subject. Scenes can be browsed before a product is chosen.
+
+Attached Product, Person, and Scene references appear as removable visual chips so the whole shot recipe is visible at a glance. Output settings use proportional shape cards with storefront, social, and banner hints. Setting 2–4 images shows matching placeholder frames while the run is in progress.
 
 The Details panel keeps the selected image's description, size, cost, and actions together, with the output settings and past makes. At a smaller window, **Details** opens the same panel over the results.
 
@@ -26,21 +30,23 @@ Generated images can be saved to a Set, as a product, or as a person. A product 
 
 A Set is a simple collection of images, made for keeping related work together. Open any generated image, edited version, or saved product and choose **Add to Set**. Pick an existing Set or name a new one. An image or product photo belongs to one Set at a time, and removing it from the Set never deletes the image or its project.
 
-The **Sets** page shows every image and product photo in one place. Open a Set and choose **Add to Set** to bring in a saved product or a ready image. From any item there, choose **Edit Photo** or **Make an Image with this Photo** to start a new project with that photo as the source. The imported source and the images made from it stay in the Set automatically, so the Set grows with the work. You can still move individual images or remove them later.
+The **Sets** page shows every image and product photo in one place. Open a Set and choose **Add to Set** to bring in a saved product or a ready image. Filter the Set to All, Products, or Generated & Edited, click any card for a high-resolution preview with source comparison, and find Remove from Set in the card's overflow menu with an undo toast. From any item there, choose **Edit Photo** or **Make an Image with this Photo** to start a new project with that photo as the source. The imported source and the images made from it stay in the Set automatically, so the Set grows with the work. You can still move individual images or remove them later.
 
 Sets also appear in **All work** under their own section. Choose the **Sets** filter to see only Sets. When a product belongs to a Set, its page shows the Set name and links back to it.
 
-**Export Set** writes all of the Set's ready images and product sources into one folder with numbered filenames. Sets are free organization: they do not change how the editor or generator works, and they are not tied to a marketplace.
+**Export Set** offers Original (full-size files), Square 1:1 (1600 × 1600), or Portrait 4:5 (1600 × 2000) and writes the Set's ready images and product sources into one numbered folder. Sets are free organization: they do not change how the editor or generator works, and they are not tied to a marketplace.
 
 ### Keep products handy
 
-Save a product photo as a Product, or start from one of the 20 clean, unbranded starter products. You can also add and name a product from the product picker while starting new work. A Product opens in the Image Editor or the Image Generator as a reusable reference, and can be added to a Set. Categories, linked work, archive, and delete keep the collection tidy.
+Save a product photo as a Product, or start from one of the 20 clean, unbranded starter products. Starter products filter by category and offer Use in Generator / Try in Editor; saved products offer Generate Scene, Edit Photo, and View Projects. You can also add and name a product from the product picker while starting new work. A Product opens in the Image Editor or the Image Generator as a reusable reference, and can be added to a Set.
+
+A product page keeps Products active in the sidebar, adds a Products back button and the product name in the window title, and renames inline. **Product notes** hold material, colour, style, or other details that should stay true; they stay on this computer and are added to image prompts only when that product is selected.
 
 ### Keep the costs visible
 
 A returned image costs $0.01. The price is on the button before every run. A refusal costs nothing, and the app does not add a fee for any generations.
 
-The Usage page tracks returned images, shows the current month, supports a monthly limit, and exports to a spreadsheet. Expand any row for request count, timing, and billing details. Adjust Photo and the local photo check are free.
+The Usage page tracks returned images with a paid AI / free adjustment breakdown, shows the current month and how much budget and how many images are left, and exports to a spreadsheet. Expand any row for request count, timing, and billing details. Adjust Photo and the local photo check are free.
 
 ## Get a license
 
@@ -100,6 +106,8 @@ The Linux AppImage checks [GitHub Releases](https://github.com/DevTarlow/moss-ph
 ## Data and privacy
 
 The library lives under the application data folder shown in **Settings, Storage**. Settings can create a backup that includes a consistent database snapshot and a copy of the library. The backup does not include the Meta key or the encrypted secret files.
+
+Product notes are stored in the local library database. When you make an image with that product selected, the notes join the composed description sent to Meta; they are never sent otherwise.
 
 The Meta key is stored in `secrets.bin`, encrypted with Electron's `safeStorage` when a system keyring is available. The fallback is AES-256-GCM with a local key protected by file mode `0600`. The license key is stored encrypted. No key is returned to the renderer, logged, or placed in a URL. Settings shows the last four characters only.
 
