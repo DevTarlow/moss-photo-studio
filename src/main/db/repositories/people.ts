@@ -12,6 +12,7 @@ function bundledLooks(id: string): PersonLook[] {
   return BUNDLED_PERSON_LOOKS.map((look) => ({
     key: look.key,
     label: look.label,
+    hint: look.hint,
     url: bundledUrl(`people/${id}-${look.key}.webp`)
   }))
 }

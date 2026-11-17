@@ -67,7 +67,8 @@ export async function exportSetImages(input: {
     await encodeImageFile(absoluteInLibrary(input.libraryPath, relative), destination, {
       format: input.options.format,
       quality: Math.max(60, Math.min(100, input.options.quality || 90)),
-      maxDimension: input.options.maxDimension
+      maxDimension: input.options.maxDimension,
+      preset: input.options.preset
     })
   }
   return { count, folderName: path.basename(folder), warnings: [], folder }

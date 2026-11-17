@@ -672,3 +672,110 @@ html[data-density='compact'] .lib-list-row { height: 44px; }
     flex: none;
   }
 }
+
+/* Library quick actions and draft cards ----------------------------------- */
+@layer components {
+  .lib-quick-actions {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms var(--ease-moss);
+  }
+  .lib-card:hover .lib-quick-actions,
+  .lib-card:focus-within .lib-quick-actions,
+  .lib-list-row:hover .lib-quick-actions,
+  .lib-list-row:focus-within .lib-quick-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .lib-draft-prompt {
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.4;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .lib-cover-draft { opacity: 0.62; filter: saturate(0.75); }
+  .lib-name-input { width: 100%; font-size: 13px; font-weight: 600; }
+  .lib-list-row[data-draft='true'] { min-height: 56px; height: auto; }
+}
+
+/* Product quick actions ----------------------------------------------------- */
+@layer components {
+  .product-quick-actions {
+    position: absolute;
+    left: 50%;
+    top: 8px;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms var(--ease-moss);
+  }
+  .card:hover .product-quick-actions,
+  .card:focus-within .product-quick-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .product-category-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+}
+
+/* Set cards, menus, and export presets ------------------------------------- */
+@layer components {
+  .set-card-media { position: relative; overflow: hidden; background: var(--surface-2); }
+  .set-card-menu { position: absolute; right: 8px; top: 8px; z-index: 5; opacity: 0; transition: opacity 120ms var(--ease-moss); }
+  .set-card:hover .set-card-menu,
+  .set-card:focus-within .set-card-menu { opacity: 1; }
+  .export-preset-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+  }
+  .export-preset-card:hover { border-color: var(--border-strong); }
+  .export-preset-card[data-selected='true'] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .export-preset-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .export-preset-frame { flex: none; display: block; border: 1px solid var(--border-strong); border-radius: 3px; background: var(--surface-2); }
+  .export-preset-frame[data-preset='original'] { width: 30px; height: 24px; }
+  .export-preset-frame[data-preset='square'] { width: 24px; height: 24px; }
+  .export-preset-frame[data-preset='portrait'] { width: 19px; height: 24px; }
+}
+
+/* People grid --------------------------------------------------------------- */
+@layer components {
+  .people-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+    gap: 10px;
+  }
+  .people-grid .card p:first-child { line-height: 1.25; }
+}

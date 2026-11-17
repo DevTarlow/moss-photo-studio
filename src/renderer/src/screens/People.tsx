@@ -18,7 +18,7 @@ import { fileToBytes } from '../lib/files'
 import { toast } from '../lib/toast'
 import { COLLECTION_PAGE_SIZE } from '@shared/constants'
 import { DropdownMenu } from 'radix-ui'
-import { Heading, Icon, Selector, Text, TextInput } from '@astryxdesign/core'
+import { Heading, Icon, Selector, Text, TextInput, ToggleButton, ToggleButtonGroup } from '@astryxdesign/core'
 
 function PersonCard({
   person,
@@ -82,6 +82,7 @@ export function People(): React.JSX.Element {
   const [yoursPage, setYoursPage] = useState(1)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'default' | 'name' | 'used'>('default')
+  const [age, setAge] = useState<'all' | '20s' | '30s+'>('all')
 
   const loadPeople = async (): Promise<void> => {
     setLoading(true)
@@ -106,7 +107,15 @@ export function People(): React.JSX.Element {
 
   const previewLook = previewPerson?.looks.find((look) => look.key === selectedLookKey) ?? null
 
-  const matching = people.filter((person) => person.name.toLowerCase().includes(search.trim().toLowerCase()))
+  const ageMatches = (person: Person): boolean => {
+    if (age === 'all') return true
+    const years = Number(person.ageBand?.replace(/[^0-9]/g, '') ?? '')
+    if (!Number.isFinite(years)) return false
+    return age === '20s' ? years === 20 : years >= 30
+  }
+  const matching = people.filter(
+    (person) => person.name.toLowerCase().includes(search.trim().toLowerCase()) && ageMatches(person)
+  )
   const sortPeople = (list: Person[]): Person[] => {
     if (sort === 'name') return [...list].sort((a, b) => a.name.localeCompare(b.name))
     if (sort === 'used') return [...list].sort((a, b) => b.usedIn - a.usedIn || a.name.localeCompare(b.name))
@@ -123,7 +132,7 @@ export function People(): React.JSX.Element {
 
   useEffect(() => {
     setYoursPage(1)
-  }, [search, sort])
+  }, [search, sort, age])
 
   const addWithPicker = async (): Promise<void> => {
     if (!name.trim()) {
@@ -266,7 +275,17 @@ export function People(): React.JSX.Element {
                 width="100%"
               />
             </div>
-            <div className="ml-auto">
+            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+              <ToggleButtonGroup
+                type="single"
+                label="Cast by age"
+                value={age}
+                onChange={(value) => { if (value) setAge(value as 'all' | '20s' | '30s+') }}
+              >
+                <ToggleButton value="all" label="All" size="sm" />
+                <ToggleButton value="20s" label="20s" size="sm" />
+                <ToggleButton value="30s+" label="30s+" size="sm" />
+              </ToggleButtonGroup>
               <Selector
                 label="Sort people"
                 isLabelHidden
@@ -309,17 +328,14 @@ export function People(): React.JSX.Element {
               <span className="meta-faint">{yours.length}</span>
             </div>
             {yours.length === 0 ? (
-              <div className="mt-3">
-                <EmptyState
-                  icon={<Icon icon={Users} size="lg" />}
-                  title="Add your own person"
-                  line="Add the person you want in your photos. One clear portrait, reused in every image."
-                  action={<Button variant="secondary" onClick={() => setAddOpen(true)}>Add Portrait</Button>}
-                  compact
-                />
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-[10px] border px-3 py-2" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                <Text type="supporting" color="secondary">
+                  Add a portrait to keep your own person first in this list.
+                </Text>
+                <Button variant="secondary" size="sm" onClick={() => setAddOpen(true)}>Add Portrait</Button>
               </div>
             ) : (
-              <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
+              <div className="people-grid mt-3">
                 {visibleYours.map((person) => (
                   <PersonCard
                     key={person.id}
@@ -344,7 +360,7 @@ export function People(): React.JSX.Element {
               <h2 id="included-heading" className="section-label">Starter People</h2>
               <span className="meta-faint">{included.length}</span>
             </div>
-            <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))' }}>
+            <div className="people-grid mt-3">
               {included.map((person) => (
                 <PersonCard key={person.id} person={person} onOpen={() => setPreviewPerson(person)} />
               ))}
@@ -445,7 +461,7 @@ export function People(): React.JSX.Element {
                         type="button"
                         aria-pressed={active}
                         aria-label={`Use ${look.label} for ${previewPerson.name}`}
-                        onClick={() => setSelectedLookKey(active ? null : look.key)}
+                        onClick={() => setSelectedLookKey(look.key)}
                         className="cursor-pointer overflow-hidden rounded-[10px] border-2 bg-transparent p-0 transition-colors"
                         style={{ borderColor: active ? 'var(--accent)' : 'var(--border)' }}
                       >
@@ -456,8 +472,8 @@ export function People(): React.JSX.Element {
                 </div>
                 <p className="hint mt-2" aria-live="polite">
                   {previewLook
-                    ? `${previewLook.label} is used for the next image.`
-                    : 'The original photo is used for the next image.'}
+                    ? `${previewLook.label} sets the pose and framing for the next image. ${previewLook.hint ?? ''}`
+                    : 'The original photo is used. Choose a studio angle to set the pose and framing.'}
                   {previewLook && (
                     <>
                       {' '}
@@ -472,7 +488,6 @@ export function People(): React.JSX.Element {
             <div className="mt-4 flex flex-wrap gap-2">
               <Button variant="primary" onClick={() => void createImage()}>Make an Image with This Person</Button>
             </div>
-            <p className="hint mt-2">This portrait will be used for the person.</p>
           </>
         )}
       </Dialog>

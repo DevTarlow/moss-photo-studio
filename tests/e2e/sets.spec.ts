@@ -4,6 +4,7 @@ import type { AxeResults } from 'axe-core'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import sharp from 'sharp'
 
 const productPhoto = path.resolve(__dirname, '../../resources/tiles/examples/product.webp')
 const screenshots = path.resolve(__dirname, '../screenshots')
@@ -132,13 +133,41 @@ test('a Set keeps images together and starts new work from them', async () => {
     await expect(page.getByRole('button', { name: /Spring collection/ }).first()).toContainText('3 images')
     await page.getByRole('button', { name: /Spring collection/ }).first().click()
     await expect(page.getByText('3 images', { exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Products (0)' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Generated & Edited (3)' })).toBeVisible()
+    await page.getByRole('button', { name: 'Products (0)' }).click()
+    await expect(page.getByRole('heading', { name: 'No product photos in this Set' })).toBeVisible()
+    await page.getByRole('button', { name: 'Generated & Edited (3)' }).click()
+    await expect(page.getByRole('heading', { name: 'Generated & Edited', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'All (3)' }).click()
     await screenshot(page, 'set-detail-many')
     await assertNoSeriousA11y(page, 'set-detail')
+
+    await page.getByRole('button', { name: /Open .* larger/ }).first().click()
+    const mediaPreview = page.getByRole('dialog', { name: 'Image preview' })
+    await expect(mediaPreview).toBeVisible()
+    expect(await page.evaluate(() => document.getElementById('root')?.hasAttribute('inert'))).toBe(true)
+    await mediaPreview.getByRole('button', { name: 'Close preview' }).click()
+    await expect(mediaPreview).toBeHidden()
+    expect(await page.evaluate(() => document.getElementById('root')?.hasAttribute('inert'))).toBe(false)
+
+    const firstSetCard = page.locator('article.set-card').first()
+    await firstSetCard.hover()
+    await firstSetCard.getByRole('button', { name: /^Actions for / }).click()
+    await page.getByRole('menuitem', { name: 'Remove from Set' }).click()
+    await expect(page.getByText(/Removed .* from this Set\./)).toBeVisible()
+    await expect(page.getByText('2 images', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Undo' }).click()
+    await expect(page.getByText('3 images', { exact: true })).toBeVisible()
 
     await app.evaluate(({ dialog }, folder) => {
       dialog.showOpenDialog = (async () => ({ canceled: false, filePaths: [folder] })) as typeof dialog.showOpenDialog
     }, exportFolder)
     await page.getByRole('button', { name: 'Export Set', exact: true }).click()
+    const exportDialog = page.getByRole('dialog', { name: 'Export Set' })
+    await expect(exportDialog).toBeVisible()
+    await exportDialog.getByRole('button', { name: /Square 1:1/ }).click()
+    await exportDialog.getByRole('button', { name: 'Export Set', exact: true }).click()
     await expect.poll(() => {
       const folders = fs.readdirSync(exportFolder).filter((name) => name.startsWith('Moss Set'))
       return folders.find((name) => fs.readdirSync(path.join(exportFolder, name)).length >= 3) ?? null
@@ -147,6 +176,8 @@ test('a Set keeps images together and starts new work from them', async () => {
     const exportedFiles = fs.readdirSync(path.join(exportFolder, exported))
     expect(exportedFiles.filter((file) => /\.(webp|jpg|png)$/.test(file))).toHaveLength(3)
     expect(exportedFiles[0]).toMatch(/^01-/)
+    const exportedSize = await sharp(path.join(exportFolder, exported, exportedFiles[0]!)).metadata()
+    expect(exportedSize).toMatchObject({ width: 1600, height: 1600 })
 
     await page.getByRole('link', { name: 'Sets', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Sets', exact: true })).toBeVisible()
@@ -163,7 +194,10 @@ test('a Set keeps images together and starts new work from them', async () => {
     await assertNoSeriousA11y(page, 'sets-dark')
 
     await page.getByRole('button', { name: /Spring collection/ }).first().click()
-    await page.getByRole('button', { name: /Remove .* from Spring collection/ }).first().click()
+    const remainingCard = page.locator('article.set-card').first()
+    await remainingCard.hover()
+    await remainingCard.getByRole('button', { name: /^Actions for / }).click()
+    await page.getByRole('menuitem', { name: 'Remove from Set' }).click()
     await expect(page.getByText('2 images', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Actions for Spring collection' }).click()
     await page.getByRole('menuitem', { name: 'Delete Set' }).click()

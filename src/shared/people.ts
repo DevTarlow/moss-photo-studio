@@ -8,6 +8,7 @@ export interface BundledPerson {
 export interface BundledPersonLook {
   key: BundledPersonLookKey
   label: string
+  hint: string
 }
 
 export type BundledPersonLookKey = 'front' | 'angle' | 'full' | 'seated'
@@ -18,10 +19,26 @@ export type BundledPersonLookKey = 'front' | 'angle' | 'full' | 'seated'
  * resources/people/<id>-<key>.webp.
  */
 export const BUNDLED_PERSON_LOOKS: readonly BundledPersonLook[] = [
-  { key: 'front', label: 'Studio front' },
-  { key: 'angle', label: 'Studio angle' },
-  { key: 'full', label: 'Full length' },
-  { key: 'seated', label: 'Seated' }
+  {
+    key: 'front',
+    label: 'Studio front',
+    hint: 'Faces the camera. Best for a straight-on product hold.'
+  },
+  {
+    key: 'angle',
+    label: 'Studio angle',
+    hint: 'Body turned three-quarters. Best for a natural pose with the product to the side.'
+  },
+  {
+    key: 'full',
+    label: 'Full length',
+    hint: 'Head to toe. Best when the length of the outfit matters.'
+  },
+  {
+    key: 'seated',
+    label: 'Seated',
+    hint: 'Seated pose. Best for table-top scenes and a lower camera.'
+  }
 ]
 
 /**

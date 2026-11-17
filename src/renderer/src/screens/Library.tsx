@@ -18,8 +18,6 @@ import { useLibraryStore } from '../store/library'
 import { useAppStore } from '../store/app'
 import { useJobsStore } from '../store/jobs'
 import { AppFrame } from '../components/ui/AppFrame'
-import { Dialog } from '../components/ui/Dialog'
-import { Field } from '../components/ui/Field'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { LibrarySkeleton } from '../components/ui/Skeleton'
@@ -37,6 +35,8 @@ import { showExportToast } from '../lib/exportFeedback'
 import { onCommand } from '../lib/commands'
 import { fileToBytes } from '../lib/files'
 import { warnIfSmallPhoto } from '../lib/photoWarnings'
+import { readDraftPreview } from '../lib/draft'
+import { openSetPicker } from '../store/setPicker'
 import { Pagination } from '../components/ui/Pagination'
 import {
   Banner,
@@ -78,13 +78,12 @@ export function Library(): React.JSX.Element {
   const license = useAppStore((state) => state.license)
   const applyLicense = useAppStore((state) => state.applyLicense)
   const products = useAppStore((state) => state.products)
+  const people = useAppStore((state) => state.people)
   const refreshProducts = useAppStore((state) => state.refreshProducts)
   const [newType, setNewType] = useState<'photo' | null>(null)
   const [addProductOpen, setAddProductOpen] = useState(false)
   const [newPersonId, setNewPersonId] = useState<string | null>(null)
   const [newPersonLook, setNewPersonLook] = useState<string | null>(null)
-  const [renameProject, setRenameProject] = useState<Project | null>(null)
-  const [renameValue, setRenameValue] = useState('')
   const [search, setSearch] = useState(store.search)
   const searchRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -327,16 +326,28 @@ export function Library(): React.JSX.Element {
     }
   }
 
-  const rename = async (): Promise<void> => {
-    if (!renameProject) return
-    const value = renameValue.trim()
-    if (!value) return
+  const renameProject = async (project: Project, name: string): Promise<boolean> => {
     try {
-      await store.rename(renameProject.id, value)
-      setRenameProject(null)
+      await store.rename(project.id, name)
       toast.status('Project renamed.')
+      return true
     } catch {
       toast.error('The project could not be renamed.')
+      return false
+    }
+  }
+
+  const addProjectToSet = async (project: Project): Promise<void> => {
+    try {
+      const images = await unwrap(window.moss.images.list({ projectId: project.id }))
+      const image = images.find((entry) => entry.id === project.coverImageId) ?? images[images.length - 1]
+      if (!image) {
+        toast.error('Make or add an image before adding this project to a Set.')
+        return
+      }
+      openSetPicker(image)
+    } catch (caught) {
+      toast.error(messageOf(caught))
     }
   }
 
@@ -475,6 +486,8 @@ export function Library(): React.JSX.Element {
   }, [setPage, setPages])
 
   const renderProject = (project: Project, view: 'grid' | 'list'): React.ReactNode => {
+    const person = project.personId ? people.find((entry) => entry.id === project.personId) : null
+    const linkedProduct = project.productId ? products.find((entry) => entry.id === project.productId) : null
     return (
       <ProjectCard
         project={project}
@@ -482,9 +495,16 @@ export function Library(): React.JSX.Element {
         job={jobFor(project.id)}
         selected={selected.has(project.id)}
         selecting={selectMode || selected.size > 0}
+        draft={project.imageCount === 0 ? {
+          prompt: readDraftPreview(project.id),
+          productName: linkedProduct?.name ?? null,
+          personName: person?.name ?? null
+        } : null}
         onSelect={(next) => toggleSelect(project.id, next)}
-        onRename={() => { setRenameProject(project); setRenameValue(project.name) }}
+        onOpen={() => navigate(`/project/${project.id}`)}
+        onRename={(name) => renameProject(project, name)}
         onDuplicate={() => void duplicate(project)}
+        onAddToSet={() => void addProjectToSet(project)}
         onExport={() => void exportProject(project)}
         onDelete={() => void remove(project)}
       />
@@ -731,10 +751,24 @@ export function Library(): React.JSX.Element {
                 className="mt-3 grid gap-4"
                 style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}
               >
-                {filteredSets.map((set) => (
+                {filteredSets.slice(0, 4).map((set) => (
                   <SetCard key={set.id} set={set} onOpen={() => navigate(`/sets/${set.id}`)} />
                 ))}
               </div>
+              {filteredSets.length > 4 && (
+                <Button
+                  label="View all Sets"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => {
+                    setSetsTab(true)
+                    setProductsTab(false)
+                    setSelected(new Set())
+                    setSelectMode(false)
+                  }}
+                />
+              )}
             </section>
           )}
 
@@ -911,29 +945,6 @@ export function Library(): React.JSX.Element {
         }}
       />
 
-      <Dialog
-        open={Boolean(renameProject)}
-        onOpenChange={(open) => { if (!open) setRenameProject(null) }}
-        title="Rename project"
-        description="The new name shows in All work and on exports."
-        footer={
-          <>
-            <Button label="Cancel" variant="secondary" onClick={() => setRenameProject(null)} />
-            <Button label="Save Name" variant="primary" onClick={() => void rename()} />
-          </>
-        }
-      >
-        <Field
-          label="Project name"
-          value={renameValue}
-          onChange={(event) => setRenameValue(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') void rename()
-          }}
-          autoFocus
-          maxLength={140}
-        />
-      </Dialog>
     </AppFrame>
   )
 }

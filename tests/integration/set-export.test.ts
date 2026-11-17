@@ -55,6 +55,30 @@ describe('Set export', () => {
     expect(fs.readdirSync(result.folder)[0]).toMatch(/^01-Mug-product\.webp$/)
   })
 
+  it('centre-crops the square and portrait presets to their named sizes', async () => {
+    const set = sets.create('Preset export')
+    const file = 'products/wide.webp'
+    const absolute = path.join(dir, 'library', file)
+    await fs.promises.mkdir(path.dirname(absolute), { recursive: true })
+    await sharp({ create: { width: 900, height: 600, channels: 3, background: { r: 90, g: 120, b: 100 } } }).webp().toFile(absolute)
+    const product = products.create({ id: 'wide-product', name: 'Wide product', file, thumb: file, width: 900, height: 600 })
+    products.setSet(product.id, set.id)
+    const base = {
+      libraryPath: path.join(dir, 'library'),
+      name: set.name,
+      images: [],
+      products: products.listBySet(set.id),
+      parentFolder: path.join(dir, 'exports'),
+      workingPathFor: () => ''
+    }
+    const square = await exportSetImages({ ...base, options: { format: 'webp', quality: 90, maxDimension: null, preset: 'square' } })
+    const squareFile = path.join(square.folder, fs.readdirSync(square.folder)[0]!)
+    expect(await sharp(squareFile).metadata()).toMatchObject({ width: 1600, height: 1600 })
+    const portrait = await exportSetImages({ ...base, options: { format: 'webp', quality: 90, maxDimension: null, preset: 'portrait' } })
+    const portraitFile = path.join(portrait.folder, fs.readdirSync(portrait.folder)[0]!)
+    expect(await sharp(portraitFile).metadata()).toMatchObject({ width: 1600, height: 2000 })
+  })
+
   it('writes a dedicated folder with numbered images in Set order', async () => {
     const set = sets.create('Spring collection')
     const project = projects.create({ type: 'image', name: 'Spring shoot' })

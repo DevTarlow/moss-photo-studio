@@ -5,6 +5,7 @@ import { Icon } from '@astryxdesign/core'
 import type { Image } from '@shared/types'
 import { Button } from './Button'
 import { IconButton } from './IconButton'
+import { useModalInert } from './useModalInert'
 
 export function Lightbox({
   open,
@@ -40,6 +41,7 @@ export function Lightbox({
   source?: Image | null
 }): React.JSX.Element {
   const image = images[index]
+  useModalInert(open)
   const [loaded, setLoaded] = useState(false)
   const [compare, setCompare] = useState(false)
   useEffect(() => {

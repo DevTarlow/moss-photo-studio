@@ -41,6 +41,7 @@ import { showExportToast } from '../../lib/exportFeedback'
 import { warnIfSmallPhoto } from '../../lib/photoWarnings'
 import { elapsedLabel, formatDate, imageCountLabel } from '../../lib/format'
 import { currentMonth } from '../../store/library'
+import { readDraft, saveDraft } from '../../lib/draft'
 import { onCommand } from '../../lib/commands'
 import { openSetPicker } from '../../store/setPicker'
 
@@ -50,16 +51,6 @@ type PendingApply = {
   text: string
   source: 'starter' | 'example'
   scene?: ExampleScene
-}
-
-const draftKey = (projectId: string): string => `moss.create-draft.${projectId}`
-
-function readDraft(projectId: string): string {
-  try {
-    return sessionStorage.getItem(draftKey(projectId)) ?? ''
-  } catch {
-    return ''
-  }
 }
 
 export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?: string | null }): React.JSX.Element {
@@ -188,11 +179,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
     // rehydrate effect below; the guard avoids writing one project's draft into
     // the next project during the same render.
     if (hydratedProject.current !== project.id) return
-    try {
-      sessionStorage.setItem(draftKey(project.id), prompt)
-    } catch {
-      // Session storage is best-effort; the workspace still works.
-    }
+    saveDraft(project.id, prompt)
   }, [prompt, project.id])
 
   useEffect(() => {

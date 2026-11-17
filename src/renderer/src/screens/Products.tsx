@@ -20,7 +20,7 @@ import { unwrap, messageOf } from '../lib/ipc'
 import { formatDate } from '../lib/format'
 import { toast } from '../lib/toast'
 import { COLLECTION_PAGE_SIZE } from '@shared/constants'
-import { Heading, Icon, Selector, Text, TextInput } from '@astryxdesign/core'
+import { Heading, Icon, Selector, Text, TextInput, ToggleButton, ToggleButtonGroup } from '@astryxdesign/core'
 
 export function Products(): React.JSX.Element {
   const navigate = useNavigate()
@@ -35,6 +35,7 @@ export function Products(): React.JSX.Element {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'recent' | 'oldest' | 'name'>('recent')
+  const [category, setCategory] = useState('all')
   const [preview, setPreview] = useState<Product | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [renaming, setRenaming] = useState<Product | null>(null)
@@ -68,7 +69,10 @@ export function Products(): React.JSX.Element {
       value.toLowerCase().includes(needle)
     )
 
-  const filteredIncluded = included.filter(matches)
+  const categories = ['all', ...Array.from(new Set(included.map((product) => product.category).filter((value): value is string => Boolean(value))))]
+  const filteredIncluded = included.filter(
+    (product) => matches(product) && (category === 'all' || product.category === category)
+  )
   const filteredProducts = products
     .filter(matches)
     .sort((a, b) => {
@@ -85,7 +89,7 @@ export function Products(): React.JSX.Element {
 
   useEffect(() => {
     setPage(1)
-  }, [search, sort])
+  }, [search, sort, category])
 
   const visibleProducts = filteredProducts.slice(
     (page - 1) * COLLECTION_PAGE_SIZE,
@@ -109,6 +113,7 @@ export function Products(): React.JSX.Element {
   }
 
   const startProject = async (product: Product, type: ProjectType): Promise<void> => {
+    setPreview(null)
     setBusy(true)
     try {
       const detail = await unwrap(window.moss.products.createProject({ productId: product.id, type }))
@@ -193,7 +198,9 @@ export function Products(): React.JSX.Element {
               <Text type="supporting" color="secondary" className="block">
                 {search.trim()
                   ? `Showing ${matchingCount} of ${included.length + products.length}`
-                  : `${included.length} starter products · ${products.length} of yours`}
+                  : category !== 'all'
+                    ? `${filteredIncluded.length} of ${included.length} starter products · ${products.length} of yours`
+                    : `${included.length} starter products · ${products.length} of yours`}
               </Text>
               <Text type="supporting" color="secondary" className="block">Your reusable product photos and the projects made from them.</Text>
             </div>
@@ -217,7 +224,7 @@ export function Products(): React.JSX.Element {
                 label="Search products"
                 isLabelHidden
                 value={search}
-                onChange={setSearch}
+                onChange={(value) => { setSearch(value); if (value.trim()) setCategory('all') }}
                 placeholder="Search products"
                 startIcon={<Icon icon={Search} size="sm" />}
                 hasClear
@@ -280,6 +287,9 @@ export function Products(): React.JSX.Element {
                           onOpen={() => navigate(`/product/${product.id}`)}
                           onRename={() => openRename(product)}
                           onDelete={() => void remove(product)}
+                          onUseInGenerator={() => void startProject(product, 'image')}
+                          onTryInEditor={() => void startProject(product, 'photo')}
+                          onViewProjects={() => navigate(`/product/${product.id}`)}
                         />
                       ))}
                     </div>
@@ -338,17 +348,52 @@ export function Products(): React.JSX.Element {
                 </section>
               )}
 
-              {filteredIncluded.length > 0 && (
+              {(filteredIncluded.length > 0 || (!search.trim() && included.length > 0)) && (
                 <section className="mt-8" aria-labelledby="included-products-heading">
                   <div className="flex items-baseline gap-2">
                     <h2 id="included-products-heading" className="section-label">Starter Products</h2>
                     <span className="meta-faint">{filteredIncluded.length}</span>
                   </div>
-                  <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
-                    {filteredIncluded.map((product) => (
-                      <ProductCard key={product.id} product={product} onOpen={() => setPreview(product)} />
-                    ))}
+                  <div className="product-category-pills mt-2" role="group" aria-label="Filter starter products">
+                    <ToggleButtonGroup
+                      type="single"
+                      value={category}
+                      label="Filter starter products"
+                      onChange={(value) => { if (value) setCategory(value) }}
+                    >
+                      {categories.map((value) => (
+                        <ToggleButton
+                          key={value}
+                          value={value}
+                          label={value === 'all' ? 'All' : value}
+                          size="sm"
+                        />
+                      ))}
+                    </ToggleButtonGroup>
                   </div>
+                  {filteredIncluded.length === 0 ? (
+                    <div className="mt-3">
+                      <EmptyState
+                        icon={<Icon icon={Package} size="lg" />}
+                        title="No starter products in this category"
+                        line="Choose All to see every starter product."
+                        action={<Button variant="secondary" onClick={() => setCategory('all')}>Show All Starter Products</Button>}
+                        compact
+                      />
+                    </div>
+                  ) : (
+                    <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+                      {filteredIncluded.map((product) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          onOpen={() => setPreview(product)}
+                          onUseInGenerator={() => void startProject(product, 'image')}
+                          onTryInEditor={() => void startProject(product, 'photo')}
+                        />
+                      ))}
+                    </div>
+                  )}
                   <p className="hint mt-3">Starter products to use as a starting point for your own product photos.</p>
                 </section>
               )}

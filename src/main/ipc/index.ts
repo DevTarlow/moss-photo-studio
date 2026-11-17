@@ -62,7 +62,8 @@ const exportOptionsSchema = z.object({
   quality: z.number().int().min(60).max(100),
   maxDimension: z.number().int().positive().nullable(),
   includeVersions: z.boolean().optional(),
-  filename: z.string().max(120).optional()
+  filename: z.string().max(120).optional(),
+  preset: z.enum(['original', 'square', 'portrait']).optional()
 })
 const brandPatchSchema = z.object({
   colors: z.array(z.string().regex(/^#[0-9a-fA-F]{6}$/)).max(6).optional(),
@@ -1419,6 +1420,8 @@ export function registerIpcHandlers(context: AppContext): void {
     return {
       month: isoMonthLabel(month),
       images: totals.images,
+      paidImages: totals.paidImages,
+      freeAdjustments: totals.freeAdjustments,
       spendCents: totals.cents,
       budgetCents: settings.budgetCents(),
       projects: context.usage.byProject(bounds.start, bounds.end).map((row) => ({

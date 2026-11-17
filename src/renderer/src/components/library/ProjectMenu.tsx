@@ -1,16 +1,18 @@
 import type { ReactNode } from 'react'
 import { DropdownMenu } from 'radix-ui'
-import { Copy, Download, Pencil, Trash2 } from 'lucide-react'
+import { Copy, Download, FolderPlus, Pencil, Trash2 } from 'lucide-react'
 import { Icon } from '@astryxdesign/core'
 
 export function ProjectMenuContent({
   onRename,
   onDuplicate,
+  onAddToSet,
   onExport,
   onDelete
 }: {
   onRename: () => void
   onDuplicate: () => void
+  onAddToSet?: () => void
   onExport: () => void
   onDelete: () => void
 }): React.JSX.Element {
@@ -22,6 +24,11 @@ export function ProjectMenuContent({
       <DropdownMenu.Item className="menu-item" onSelect={onDuplicate}>
         <Icon icon={Copy} size="sm" /> Duplicate
       </DropdownMenu.Item>
+      {onAddToSet && (
+        <DropdownMenu.Item className="menu-item" onSelect={onAddToSet}>
+          <Icon icon={FolderPlus} size="sm" /> Add to Set
+        </DropdownMenu.Item>
+      )}
       <DropdownMenu.Item className="menu-item" onSelect={onExport}>
         <Icon icon={Download} size="sm" /> Export
       </DropdownMenu.Item>
@@ -40,6 +47,7 @@ export function ProjectMenu({
   children: ReactNode
   onRename: () => void
   onDuplicate: () => void
+  onAddToSet?: () => void
   onExport: () => void
   onDelete: () => void
 }): React.JSX.Element {

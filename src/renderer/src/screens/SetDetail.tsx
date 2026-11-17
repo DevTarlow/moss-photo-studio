@@ -1,21 +1,28 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Download, Image as ImageIcon, Layers, Loader2, MoreHorizontal, Pencil, Plus, Sparkles, Trash2, X } from 'lucide-react'
+import { Download, Image as ImageIcon, Layers, Loader2, MoreHorizontal, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
 import { Heading, Icon, Text } from '@astryxdesign/core'
 import { DropdownMenu } from 'radix-ui'
 import type { LibraryImage, SetDetail as SetDetailData } from '@shared/types'
+import type { ExportPreset } from '@shared/exportPresets'
 import { AppFrame } from '../components/ui/AppFrame'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Skeleton } from '../components/ui/Skeleton'
+import { Segmented } from '../components/ui/Segmented'
+import { MediaLightbox } from '../components/ui/MediaLightbox'
+import type { MediaItem } from '../components/ui/MediaLightbox'
 import { SetNameDialog } from '../components/sets/SetNameDialog'
 import { AddToSetDialog } from '../components/sets/AddToSetDialog'
+import { SetExportDialog } from '../components/sets/SetExportDialog'
 import { useConfirm } from '../components/ui/ConfirmProvider'
 import { useAppStore } from '../store/app'
 import { unwrap, messageOf } from '../lib/ipc'
 import { showExportToast } from '../lib/exportFeedback'
 import { toast } from '../lib/toast'
+
+type SetFilter = 'all' | 'products' | 'images'
 
 export function SetDetail(): React.JSX.Element {
   const { id } = useParams<{ id: string }>()
@@ -29,6 +36,10 @@ export function SetDetail(): React.JSX.Element {
   const [renameOpen, setRenameOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
+  const [filter, setFilter] = useState<SetFilter>('all')
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [lightboxSource, setLightboxSource] = useState<string | null>(null)
 
   const load = async (): Promise<void> => {
     if (!id) return
@@ -47,6 +58,11 @@ export function SetDetail(): React.JSX.Element {
     void load()
   }, [id])
 
+  useEffect(() => {
+    setLightboxIndex(null)
+    setLightboxSource(null)
+  }, [filter])
+
   const createFromImage = async (image: LibraryImage, type: 'photo' | 'image'): Promise<void> => {
     setBusy(`${image.id}:${type}`)
     try {
@@ -62,12 +78,25 @@ export function SetDetail(): React.JSX.Element {
   const projectUrl = (projectId: string): string =>
     `/project/${projectId}${id ? `?fromSet=${encodeURIComponent(id)}` : ''}`
 
+  const restoreImage = async (imageId: string): Promise<void> => {
+    if (!id) return
+    try {
+      await unwrap(window.moss.images.assignSet({ imageId, setId: id }))
+      await load()
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    }
+  }
+
   const removeImage = async (image: LibraryImage): Promise<void> => {
     setBusy(`${image.id}:remove`)
     try {
       await unwrap(window.moss.images.assignSet({ imageId: image.id, setId: null }))
-      toast.status('Removed from Set. The image stays in its project.')
       await load()
+      toast.status(`Removed ${image.label} from this Set.`, {
+        label: 'Undo',
+        onClick: () => void restoreImage(image.id)
+      })
     } catch (caught) {
       toast.error(messageOf(caught))
     } finally {
@@ -87,12 +116,25 @@ export function SetDetail(): React.JSX.Element {
     }
   }
 
-  const removeProduct = async (productId: string): Promise<void> => {
+  const restoreProduct = async (productId: string): Promise<void> => {
+    if (!id) return
+    try {
+      await unwrap(window.moss.products.assignSet({ productId, setId: id }))
+      await load()
+    } catch (caught) {
+      toast.error(messageOf(caught))
+    }
+  }
+
+  const removeProduct = async (productId: string, name: string): Promise<void> => {
     setBusy(`product:${productId}:remove`)
     try {
       await unwrap(window.moss.products.assignSet({ productId, setId: null }))
-      toast.status('Removed from Set. The product stays in Products.')
       await load()
+      toast.status(`Removed ${name} from this Set.`, {
+        label: 'Undo',
+        onClick: () => void restoreProduct(productId)
+      })
     } catch (caught) {
       toast.error(messageOf(caught))
     } finally {
@@ -127,16 +169,17 @@ export function SetDetail(): React.JSX.Element {
     }
   }
 
-  const exportSet = async (): Promise<void> => {
+  const runExport = async (preset: ExportPreset): Promise<void> => {
     if (!detail || !id) return
-    const options = settings?.exportDefaults ?? { format: 'webp' as const, quality: 90, maxDimension: null }
+    const defaults = settings?.exportDefaults ?? { format: 'webp' as const, quality: 90, maxDimension: null }
     setBusy('export')
     try {
-      const result = await unwrap(window.moss.sets.export({ id, options }))
+      const result = await unwrap(window.moss.sets.export({ id, options: { ...defaults, preset } }))
       if (result.count < 1) {
         toast.error(result.warnings[0] ?? 'Make at least one image first.')
         return
       }
+      setExportOpen(false)
       showExportToast(result.count, result.folderName, null, detail.set.id)
       if (result.warnings.length) toast.error(result.warnings.join(' '))
     } catch (caught) {
@@ -146,12 +189,175 @@ export function SetDetail(): React.JSX.Element {
     }
   }
 
+  const mediaItems: MediaItem[] = detail
+    ? [
+        ...detail.products.map((product) => ({
+          id: product.id,
+          label: product.name,
+          caption: 'Product photo',
+          url: product.imageUrl,
+          thumbUrl: product.thumbUrl
+        })),
+        ...detail.images.map((image) => ({
+          id: image.id,
+          label: image.label,
+          caption: `From ${image.projectName}`,
+          url: image.url ?? image.thumbUrl,
+          thumbUrl: image.thumbUrl
+        }))
+      ]
+    : []
+
+  const openImage = async (image: LibraryImage): Promise<void> => {
+    const index = mediaItems.findIndex((item) => item.id === image.id)
+    setLightboxSource(null)
+    setLightboxIndex(index >= 0 ? index : 0)
+    try {
+      const project = await unwrap(window.moss.projects.get({ id: image.projectId }))
+      const source =
+        project.images.find((entry) => entry.id === project.project.sourceImageId) ??
+        project.images.find((entry) => entry.isOriginal)
+      setLightboxSource(source?.url ?? null)
+    } catch {
+      setLightboxSource(null)
+    }
+  }
+
   if (!id) {
     return <ErrorState message="That Set is not here anymore." onRetry={() => navigate('/sets')} />
   }
 
+  const products = detail?.products ?? []
+  const images = detail?.images ?? []
+  const visibleProducts = filter === 'images' ? [] : products
+  const visibleImages = filter === 'products' ? [] : images
+  const filterEmpty = Boolean(detail) && (visibleProducts.length + visibleImages.length === 0)
+
+  const productCard = (product: NonNullable<typeof products[number]>): React.JSX.Element => (
+    <article key={product.id} className="card set-card overflow-hidden">
+      <div className="set-card-media">
+        <button
+          type="button"
+          className="block w-full cursor-zoom-in border-0 bg-transparent p-0"
+          aria-label={`Open ${product.name} larger`}
+          onClick={() => {
+            const index = mediaItems.findIndex((item) => item.id === product.id)
+            setLightboxSource(null)
+            setLightboxIndex(index >= 0 ? index : 0)
+          }}
+        >
+          <img src={product.thumbUrl} alt="" className="aspect-[4/3] w-full object-cover" />
+        </button>
+        <span className="badge absolute left-2 top-2">Product</span>
+        <div className="set-card-menu">
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button
+                type="button"
+                className="icon-btn"
+                style={{ background: 'var(--surface)' }}
+                aria-label={`Actions for ${product.name}`}
+              >
+                <Icon icon={MoreHorizontal} size="sm" />
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content className="menu-content" align="end" sideOffset={4}>
+                <DropdownMenu.Item className="menu-item" onSelect={() => setAddOpen(true)}>
+                  <Icon icon={Plus} size="sm" /> Add to Set
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="menu-item"
+                  data-danger="true"
+                  disabled={busy !== null}
+                  onSelect={() => void removeProduct(product.id, product.name)}
+                >
+                  <Icon icon={Trash2} size="sm" /> Remove from Set
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        </div>
+      </div>
+      <div className="p-3">
+        <p className="truncate text-[13px] font-semibold">{product.name}</p>
+        <p className="meta mt-0.5">Product Photo</p>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromProduct(product.id, 'photo')}>
+            {busy === `product:${product.id}:photo` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Pencil} size="sm" />} Edit Photo
+          </Button>
+          <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromProduct(product.id, 'image')}>
+            {busy === `product:${product.id}:image` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Make an Image with this Product
+          </Button>
+        </div>
+      </div>
+    </article>
+  )
+
+  const imageCard = (image: LibraryImage): React.JSX.Element => (
+    <article key={image.id} className="card set-card overflow-hidden">
+      <div className="set-card-media">
+        <button
+          type="button"
+          className="block w-full cursor-zoom-in border-0 bg-transparent p-0"
+          aria-label={`Open ${image.label} larger`}
+          onClick={() => void openImage(image)}
+        >
+          {image.thumbUrl ? (
+            <img src={image.thumbUrl} alt="" className="aspect-[4/3] w-full object-cover" />
+          ) : (
+            <span className="grid aspect-[4/3] w-full place-items-center" style={{ background: 'var(--surface-2)', color: 'var(--text-faint)' }}>
+              <Icon icon={ImageIcon} size="lg" />
+            </span>
+          )}
+        </button>
+        <div className="set-card-menu">
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button
+                type="button"
+                className="icon-btn"
+                style={{ background: 'var(--surface)' }}
+                aria-label={`Actions for ${image.label}`}
+              >
+                <Icon icon={MoreHorizontal} size="sm" />
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content className="menu-content" align="end" sideOffset={4}>
+                <DropdownMenu.Item className="menu-item" onSelect={() => setAddOpen(true)}>
+                  <Icon icon={Plus} size="sm" /> Add to Set
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="menu-item"
+                  data-danger="true"
+                  disabled={busy !== null}
+                  onSelect={() => void removeImage(image)}
+                >
+                  <Icon icon={Trash2} size="sm" /> Remove from Set
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        </div>
+      </div>
+      <div className="p-3">
+        <p className="truncate text-[13px] font-semibold">{image.label}</p>
+        <p className="meta mt-0.5 truncate">From {image.projectName}</p>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromImage(image, 'photo')}>
+            {busy === `${image.id}:photo` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Pencil} size="sm" />} Edit Photo
+          </Button>
+          <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromImage(image, 'image')}>
+            {busy === `${image.id}:image` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Make an Image with this Photo
+          </Button>
+        </div>
+      </div>
+    </article>
+  )
+
   return (
-    <AppFrame backTo="/sets" backLabel="Back to Sets" title="Set">
+    <AppFrame backTo="/sets" backLabel="Back to Sets" backText="Sets" title="Set">
       <div className="page-scroll">
         <div className="page-pad page-max">
           {loading && !detail ? (
@@ -176,7 +382,7 @@ export function SetDetail(): React.JSX.Element {
                   <Button variant="primary" disabled={busy !== null} onClick={() => setAddOpen(true)}>
                     <Icon icon={Plus} size="sm" /> Add to Set
                   </Button>
-                  <Button variant="secondary" disabled={busy !== null || detail.total === 0} onClick={() => void exportSet()}>
+                  <Button variant="secondary" disabled={busy !== null || detail.total === 0} onClick={() => setExportOpen(true)}>
                     {busy === 'export' ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Download} size="sm" />} Export Set
                   </Button>
                   <DropdownMenu.Root>
@@ -208,72 +414,54 @@ export function SetDetail(): React.JSX.Element {
                 />
               ) : (
                 <>
-                  {detail.products.length > 0 && (
-                    <div className="mt-6 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
-                      {detail.products.map((product) => (
-                        <article key={product.id} className="card overflow-hidden">
-                          <div className="relative aspect-[4/3] overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                            <img src={product.thumbUrl} alt="" className="h-full w-full object-cover" />
-                            <span className="badge absolute left-2 top-2">Product</span>
-                          </div>
-                          <div className="p-3">
-                            <div className="flex items-start gap-2">
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-[13px] font-semibold">{product.name}</p>
-                                <p className="meta mt-0.5">Product Photo</p>
-                              </div>
-                              <button type="button" className="icon-btn shrink-0" aria-label={`Remove product ${product.name} from ${detail.set.name}`} disabled={busy !== null} onClick={() => void removeProduct(product.id)}>
-                                <Icon icon={X} size="sm" />
-                              </button>
-                            </div>
-                            <div className="mt-3 flex flex-wrap gap-1.5">
-                              <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromProduct(product.id, 'photo')}>
-                                {busy === `product:${product.id}:photo` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Pencil} size="sm" />} Edit Photo
-                              </Button>
-                              <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromProduct(product.id, 'image')}>
-                                {busy === `product:${product.id}:image` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Make an Image with this Product
-                              </Button>
-                            </div>
-                          </div>
-                        </article>
-                      ))}
+                  <div className="mt-5 flex flex-wrap items-center gap-3">
+                    <Segmented
+                      label="Filter Set contents"
+                      value={filter}
+                      onChange={setFilter}
+                      options={[
+                        { value: 'all', label: `All (${detail.total})` },
+                        { value: 'products', label: `Products (${products.length})` },
+                        { value: 'images', label: `Generated & Edited (${images.length})` }
+                      ]}
+                    />
+                    <p className="hint">Choose a card to preview it larger.</p>
+                  </div>
+
+                  {filterEmpty ? (
+                    <div className="mt-6">
+                      <EmptyState
+                        icon={<Icon icon={Layers} size="lg" />}
+                        title={filter === 'products' ? 'No product photos in this Set' : 'No generated or edited images in this Set'}
+                        line="Add one from Add to Set, or choose another filter."
+                        compact
+                      />
                     </div>
-                  )}
-                  {detail.images.length > 0 && (
-                    <div className="mt-6 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
-                      {detail.images.map((image) => (
-                        <article key={image.id} className="card overflow-hidden">
-                          <div className="aspect-[4/3] overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-                            {image.thumbUrl ? (
-                              <img src={image.thumbUrl} alt="" className="h-full w-full object-cover" />
-                            ) : (
-                              <div className="grid h-full place-items-center" style={{ color: 'var(--text-faint)' }}>
-                                <Icon icon={ImageIcon} size="lg" />
-                              </div>
-                            )}
+                  ) : (
+                    <>
+                      {visibleProducts.length > 0 && (
+                        <section className="mt-6" aria-labelledby="set-products-heading">
+                          <div className="flex items-baseline gap-2">
+                            <h2 id="set-products-heading" className="section-label">Products</h2>
+                            <span className="meta-faint">{visibleProducts.length}</span>
                           </div>
-                          <div className="p-3">
-                            <div className="flex items-start gap-2">
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-[13px] font-semibold">{image.label}</p>
-                                <p className="meta mt-0.5 truncate">From {image.projectName}</p>
-                              </div>
-                              <button type="button" className="icon-btn shrink-0" aria-label={`Remove ${image.label} from ${detail.set.name}`} disabled={busy !== null} onClick={() => void removeImage(image)}>
-                                <Icon icon={X} size="sm" />
-                              </button>
-                            </div>
-                            <div className="mt-3 flex flex-wrap gap-1.5">
-                              <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromImage(image, 'photo')}>
-                                {busy === `${image.id}:photo` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Pencil} size="sm" />} Edit Photo
-                              </Button>
-                              <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromImage(image, 'image')}>
-                                {busy === `${image.id}:image` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Make an Image with this Photo
-                              </Button>
-                            </div>
+                          <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
+                            {visibleProducts.map(productCard)}
                           </div>
-                        </article>
-                      ))}
-                    </div>
+                        </section>
+                      )}
+                      {visibleImages.length > 0 && (
+                        <section className="mt-6" aria-labelledby="set-images-heading">
+                          <div className="flex items-baseline gap-2">
+                            <h2 id="set-images-heading" className="section-label">Generated & Edited</h2>
+                            <span className="meta-faint">{visibleImages.length}</span>
+                          </div>
+                          <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
+                            {visibleImages.map(imageCard)}
+                          </div>
+                        </section>
+                      )}
+                    </>
                   )}
                 </>
               )}
@@ -301,6 +489,23 @@ export function SetDetail(): React.JSX.Element {
           onAdded={() => void load()}
         />
       )}
+      {detail && (
+        <SetExportDialog
+          open={exportOpen}
+          onOpenChange={setExportOpen}
+          setName={detail.set.name}
+          busy={busy === 'export'}
+          onExport={(preset) => void runExport(preset)}
+        />
+      )}
+      <MediaLightbox
+        open={lightboxIndex !== null}
+        onOpenChange={(open) => { if (!open) { setLightboxIndex(null); setLightboxSource(null) } }}
+        items={mediaItems}
+        index={lightboxIndex ?? 0}
+        onIndex={setLightboxIndex}
+        sourceUrl={lightboxSource}
+      />
     </AppFrame>
   )
 }

@@ -12,6 +12,7 @@ import { unwrap, messageOf } from '../lib/ipc'
 import { usd, monthLabel, shortMonthLabel, formatDateTime } from '../lib/format'
 import { toast } from '../lib/toast'
 import { currentMonth } from '../store/library'
+import { estimateCents } from '@shared/cost'
 import { errorMessage } from '@shared/errors'
 import { COLLECTION_PAGE_SIZE } from '@shared/constants'
 import { Button, Card, Heading, Icon, ProgressBar, Selector, Text, TextInput } from '@astryxdesign/core'
@@ -133,6 +134,12 @@ export function Usage(): React.JSX.Element {
   }
 
   const budgetCents = summary?.budgetCents ?? null
+  const spentCents = summary?.spendCents ?? 0
+  const remainingCents = budgetCents === null ? null : Math.max(0, budgetCents - spentCents)
+  const imageCostCents = Math.max(1, estimateCents(1))
+  const imagesLeft = remainingCents === null ? null : Math.floor(remainingCents / imageCostCents)
+  const paidImages = summary?.paidImages ?? 0
+  const freeAdjustments = summary?.freeAdjustments ?? 0
   const savedBudget = budgetCents === null ? '' : (budgetCents / 100).toFixed(2)
   const budgetDirty = budget.trim().replace(/^\$/, '') !== savedBudget
   const maxProject = Math.max(1, ...(summary?.projects.map((project) => project.spendCents) ?? [0]))
@@ -180,7 +187,9 @@ export function Usage(): React.JSX.Element {
                 <Card padding={4}>
                   <Text type="label" color="secondary" className="block">Images made</Text>
                   <Text weight="bold" className="mt-2 block tabular" style={{ fontSize: 24 }}>{summary?.images ?? 0}</Text>
-                  <Text type="supporting" color="secondary" className="block">{monthLabel(month)} · {usd(1)} for each image that came back</Text>
+                  <Text type="supporting" color="secondary" className="block">
+                    {paidImages} paid AI · {freeAdjustments} free {freeAdjustments === 1 ? 'adjustment' : 'adjustments'}
+                  </Text>
                 </Card>
                 <Card padding={4}>
                   <Text type="label" color="secondary" className="block">Spent</Text>
@@ -193,15 +202,20 @@ export function Usage(): React.JSX.Element {
                     <Text weight="bold" className="mt-2 block">No monthly limit</Text>
                   ) : (
                     <>
-                      <Text weight="bold" className="mt-2 block tabular">{usd(summary?.spendCents ?? 0)} of {usd(budgetCents)}</Text>
+                      <Text weight="bold" className="mt-2 block tabular">{usd(spentCents)} of {usd(budgetCents)}</Text>
                       <div className="mt-2">
                         <ProgressBar
-                          value={Math.min(summary?.spendCents ?? 0, budgetCents)}
+                          value={Math.min(spentCents, budgetCents)}
                           max={budgetCents}
-                          label={`${usd(summary?.spendCents ?? 0)} of ${usd(budgetCents)} used this month`}
-                          hasValueLabel
+                          label={`${usd(spentCents)} of ${usd(budgetCents)} used this month`}
+                          hasValueLabel={false}
                         />
                       </div>
+                      <Text type="supporting" color="secondary" className="mt-1 block">
+                        {remainingCents && remainingCents > 0
+                          ? `${usd(remainingCents)} left · about ${imagesLeft} more ${imagesLeft === 1 ? 'AI image' : 'AI images'}`
+                          : 'No budget left this month.'}
+                      </Text>
                     </>
                   )}
                   <div className="mt-3 flex items-end gap-2">

@@ -61,6 +61,37 @@ describe('usage project names', () => {
     ])
   })
 
+  it('separates paid images from free adjustments in the month summary', () => {
+    const project = projects.create({ type: 'photo', name: 'Summary' })
+    record(project.id, 'Summary')
+    usage.record({
+      projectId: project.id,
+      projectName: 'Summary',
+      action: 'adjust',
+      requestedN: 1,
+      returnedN: 1,
+      costCents: 0,
+      result: 'ok'
+    })
+    usage.record({
+      projectId: project.id,
+      projectName: 'Summary',
+      action: 'adjust',
+      requestedN: 1,
+      returnedN: 1,
+      costCents: 0,
+      result: 'ok'
+    })
+
+    const { start, end } = month()
+    expect(usage.monthSummary(start, end)).toEqual({
+      images: 3,
+      paidImages: 1,
+      freeAdjustments: 2,
+      cents: 1
+    })
+  })
+
   it('keeps one by-project row when a project name changed between runs', () => {
     const project = projects.create({ type: 'photo', name: 'First title' })
     record(project.id, 'First title')

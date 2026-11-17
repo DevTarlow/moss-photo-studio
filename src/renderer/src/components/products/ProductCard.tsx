@@ -1,17 +1,59 @@
 import { DropdownMenu } from 'radix-ui'
+import { FolderOpen, Image as ImageIcon, Sparkles } from 'lucide-react'
+import { Icon } from '@astryxdesign/core'
 import type { Product } from '@shared/types'
+import { IconButton } from '../ui/IconButton'
 
 export function ProductCard({
   product,
   onOpen,
   onRename,
-  onDelete
+  onDelete,
+  onUseInGenerator,
+  onTryInEditor,
+  onViewProjects
 }: {
   product: Product
   onOpen: () => void
   onRename?: () => void
   onDelete?: () => void
+  onUseInGenerator?: () => void
+  onTryInEditor?: () => void
+  onViewProjects?: () => void
 }): React.JSX.Element {
+  const quickActions =
+    product.source === 'bundled' && (onUseInGenerator || onTryInEditor) ? (
+      <div className="product-quick-actions">
+        {onUseInGenerator && (
+          <IconButton label={`Use ${product.name} in the Image Generator`} onClick={onUseInGenerator}>
+            <Icon icon={Sparkles} size="sm" />
+          </IconButton>
+        )}
+        {onTryInEditor && (
+          <IconButton label={`Try ${product.name} in the Image Editor`} onClick={onTryInEditor}>
+            <Icon icon={ImageIcon} size="sm" />
+          </IconButton>
+        )}
+      </div>
+    ) : product.source === 'user' && (onUseInGenerator || onTryInEditor || onViewProjects) ? (
+      <div className="product-quick-actions">
+        {onUseInGenerator && (
+          <IconButton label={`Generate a scene with ${product.name}`} onClick={onUseInGenerator}>
+            <Icon icon={Sparkles} size="sm" />
+          </IconButton>
+        )}
+        {onTryInEditor && (
+          <IconButton label={`Edit ${product.name} in the Image Editor`} onClick={onTryInEditor}>
+            <Icon icon={ImageIcon} size="sm" />
+          </IconButton>
+        )}
+        {onViewProjects && (
+          <IconButton label={`View projects for ${product.name}`} onClick={onViewProjects}>
+            <Icon icon={FolderOpen} size="sm" />
+          </IconButton>
+        )}
+      </div>
+    ) : null
   return (
     <div className="card card-hover group relative overflow-hidden">
       <button type="button" className="block w-full cursor-pointer" onClick={onOpen} aria-label={`Open ${product.name}`}>
@@ -22,6 +64,7 @@ export function ProductCard({
           style={{ background: 'var(--surface-2)' }}
         />
       </button>
+      {quickActions}
       <div className="p-3">
         <p className="truncate text-[13px] font-semibold">{product.name}</p>
         <p className="meta mt-0.5">

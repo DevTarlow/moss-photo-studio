@@ -16,6 +16,7 @@ interface ProjectRow {
   shape: 'square' | 'portrait' | 'landscape'
   format: 'webp' | 'jpeg' | 'png'
   person_look: string | null
+  person_id: string | null
   image_count: number
   running: number
   cover_file: string | null
@@ -43,6 +44,7 @@ export class ProjectRepository {
     return `
       SELECT p.*,
         (SELECT COUNT(*) FROM images i WHERE i.project_id = p.id AND i.deleted_at IS NULL AND i.status = 'ready' AND (p.type = 'photo' OR i.kind <> 'upload')) AS image_count,
+        (SELECT i.person_id FROM images i WHERE i.project_id = p.id AND i.deleted_at IS NULL AND i.person_id IS NOT NULL ORDER BY i.seq ASC LIMIT 1) AS person_id,
         (SELECT COUNT(*) FROM jobs j WHERE j.project_id = p.id AND j.status = 'running') AS running,
         (SELECT i.file FROM images i WHERE i.id = p.cover_image_id AND i.deleted_at IS NULL) AS cover_file
       FROM projects p
@@ -64,6 +66,7 @@ export class ProjectRepository {
       shape: row.shape,
       format: row.format,
       personLook: row.person_look,
+      personId: row.person_id,
       imageCount: Number(row.image_count),
       running: Number(row.running) > 0
     }

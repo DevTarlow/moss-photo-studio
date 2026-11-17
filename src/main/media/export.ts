@@ -3,6 +3,7 @@ import path from 'node:path'
 import sharp from 'sharp'
 import type { ExportOptions, Format, Image } from '@shared/types'
 import { extensionForFormat, mimeForFormat } from '@shared/shapes'
+import { exportPresetById } from '@shared/exportPresets'
 import { safeBaseName, uniqueFileName } from '@shared/files'
 import { pathToFileURL } from 'node:url'
 import { absoluteInLibrary } from './paths'
@@ -22,13 +23,21 @@ async function sourceForImage(libraryPath: string, image: Image, workingPath: st
 export async function encodeImageFile(
   input: string,
   output: string,
-  options: { format: Format; quality: number; maxDimension: number | null }
+  options: { format: Format; quality: number; maxDimension: number | null; preset?: 'original' | 'square' | 'portrait' }
 ): Promise<void> {
   const image = sharp(input).rotate().toColorspace('srgb')
   const meta = await image.metadata()
   const longEdge = Math.max(meta.width ?? 0, meta.height ?? 0)
   let pipeline = image
-  if (options.maxDimension && longEdge > options.maxDimension) {
+  const preset = exportPresetById(options.preset)
+  if (preset?.width && preset.height) {
+    pipeline = pipeline.resize({
+      width: preset.width,
+      height: preset.height,
+      fit: 'cover',
+      position: 'centre'
+    })
+  } else if (options.maxDimension && longEdge > options.maxDimension) {
     pipeline = pipeline.resize({
       width: options.maxDimension,
       height: options.maxDimension,
@@ -78,7 +87,8 @@ export async function exportOneImage(input: {
   await encodeImageFile(source, output, {
     format: input.options.format,
     quality: Math.max(60, Math.min(100, input.options.quality || 90)),
-    maxDimension: input.options.maxDimension
+    maxDimension: input.options.maxDimension,
+    preset: input.options.preset
   })
   return output
 }
@@ -102,7 +112,8 @@ export async function exportImageToPath(input: {
   await encodeImageFile(source, input.destinationPath, {
     format: input.options.format,
     quality: Math.max(60, Math.min(100, input.options.quality || 90)),
-    maxDimension: input.options.maxDimension
+    maxDimension: input.options.maxDimension,
+    preset: input.options.preset
   })
   return input.destinationPath
 }

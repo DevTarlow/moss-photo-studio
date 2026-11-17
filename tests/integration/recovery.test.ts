@@ -122,6 +122,7 @@ describe('pack cleanup', () => {
     expect(imageColumns.map((row) => row.name)).toContain('set_id')
     const productColumns = db.pragma('table_info(products)') as Array<{ name: string }>
     expect(productColumns.map((row) => row.name)).toContain('set_id')
+    expect(productColumns.map((row) => row.name)).toContain('notes')
     db.close()
   })
 })

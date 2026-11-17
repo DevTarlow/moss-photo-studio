@@ -63,14 +63,22 @@ export class UsageRepository {
     return Number(row.cents)
   }
 
-  monthSummary(monthStart: number, monthEnd: number): { images: number; cents: number } {
+  monthSummary(monthStart: number, monthEnd: number): { images: number; paidImages: number; freeAdjustments: number; cents: number } {
     const row = this.db
       .prepare(
-        `SELECT COALESCE(SUM(returned_n), 0) AS images, COALESCE(SUM(cost_cents), 0) AS cents
+        `SELECT COALESCE(SUM(returned_n), 0) AS images,
+                COALESCE(SUM(CASE WHEN action = 'adjust' THEN returned_n ELSE 0 END), 0) AS free_adjustments,
+                COALESCE(SUM(CASE WHEN action <> 'adjust' THEN returned_n ELSE 0 END), 0) AS paid_images,
+                COALESCE(SUM(cost_cents), 0) AS cents
          FROM usage_events WHERE at >= ? AND at < ?`
       )
-      .get(monthStart, monthEnd) as { images: number; cents: number }
-    return { images: Number(row.images), cents: Number(row.cents) }
+      .get(monthStart, monthEnd) as { images: number; free_adjustments: number; paid_images: number; cents: number }
+    return {
+      images: Number(row.images),
+      paidImages: Number(row.paid_images),
+      freeAdjustments: Number(row.free_adjustments),
+      cents: Number(row.cents)
+    }
   }
 
   byProject(monthStart: number, monthEnd: number): Array<{ projectId: string | null; name: string; images: number; spendCents: number }> {

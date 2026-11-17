@@ -34,6 +34,8 @@ export interface Project {
   format: Format
   /** The person look an image project was started from, if any. */
   personLook: string | null
+  /** The person shown in this project's source image, if any. */
+  personId: string | null
   imageCount: number
   running: boolean
 }
@@ -138,6 +140,8 @@ export interface PersonLook {
   key: string
   label: string
   url: string
+  /** How this angle guides the pose and framing in a made image. */
+  hint?: string
 }
 
 export interface Person {
@@ -262,6 +266,10 @@ export interface UsageEvent {
 export interface UsageSummary {
   month: string
   images: number
+  /** Returned images from paid create/edit work. */
+  paidImages: number
+  /** Versions made by free local adjustments. */
+  freeAdjustments: number
   spendCents: number
   budgetCents: number | null
   projects: Array<{ projectId: string; name: string; images: number; spendCents: number }>
@@ -297,6 +305,8 @@ export interface ExportOptions {
   maxDimension: number | null
   includeVersions?: boolean
   filename?: string
+  /** A centre-crop batch preset for a Set. Omit for the source size. */
+  preset?: 'original' | 'square' | 'portrait'
 }
 
 export interface UpdateCheckResult {

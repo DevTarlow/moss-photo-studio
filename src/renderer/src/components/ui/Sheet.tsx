@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Dialog as RadixDialog } from 'radix-ui'
 import { X } from 'lucide-react'
 import { Icon } from '@astryxdesign/core'
+import { useModalInert } from './useModalInert'
 
 export function Sheet({
   open,
@@ -16,6 +17,7 @@ export function Sheet({
   title: string
   children: ReactNode
 }): React.JSX.Element {
+  useModalInert(open)
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
