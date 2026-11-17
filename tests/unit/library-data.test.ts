@@ -11,6 +11,7 @@ import { nextCountedLabel } from '@shared/labels'
 import { shapeForImage, sizeForShape } from '@shared/shapes'
 import { cleanProductName, safeBaseName, uniqueFileName, numberedFileName } from '@shared/files'
 import { usd, estimateCents, monthBounds, monthKey } from '@shared/cost'
+import { PRODUCT_PACK } from '../../scripts/lab/product-pack.mjs'
 
 const root = path.resolve(__dirname, '../..')
 
@@ -214,20 +215,39 @@ describe('cost and file naming', () => {
 })
 
 describe('bundled products', () => {
-  it('ships twenty unique unbranded starter products', () => {
-    expect(BUNDLED_PRODUCTS).toHaveLength(20)
-    expect(new Set(BUNDLED_PRODUCTS.map((product) => product.id)).size).toBe(20)
+  it('ships one hundred unique unbranded starter products across nineteen categories', () => {
+    expect(BUNDLED_PRODUCTS).toHaveLength(100)
+    expect(new Set(BUNDLED_PRODUCTS.map((product) => product.id)).size).toBe(100)
     expect(BUNDLED_PRODUCT_SIZE).toBe(1024)
     expect(BUNDLED_PRODUCTS.some((product) => product.name === 'Speckled mug')).toBe(true)
+    const categories = Array.from(new Set(BUNDLED_PRODUCTS.map((product) => product.category)))
+    expect(categories).toHaveLength(19)
     for (const product of BUNDLED_PRODUCTS) {
+      expect(product.id).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
       expect(product.name.length).toBeGreaterThan(0)
       expect(product.category.length).toBeGreaterThan(0)
       expect(product.blurb.length).toBeGreaterThan(0)
       expect(isBundledProduct(product.id)).toBe(true)
     }
+    for (const category of categories) {
+      expect(BUNDLED_PRODUCTS.filter((product) => product.category === category).length).toBeGreaterThanOrEqual(4)
+    }
     expect(isBundledProduct('not-a-bundled-product')).toBe(false)
     expect(CREATE_PRODUCT_PROMPT.length).toBeGreaterThan(0)
     expect(CREATE_PRODUCT_PROMPT.length).toBeLessThanOrEqual(PROMPT_MAX)
+  })
+
+  it('keeps the lab prompt pack in sync with the catalog', () => {
+    expect(PRODUCT_PACK).toHaveLength(BUNDLED_PRODUCTS.length)
+    expect(PRODUCT_PACK.map((entry) => entry.id)).toEqual(BUNDLED_PRODUCTS.map((product) => product.id))
+    const packById = new Map(PRODUCT_PACK.map((entry) => [entry.id, entry]))
+    for (const product of BUNDLED_PRODUCTS) {
+      const entry = packById.get(product.id)
+      expect(entry?.name).toBe(product.name)
+      expect(entry?.category).toBe(product.category)
+      expect(entry?.prompt.length ?? 0).toBeGreaterThan(0)
+      expect(entry?.prompt).toContain('pure white seamless background')
+    }
   })
 
   it('has full and thumb assets for every included product', () => {
@@ -239,7 +259,7 @@ describe('bundled products', () => {
 
   it('maps bundled products to resources without a saved row', () => {
     const cards = bundledProductCards()
-    expect(cards).toHaveLength(20)
+    expect(cards).toHaveLength(100)
     for (const card of cards) {
       expect(card.source).toBe('bundled')
       expect(card.width).toBe(1024)

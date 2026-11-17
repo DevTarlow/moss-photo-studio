@@ -34,6 +34,7 @@ export function Products(): React.JSX.Element {
   const [busy, setBusy] = useState(false)
   const [creatingProduct, setCreatingProduct] = useState(false)
   const [page, setPage] = useState(1)
+  const [starterPage, setStarterPage] = useState(1)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'recent' | 'oldest' | 'name'>('recent')
   const [category, setCategory] = useState('all')
@@ -89,12 +90,23 @@ export function Products(): React.JSX.Element {
   }, [filteredProducts.length, page])
 
   useEffect(() => {
+    const pages = Math.max(1, Math.ceil(filteredIncluded.length / COLLECTION_PAGE_SIZE))
+    if (starterPage > pages) setStarterPage(pages)
+  }, [filteredIncluded.length, starterPage])
+
+  useEffect(() => {
     setPage(1)
+    setStarterPage(1)
   }, [search, sort, category])
 
   const visibleProducts = filteredProducts.slice(
     (page - 1) * COLLECTION_PAGE_SIZE,
     page * COLLECTION_PAGE_SIZE
+  )
+
+  const visibleIncluded = filteredIncluded.slice(
+    (starterPage - 1) * COLLECTION_PAGE_SIZE,
+    starterPage * COLLECTION_PAGE_SIZE
   )
 
   const createProduct = async (): Promise<void> => {
@@ -385,7 +397,7 @@ export function Products(): React.JSX.Element {
                     </div>
                   ) : (
                     <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
-                      {filteredIncluded.map((product) => (
+                      {visibleIncluded.map((product) => (
                         <ProductCard
                           key={product.id}
                           product={product}
@@ -396,6 +408,12 @@ export function Products(): React.JSX.Element {
                       ))}
                     </div>
                   )}
+                  <Pagination
+                    page={starterPage}
+                    total={filteredIncluded.length}
+                    onPage={setStarterPage}
+                    label="Starter product pages"
+                  />
                   <p className="hint mt-3">Starter products to use as a starting point for your own product photos.</p>
                 </section>
               )}

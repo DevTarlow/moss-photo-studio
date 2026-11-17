@@ -44,6 +44,7 @@ export function SourcePickerDialog({
   const [error, setError] = useState<string | null>(null)
   const [libraryPage, setLibraryPage] = useState(1)
   const [productPage, setProductPage] = useState(1)
+  const [starterPage, setStarterPage] = useState(1)
   const [addProductOpen, setAddProductOpen] = useState(false)
 
   const loadLibrary = async (query: string, requestedPage: number): Promise<void> => {
@@ -76,9 +77,15 @@ export function SourcePickerDialog({
     setSearch('')
     setLibraryPage(1)
     setProductPage(1)
+    setStarterPage(1)
     setAddProductOpen(false)
     void loadLibrary('', 1)
   }, [open, libraryOnly])
+
+  useEffect(() => {
+    setProductPage(1)
+    setStarterPage(1)
+  }, [search])
 
   useEffect(() => {
     if (!open || tab !== 'library') return
@@ -91,16 +98,30 @@ export function SourcePickerDialog({
 
   const needle = search.trim().toLowerCase()
   const filteredProducts = products.filter((product) => !needle || product.name.toLowerCase().includes(needle))
-  const filteredStarters = starterProducts.filter((product) => !needle || product.name.toLowerCase().includes(needle))
+  const filteredStarters = starterProducts.filter(
+    (product) =>
+      !needle ||
+      [product.name, product.category ?? '', product.blurb ?? ''].some((value) => value.toLowerCase().includes(needle))
+  )
 
   useEffect(() => {
     const pages = Math.max(1, Math.ceil(filteredProducts.length / COLLECTION_PAGE_SIZE))
     if (productPage > pages) setProductPage(pages)
   }, [filteredProducts.length, productPage])
 
+  useEffect(() => {
+    const pages = Math.max(1, Math.ceil(filteredStarters.length / COLLECTION_PAGE_SIZE))
+    if (starterPage > pages) setStarterPage(pages)
+  }, [filteredStarters.length, starterPage])
+
   const visibleProducts = filteredProducts.slice(
     (productPage - 1) * COLLECTION_PAGE_SIZE,
     productPage * COLLECTION_PAGE_SIZE
+  )
+
+  const visibleStarters = filteredStarters.slice(
+    (starterPage - 1) * COLLECTION_PAGE_SIZE,
+    starterPage * COLLECTION_PAGE_SIZE
   )
 
   const choose = (choice: SourceChoice): void => {
@@ -205,7 +226,7 @@ export function SourcePickerDialog({
                 <p className="section-label">Starter Products</p>
                 <p className="meta mt-1">Use one as the product in this project. It is added to the project as a photo.</p>
                 <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {filteredStarters.map((product) => (
+                  {visibleStarters.map((product) => (
                     <button
                       key={product.id}
                       type="button"
@@ -216,11 +237,17 @@ export function SourcePickerDialog({
                       <img src={product.thumbUrl} alt="" className="aspect-[4/3] w-full object-cover" style={{ background: 'var(--surface-2)' }} />
                       <span className="block p-2">
                         <span className="block truncate text-[12px] font-medium">{product.name}</span>
-                        <span className="meta">Starter product</span>
+                        <span className="meta block truncate">{product.category}</span>
                       </span>
                     </button>
                   ))}
                 </div>
+                <Pagination
+                  page={starterPage}
+                  total={filteredStarters.length}
+                  onPage={setStarterPage}
+                  label="Starter source pages"
+                />
               </div>
             )}
             {filteredProducts.length === 0 && filteredStarters.length === 0 && (
