@@ -16,7 +16,7 @@ The local adjust panel covers Free, 1:1, 4:5, and 16:9 crop, rotate, flip, expos
 
 A person is optional on any change. Pick one to keep the same face and body, or describe the change without one. Adjustments make a new version and stay on your computer. The version panel keeps each version's description, details, export format, and actions together.
 
-A floating canvas toolbar handles zoom (Fit/100%), undo/redo, and before/after compare; hold the middle mouse button to drag a zoomed photo around the stage. The filmstrip labels every version Original, Adjusted, or AI. The priced action and month budget stay under the left inputs, and Add Photo and Export stay on the canvas footer.
+A floating canvas toolbar handles zoom (Fit/100%), undo/redo, and before/after compare; scroll over the photo to zoom under the pointer, and hold the middle mouse button to drag a zoomed photo around the stage. The filmstrip labels every version Original, Adjusted, or AI. The priced action and month budget stay under the left inputs, and Add Photo and Export stay on the canvas footer.
 
 Versions branch instead of overwrite. Compare them, move through the filmstrip, export the one you want, or start from a file, a product, or a library image and add another source later.
 

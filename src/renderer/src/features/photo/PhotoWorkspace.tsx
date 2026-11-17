@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Columns2, Download, Loader2, Maximize2, Minus, PanelLeft, PanelRight, Plus, Redo2, Undo2 } from 'lucide-react'
 import { Icon, Banner } from '@astryxdesign/core'
@@ -42,6 +42,17 @@ import { currentMonth } from '../../store/library'
 
 type Tab = 'change' | 'adjust'
 type TextSource = 'user' | 'tile'
+
+const MIN_ZOOM = 0.4
+const MAX_ZOOM = 6
+const ZOOM_STEP = 0.15
+// Wheel zoom is exponential, so one mouse notch and a trackpad's pixel stream
+// feel proportional. A notch at 100 deltaY is about a 22% step.
+const WHEEL_ZOOM_RATE = 0.002
+
+function clampZoom(value: number): number {
+  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value))
+}
 
 function emptyAdjust(): AdjustTransform {
   return {}
@@ -125,6 +136,8 @@ export function PhotoWorkspace(): React.JSX.Element {
   const handledJob = useRef<string | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
   const compareRef = useRef<HTMLDivElement>(null)
+  const zoomBoxRef = useRef<HTMLDivElement>(null)
+  const wheelAnchorRef = useRef<{ nx: number; ny: number; clientX: number; clientY: number } | null>(null)
   const panRef = useRef<{ pointerId: number; x: number; y: number; left: number; top: number } | null>(null)
   const [panning, setPanning] = useState(false)
 
@@ -189,6 +202,48 @@ export function PhotoWorkspace(): React.JSX.Element {
     observer.observe(stage)
     return () => observer.disconnect()
   }, [])
+
+  // The wheel zooms the stage instead of scrolling it. React registers wheel
+  // listeners as passive, so the gesture is claimed by a native listener that
+  // can prevent the page scroll. The pointer's spot in the photo is recorded
+  // here and restored after the new size lands, so zooming happens under the
+  // cursor rather than around the stage's center.
+  useEffect(() => {
+    const stage = canvasRef.current
+    if (!stage) return
+    const onWheel = (event: WheelEvent): void => {
+      if (event.deltaY === 0) return
+      event.preventDefault()
+      const box = zoomBoxRef.current?.getBoundingClientRect()
+      wheelAnchorRef.current = box && box.width > 0 && box.height > 0
+        ? {
+            nx: (event.clientX - box.left) / box.width,
+            ny: (event.clientY - box.top) / box.height,
+            clientX: event.clientX,
+            clientY: event.clientY
+          }
+        : null
+      setZoom((value) => {
+        const next = clampZoom(+(value * Math.exp(-event.deltaY * WHEEL_ZOOM_RATE)).toFixed(3))
+        if (next === value) wheelAnchorRef.current = null
+        return next
+      })
+    }
+    stage.addEventListener('wheel', onWheel, { passive: false })
+    return () => stage.removeEventListener('wheel', onWheel)
+  }, [])
+
+  useLayoutEffect(() => {
+    const anchor = wheelAnchorRef.current
+    if (!anchor) return
+    wheelAnchorRef.current = null
+    const stage = canvasRef.current
+    const box = zoomBoxRef.current
+    if (!stage || !box) return
+    const rect = box.getBoundingClientRect()
+    stage.scrollLeft += rect.left + anchor.nx * rect.width - anchor.clientX
+    stage.scrollTop += rect.top + anchor.ny * rect.height - anchor.clientY
+  }, [zoom])
 
   useEffect(() => {
     if (!isRunning) return
@@ -286,8 +341,8 @@ export function PhotoWorkspace(): React.JSX.Element {
         if (rightHidden) setRightSheet(true)
         else setRightCollapsed((collapsed) => !collapsed)
       }
-      else if (command === 'zoom-in') setZoom((value) => Math.min(2.5, +(value + 0.15).toFixed(2)))
-      else if (command === 'zoom-out') setZoom((value) => Math.max(0.4, +(value - 0.15).toFixed(2)))
+      else if (command === 'zoom-in') setZoom((value) => clampZoom(+(value + ZOOM_STEP).toFixed(2)))
+      else if (command === 'zoom-out') setZoom((value) => clampZoom(+(value - ZOOM_STEP).toFixed(2)))
       else if (command === 'zoom-reset') setZoom(1)
       else if (command === 'undo' && tab === 'adjust') undo()
       else if (command === 'redo' && tab === 'adjust') redo()
@@ -813,7 +868,7 @@ export function PhotoWorkspace(): React.JSX.Element {
           </div>
           <div className="canvas-wrap canvas-surface">
             <div className="canvas-toolbar" role="toolbar" aria-label="Canvas tools">
-              <IconButton label="Zoom out" disabled={zoom <= 0.4} onClick={() => setZoom((value) => Math.max(0.4, +(value - 0.15).toFixed(2)))}>
+              <IconButton label="Zoom out" disabled={zoom <= MIN_ZOOM} onClick={() => setZoom((value) => clampZoom(+(value - ZOOM_STEP).toFixed(2)))}>
                 <Icon icon={Minus} size="sm" />
               </IconButton>
               <Button variant="ghost" size="sm" className="canvas-toolbar-btn" onClick={() => setZoom(1)}>Fit</Button>
@@ -822,11 +877,11 @@ export function PhotoWorkspace(): React.JSX.Element {
                 size="sm"
                 className="canvas-toolbar-btn"
                 disabled={fit <= 0}
-                onClick={() => setZoom(Math.min(6, +(1 / Math.max(fit, 0.001)).toFixed(2)))}
+                onClick={() => setZoom(clampZoom(+(1 / Math.max(fit, 0.001)).toFixed(2)))}
               >
                 100%
               </Button>
-              <IconButton label="Zoom in" disabled={zoom >= 6} onClick={() => setZoom((value) => Math.min(6, +(value + 0.15).toFixed(2)))}>
+              <IconButton label="Zoom in" disabled={zoom >= MAX_ZOOM} onClick={() => setZoom((value) => clampZoom(+(value + ZOOM_STEP).toFixed(2)))}>
                 <Icon icon={Plus} size="sm" />
               </IconButton>
               <span className="canvas-zoom-readout" aria-live="polite">{fit > 0 ? `${Math.round(fit * zoom * 100)}%` : 'Fit'}</span>
@@ -866,6 +921,7 @@ export function PhotoWorkspace(): React.JSX.Element {
             >
               {displayImage?.url && fit > 0 ? (
                 <div
+                  ref={zoomBoxRef}
                   className="canvas-zoom-box"
                   style={{ width: displayWidth * zoom, height: displayHeight * zoom }}
                 >
@@ -918,8 +974,7 @@ export function PhotoWorkspace(): React.JSX.Element {
               {isRunning && runningJob && (
                 <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'var(--scrim)' }} role="status" aria-live="polite">
                   <div className="text-center">
-                    <div className="mx-auto shimmer-block h-24 w-64 rounded-[10px]" aria-hidden />
-                    <Icon icon={Loader2} size="md" className="mx-auto mt-4 animate-spin" aria-hidden />
+                    <Icon icon={Loader2} size="md" className="mx-auto animate-spin" aria-hidden />
                     <p className="mt-2 text-[13px] font-semibold" style={{ color: 'var(--canvas-text)' }}>{jobItem?.waiting ? 'Waiting for Meta' : 'Making your change'} · {elapsedLabel(jobItem?.startedAt ?? runningJob.startedAt, now)}</p>
                     <p className="canvas-meta mt-1 text-[11px]">{usd(runningJob.costCents)} so far</p>
                   </div>
@@ -960,7 +1015,7 @@ export function PhotoWorkspace(): React.JSX.Element {
             )}
             {!compare && (
               <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px]" style={{ color: 'var(--white-60)' }}>
-                {selected?.width && selected?.height ? `${selected.width} × ${selected.height}` : ''} {fit > 0 ? `· ${Math.round(fit * zoom * 100)}%` : ''} · {shapeLabel(project.shape)}{zoom > 1.001 ? ' · Middle-drag to pan' : ''}
+                {selected?.width && selected?.height ? `${selected.width} × ${selected.height}` : ''} {fit > 0 ? `· ${Math.round(fit * zoom * 100)}%` : ''} · {shapeLabel(project.shape)} · Scroll to zoom{zoom > 1.001 ? ' · Middle-drag to pan' : ''}
               </div>
             )}
           </div>
