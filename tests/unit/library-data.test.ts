@@ -299,9 +299,9 @@ describe('cost and file naming', () => {
 })
 
 describe('bundled products', () => {
-  it('ships one hundred and one unique unbranded starter products across nineteen categories', () => {
-    expect(BUNDLED_PRODUCTS).toHaveLength(101)
-    expect(new Set(BUNDLED_PRODUCTS.map((product) => product.id)).size).toBe(101)
+  it('ships one hundred unique unbranded starter products across nineteen categories', () => {
+    expect(BUNDLED_PRODUCTS).toHaveLength(100)
+    expect(new Set(BUNDLED_PRODUCTS.map((product) => product.id)).size).toBe(100)
     expect(BUNDLED_PRODUCT_SIZE).toBe(1024)
     expect(BUNDLED_PRODUCTS.some((product) => product.name === 'Speckled mug')).toBe(true)
     const categories = Array.from(new Set(BUNDLED_PRODUCTS.map((product) => product.category)))
@@ -343,7 +343,7 @@ describe('bundled products', () => {
 
   it('maps bundled products to resources without a saved row', () => {
     const cards = bundledProductCards()
-    expect(cards).toHaveLength(101)
+    expect(cards).toHaveLength(100)
     for (const card of cards) {
       expect(card.source).toBe('bundled')
       expect(card.width).toBe(1024)

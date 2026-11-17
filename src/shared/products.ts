@@ -12,7 +12,7 @@ export interface BundledProduct {
 export const BUNDLED_PRODUCT_SIZE = 1024
 
 /**
- * Clean, unbranded product photos included with Moss as starting points: 101
+ * Clean, unbranded product photos included with Moss as starting points: 100
  * products across 19 categories. The matching generation prompts live in
  * scripts/lab/product-pack.mjs; keep ids, names and categories in sync with it
  * (the unit test checks that). The images are
@@ -438,12 +438,6 @@ export const BUNDLED_PRODUCTS: readonly BundledProduct[] = [
     name: 'Bath towel',
     category: 'Textiles and soft furnishings',
     blurb: 'A folded white cotton bath towel.'
-  },
-  {
-    id: 'oven-mitt',
-    name: 'Oven mitt',
-    category: 'Textiles and soft furnishings',
-    blurb: 'A quilted natural linen oven mitt.'
   },
   {
     id: 'packaged-sheet-set',

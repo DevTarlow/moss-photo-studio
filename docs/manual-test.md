@@ -62,7 +62,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 ## Products
 
-- Products shows “101 starter products · N of yours,” search, sort, category pills, and pagination. The starter list pages 20 at a time; category pills filter Starter Products only.
+- Products shows “100 starter products · N of yours,” search, sort, category pills, and pagination. The starter list pages 20 at a time; category pills filter Starter Products only.
 - Starter Products open with Edit Photo and Make an Image with this Product, without Rename or Delete. Hovering a starter card offers Use in Generator and Try in Editor; hovering a saved product offers Generate Scene, Edit Photo, and View Projects.
 - Generate Product Photo opens the Image Generator with the product prompt; Save as Product adds it under Your Products. Add Product Photo asks for a name before saving.
 - A product hub keeps Products selected in the left navigation, shows a contextual Products back button, and puts the product name in the window title. It shows the source photo, Product notes, Add to Set, Make an Image with this Product, linked projects, Link Existing Projects, archive, and delete. Clicking the product title renames it in place; Enter saves, Escape cancels, and clicking away saves. Notes save locally and are added to later image prompts only when this product is selected. The empty project state offers Edit Photo (Free) and Make an Image.

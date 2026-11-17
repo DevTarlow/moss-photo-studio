@@ -349,3 +349,7 @@ Each entry records a choice that was not fixed by the brief, or a place where th
 ## Faint backdrop transitions
 
 145. **The studio backdrops show only a very faint floor-to-wall tonal transition, not a crease.** The four studio presets are straight-on, seamless paper wall-and-floor photographs where the floor is only slightly lighter than the wall and the change is soft and out of focus. There is no visible roll, crease, edge, horizon line or shadow; the charcoal preset is the reference for how subtle the transition should read. This supersedes the visible crease detail in Decision 143.
+
+## Oven mitt removed
+
+146. **The oven mitt is removed from the starter products.** It was the only product in Textiles and soft furnishings that did not fit the category's textiles focus, and the user asked for it to go. The packaged sheet set remains in that category, the catalog returns to 100 products across 19 categories, and the product pack, assets, tests, pages and screenshots follow the new count. This supersedes the 101-product count in Decision 143.

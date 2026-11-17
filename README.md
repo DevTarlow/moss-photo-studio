@@ -30,11 +30,11 @@ Attached Product, Person, and Scene references appear as removable chips, so the
 
 The Details panel keeps the selected image's description, size, cost, and actions together with the output settings and past makes. At a smaller window, **Details** opens the same panel over the results.
 
-Generated images can be saved to a Set, as a product, or as a person. A product photo can come from your saved products or from the 101 starter products. A generated project appears in All work after its first image.
+Generated images can be saved to a Set, as a product, or as a person. A product photo can come from your saved products or from the 100 starter products. A generated project appears in All work after its first image.
 
 ### Products
 
-Save a product photo as a Product, or start from one of the 101 clean, unbranded starter products across 19 categories. Starter products filter by category, page 20 at a time, and offer Use in Generator / Try in Editor. Saved products offer Generate Scene, Edit Photo, and View Projects. You can also add and name a product from the product picker while starting new work.
+Save a product photo as a Product, or start from one of the 100 clean, unbranded starter products across 19 categories. Starter products filter by category, page 20 at a time, and offer Use in Generator / Try in Editor. Saved products offer Generate Scene, Edit Photo, and View Projects. You can also add and name a product from the product picker while starting new work.
 
 A product page keeps Products active in the sidebar, adds a Products back button and the product name in the window title, and renames inline. **Product notes** hold material, colour, style, or other details that should stay true. The notes stay on this computer and join the image prompt only when that product is selected.
 
