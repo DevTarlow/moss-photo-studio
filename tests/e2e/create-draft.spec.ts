@@ -73,6 +73,11 @@ test('an untouched Image Generator leaves no project behind', async () => {
     // Opening the tool and leaving again must not add an Images card.
     await page.getByRole('link', { name: 'Image Generator', exact: true }).click()
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('button', { name: /Output settings/ }).click()
+    await page.getByRole('group', { name: 'How many images' }).getByRole('button', { name: '3', exact: true }).click()
+    await expect(page.getByLabel('Placeholder for image 1')).toBeVisible()
+    await expect(page.getByLabel('Placeholder for image 3')).toBeVisible()
+    await page.getByRole('button', { name: /Output settings/ }).click()
     await page.getByRole('link', { name: 'All work', exact: true }).first().click()
     await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('0 projects', { exact: true })).toBeVisible()

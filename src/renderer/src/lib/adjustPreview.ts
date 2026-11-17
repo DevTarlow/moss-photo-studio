@@ -1,8 +1,13 @@
 import type { AdjustTransform } from '@shared/types'
 
 export function previewFilter(transform: AdjustTransform): string {
-  const brightness = 1 + (transform.brightness ?? 0) / 100
-  const contrast = 1 + (transform.contrast ?? 0) / 100
+  // Highlights and shadows cannot be expressed exactly in CSS filters. This
+  // small global lift is an honest approximation; the applied file uses the
+  // luminance tone curve in the main process.
+  const shadowLift = (transform.shadows ?? 0) / 600
+  const highlightLift = (transform.highlights ?? 0) / 1400
+  const brightness = 1 + (transform.brightness ?? 0) / 100 + shadowLift - highlightLift / 3
+  const contrast = (1 + (transform.contrast ?? 0) / 100) * (1 + highlightLift)
   const saturation = Math.max(0, 1 + (transform.saturation ?? 0) / 100)
   const warmth = (transform.warmth ?? 0) / 300
   const sepia = transform.warmth && transform.warmth > 0 ? Math.min(0.25, transform.warmth / 400) : 0
@@ -21,6 +26,8 @@ export function isIdentity(transform: AdjustTransform): boolean {
     transform.rotate ?? 0,
     transform.brightness ?? 0,
     transform.contrast ?? 0,
+    transform.highlights ?? 0,
+    transform.shadows ?? 0,
     transform.saturation ?? 0,
     transform.warmth ?? 0,
     transform.sharpen ?? 0,

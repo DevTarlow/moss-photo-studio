@@ -6,6 +6,7 @@ import { formatDate, formatDateTime, imageCountLabel, usd } from '../../lib/form
 import { Button } from '../../components/ui/Button'
 import { DescriptionPreview } from '../../components/ui/DescriptionPreview'
 import { Segmented } from '../../components/ui/Segmented'
+import { ShapePicker } from './ShapePicker'
 
 export interface OutputSettings {
   count: number
@@ -14,6 +15,26 @@ export interface OutputSettings {
   shape: Shape
   format: Format
   open: boolean
+}
+
+function PlaceholderFrames({ count, shape, running }: { count: number; shape: Shape; running: boolean }): React.JSX.Element {
+  const ratio = shape === 'square' ? '1 / 1' : shape === 'portrait' ? '2 / 3' : '3 / 2'
+  return (
+    <div className="mt-3 grid grid-cols-2 gap-2">
+      {Array.from({ length: count }).map((_, index) => (
+        <div
+          key={index}
+          className="placeholder-frame"
+          data-running={running}
+          style={{ aspectRatio: ratio }}
+          aria-label={`Placeholder for image ${index + 1}`}
+        >
+          <span>Image {index + 1}</span>
+          <span className="meta">{running ? 'Making…' : 'Waiting'}</span>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 function runStatus(run: JobState): { label: string; tone?: 'success' | 'danger' } {
@@ -159,15 +180,22 @@ export function CreateInspector({
         ) : (
           <div className="mt-2">
             <p className="text-[13px] font-semibold">
-              {isRunning ? 'Making your first image…' : runFilterId ? 'No images from this make.' : 'Nothing made yet'}
+              {settings.requestedCount > 1 && !settings.hasReference && !runFilterId
+                ? isRunning ? `Making ${settings.requestedCount} images…` : `${settings.requestedCount} images will come back`
+                : isRunning ? 'Making your first image…' : runFilterId ? 'No images from this make.' : 'Nothing made yet'}
             </p>
             <p className="meta mt-1">
-              {isRunning
-                ? 'It will show here when it comes back.'
-                : runFilterId
-                  ? 'Choose Show all to see your other images.'
-                  : 'Make an image and it will show here.'}
+              {settings.requestedCount > 1 && !settings.hasReference && !runFilterId
+                ? 'Each frame fills in as its image comes back.'
+                : isRunning
+                  ? 'It will show here when it comes back.'
+                  : runFilterId
+                    ? 'Choose Show all to see your other images.'
+                    : 'Make an image and it will show here.'}
             </p>
+            {settings.requestedCount > 1 && !settings.hasReference && !runFilterId && (
+              <PlaceholderFrames count={settings.requestedCount} shape={settings.shape} running={isRunning} />
+            )}
             {showTips && (
               <div className="mt-4 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
                 <p className="section-label">For a better picture</p>
@@ -216,16 +244,7 @@ export function CreateInspector({
             </div>
             <div>
               <p className="field-label">Shape</p>
-              <Segmented
-                label="Shape"
-                value={settings.shape}
-                onChange={onShape}
-                options={[
-                  { value: 'square' as const, label: 'Square' },
-                  { value: 'portrait' as const, label: 'Portrait' },
-                  { value: 'landscape' as const, label: 'Landscape' }
-                ]}
-              />
+              <ShapePicker value={settings.shape} onChange={onShape} />
             </div>
             <div>
               <p className="field-label">Format</p>

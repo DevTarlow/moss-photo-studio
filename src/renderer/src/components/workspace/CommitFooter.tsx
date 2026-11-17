@@ -23,7 +23,7 @@ export function CommitFooter({
       <button
         type="button"
         className="ws-commit-budget"
-        aria-label="Open Usage"
+        title="Open Usage"
         onClick={() => navigate('/usage')}
       >
         <span className="tabular">

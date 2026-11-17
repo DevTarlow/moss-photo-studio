@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Popover } from 'radix-ui'
-import { Banner, Icon, MoreMenu } from '@astryxdesign/core'
-import { ChevronDown, Download, Image as ImageIcon, Loader2, Mountain, Pencil, Sparkles, X } from 'lucide-react'
+import { Banner, Icon, MoreMenu, ToggleButton, ToggleButtonGroup } from '@astryxdesign/core'
+import { ChevronDown, Download, Image as ImageIcon, Loader2, Mountain, Pencil, Sparkles, UserRound, X } from 'lucide-react'
 import type { Format, Image, JobState, Project, Shape } from '@shared/types'
 import { MAX_PROMPT } from '@shared/constants'
 import { isBundledProduct } from '@shared/products'
 import { shapeLabel } from '@shared/shapes'
 import { composeCreatePrompt } from '@shared/prompts/guards'
-import { CREATE_PERSON_PROMPT, CREATE_PRODUCT_PROMPT, EXAMPLE_SCENES, exampleTextFor, startersByCategory } from '@shared/starters'
-import type { ExampleScene, Starter } from '@shared/starters'
+import { CREATE_PERSON_PROMPT, CREATE_PRODUCT_PROMPT, EXAMPLE_GROUPS, EXAMPLE_SCENES, exampleTextFor, startersByCategory } from '@shared/starters'
+import type { ExampleGroup, ExampleScene, Starter } from '@shared/starters'
 import { estimateCents, usd } from '@shared/cost'
 import { errorMessage, billingUncertain } from '@shared/errors'
 import { useWorkspaceStore } from '../../store/workspace'
@@ -83,6 +83,7 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const [promptSource, setPromptSource] = useState<PromptSource>('user')
   const [pendingApply, setPendingApply] = useState<PendingApply | null>(null)
   const [exampleUsesProduct, setExampleUsesProduct] = useState(true)
+  const [exampleGroup, setExampleGroup] = useState<'All' | ExampleGroup>('All')
   const [loadedExample, setLoadedExample] = useState<{ scene: ExampleScene; text: string } | null>(null)
   const [count, setCount] = useState(1)
   const [shape, setShape] = useState<Shape>(project.shape)
@@ -155,6 +156,39 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
   const makeActionLabel = `${requestedCount === 1 ? 'Make Image' : `Make ${requestedCount} Images`} · ${usd(estimateCents(requestedCount))}`
   const selectedPerson = people.find((person) => person.id === personId) ?? null
   const selectedLook = selectedPerson?.looks.find((look) => look.key === personLook) ?? null
+  const productRefLabel = productRef
+    ? productRef.kind === 'product' ? productRef.name : productRef.label
+    : null
+  const filteredExamples = exampleGroup === 'All'
+    ? EXAMPLE_SCENES
+    : EXAMPLE_SCENES.filter((scene) => scene.group === exampleGroup)
+  const recipeChips = [
+    productRef ? {
+      id: 'product',
+      type: 'Product',
+      label: productRefLabel ?? 'Product photo',
+      thumbUrl: productRef.thumbUrl ?? null,
+      remove: () => {
+        setProductRef(null)
+        setPendingApply(null)
+        syncExampleText(exampleUsesProduct, false)
+      }
+    } : null,
+    selectedPerson ? {
+      id: 'person',
+      type: 'Person',
+      label: `${selectedPerson.name}${selectedLook ? ` · ${selectedLook.label}` : ''}`,
+      thumbUrl: selectedLook?.url ?? selectedPerson.portraitUrl,
+      remove: () => { setPersonId(null); setPersonLook(null) }
+    } : null,
+    sceneRef ? {
+      id: 'scene',
+      type: 'Scene',
+      label: sceneRef.kind === 'image' ? sceneRef.label : sceneRef.name,
+      thumbUrl: sceneRef.thumbUrl ?? null,
+      remove: () => setSceneRef(null)
+    } : null
+  ].filter((chip): chip is NonNullable<typeof chip> => Boolean(chip))
   const composedPrompt = composeCreatePrompt({ text: prompt, hasProduct: Boolean(activeProductRef), hasPerson: Boolean(personId), hasScene })
   const guardChars = composedPrompt.length - prompt.trim().length
   const results = images
@@ -613,6 +647,35 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
         )}
       </div>
 
+      {recipeChips.length > 0 && (
+        <div className="mt-3">
+          <p className="field-label">Shot recipe</p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {recipeChips.map((chip) => (
+              <span key={chip.id} className="recipe-chip" title={chip.label}>
+                {chip.thumbUrl ? (
+                  <img src={chip.thumbUrl} alt="" className="recipe-chip-thumb" />
+                ) : (
+                  <span className="recipe-chip-thumb grid place-items-center" style={{ color: 'var(--text-faint)' }}>
+                    <Icon icon={chip.id === 'person' ? UserRound : chip.id === 'scene' ? Mountain : ImageIcon} size="xsm" />
+                  </span>
+                )}
+                <span className="recipe-chip-type">{chip.type}</span>
+                <button
+                  type="button"
+                  className="recipe-chip-remove"
+                  aria-label={`Remove ${chip.type.toLowerCase()} reference ${chip.label}`}
+                  onClick={chip.remove}
+                >
+                  <Icon icon={X} size="xsm" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <p className="hint mt-1">Your shots keep these references attached.</p>
+        </div>
+      )}
+
       <div className="mt-4">
         <p className="field-label">Start from an idea</p>
         <Popover.Root>
@@ -712,21 +775,26 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
 
       <div className="mt-4">
         <p className="field-label">Scene <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
-        {hasScene && sceneRef?.kind === 'image' ? (
+        {sceneRef?.kind === 'image' ? (
           <div className="flex items-center gap-2 rounded-[8px] border p-2" style={{ borderColor: 'var(--border)' }}>
             <img src={sceneRef.thumbUrl ?? ''} alt="" className="h-10 w-10 rounded object-cover" style={{ background: 'var(--surface-2)' }} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-[11px] font-medium">{sceneRef.label}</p>
-              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>The setting and light are borrowed; its subject is not.</p>
+              <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
+                {activeProductRef
+                  ? 'The setting and light are borrowed; its subject is not.'
+                  : 'Add a product photo to use this scene.'}
+              </p>
             </div>
             <button type="button" className="icon-btn" aria-label="Remove scene" onClick={() => setSceneRef(null)}><Icon icon={X} size="sm" /></button>
           </div>
-        ) : activeProductRef ? (
+        ) : (
           <Button variant="secondary" className="w-full justify-start" type="button" onClick={() => setScenePickerOpen(true)}>
             <Icon icon={Mountain} size="sm" /> Choose a Scene
           </Button>
-        ) : (
-          <p className="hint">Choose a product photo first, then add a scene to borrow its setting and light.</p>
+        )}
+        {!activeProductRef && (
+          <p className="hint mt-1">Browse scenes anytime. Add a product photo when you want the setting and light in a made image.</p>
         )}
       </div>
 
@@ -854,35 +922,59 @@ export function CreateWorkspace({ preferredPersonLook }: { preferredPersonLook?:
               examplesVisible ? (
                 <div>
                   <p className="text-center text-[12px]" style={{ color: 'var(--text-muted)' }}>Describe the picture you want. Meta makes it, and you pay {usd(1)} an image.</p>
-                  {productRef ? (
-                    <div className="mx-auto mt-4 flex max-w-[760px] flex-wrap items-center justify-center gap-3">
-                      <p className="text-center text-[13px] font-semibold">Examples</p>
+                  <div className="mx-auto mt-4 flex max-w-[760px] flex-wrap items-center justify-center gap-3">
+                    <p className="text-center text-[13px] font-semibold">Examples</p>
+                    {productRef && (
                       <div className="flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px]" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
                         <Switch checked={exampleUsesProduct} onCheckedChange={applyExampleToggle} label="Use my product photo in examples" />
                         <span>Use my product photo</span>
                       </div>
-                    </div>
-                  ) : (
-                    <p className="mx-auto mt-4 max-w-[760px] text-center text-[13px] font-semibold">Examples</p>
+                    )}
+                  </div>
+                  {productRef && (
+                    <p className="mx-auto mt-1 max-w-[760px] text-center text-[11px]" style={{ color: 'var(--text-faint)' }}>
+                      {exampleUsesReference ? `Using ${productRefLabel} as the product.` : 'Showing examples without your product.'}
+                    </p>
                   )}
-                  <p className="mx-auto mt-1 max-w-[760px] text-center text-[11px]" style={{ color: 'var(--text-faint)' }}>
+                  <div className="mt-2 flex justify-center">
+                    <ToggleButtonGroup
+                      type="single"
+                      className="flex-wrap"
+                      label="Filter examples"
+                      value={exampleGroup}
+                      onChange={(value) => { if (value) setExampleGroup(value as 'All' | ExampleGroup) }}
+                    >
+                      <ToggleButton value="All" label="All" size="sm" />
+                      {EXAMPLE_GROUPS.map((group) => (
+                        <ToggleButton key={group} value={group} label={group} size="sm" />
+                      ))}
+                    </ToggleButtonGroup>
+                  </div>
+                  <p className="mx-auto mt-2 max-w-[760px] text-center text-[11px]" style={{ color: 'var(--text-faint)' }}>
                     Click a photo to load a starting description.
                   </p>
-                  <div className="mx-auto mt-2 grid max-w-[760px] grid-cols-2 gap-4">
-                    {EXAMPLE_SCENES.map((scene) => (
-                      <button
-                        key={scene.key}
-                        type="button"
-                        className="card card-hover generator-example overflow-hidden text-left"
-                        onClick={() => chooseExample(scene)}
-                      >
-                        <img src={exampleUrl(scene.key)} alt="" className="aspect-[4/3] w-full object-cover" />
-                        <div className="p-3">
-                          <p className="text-[12px] font-semibold">{scene.label}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                  {filteredExamples.length === 0 ? (
+                    <p className="mt-4 text-center text-[12px]" style={{ color: 'var(--text-faint)' }}>No examples in this group.</p>
+                  ) : (
+                    <div className="mx-auto mt-2 grid max-w-[760px] grid-cols-2 gap-4">
+                      {filteredExamples.map((scene) => (
+                        <button
+                          key={scene.key}
+                          type="button"
+                          className="card card-hover generator-example relative overflow-hidden text-left"
+                          onClick={() => chooseExample(scene)}
+                        >
+                          <img src={exampleUrl(scene.key)} alt="" className="aspect-[4/3] w-full object-cover" />
+                          {productRef && exampleUsesProduct && (
+                            <span className="badge absolute left-2 top-2" data-tone="success">Your product</span>
+                          )}
+                          <div className="p-3">
+                            <p className="text-[12px] font-semibold">{scene.label}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : filterEmpty ? (
                 <div className="py-12 text-center">

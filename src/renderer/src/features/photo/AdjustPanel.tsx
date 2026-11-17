@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Crop, FlipHorizontal, FlipVertical, Loader2, Redo2, RotateCcw, RotateCw, Sparkles, Undo2 } from 'lucide-react'
+import { Crop, FlipHorizontal, FlipVertical, Loader2, RotateCcw, RotateCw, Sparkles } from 'lucide-react'
 import { Icon } from '@astryxdesign/core'
 import type { AdjustTransform } from '@shared/types'
 import { Button } from '../../components/ui/Button'
@@ -7,12 +7,10 @@ import { Chip } from '../../components/ui/Chip'
 import { IconButton } from '../../components/ui/IconButton'
 
 const ASPECTS = [
-  { id: 'original', label: 'Original', ratio: null },
+  { id: 'free', label: 'Free', ratio: 'free' },
   { id: '1:1', label: '1:1', ratio: 1 },
   { id: '4:5', label: '4:5', ratio: 4 / 5 },
-  { id: '3:2', label: '3:2', ratio: 3 / 2 },
-  { id: '16:9', label: '16:9', ratio: 16 / 9 },
-  { id: 'free', label: 'Free', ratio: 'free' }
+  { id: '16:9', label: '16:9', ratio: 16 / 9 }
 ] as const
 
 function Slider({
@@ -70,10 +68,6 @@ export function AdjustPanel({
   transform,
   width,
   height,
-  canUndo,
-  canRedo,
-  onUndo,
-  onRedo,
   onChange,
   onChangeWithHistory,
   onBegin,
@@ -87,10 +81,6 @@ export function AdjustPanel({
   transform: AdjustTransform
   width: number | null
   height: number | null
-  canUndo: boolean
-  canRedo: boolean
-  onUndo: () => void
-  onRedo: () => void
   onChange: (next: AdjustTransform) => void
   onChangeWithHistory: (next: AdjustTransform) => void
   onBegin: () => void
@@ -105,20 +95,14 @@ export function AdjustPanel({
   const [sizeHeight, setSizeHeight] = useState('')
   const [sizeUnit, setSizeUnit] = useState<'cm' | 'in'>('cm')
   const currentAspect = (() => {
-    if (!transform.crop || !width || !height) return 'original'
+    if (!transform.crop || !width || !height) return null
     const ratio = (transform.crop.width * width) / (transform.crop.height * height)
     const found = ASPECTS.find((aspect) => typeof aspect.ratio === 'number' && Math.abs(aspect.ratio - ratio) < 0.02)
     return found?.id ?? 'free'
   })()
 
-  const setAspect = (ratio: number | null | 'free'): void => {
+  const setAspect = (ratio: number | 'free'): void => {
     if (!width || !height) return
-    if (!ratio) {
-      const next = { ...transform }
-      delete next.crop
-      onChangeWithHistory(next)
-      return
-    }
     if (ratio === 'free') {
       onChangeWithHistory({
         ...transform,
@@ -142,16 +126,18 @@ export function AdjustPanel({
     })
   }
 
+  const clearCrop = (): void => {
+    const next = { ...transform }
+    delete next.crop
+    onChangeWithHistory(next)
+  }
+
   const patch = (next: Partial<AdjustTransform>): AdjustTransform => ({ ...transform, ...next })
 
   return (
     <div>
       <div className="flex items-center justify-between gap-2">
         <p className="section-label">Adjustments</p>
-        <div className="flex items-center gap-1">
-          <IconButton label="Undo" disabled={!canUndo} onClick={onUndo}><Icon icon={Undo2} size="sm" /></IconButton>
-          <IconButton label="Redo" disabled={!canRedo} onClick={onRedo}><Icon icon={Redo2} size="sm" /></IconButton>
-        </div>
       </div>
       <p className="hint mt-1">Free. Done on this computer. The original stays untouched.</p>
 
@@ -164,6 +150,7 @@ export function AdjustPanel({
           {ASPECTS.map((aspect) => (
             <Chip key={aspect.id} selected={currentAspect === aspect.id} onClick={() => setAspect(aspect.ratio)}>{aspect.label}</Chip>
           ))}
+          {transform.crop && <Chip onClick={clearCrop}>Reset crop</Chip>}
         </div>
         <p className="mt-1.5 text-[11px]" style={{ color: 'var(--text-faint)' }}>Drag the corners to crop. Use the arrow keys for fine control.</p>
       </section>
@@ -188,11 +175,14 @@ export function AdjustPanel({
 
       <section className="mt-5 space-y-3">
         <h3 className="text-[12px] font-semibold">Light and color</h3>
-        <Slider label="Brightness" value={transform.brightness ?? 0} onBegin={onBegin} onChange={(value) => onChange(patch({ brightness: value }))} />
+        <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>Double-click a slider to reset it.</p>
+        <Slider label="Exposure" value={transform.brightness ?? 0} onBegin={onBegin} onChange={(value) => onChange(patch({ brightness: value }))} />
         <Slider label="Contrast" value={transform.contrast ?? 0} onBegin={onBegin} onChange={(value) => onChange(patch({ contrast: value }))} />
-        <Slider label="Saturation" value={transform.saturation ?? 0} onBegin={onBegin} onChange={(value) => onChange(patch({ saturation: value }))} />
+        <Slider label="Highlights" value={transform.highlights ?? 0} onBegin={onBegin} onChange={(value) => onChange(patch({ highlights: value }))} />
+        <Slider label="Shadows" value={transform.shadows ?? 0} onBegin={onBegin} onChange={(value) => onChange(patch({ shadows: value }))} />
         <Slider label="Warmth" value={transform.warmth ?? 0} onBegin={onBegin} onChange={(value) => onChange(patch({ warmth: value }))} />
-        <Slider label="Sharpen" min={0} max={100} value={transform.sharpen ?? 0} onBegin={onBegin} onChange={(value) => onChange(patch({ sharpen: value }))} />
+        <Slider label="Saturation" value={transform.saturation ?? 0} onBegin={onBegin} onChange={(value) => onChange(patch({ saturation: value }))} />
+        <Slider label="Sharpness" min={0} max={100} value={transform.sharpen ?? 0} onBegin={onBegin} onChange={(value) => onChange(patch({ sharpen: value }))} />
         <Slider label="Vignette" min={0} max={100} value={transform.vignette ?? 0} onBegin={onBegin} onChange={(value) => onChange(patch({ vignette: value }))} />
       </section>
 

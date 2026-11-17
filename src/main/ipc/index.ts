@@ -52,6 +52,8 @@ const adjustSchema = z.object({
   flipV: z.boolean().optional(),
   brightness: z.number().min(-100).max(100).optional(),
   contrast: z.number().min(-100).max(100).optional(),
+  highlights: z.number().min(-100).max(100).optional(),
+  shadows: z.number().min(-100).max(100).optional(),
   saturation: z.number().min(-100).max(100).optional(),
   warmth: z.number().min(-100).max(100).optional(),
   sharpen: z.number().min(0).max(100).optional(),

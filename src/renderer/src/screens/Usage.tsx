@@ -208,7 +208,7 @@ export function Usage(): React.JSX.Element {
                           value={Math.min(spentCents, budgetCents)}
                           max={budgetCents}
                           label={`${usd(spentCents)} of ${usd(budgetCents)} used this month`}
-                          hasValueLabel={false}
+                          isLabelHidden
                         />
                       </div>
                       <Text type="supporting" color="secondary" className="mt-1 block">

@@ -31,6 +31,8 @@ describe('local adjust rendering', () => {
         crop: { x: 0.1, y: 0.2, width: 0.5, height: 0.4 },
         brightness: 25,
         contrast: 10,
+        highlights: 20,
+        shadows: 15,
         saturation: 12,
         warmth: 10,
         sharpen: 35,

@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import sharp from 'sharp'
+import type { Sharp } from 'sharp'
 import type { AdjustTransform } from '@shared/types'
 import { absoluteInLibrary, imageRelative, thumbRelative } from './paths'
 
@@ -20,6 +21,34 @@ export function cropPixels(
     top: Math.round(y * height),
     width: Math.max(1, Math.round(w * width)),
     height: Math.max(1, Math.round(h * height))
+  }
+}
+
+/**
+ * A luminance-weighted tone pass for highlights and shadows. Highlights move
+ * the bright end; shadows move the dark end. Alpha is preserved when present.
+ */
+export function applyTonePixels(
+  data: Uint8Array,
+  highlights: number,
+  shadows: number,
+  channels = 4
+): void {
+  const highlight = clamp(highlights, -100, 100)
+  const shadow = clamp(shadows, -100, 100)
+  if (highlight === 0 && shadow === 0) return
+  for (let i = 0; i + 2 < data.length; i += channels) {
+    const r = data[i]!
+    const g = data[i + 1]!
+    const b = data[i + 2]!
+    const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    const shadowWeight = (1 - luminance / 255) ** 2
+    const highlightWeight = (luminance / 255) ** 2
+    const delta = (shadow / 100) * shadowWeight * 64 + (highlight / 100) * highlightWeight * 64
+    if (delta === 0) continue
+    data[i] = clamp(Math.round(r + delta), 0, 255)
+    data[i + 1] = clamp(Math.round(g + delta), 0, 255)
+    data[i + 2] = clamp(Math.round(b + delta), 0, 255)
   }
 }
 
@@ -47,7 +76,18 @@ export async function applyLocalAdjust(input: {
   const meta = await sharp(cropped).metadata()
   const width = meta.width ?? 0
   const height = meta.height ?? 0
-  let pipeline = sharp(cropped).toColorspace('srgb')
+  const highlights = clamp(t.highlights ?? 0, -100, 100)
+  const shadows = clamp(t.shadows ?? 0, -100, 100)
+  let pipeline: Sharp
+  if (highlights !== 0 || shadows !== 0) {
+    const raw = await sharp(cropped).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+    applyTonePixels(raw.data, highlights, shadows, raw.info.channels)
+    pipeline = sharp(raw.data, {
+      raw: { width: raw.info.width, height: raw.info.height, channels: raw.info.channels }
+    }).toColorspace('srgb')
+  } else {
+    pipeline = sharp(cropped).toColorspace('srgb')
+  }
   const brightness = clamp(t.brightness ?? 0, -100, 100)
   const contrast = clamp(t.contrast ?? 0, -100, 100)
   const factor = 1 + contrast / 100

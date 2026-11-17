@@ -47,6 +47,8 @@ export interface AdjustTransform {
   flipV?: boolean
   brightness?: number
   contrast?: number
+  highlights?: number
+  shadows?: number
   saturation?: number
   warmth?: number
   sharpen?: number

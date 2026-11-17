@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Download, Loader2, Maximize2, PanelLeft, PanelRight, Plus } from 'lucide-react'
+import { ArrowLeft, Columns2, Download, Loader2, Maximize2, Minus, PanelLeft, PanelRight, Plus, Redo2, Undo2 } from 'lucide-react'
 import { Icon, Banner } from '@astryxdesign/core'
 import type { AdjustTransform, Image, Project } from '@shared/types'
 import { estimateCents, usd } from '@shared/cost'
@@ -45,6 +45,12 @@ type TextSource = 'user' | 'tile'
 
 function emptyAdjust(): AdjustTransform {
   return {}
+}
+
+function versionKind(image: Image): 'Original' | 'Adjusted' | 'AI' {
+  if (image.isOriginal) return 'Original'
+  if (image.adjust || image.origin === 'local') return 'Adjusted'
+  return 'AI'
 }
 
 function readyInProject(images: Image[]): Image[] {
@@ -616,10 +622,6 @@ export function PhotoWorkspace(): React.JSX.Element {
             transform={adjust}
             width={selected?.width ?? null}
             height={selected?.height ?? null}
-            canUndo={undoStack.length > 0}
-            canRedo={redoStack.length > 0}
-            onUndo={undo}
-            onRedo={redo}
             onChange={changeAdjust}
             onChangeWithHistory={changeWithHistory}
             onBegin={beginAdjust}
@@ -738,24 +740,59 @@ export function PhotoWorkspace(): React.JSX.Element {
                 {(rightHidden || rightCollapsed) && <IconButton label="Open version details" onClick={() => { if (rightHidden) setRightSheet(true); else setRightCollapsed(false) }}><Icon icon={PanelRight} size="sm" /></IconButton>}
               </div>
             )}
-            {tab === 'change' && (
-              <Button variant="ghost" size="sm" disabled={!parent || isRunning} onClick={() => { setCompare((value) => !value); setShowOriginal(false) }}>
-                {compare ? 'Done Comparing' : 'Compare'}
-              </Button>
-            )}
           </div>
           <div className="canvas-wrap canvas-surface">
+            <div className="canvas-toolbar" role="toolbar" aria-label="Canvas tools">
+              <IconButton label="Zoom out" disabled={zoom <= 0.4} onClick={() => setZoom((value) => Math.max(0.4, +(value - 0.15).toFixed(2)))}>
+                <Icon icon={Minus} size="sm" />
+              </IconButton>
+              <Button variant="ghost" size="sm" className="canvas-toolbar-btn" onClick={() => setZoom(1)}>Fit</Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="canvas-toolbar-btn"
+                disabled={fit <= 0}
+                onClick={() => setZoom(Math.min(6, +(1 / Math.max(fit, 0.001)).toFixed(2)))}
+              >
+                100%
+              </Button>
+              <IconButton label="Zoom in" disabled={zoom >= 6} onClick={() => setZoom((value) => Math.min(6, +(value + 0.15).toFixed(2)))}>
+                <Icon icon={Plus} size="sm" />
+              </IconButton>
+              <span className="canvas-zoom-readout" aria-live="polite">{fit > 0 ? `${Math.round(fit * zoom * 100)}%` : 'Fit'}</span>
+              <span className="canvas-toolbar-sep" aria-hidden />
+              <IconButton label="Undo" disabled={tab !== 'adjust' || undoStack.length === 0} onClick={undo}>
+                <Icon icon={Undo2} size="sm" />
+              </IconButton>
+              <IconButton label="Redo" disabled={tab !== 'adjust' || redoStack.length === 0} onClick={redo}>
+                <Icon icon={Redo2} size="sm" />
+              </IconButton>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="canvas-toolbar-btn"
+                disabled={!parent || isRunning}
+                onClick={() => { setCompare((value) => !value); setShowOriginal(false) }}
+              >
+                <Icon icon={Columns2} size="sm" /> {compare ? 'Done Comparing' : 'Compare'}
+              </Button>
+            </div>
             <div
               ref={canvasRef}
               tabIndex={0}
               role="group"
               aria-label="Photo canvas. Use arrow keys to change version. Hold Space to see the original."
               className="canvas-stage outline-none"
+              data-zoomed={zoom > 1.001}
               onKeyDown={onCanvasKeyDown}
               onKeyUp={onCanvasKeyUp}
               onBlur={() => setShowOriginal(false)}
             >
               {displayImage?.url && fit > 0 ? (
+                <div
+                  className="canvas-zoom-box"
+                  style={{ width: displayWidth * zoom, height: displayHeight * zoom }}
+                >
                 <div
                   ref={compareRef}
                   className={canPreview ? 'relative cursor-zoom-in' : 'relative'}
@@ -797,6 +834,7 @@ export function PhotoWorkspace(): React.JSX.Element {
                       {showParent && <span className="absolute left-2 top-2 badge" data-tone="canvas">Original</span>}
                     </>
                   )}
+                </div>
                 </div>
               ) : (
                 <p className="canvas-meta">{displayImage?.url ? 'Fitting the photo…' : 'No version selected.'}</p>
@@ -846,25 +884,27 @@ export function PhotoWorkspace(): React.JSX.Element {
             )}
             {!compare && (
               <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 text-[11px]" style={{ color: 'var(--white-60)' }}>
-                {selected?.width && selected?.height ? `${selected.width} × ${selected.height}` : ''} {zoom !== 1 ? `· ${Math.round(zoom * 100)}%` : ''} · {shapeLabel(project.shape)}
+                {selected?.width && selected?.height ? `${selected.width} × ${selected.height}` : ''} {fit > 0 ? `· ${Math.round(fit * zoom * 100)}%` : ''} · {shapeLabel(project.shape)}
               </div>
             )}
           </div>
           <div className="ws-filmstrip" role="list" aria-label="Versions">
-            {ready.map((image, index) => {
+            {ready.map((image) => {
               const parentForImage = image.parentId ? ready.find((entry) => entry.id === image.parentId) : null
+              const kind = versionKind(image)
               return (
                 <div key={image.id} className="relative" role="listitem">
                   <button
                     type="button"
                     className="ws-film-card"
                     data-selected={image.id === selected?.id}
+                    data-version-kind={kind}
                     disabled={isRunning}
-                    aria-label={`${image.label}${index === 0 ? ', original' : ''}`}
                     title={parentForImage ? `from ${parentForImage.label}` : undefined}
                     onClick={() => selectImage(image.id)}
                   >
                     {image.thumbUrl ? <img src={image.thumbUrl} alt="" /> : <div className="h-[60px] w-full" style={{ background: 'var(--white-08)' }} />}
+                    <span className="ws-film-badge badge">{kind}</span>
                     <span className="ws-film-label">{image.label}</span>
                   </button>
                   {image.id === selected?.id && (

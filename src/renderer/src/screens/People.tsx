@@ -24,22 +24,24 @@ function PersonCard({
   person,
   onOpen,
   onRename,
-  onDelete
+  onDelete,
+  compact = false
 }: {
   person: Person
   onOpen: () => void
   onRename?: () => void
   onDelete?: () => void
+  compact?: boolean
 }): React.JSX.Element {
   return (
     <div className="card card-hover group relative overflow-hidden">
       <button type="button" className="block w-full cursor-zoom-in" onClick={onOpen} aria-label={`Open ${person.name} larger`}>
         <img src={person.portraitUrl} alt="" className="aspect-square w-full object-cover" />
       </button>
-      <div className="p-3">
+      <div className={compact ? 'p-2' : 'p-3'}>
         <p className="truncate text-[13px] font-semibold">{person.name}{person.ageBand ? ` · ${person.ageBand}` : ''}</p>
         <p className="meta mt-0.5">Used in {person.usedIn} {person.usedIn === 1 ? 'image' : 'images'}</p>
-        {person.blurb && <p className="mt-1 line-clamp-2 text-[11px]" style={{ color: 'var(--text-faint)' }}>{person.blurb}</p>}
+        {!compact && person.blurb && <p className="mt-1 line-clamp-2 text-[11px]" style={{ color: 'var(--text-faint)' }}>{person.blurb}</p>}
       </div>
       {person.source === 'user' && onRename && onDelete && (
         <div className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
@@ -328,18 +330,16 @@ export function People(): React.JSX.Element {
               <span className="meta-faint">{yours.length}</span>
             </div>
             {yours.length === 0 ? (
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-[10px] border px-3 py-2" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-                <Text type="supporting" color="secondary">
-                  Add a portrait to keep your own person first in this list.
-                </Text>
-                <Button variant="secondary" size="sm" onClick={() => setAddOpen(true)}>Add Portrait</Button>
-              </div>
+              <Text type="supporting" color="secondary" className="mt-1 block">
+                Add a portrait to keep your own person first in this list.
+              </Text>
             ) : (
               <div className="people-grid mt-3">
                 {visibleYours.map((person) => (
                   <PersonCard
                     key={person.id}
                     person={person}
+                    compact
                     onOpen={() => setPreviewPerson(person)}
                     onRename={() => { setRenaming(person); setRenameValue(person.name) }}
                     onDelete={() => void remove(person)}
@@ -362,7 +362,7 @@ export function People(): React.JSX.Element {
             </div>
             <div className="people-grid mt-3">
               {included.map((person) => (
-                <PersonCard key={person.id} person={person} onOpen={() => setPreviewPerson(person)} />
+                <PersonCard key={person.id} person={person} compact onOpen={() => setPreviewPerson(person)} />
               ))}
             </div>
             <p className="hint mt-3">Starter people made for Moss. They are not photographs of real people.</p>

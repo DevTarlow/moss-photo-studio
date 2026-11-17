@@ -9,11 +9,19 @@ import { isBundledPerson } from '@shared/people'
 import { PROMPT_MAX } from '@shared/prompts/guards'
 import type { ChangeKind } from '@shared/prompts/guards'
 import { Button } from '../../components/ui/Button'
+import { Chip } from '../../components/ui/Chip'
 import { PersonPicker } from '../../components/people/PersonPicker'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { TextareaCounter } from '../../components/ui/TextareaCounter'
 
 type TextSource = 'user' | 'tile'
+
+const STUDIO_PROMPTS = [
+  { label: 'Clean white studio', text: 'A clean white studio background with soft, even light.' },
+  { label: 'Soft window light', text: 'Soft window light from one side, with gentle shadows.' },
+  { label: 'Smooth wrinkles & drape', text: 'Smooth out wrinkles and let the material drape naturally.' },
+  { label: 'Natural tabletop shadow', text: 'A natural soft shadow on the tabletop, without a hard edge.' }
+] as const
 
 interface PendingTile {
   id: string
@@ -142,6 +150,25 @@ export function ChangePanel({
             That's {text.length - PROMPT_MAX} characters over. Shorten it and try again.
           </p>
         )}
+      </div>
+
+      <div className="mt-2">
+        <p className="field-label">Studio prompts</p>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {STUDIO_PROMPTS.map((prompt) => (
+            <Chip
+              key={prompt.label}
+              disabled={disabled}
+              onClick={() => {
+                if (text.toLowerCase().includes(prompt.text.toLowerCase())) return
+                onText(text.trim() ? `${text.trim().replace(/[.\s]+$/, '')}. ${prompt.text}` : prompt.text, 'user')
+              }}
+            >
+              {prompt.label}
+            </Chip>
+          ))}
+        </div>
+        <p className="hint mt-1">Adds a studio-ready phrase to your description.</p>
       </div>
 
       <div className="mt-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>

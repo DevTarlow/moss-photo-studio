@@ -357,6 +357,7 @@ export function Products(): React.JSX.Element {
                   <div className="product-category-pills mt-2" role="group" aria-label="Filter starter products">
                     <ToggleButtonGroup
                       type="single"
+                      className="flex-wrap"
                       value={category}
                       label="Filter starter products"
                       onChange={(value) => { if (value) setCategory(value) }}

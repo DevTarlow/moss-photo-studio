@@ -190,9 +190,14 @@ export type ExampleSceneKey =
   | 'home'
   | 'jewelry'
 
+export type ExampleGroup = 'White Backdrop' | 'Lifestyle' | 'On Model' | 'Flat Lay'
+
+export const EXAMPLE_GROUPS: readonly ExampleGroup[] = ['White Backdrop', 'Lifestyle', 'On Model', 'Flat Lay']
+
 export interface ExampleScene {
   key: ExampleSceneKey
   label: string
+  group: ExampleGroup
   /** The scene as the example image shows it. */
   exampleText: string
   /** The same scene written for a product that arrives as a reference. */
@@ -214,6 +219,7 @@ export const CREATE_PRODUCT_PROMPT =
 export const EXAMPLE_SCENES: readonly ExampleScene[] = [
   {
     key: 'product',
+    group: 'White Backdrop',
     label: 'A product shot',
     exampleText:
       'A ceramic mug of coffee alone on a pure white background, centred and filling most of the frame, no props or text, soft even lighting, product photo.',
@@ -222,6 +228,7 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
   },
   {
     key: 'person',
+    group: 'On Model',
     label: 'A person holding product',
     exampleText: PERSON_HOLDING_EXAMPLE,
     productText:
@@ -229,6 +236,7 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
   },
   {
     key: 'lifestyle',
+    group: 'Lifestyle',
     label: 'A lifestyle scene',
     exampleText:
       'A lit scented candle on a wooden bedside table beside a book and a mug, warm evening light, cosy handmade style.',
@@ -237,6 +245,7 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
   },
   {
     key: 'worn',
+    group: 'On Model',
     label: 'Someone wearing it',
     exampleText:
       'A smiling woman wearing a light blue patterned blouse and blue jeans, standing in a bright room, full body, natural daylight, realistic photo.',
@@ -245,6 +254,7 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
   },
   {
     key: 'flatlay',
+    group: 'Flat Lay',
     label: 'A flat lay',
     exampleText:
       'A flat lay of a ceramic mug of coffee on a checked cloth with scattered coffee beans and a spoon, soft daylight, square photo.',
@@ -253,6 +263,7 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
   },
   {
     key: 'gift',
+    group: 'Lifestyle',
     label: 'A gift shot',
     exampleText:
       'A lit scented candle sitting inside an open black gift box lined with white tissue paper, warm festive light, shallow depth of field, product photo.',
@@ -261,6 +272,7 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
   },
   {
     key: 'home',
+    group: 'Lifestyle',
     label: 'A room scene',
     exampleText:
       'A small oak side table in a bright living room beside a sofa, a plant and a woven rug, soft daylight, home lifestyle photo.',
@@ -269,6 +281,7 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
   },
   {
     key: 'jewelry',
+    group: 'On Model',
     label: 'A jewelry close-up',
     exampleText:
       'A close-up of a person wearing a delicate gold pendant necklace, the pendant in focus, soft neutral background, natural light, jewelry photo.',
