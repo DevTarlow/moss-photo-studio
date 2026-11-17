@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Mountain, Sparkles, X } from 'lucide-react'
-import { Icon } from '@astryxdesign/core'
+import { DropdownMenu, Icon } from '@astryxdesign/core'
 import type { Person } from '@shared/types'
 import type { Template as TemplateType } from '@shared/prompts/templates'
 import { TEMPLATE_GROUPS, templateAsset, templateById } from '@shared/prompts/templates'
@@ -9,18 +9,36 @@ import { isBundledPerson } from '@shared/people'
 import { PROMPT_MAX } from '@shared/prompts/guards'
 import type { ChangeKind } from '@shared/prompts/guards'
 import { Button } from '../../components/ui/Button'
-import { Chip } from '../../components/ui/Chip'
 import { PersonPicker } from '../../components/people/PersonPicker'
 import type { SourceChoice } from '../../components/sources/SourcePickerDialog'
 import { TextareaCounter } from '../../components/ui/TextareaCounter'
 
 type TextSource = 'user' | 'tile'
 
+// A studio prompt is a whole sentence the user can add without editing it.
+// Each one targets a different photo property, so they suit clothing, hard
+// goods, food, and packaged products alike and can be combined safely.
 const STUDIO_PROMPTS = [
-  { label: 'Clean white studio', text: 'A clean white studio background with soft, even light.' },
-  { label: 'Soft window light', text: 'Soft window light from one side, with gentle shadows.' },
-  { label: 'Smooth wrinkles & drape', text: 'Smooth out wrinkles and let the material drape naturally.' },
-  { label: 'Natural tabletop shadow', text: 'A natural soft shadow on the tabletop, without a hard edge.' }
+  {
+    label: 'Clean studio background',
+    description: 'Seamless backdrop, soft even light.',
+    text: 'Give the product a clean, seamless studio background with soft, even lighting.'
+  },
+  {
+    label: 'Soft, natural light',
+    description: 'Diffused daylight from one side.',
+    text: 'Light the product with soft, diffused daylight from one side, with gentle, natural shadows.'
+  },
+  {
+    label: 'True-to-life detail',
+    description: 'Accurate colour, texture, and shape.',
+    text: "Keep the product's colour, texture and shape accurate and true to life."
+  },
+  {
+    label: 'Remove clutter',
+    description: 'Clear the scene so the product leads.',
+    text: 'Remove distracting props and clutter so the product is the clear focus.'
+  }
 ] as const
 
 interface PendingTile {
@@ -90,6 +108,10 @@ export function ChangePanel({
     applyTile(tile)
   }
 
+  const addStudioPrompt = (prompt: typeof STUDIO_PROMPTS[number]): void => {
+    onText(text.trim() ? `${text.trim().replace(/[.\s]+$/, '')}. ${prompt.text}` : prompt.text, 'user')
+  }
+
   const tileImage = (template: TemplateType): string => {
     if (template.group === 'model' && modelPerson) {
       if (isBundledPerson(modelPerson.id)) return bundledUrl(templateAsset(template, modelPerson.id))
@@ -152,23 +174,31 @@ export function ChangePanel({
         )}
       </div>
 
-      <div className="mt-2">
-        <p className="field-label">Studio prompts</p>
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {STUDIO_PROMPTS.map((prompt) => (
-            <Chip
-              key={prompt.label}
-              disabled={disabled}
-              onClick={() => {
-                if (text.toLowerCase().includes(prompt.text.toLowerCase())) return
-                onText(text.trim() ? `${text.trim().replace(/[.\s]+$/, '')}. ${prompt.text}` : prompt.text, 'user')
-              }}
-            >
-              {prompt.label}
-            </Chip>
-          ))}
-        </div>
-        <p className="hint mt-1">Adds a studio-ready phrase to your description.</p>
+      <div className="mt-3">
+        <p className="field-label">Studio prompts <span className="font-normal" style={{ color: 'var(--text-faint)' }}>Optional</span></p>
+        <DropdownMenu
+          button={{
+            label: 'Add a studio prompt',
+            children: 'Add a studio prompt',
+            variant: 'secondary',
+            size: 'sm',
+            width: '100%',
+            icon: <Icon icon={Sparkles} size="sm" />,
+            isDisabled: disabled
+          }}
+          menuWidth={320}
+          items={STUDIO_PROMPTS.map((prompt) => {
+            const added = text.toLowerCase().includes(prompt.text.toLowerCase())
+            return {
+              id: prompt.label,
+              label: prompt.label,
+              description: added ? 'Already in your description' : prompt.description,
+              isDisabled: added,
+              onClick: () => addStudioPrompt(prompt)
+            }
+          })}
+        />
+        <p className="hint mt-1">Adds a ready-made phrase to your description.</p>
       </div>
 
       <div className="mt-3 rounded-[8px] border p-3" style={{ borderColor: 'var(--border)' }}>
