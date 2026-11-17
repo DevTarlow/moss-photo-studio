@@ -7,11 +7,11 @@ export interface LicenseProvider {
 export type LicenseProviderError = 'license_limit' | 'license_invalid' | 'license_offline' | 'unknown'
 
 export type ActivateOutcome =
-  | { ok: true; instanceId: string; status: string }
+  | { ok: true; instanceId: string; status: string; product: string | null }
   | { ok: false; code: LicenseProviderError }
 
 export type ValidateOutcome =
-  | { ok: true; status: string }
+  | { ok: true; status: string; product: string | null }
   | { ok: false; code: LicenseProviderError }
 
 export type DeactivateOutcome =

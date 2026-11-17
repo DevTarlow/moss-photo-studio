@@ -3,7 +3,7 @@
 Moss Photo Studio sends data to the following places, and only when it is needed:
 
 1. **To Meta Muse**, when you press a button that makes or changes an image: your Muse key, the product and person and scene references you chose, the composed description, the requested shape, format, and count, and a random installation id in the API's `user` field. Meta also sees your IP address, as any service does.
-2. **To the Moss license center (`license.mossaistudio.com`)**, when you activate, validate, or deactivate a license: the license key, an instance id, and a short computer label. The license center is a separate website that stores the buyer account and purchase email; the desktop app never signs in to it.
+2. **To the Moss license center (`license.mossaistudio.com`)**, when you activate, validate, or deactivate a license: the license key, an instance id, the app slug, and a short computer label. The label is a truncated, salted hash of the local system id, or a random per-install code where no system id is available. It is not a hostname, MAC address, disk serial, or account name, and the raw system id never leaves the computer. The license center is a separate website that stores the buyer account and purchase email; the desktop app never signs in to it.
 3. **To the Moss license center (`license.mossaistudio.com`)**, when a build without automatic updates uses **Check for Updates** in Settings: the app slug, platform, architecture, update channel, and current version. It sends no install id, license key, email, or library data.
 4. **To GitHub Releases (`github.com/DevTarlow/moss-photo-studio`)**, when the Linux AppImage checks for updates on launch, every four hours, or when you press **Check for Updates**: the app version, platform, architecture, and channel. GitHub also sees your IP address. It sends no install id, license key, email, library data, or usage history. The app downloads a newer build in the background and installs it only when you choose Restart.
 5. **To your browser**, if you click a link such as “Where to Get a Key”, “Buy a License”, a download page, or a Meta documentation link. The app opens the system browser. The app itself does not load the page.
@@ -36,9 +36,11 @@ Builds without automatic updates check the license center only when you press **
 
 - The license key.
 - The portal instance id, which is created the first time a computer activates.
-- A label such as `linux-4f21a8c0`. It is derived from the OS and a random per-installation suffix. It is not a hostname, MAC address, disk serial, or account name.
+- The app slug (`moss-photo-studio`), so a key for another Moss app is not accepted here.
+- A label such as `linux-4f21a8c0d9e2`. It is a truncated salted hash of the local system id, or a random per-install code when the system id is unavailable. It is not a hostname, MAC address, disk serial, or account name.
+- The app stores a local machine fingerprint with the saved license so a copied app-data folder is not treated as the same computer. The fingerprint is computed and compared on this computer; it is never sent.
 
-The license validation request happens no more than once per 24 hours automatically, with a check when the window regains focus. A manual **Check Now** is immediate. The last validation time is stored locally. A failed validation never deletes a license or hides the library: a portal error or an unreadable response does not shorten the 14 day offline window, and only an explicit rejection by the portal, or the end of that window, makes the license read-only. A license file that cannot be decrypted is not treated as licensed; the seller is asked to paste the key again.
+The license validation request happens no more than once per 24 hours automatically, with a check when the window regains focus. A manual **Check Now** is immediate. The last validation time is stored locally. A failed validation never deletes a license or hides the library: a portal error or an unreadable response does not shorten the 14 day offline window, and only an explicit rejection by the portal, or the end of that window, makes the studio read-only. Read-only means you can view, copy, delete, and export your work, but making images, importing photos, editing, and changing Sets, Products, or People need an active license. A license file that cannot be decrypted is not treated as licensed; the seller is asked to paste the key again.
 
 ## What is stored locally
 
@@ -47,7 +49,7 @@ The application data folder contains:
 - `library.sqlite` and its WAL and backup files: projects, images, Set names and membership, jobs, usage, products (including Product notes), people, brand, settings, and license metadata.
 - `library/`: all original and working images, saved Products, and exports made inside the library.
 - `secrets.bin`: the Muse key, encrypted with the system keyring, or with the documented AES-256-GCM fallback if no keyring is available.
-- `license.json`: the license key and instance id, encrypted.
+- `license.json`: the license key, instance id, and local machine fingerprint, encrypted.
 - `logs/`: local logs. They contain request ids, status codes, counts, durations, and error codes. They do not contain keys, prompts, or full responses. Log rotation keeps the last two files.
 - A backup folder you choose in **Settings, Storage**: a consistent database snapshot, a copy of `library/`, a manifest, and a README. It excludes `secrets.bin` and `license.json`; the database keeps an encrypted license row, so a restore may ask you to re-activate. Backups are never uploaded.
 - A diagnostics folder you choose to create in **Settings, Storage**: app version, build, schema, library counts, and a copy of `logs/`. It contains no keys, prompts, images, or full file contents. It is opened in the system file manager and is only shared if you share it.

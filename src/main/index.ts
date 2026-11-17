@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { app, BrowserWindow, dialog, nativeTheme, Notification } from 'electron'
-import { APP_ID, APP_NAME, APP_VERSION, DEFAULT_BUDGET_CENTS, EMPTY_MENU_CONTEXT, SUPPORT_EMAIL } from '@shared/constants'
+import { APP_ID, APP_NAME, APP_SLUG, APP_VERSION, DEFAULT_BUDGET_CENTS, EMPTY_MENU_CONTEXT, SUPPORT_EMAIL } from '@shared/constants'
 import type { JobState } from '@shared/types'
 import { runtimeEnv, appResourceRoot, defaultLibraryPath, isReleaseBuild } from './env'
 import { Logger } from './logger'
@@ -192,12 +192,12 @@ async function boot(): Promise<void> {
   const licenseProvider = new MossLicenseProvider({ baseUrl: runtimeEnv.licenseBaseUrl })
   const updates = new UpdateService({
     baseUrl: runtimeEnv.licenseBaseUrl,
-    appSlug: 'moss-photo-studio'
+    appSlug: APP_SLUG
   })
   const autoUpdates = new AutoUpdateService({
     supported: isReleaseBuild && (process.platform !== 'linux' || Boolean(process.env.APPIMAGE)),
     currentVersion: APP_VERSION,
-    downloadPageUrl: new URL('/downloads?app=moss-photo-studio', `${runtimeEnv.licenseBaseUrl}/`).toString(),
+    downloadPageUrl: new URL(`/downloads?app=${APP_SLUG}`, `${runtimeEnv.licenseBaseUrl}/`).toString(),
     updater: autoUpdater as unknown as AutoUpdaterLike
   })
   const license = new LicenseController({

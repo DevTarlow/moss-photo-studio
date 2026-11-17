@@ -53,22 +53,6 @@ function readMachineId(userDataDir: string): string {
   }
 }
 
-function readLabelSuffix(userDataDir: string): string {
-  const file = path.join(userDataDir, '.machine-label')
-  try {
-    if (fs.existsSync(file)) {
-      const value = fs.readFileSync(file, 'utf8').trim()
-      if (/^[0-9a-f]{8}$/.test(value)) return value
-    }
-    const value = crypto.randomBytes(4).toString('hex')
-    fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 })
-    fs.writeFileSync(file, value, { mode: 0o600 })
-    return value
-  } catch {
-    return crypto.randomBytes(4).toString('hex')
-  }
-}
-
 export function machineIdentity(userDataDir: string): MachineIdentity {
   const machineId = readMachineId(userDataDir)
   const fingerprint = crypto
@@ -80,8 +64,10 @@ export function machineIdentity(userDataDir: string): MachineIdentity {
     machineId,
     fingerprint,
     // The store only needs a label a seller can recognize when two machines
-    // are activated. A random per-install suffix is enough; the hostname and
-    // hardware identifiers are never sent.
-    label: `${process.platform}-${readLabelSuffix(userDataDir)}`
+    // are activated. Deriving it from the local fingerprint keeps the label
+    // stable for this machine and makes a copied app-data folder look like a
+    // different computer. The raw machine id, hostname, and hardware serial
+    // are never sent.
+    label: `${process.platform}-${fingerprint}`
   }
 }

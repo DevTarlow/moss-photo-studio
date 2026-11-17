@@ -117,9 +117,12 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 ## License and offline behavior
 
 - With 13 days since the last check and the portal down, the app shows Working offline and can still generate.
-- After 14 days offline, the library is read-only; Browse My Library still opens it. Adjust Photo and export work.
-- A valid key restores generation. Deactivation releases the machine.
+- After 14 days offline, the library is read-only; Browse My Library still opens it. View, copy, delete, backup, and export work. Project creation, imports, local adjust, size labels, Sets/Products/People changes, and generation return "Reactivate to use the studio." and the Read-only banner is visible.
+- A valid key restores generating and editing. Deactivation releases the machine.
+- A key issued for another app in the license center is rejected. The app sends `app_slug` and shows the normal invalid-key message.
+- Copy the app-data folder to a second computer (or change the machine id on a disposable VM). The copied license is not accepted; pasting the key on the second machine activates it and consumes a seat. A portal reset frees the seats, and the same machine re-activates with the same key.
 - No key or prompt is shown in the interface, logs, or clipboard.
+- Launch a packaged release with `MOSS_DEV_UNLOCK=1`, `MOSS_MUSE_FAKE=1`, `MOSS_E2E=1`, and `MOSS_LICENSE_API_BASE=http://127.0.0.1:1`. It still shows activation and ignores every override.
 
 ## Accessibility and layout
 

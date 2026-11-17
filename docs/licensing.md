@@ -17,8 +17,9 @@ Squeezy.
   call the portal.
 - The owner registers each app in the admin dashboard: name, seats, prices, download links, and
   post-purchase instructions. Adding another app does not require a code deploy.
-- The desktop app keeps its existing 14 day offline grace, encrypted local key, daily validation,
-  and read-only library behavior. Only the `LicenseProvider` implementation and the host change.
+- The desktop app keeps its 14 day offline grace, encrypted local key, daily validation, and
+  read-only studio behavior. A lapsed license can still view, copy, delete, and export the
+  library, but making images, importing, and editing need an active license.
 
 Why not a vendor: the owner wants a branded customer portal, self-service machine resets, manual
 issue/remove controls, and one backend for several apps. Lemon Squeezy, Polar, and Keygen remain
@@ -36,7 +37,7 @@ implementation existing forever.
 5. Brevo emails the key, the app's download/install instructions, and a manage link.
 6. Buyer opens https://license.mossaistudio.com/account, signs in with the purchase email,
    and sees the license, machines, and reset control.
-7. App activates against /api/v1/licenses/* with the key and a per-install label.
+7. App activates against /api/v1/licenses/* with the key, its app slug, and a per-machine label.
 ```
 
 If mapping fails, the portal writes an `unmatchedPurchases` row and alerts the owner. It never
@@ -100,14 +101,15 @@ Base: `https://license.mossaistudio.com/api/v1`. JSON only, 8 KB body limit, zod
 
 | Endpoint | Request | Success | Explicit failure |
 | --- | --- | --- | --- |
-| `POST /licenses/activate` | `{ key, instance_name }` | `{ activated: true, instance: { id, name }, license: { status: "active", product, expiresAt } }` | 400 `invalid_key`, 409 `activation_limit`, 410 `license_expired` / `license_revoked`, 429 `rate_limited` |
-| `POST /licenses/validate` | `{ key, instance_id }` | `{ valid: true, license: { status: "active", expiresAt } }` | 200 `{ valid: false, license: { status: "inactive" \| "expired" \| "revoked" } }` for explicit rejection; 429/5xx only for transient failures |
-| `POST /licenses/deactivate` | `{ key, instance_id }` | `{ deactivated: true }` | 400/429; idempotent true when the activation is already gone |
+| `POST /licenses/activate` | `{ key, instance_name, app_slug? }` | `{ activated: true, instance: { id, name }, license: { status: "active", product, expiresAt } }` | 400 `invalid_key`, 409 `activation_limit`, 410 `license_expired` / `license_revoked`, 429 `rate_limited` |
+| `POST /licenses/validate` | `{ key, instance_id, app_slug? }` | `{ valid: true, license: { status: "active", expiresAt, product } }` | 200 `{ valid: false, license: { status: "inactive" \| "expired" \| "revoked" } }` for explicit rejection; 429/5xx only for transient failures |
+| `POST /licenses/deactivate` | `{ key, instance_id, app_slug? }` | `{ deactivated: true }` | 400/429; idempotent true when the activation is already gone |
 | `GET /health` | — | `{ ok: true }` | — |
 
 The Electron provider maps 400/404/410/422 to `license_invalid`, 409 to `license_limit`, and
 408/425/429/5xx/network/timeout/401/403 to `license_offline`. A rate limit must never look like a
-bad key.
+bad key. The app sends its slug as `app_slug` and rejects a license whose `product` is a different
+app; a missing `product` is accepted for older portal deployments and logged.
 
 ### Keys
 
@@ -121,12 +123,17 @@ bad key.
 
 ### Seats and reset
 
-- `activationLimit` is per license (default 2). Each activation is a per-install label, not a
-  hardware fingerprint.
+- `activationLimit` is per license (default 2). Each activation is a per-machine label. The label
+  is a truncated, salted hash of the local system id, or a random per-install code where no system
+  id is available. The raw machine id, hostname, and hardware serial never leave the computer.
 - Activating the same label is idempotent. A new label over the limit returns 409.
 - A revoked or expired license returns 410 and does not consume a seat.
-- Customer reset clears every activation, is limited to one per 24 hours, sends a notice email,
-  and is audited. Admin reset is unlimited.
+- Customer reset clears every activation, is limited to one per 30 days, sends a notice email,
+  and is audited. Admin reset is unlimited. Reset does not change the key: the same machine
+  re-activates with a fresh activation, and a different machine consumes a seat.
+- The app stores the local machine fingerprint with the license and refuses to use a license row
+  or recovery file copied from another machine. A copied install must paste the key to activate,
+  which is a real activation.
 - Deactivate removes one activation and is idempotent.
 - Reset does not revoke the key. The old machine becomes read-only when its next validation sees
   no matching activation; the new machine activates with the same key.
@@ -161,8 +168,11 @@ bad key.
   disconnected machine.
 - The app hardcodes "two computers" in several strings. Changing the default to one needs a copy
   release.
+- A determined person with the source can remove the client-side license check and build their own
+  copy. The license terms, not the client code, are the enforceable boundary; this repository's
+  LICENSE and docs/eula.md say so.
 - The portal is a separate account system; the app stays account-free and only sends the key,
-  instance id, and install label.
+  app slug, instance id, and machine label.
 - All sites share one Stripe account. A separate Stripe account per site needs per-app webhook
   credentials and is not implemented.
 - There is no silent auto-update. Downloads and a version check are the current scope; an

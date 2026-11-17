@@ -5,6 +5,7 @@ export interface LicenseRow {
   key_enc: string | null
   instance_id: string | null
   machine_label: string | null
+  machine_fingerprint: string | null
   status: string
   activated_at: number | null
   last_validated_at: number | null
@@ -22,6 +23,7 @@ export class LicenseRepository {
     keyEnc: string | null
     instanceId: string | null
     machineLabel: string | null
+    machineFingerprint: string | null
     status: string
     activatedAt: number | null
     lastValidatedAt: number | null
@@ -31,13 +33,14 @@ export class LicenseRepository {
     if (existing) {
       this.db
         .prepare(
-          `UPDATE license SET key_enc = ?, instance_id = ?, machine_label = ?, status = ?, activated_at = ?,
-            last_validated_at = ?, source = ? WHERE id = ?`
+          `UPDATE license SET key_enc = ?, instance_id = ?, machine_label = ?, machine_fingerprint = ?,
+            status = ?, activated_at = ?, last_validated_at = ?, source = ? WHERE id = ?`
         )
         .run(
           input.keyEnc,
           input.instanceId,
           input.machineLabel,
+          input.machineFingerprint,
           input.status,
           input.activatedAt,
           input.lastValidatedAt,
@@ -47,14 +50,15 @@ export class LicenseRepository {
     } else {
       this.db
         .prepare(
-          `INSERT INTO license (id, key_enc, instance_id, machine_label, status, activated_at,
-             last_validated_at, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+          `INSERT INTO license (id, key_enc, instance_id, machine_label, machine_fingerprint, status,
+             activated_at, last_validated_at, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(
           crypto.randomUUID(),
           input.keyEnc,
           input.instanceId,
           input.machineLabel,
+          input.machineFingerprint,
           input.status,
           input.activatedAt,
           input.lastValidatedAt,

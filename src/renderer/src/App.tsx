@@ -159,6 +159,7 @@ function useGlobalDrop(): { dragOver: boolean } {
   const confirm = useConfirm()
   const navigate = useNavigate()
   const location = useLocation()
+  const canUseStudio = useAppStore((state) => state.canUseStudio)
 
   useEffect(() => {
     const hasFiles = (event: DragEvent): boolean => Boolean(event.dataTransfer?.types.includes('Files'))
@@ -181,6 +182,10 @@ function useGlobalDrop(): { dragOver: boolean } {
       event.preventDefault()
       depth.current = 0
       setDragOver(false)
+      if (!canUseStudio) {
+        toast.error('Reactivate to use the studio.')
+        return
+      }
       const file = [...(event.dataTransfer?.files ?? [])].find((entry) =>
         ['image/jpeg', 'image/png', 'image/webp'].includes(entry.type)
       )
@@ -238,7 +243,7 @@ function useGlobalDrop(): { dragOver: boolean } {
       window.removeEventListener('dragleave', onDragLeave)
       window.removeEventListener('drop', onDrop)
     }
-  }, [confirm, location.pathname, navigate])
+  }, [canUseStudio, confirm, location.pathname, navigate])
 
   return { dragOver }
 }
@@ -248,6 +253,7 @@ export function RootLayout(): React.JSX.Element {
   const bootError = useAppStore((state) => state.bootError)
   const boot = useAppStore((state) => state.boot)
   const license = useAppStore((state) => state.license)
+  const canUseStudio = useAppStore((state) => state.canUseStudio)
   const settings = useAppStore((state) => state.settings)
   const onboardingBypass = useAppStore((state) => state.onboardingBypass)
   const initialLicenseValid = useAppStore((state) => state.initialLicenseValid)
@@ -305,7 +311,7 @@ export function RootLayout(): React.JSX.Element {
       if (state.status === 'grace' && previous !== 'grace') {
         toast.status("Working offline. License checks resume when you're connected.")
       } else if (state.status === 'expired' && previous !== 'expired') {
-        toast.error('The license needs attention. Your library, edits and exports still work.')
+        toast.error('The license needs attention. You can view and export your work. Reactivate to make new images or edits.')
       }
       previousLicense.current = state.status
     })
@@ -321,6 +327,16 @@ export function RootLayout(): React.JSX.Element {
     const onKey = (event: KeyboardEvent): void => {
       const target = event.target as HTMLElement
       const typing = target.matches('input, textarea, select, [contenteditable="true"]')
+      if (!canUseStudio && (event.metaKey || event.ctrlKey) && ['n', '1', '2'].includes(event.key.toLowerCase())) {
+        event.preventDefault()
+        toast.error('Reactivate to use the studio.')
+        return
+      }
+      if (!canUseStudio && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'v' && !typing) {
+        event.preventDefault()
+        toast.error('Reactivate to use the studio.')
+        return
+      }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
         setPalette(true)
@@ -381,7 +397,7 @@ export function RootLayout(): React.JSX.Element {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [booted, location.pathname, navigate, setPalette, setShortcuts, toggleRail])
+  }, [booted, canUseStudio, location.pathname, navigate, setPalette, setShortcuts, toggleRail])
 
   const pasteAsPhoto = async (): Promise<void> => {
     try {
@@ -406,6 +422,10 @@ export function RootLayout(): React.JSX.Element {
   useEffect(() => {
     if (!booted) return
     return window.moss.onMenuAction((event) => {
+      if (!canUseStudio && ['new-photo', 'new-image', 'paste-image'].includes(event.action)) {
+        toast.error('Reactivate to use the studio.')
+        return
+      }
       switch (event.action) {
         case 'new-photo':
           navigate('/library?new=photo')
@@ -482,7 +502,7 @@ export function RootLayout(): React.JSX.Element {
           break
       }
     })
-  }, [booted, location.pathname, navigate, setGuide, setShortcuts, setTheme, settings?.theme, toggleRail])
+  }, [booted, canUseStudio, location.pathname, navigate, setGuide, setShortcuts, setTheme, settings?.theme, toggleRail])
 
   useEffect(() => {
     if (location.pathname === '/' && booted) {
@@ -495,7 +515,7 @@ export function RootLayout(): React.JSX.Element {
   if (!booted) return <Splash />
   if (bootError) return <BootError />
 
-  const licenseInvalid = !license || license.status === 'unlicensed' || license.status === 'offline_unlicensed' || license.status === 'expired'
+  const licenseInvalid = !license || license.status === 'unlicensed' || license.status === 'expired'
   if (licenseInvalid && !initialLicenseValid && !readonlyBypass && location.pathname !== '/activation') {
     return <Navigate to="/activation" replace />
   }
@@ -516,6 +536,23 @@ export function RootLayout(): React.JSX.Element {
     <>
       <Outlet />
       <UpdateNotice />
+      {!canUseStudio && location.pathname !== '/activation' && location.pathname !== '/' && (
+        <div
+          className="readonly-banner fixed bottom-20 left-6 z-50 max-w-[430px]"
+          role="status"
+          style={{ boxShadow: '0 12px 32px rgba(0,0,0,0.18)' }}
+        >
+          <div>
+            <p className="text-[13px] font-semibold">Read-only</p>
+            <p className="hint mt-1">
+              Your license isn&apos;t active. You can view, copy, and export your work. Reactivate to make new images or edits.
+            </p>
+          </div>
+          <Button variant="primary" size="sm" onClick={() => navigate('/activation')}>
+            Activate
+          </Button>
+        </div>
+      )}
       <CommandPalette />
       <ShortcutsSheet />
       <GuideDialog />

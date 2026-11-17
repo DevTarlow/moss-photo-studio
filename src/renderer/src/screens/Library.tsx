@@ -172,6 +172,11 @@ export function Library(): React.JSX.Element {
 
   useEffect(() => {
     const nextType = params.get('new')
+    if (nextType && !useAppStore.getState().canUseStudio) {
+      setParams({}, { replace: true })
+      toast.error('Reactivate to use the studio.')
+      return
+    }
     if (nextType === 'photo') {
       setNewType(nextType)
       setNewPersonId(params.get('person'))
@@ -356,6 +361,10 @@ export function Library(): React.JSX.Element {
     event.stopPropagation()
     dragDepth.current = 0
     setDragOver(false)
+    if (!useAppStore.getState().canUseStudio) {
+      toast.error('Reactivate to use the studio.')
+      return
+    }
     const file = [...event.dataTransfer.files].find((entry) => ['image/jpeg', 'image/png', 'image/webp'].includes(entry.type))
     if (!file) {
       toast.error('That file is not a JPEG, PNG, or WebP photo.')

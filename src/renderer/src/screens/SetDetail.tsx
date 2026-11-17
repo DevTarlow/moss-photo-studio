@@ -29,6 +29,7 @@ export function SetDetail(): React.JSX.Element {
   const navigate = useNavigate()
   const confirm = useConfirm()
   const settings = useAppStore((state) => state.settings)
+  const canUseStudio = useAppStore((state) => state.canUseStudio)
   const [detail, setDetail] = useState<SetDetailData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -64,6 +65,10 @@ export function SetDetail(): React.JSX.Element {
   }, [filter])
 
   const createFromImage = async (image: LibraryImage, type: 'photo' | 'image'): Promise<void> => {
+    if (!canUseStudio) {
+      toast.error('Reactivate to use the studio.')
+      return
+    }
     setBusy(`${image.id}:${type}`)
     try {
       const project = await unwrap(window.moss.projects.createFromImage({ sourceImageId: image.id, type }))
@@ -345,10 +350,10 @@ export function SetDetail(): React.JSX.Element {
         <p className="truncate text-[13px] font-semibold">{image.label}</p>
         <p className="meta mt-0.5 truncate">From {image.projectName}</p>
         <div className="mt-3 flex flex-wrap gap-1.5">
-          <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromImage(image, 'photo')}>
+          <Button variant="secondary" size="sm" disabled={busy !== null || !canUseStudio} onClick={() => void createFromImage(image, 'photo')}>
             {busy === `${image.id}:photo` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Pencil} size="sm" />} Edit Photo
           </Button>
-          <Button variant="secondary" size="sm" disabled={busy !== null} onClick={() => void createFromImage(image, 'image')}>
+          <Button variant="secondary" size="sm" disabled={busy !== null || !canUseStudio} onClick={() => void createFromImage(image, 'image')}>
             {busy === `${image.id}:image` ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Sparkles} size="sm" />} Make an Image with this Photo
           </Button>
         </div>
@@ -379,7 +384,7 @@ export function SetDetail(): React.JSX.Element {
                   </Text>
                 </div>
                 <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-                  <Button variant="primary" disabled={busy !== null} onClick={() => setAddOpen(true)}>
+                  <Button variant="primary" disabled={busy !== null || !canUseStudio} onClick={() => setAddOpen(true)}>
                     <Icon icon={Plus} size="sm" /> Add to Set
                   </Button>
                   <Button variant="secondary" disabled={busy !== null || detail.total === 0} onClick={() => setExportOpen(true)}>
@@ -410,7 +415,7 @@ export function SetDetail(): React.JSX.Element {
                   icon={<Icon icon={Layers} size="lg" />}
                   title="This Set is empty"
                   line="Add a product photo or an image to this Set."
-                  action={<Button variant="primary" onClick={() => setAddOpen(true)}><Icon icon={Plus} size="sm" /> Add to Set</Button>}
+                  action={<Button variant="primary" disabled={!canUseStudio} onClick={() => setAddOpen(true)}><Icon icon={Plus} size="sm" /> Add to Set</Button>}
                 />
               ) : (
                 <>

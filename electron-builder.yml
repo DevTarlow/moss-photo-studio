@@ -4,6 +4,8 @@ copyright: Copyright © 2026 Moss Toolbox
 directories:
   buildResources: resources/brand
   output: release
+# Ship only the compiled app. Source, tests, docs, and sourcemaps stay out.
+asar: true
 files:
   - out/**/*
   - package.json

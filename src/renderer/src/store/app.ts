@@ -47,6 +47,7 @@ interface AppStore {
   setReadonlyBypass: (value: boolean) => void
   setOnboardingBypass: (value: boolean) => void
   canGenerate: boolean
+  canUseStudio: boolean
 }
 
 function applyThemeToDocument(theme: ThemeSetting): void {
@@ -73,6 +74,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   onboardingBypass: false,
   initialLicenseValid: false,
   canGenerate: false,
+  canUseStudio: false,
   boot: async () => {
     try {
       const [appInfo, settings, license, secrets, brand, people, products] = await Promise.all([
@@ -97,6 +99,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         people,
         products,
         canGenerate: license.status === 'licensed' || license.status === 'grace',
+        canUseStudio: license.status === 'licensed' || license.status === 'grace',
         initialLicenseValid: license.status === 'licensed' || license.status === 'grace'
       })
     } catch {
@@ -115,7 +118,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   applyLicense: (license) => {
     set({
       license,
-      canGenerate: license.status === 'licensed' || license.status === 'grace'
+      canGenerate: license.status === 'licensed' || license.status === 'grace',
+      canUseStudio: license.status === 'licensed' || license.status === 'grace'
     })
   },
   refreshLicense: async () => {

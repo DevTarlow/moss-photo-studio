@@ -43,8 +43,9 @@ ready; the site stays noindex until it is true. The site's `.env.example` still 
 in one comment; use the Stripe Payment Link here.
 
 6. The thank-you page should say, in plain words, that the license key is on its way to the
-   Stripe checkout email, link to `https://license.mossaistudio.com/account`, and give the support
-   address. It must not claim to show the key.
+   Stripe checkout email, link to `https://license.mossaistudio.com/account`, link the EULA
+   (`docs/eula.md`, published on the product site), and give the support address. It must not
+   claim to show the key.
 7. Register the same price id in the portal app. The portal retrieves the Checkout Session with
    its line items to map a Payment Link purchase when metadata is absent.
 

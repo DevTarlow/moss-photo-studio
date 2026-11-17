@@ -73,6 +73,7 @@ export function ProductDetail(): React.JSX.Element {
   const { id } = useParams()
   const navigate = useNavigate()
   const refreshProducts = useAppStore((state) => state.refreshProducts)
+  const canUseStudio = useAppStore((state) => state.canUseStudio)
   const confirm = useConfirm()
   const [detail, setDetail] = useState<ProductDetailData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -113,6 +114,7 @@ export function ProductDetail(): React.JSX.Element {
   const notesDirty = notesValue.trim() !== notesSaved.trim()
 
   const persistNotes = async (announce = true): Promise<boolean> => {
+    if (!canUseStudio) return true
     if (!detail || !notesDirty) return true
     setNotesBusy(true)
     try {
@@ -136,6 +138,10 @@ export function ProductDetail(): React.JSX.Element {
   }
 
   const start = async (type: ProjectType): Promise<void> => {
+    if (!canUseStudio) {
+      toast.error('Reactivate to use the studio.')
+      return
+    }
     if (!detail) return
     if (!(await persistNotes(false))) return
     setBusy(true)
@@ -150,6 +156,10 @@ export function ProductDetail(): React.JSX.Element {
   }
 
   const startRename = (): void => {
+    if (!canUseStudio) {
+      toast.error('Reactivate to use the studio.')
+      return
+    }
     if (!detail) return
     renameCancelled.current = false
     setRenameValue(detail.product.name)
@@ -191,6 +201,10 @@ export function ProductDetail(): React.JSX.Element {
   }
 
   const archive = async (): Promise<void> => {
+    if (!canUseStudio) {
+      toast.error('Reactivate to use the studio.')
+      return
+    }
     if (!detail) return
     const ok = await confirm({
       title: `Archive "${detail.product.name}"?`,

@@ -46,11 +46,11 @@ A product page keeps Products active in the sidebar, adds a Products back button
 
 A returned image costs $0.01. The price is on the button before every run. A refusal costs nothing, and the app does not add a fee for any generations.
 
-The Usage page tracks returned images with a paid AI / free adjustment breakdown, shows the current month and how much budget and how many images are left, and exports to a spreadsheet. Expand any row for request count, timing, and billing details. Adjust Photo and the local photo check are free.
+The Usage page tracks returned images with a paid AI / free adjustment breakdown, shows the current month and how much budget and how many images are left, and exports to a spreadsheet. Expand any row for request count, timing, and billing details. Adjust Photo and the local photo check do not spend a Meta credit; they still need an active license.
 
 ## Get a license
 
-A license costs $79 per year and covers two computers.
+A license costs $79 per year and covers two computers. The terms are in [docs/eula.md](docs/eula.md).
 
 Download the current Linux build from [GitHub Releases](https://github.com/DevTarlow/moss-photo-studio/releases). Install it, then activate with the key. Windows and macOS builds are not published yet.
 
@@ -59,11 +59,11 @@ Download the current Linux build from [GitHub Releases](https://github.com/DevTa
 3. Open **Settings, License** in the app and paste the key.
 4. Manage machines and licenses at [license.mossaistudio.com/account](https://license.mossaistudio.com/account).
 
-The app works offline for 14 days after a successful check. If the license ends, the library becomes read-only.
+The app works offline for 14 days after a successful check. If the license ends, the studio becomes read-only: you can view, copy, delete, and export your work, but making images, importing photos, editing, and changing Sets, Products, or People need an active license.
 
 Your files are not deleted.
 
-The app source is public. The license portal and its Stripe configuration are private.
+The source is published so buyers can inspect what runs on their computer. It is not open source; see [LICENSE](LICENSE) and [docs/eula.md](docs/eula.md). A purchased key is required to use the app, and a source build is not a licensed copy. The license portal and its Stripe configuration are private.
 
 ## Run from source
 
@@ -80,13 +80,13 @@ The dev app uses the same application data folder as an installed build. To keep
 MOSS_USER_DATA_DIR="$HOME/moss-dev-data" npm run dev
 ```
 
-To skip the license check and use a local fake image client instead of Meta:
+For development and automated tests, the unpackaged dev app can skip the license check and use a local fake image client instead of Meta:
 
 ```bash
 MOSS_DEV_UNLOCK=1 MOSS_MUSE_FAKE=1 npm run dev
 ```
 
-Nothing leaves the computer in fake mode, and a red FAKE MODE chip appears in Settings and the About window.
+This is a development tool, not a license grant, and it cannot be enabled in a packaged release. Nothing leaves the computer in fake mode, and a red FAKE MODE chip appears in Settings and the About window.
 
 ## Tests and builds
 
@@ -134,4 +134,4 @@ More detail lives in [docs/licensing.md](docs/licensing.md), [docs/checkout-inte
 
 ## License
 
-The application code and supplied reference imagery are part of Moss Toolbox. Third-party components and fonts keep their own licenses. See [LICENSES.md](LICENSES.md).
+Moss Photo Studio is proprietary software. Copyright (c) 2026 Moss Toolbox. All rights reserved. The source is published for inspection only; using the app requires a paid license under [docs/eula.md](docs/eula.md). See [LICENSE](LICENSE). Third-party components and fonts keep their own licenses; see [LICENSES.md](LICENSES.md).

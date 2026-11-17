@@ -735,9 +735,15 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await browse.focus()
     await page.keyboard.press('Enter')
     await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible()
+    await expect(page.getByText('Read-only', { exact: true }).first()).toBeVisible()
     await screenshot('license-expired-readonly')
+    const blocked = await page.evaluate(async () => {
+      const result = await window.moss.projects.create({ type: 'image', name: 'Should not exist' })
+      return result.ok ? null : result.code
+    })
+    expect(blocked).toBe('unlicensed')
     await page.locator('article.lib-card').first().getByRole('link', { name: /Open/ }).click()
-    await expect(page.getByText(/Reactivate to make images/).first()).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByText(/Reactivate/).first()).toBeVisible({ timeout: 20_000 })
     const projectId = new URL(page.url()).hash.split('/')[2]!
     const detail = await page.evaluate(async (id) => {
       const result = await window.moss.projects.get({ id })
@@ -750,10 +756,20 @@ test.describe.serial('Moss Photo Studio journey', () => {
         imageId,
         transform: { rotate: 0, flipH: false, flipV: false, brightness: 10, contrast: 0, saturation: 0, warmth: 0, sharpen: 0, vignette: 0 }
       })
-      return result.ok ? result.data : null
+      return result.ok ? null : result.code
     }, source!.id)
-    expect(adjusted?.imageId).toBeTruthy()
+    expect(adjusted).toBe('unlicensed')
+    const readable = await page.evaluate(async (id) => {
+      const result = await window.moss.images.list({ projectId: id })
+      return result.ok ? result.data.length : 0
+    }, projectId)
+    expect(readable).toBeGreaterThan(0)
     license.control('active')
+    const restored = await page.evaluate(async () => {
+      const result = await window.moss.license.validate()
+      return result.ok ? result.data.status : null
+    })
+    expect(restored).toBe('licensed')
     expect(pageErrors).toEqual([])
   })
 

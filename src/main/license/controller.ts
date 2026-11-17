@@ -2,14 +2,17 @@ import fs from 'node:fs'
 import path from 'node:path'
 import type { TextCipher } from '../secretCipher'
 import type { ErrorCode, LicenseState } from '@shared/types'
-import { LICENSE_GRACE_DAYS, LICENSE_GRACE_DAYS as GRACE } from '@shared/constants'
+import { APP_SLUG, LICENSE_GRACE_DAYS, LICENSE_GRACE_DAYS as GRACE } from '@shared/constants'
 import type { LicenseRepository, LicenseRow } from '../db/repositories/license'
 import type { Logger } from '../logger'
 import type { LicenseProvider, LicenseProviderError } from './provider'
-import { machineIdentity } from './machine'
+import { machineIdentity, type MachineIdentity } from './machine'
 
 const DAY = 24 * 60 * 60 * 1000
 const GRACE_MS = LICENSE_GRACE_DAYS * DAY
+
+const MACHINE_MISMATCH_MESSAGE =
+  'This license was activated on another computer. Paste your key to activate this computer.'
 
 export class LicenseError extends Error {
   constructor(readonly code: ErrorCode) {
@@ -19,10 +22,11 @@ export class LicenseError extends Error {
 }
 
 interface LicenseFile {
-  version: 1
+  version: 2
   keyEnc: string | null
   instanceId: string | null
   machineLabel: string | null
+  machineFingerprint: string | null
   status: string
   activatedAt: number | null
   lastValidatedAt: number | null
@@ -44,6 +48,7 @@ export class LicenseController {
   private readonly logger: Logger
   private readonly devUnlock: boolean
   private readonly machineLabel: string
+  private readonly machineFingerprint: string
   private readonly cipher: TextCipher
   private readonly listeners = new Set<(state: LicenseState) => void>()
   /** Serializes activate/validate/deactivate so a late response cannot overwrite a newer action. */
@@ -57,6 +62,7 @@ export class LicenseController {
     logger: Logger
     devUnlock?: boolean
     cipher: TextCipher
+    machine?: MachineIdentity
   }) {
     this.repo = options.repo
     this.provider = options.provider
@@ -65,7 +71,9 @@ export class LicenseController {
     this.logger = options.logger
     this.devUnlock = Boolean(options.devUnlock)
     this.cipher = options.cipher
-    this.machineLabel = machineIdentity(options.userDataDir).label
+    const identity = options.machine ?? machineIdentity(options.userDataDir)
+    this.machineLabel = identity.label
+    this.machineFingerprint = identity.fingerprint
     this.recoverFromFile()
   }
 
@@ -86,10 +94,21 @@ export class LicenseController {
       if (!fs.existsSync(this.file)) return
       const parsed = JSON.parse(fs.readFileSync(this.file, 'utf8')) as Partial<LicenseFile>
       if (!parsed || typeof parsed !== 'object' || !parsed.keyEnc || !parsed.instanceId) return
-      this.repo.save({
+      // A version 1 file predates machine binding. Adopt this machine so an
+      // existing install keeps working. A version 2 file from another computer
+      // is a copied license and must not be imported.
+      const fingerprint =
+        typeof parsed.machineFingerprint === 'string' ? parsed.machineFingerprint : this.machineFingerprint
+      if (fingerprint !== this.machineFingerprint) {
+        this.logger.warn('license', 'recovery_machine_mismatch')
+        fs.rmSync(this.file, { force: true })
+        return
+      }
+      this.save({
         keyEnc: parsed.keyEnc,
         instanceId: parsed.instanceId,
         machineLabel: parsed.machineLabel ?? this.machineLabel,
+        machineFingerprint: fingerprint,
         status: parsed.status ?? 'licensed',
         activatedAt: parsed.activatedAt ?? null,
         lastValidatedAt: parsed.lastValidatedAt ?? null,
@@ -107,10 +126,11 @@ export class LicenseController {
       return
     }
     const payload: LicenseFile = {
-      version: 1,
+      version: 2,
       keyEnc: row.key_enc,
       instanceId: row.instance_id,
       machineLabel: row.machine_label,
+      machineFingerprint: row.machine_fingerprint,
       status: row.status,
       activatedAt: row.activated_at,
       lastValidatedAt: row.last_validated_at,
@@ -136,6 +156,7 @@ export class LicenseController {
             keyEnc: decrypted.reencrypted,
             instanceId: row.instance_id,
             machineLabel: row.machine_label,
+            machineFingerprint: row.machine_fingerprint,
             status: row.status,
             activatedAt: row.activated_at,
             lastValidatedAt: row.last_validated_at,
@@ -150,6 +171,18 @@ export class LicenseController {
     } catch {
       return null
     }
+  }
+
+  /**
+   * A null fingerprint is a pre-binding license; adopt this machine once. A
+   * different fingerprint is a copied install and is never treated as licensed.
+   */
+  private async bindOrReject(row: LicenseRow): Promise<LicenseRow | null> {
+    if (row.machine_fingerprint === null) {
+      this.save({ ...rowToSave(row), machineFingerprint: this.machineFingerprint })
+      return this.repo.getRow()
+    }
+    return row.machine_fingerprint === this.machineFingerprint ? row : null
   }
 
   private last4(key: string | null): string | null {
@@ -170,8 +203,8 @@ export class LicenseController {
 
   async state(): Promise<LicenseState> {
     if (this.devUnlock) return this.devState()
-    const row = this.repo.getRow()
-    if (!row || !row.key_enc || !row.instance_id) {
+    const stored = this.repo.getRow()
+    if (!stored || !stored.key_enc || !stored.instance_id) {
       return {
         status: 'unlicensed',
         source: null,
@@ -183,23 +216,36 @@ export class LicenseController {
       }
     }
     const now = this.clock()
-    const key = await this.decryptKey(row)
-    const last = row.last_validated_at
-    const offlineUntil = last ? last + GRACE_MS : null
+    const key = await this.decryptKey(stored)
     if (!key) {
+      const last = stored.last_validated_at
       // A row that cannot be decrypted is not a license. Reporting it as
       // licensed would let a copied userData folder keep generation open after
       // the OS keyring changed; the seller can re-activate with their key.
       return {
         status: 'unlicensed',
         source: null,
-        machineLabel: row.machine_label ?? this.machineLabel,
+        machineLabel: stored.machine_label ?? this.machineLabel,
         keyLast4: null,
         lastValidatedAt: last,
-        offlineUntil,
+        offlineUntil: last ? last + GRACE_MS : null,
         message: "The saved license could not be read on this computer. Paste your license key to activate it again."
       }
     }
+    const row = await this.bindOrReject(stored)
+    if (!row) {
+      return {
+        status: 'unlicensed',
+        source: null,
+        machineLabel: stored.machine_label ?? this.machineLabel,
+        keyLast4: null,
+        lastValidatedAt: stored.last_validated_at,
+        offlineUntil: stored.last_validated_at ? stored.last_validated_at + GRACE_MS : null,
+        message: MACHINE_MISMATCH_MESSAGE
+      }
+    }
+    const last = row.last_validated_at
+    const offlineUntil = last ? last + GRACE_MS : null
     const rolledBack = last !== null && now < last - DAY
     const graceEnded = last !== null && now - last > GRACE_MS
     const source = row.source === 'dev' ? 'dev' : row.source === 'lemon' ? 'lemon' : 'moss'
@@ -261,15 +307,20 @@ export class LicenseController {
     }
   }
 
-  async canGenerate(): Promise<boolean> {
+  async canUseStudio(): Promise<boolean> {
     const status = (await this.state()).status
     return status === 'licensed' || status === 'grace'
+  }
+
+  async canGenerate(): Promise<boolean> {
+    return this.canUseStudio()
   }
 
   private save(input: {
     keyEnc: string | null
     instanceId: string | null
     machineLabel: string | null
+    machineFingerprint: string | null
     status: string
     activatedAt: number | null
     lastValidatedAt: number | null
@@ -293,14 +344,29 @@ export class LicenseController {
 
   private async validateNow(): Promise<LicenseState> {
     if (this.devUnlock) return this.state()
-    const row = this.repo.getRow()
-    const key = await this.decryptKey(row)
-    if (!row || !row.instance_id || !key) {
+    const stored = this.repo.getRow()
+    const key = await this.decryptKey(stored)
+    if (!stored || !stored.instance_id || !key) {
+      return this.state()
+    }
+    const row = await this.bindOrReject(stored)
+    if (!row || !row.instance_id) {
+      // Never send a copied license to the portal; the copied machine must
+      // activate with the key to claim its own seat.
+      this.logger.warn('license', 'validation_machine_mismatch')
       return this.state()
     }
     const outcome = await this.provider.validate({ key, instanceId: row.instance_id })
     const now = this.clock()
     if (outcome.ok) {
+      if (outcome.product !== null && outcome.product !== APP_SLUG) {
+        this.save({
+          ...rowToSave(row),
+          status: 'expired'
+        })
+        this.logger.warn('license', 'validation_wrong_product')
+        return this.emit()
+      }
       this.save({
         ...rowToSave(row),
         status: 'licensed',
@@ -338,12 +404,20 @@ export class LicenseController {
     const outcome = await this.provider.activate({ key: trimmed, instanceName: this.machineLabel })
     if (!outcome.ok) throw new LicenseError(providerCodeToError(outcome.code))
     if (outcome.status !== 'active') throw new LicenseError('license_invalid')
+    if (outcome.product !== null && outcome.product !== APP_SLUG) {
+      this.logger.warn('license', 'activation_wrong_product')
+      throw new LicenseError('license_invalid')
+    }
+    if (outcome.product === null) {
+      this.logger.warn('license', 'activation_missing_product')
+    }
     const encrypted = await this.cipher.encryptString(trimmed)
     const now = this.clock()
     this.save({
       keyEnc: encrypted,
       instanceId: outcome.instanceId,
       machineLabel: this.machineLabel,
+      machineFingerprint: this.machineFingerprint,
       status: 'licensed',
       activatedAt: now,
       lastValidatedAt: now,
@@ -372,6 +446,13 @@ export class LicenseController {
       this.writeFile(null)
       return this.emit()
     }
+    if (row.machine_fingerprint !== null && row.machine_fingerprint !== this.machineFingerprint) {
+      // A copied install must not release the real machine's seat.
+      this.repo.clear()
+      this.writeFile(null)
+      this.logger.warn('license', 'deactivation_machine_mismatch')
+      return this.emit()
+    }
     const outcome = await this.provider.deactivate({ key, instanceId: row.instance_id })
     if (!outcome.ok) throw new LicenseError(providerCodeToError(outcome.code))
     this.repo.clear()
@@ -385,6 +466,8 @@ function rowToSave(row: LicenseRow): {
   keyEnc: string | null
   instanceId: string | null
   machineLabel: string | null
+  machineFingerprint: string | null
+  status: string
   activatedAt: number | null
   lastValidatedAt: number | null
   source: string
@@ -393,6 +476,8 @@ function rowToSave(row: LicenseRow): {
     keyEnc: row.key_enc,
     instanceId: row.instance_id,
     machineLabel: row.machine_label,
+    machineFingerprint: row.machine_fingerprint,
+    status: row.status,
     activatedAt: row.activated_at,
     lastValidatedAt: row.last_validated_at,
     source: row.source

@@ -25,6 +25,7 @@ import { Heading, Icon, Selector, Text, TextInput, ToggleButton, ToggleButtonGro
 export function Products(): React.JSX.Element {
   const navigate = useNavigate()
   const products = useAppStore((state) => state.products)
+  const canUseStudio = useAppStore((state) => state.canUseStudio)
   const refreshProducts = useAppStore((state) => state.refreshProducts)
   const confirm = useConfirm()
   const included = bundledProductCards()
@@ -205,10 +206,10 @@ export function Products(): React.JSX.Element {
               <Text type="supporting" color="secondary" className="block">Your reusable product photos and the projects made from them.</Text>
             </div>
             <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-              <Button variant="secondary" disabled={creatingProduct} onClick={() => void createProduct()}>
+              <Button variant="secondary" disabled={creatingProduct || !canUseStudio} onClick={() => void createProduct()}>
                 <Icon icon={Sparkles} size="sm" /> Generate Product Photo
               </Button>
-              <Button variant="primary" onClick={() => setAddOpen(true)}>
+              <Button variant="primary" disabled={!canUseStudio} onClick={() => setAddOpen(true)}>
                 {busy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={Plus} size="sm" />} Add Product Photo
               </Button>
             </div>
@@ -274,7 +275,7 @@ export function Products(): React.JSX.Element {
                         icon={<Icon icon={Package} size="lg" />}
                         title="No saved products yet"
                         line="Save a product photo from an image, or add one from a file."
-                        action={<Button variant="secondary" onClick={() => setAddOpen(true)}>Add a Product Photo</Button>}
+                        action={<Button variant="secondary" disabled={!canUseStudio} onClick={() => setAddOpen(true)}>Add a Product Photo</Button>}
                         compact
                       />
                     </div>
@@ -320,7 +321,7 @@ export function Products(): React.JSX.Element {
                           <p className="meta">{project.type === 'photo' ? 'Photo edit' : 'Image'} · {project.imageCount} {project.imageCount === 1 ? 'image' : 'images'}</p>
                         </div>
                         <Button variant="ghost" size="sm" onClick={() => navigate(`/project/${project.id}`)}>Open</Button>
-                        <Button variant="secondary" size="sm" disabled={busy} onClick={() => void makeProductFromProject(project)}>Save as Product</Button>
+                        <Button variant="secondary" size="sm" disabled={busy || !canUseStudio} onClick={() => void makeProductFromProject(project)}>Save as Product</Button>
                       </div>
                     ))}
                   </div>
@@ -420,7 +421,7 @@ export function Products(): React.JSX.Element {
             <Button variant="ghost" onClick={() => setPreview(null)}>Close</Button>
           ) : (
             <>
-              <Button variant="ghost" onClick={() => preview && openRename(preview)}>Rename</Button>
+              <Button variant="ghost" disabled={!canUseStudio} onClick={() => preview && openRename(preview)}>Rename</Button>
               <Button variant="ghost" className="text-[var(--danger)]" onClick={() => preview && void remove(preview)}>Delete</Button>
             </>
           )
@@ -434,10 +435,10 @@ export function Products(): React.JSX.Element {
             <div className="mt-4">
               <p className="section-label">Start with This Product</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'photo')}>
+                <Button variant="secondary" disabled={busy || !canUseStudio} onClick={() => void startProject(preview, 'photo')}>
                   <Icon icon={ImageIcon} size="sm" /> Edit Photo
                 </Button>
-                <Button variant="secondary" disabled={busy} onClick={() => void startProject(preview, 'image')}>
+                <Button variant="secondary" disabled={busy || !canUseStudio} onClick={() => void startProject(preview, 'image')}>
                   <Icon icon={Sparkles} size="sm" /> Make an Image with this Product
                 </Button>
               </div>

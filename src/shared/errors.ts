@@ -13,8 +13,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   app_bug: "Something in the app sent a setting Meta doesn't accept. Update the app.",
   invalid_request: 'Meta refused that request. Try a shorter description or a different photo.',
   aborted: 'That change was stopped.',
-  unlicensed: 'Reactivate to make images.',
-  unlicensed_library: 'Reactivate to make images.',
+  unlicensed: 'Reactivate to use the studio.',
   no_key: 'Add your Meta key in Settings to make images.',
   budget: 'This run would pass your monthly limit. Raise it in Usage, or make fewer images.',
   disk_full:

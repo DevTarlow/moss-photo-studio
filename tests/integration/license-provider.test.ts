@@ -18,8 +18,9 @@ describe('Moss license portal provider', () => {
     expect(activated.ok).toBe(true)
     if (!activated.ok) return
     expect(activated.instanceId).toMatch(/^instance-/)
+    expect(activated.product).toBe('moss-photo-studio')
     const validated = await provider.validate({ key: 'MOSS-E2E-VALID-KEY', instanceId: activated.instanceId })
-    expect(validated).toEqual({ ok: true, status: 'active' })
+    expect(validated).toEqual({ ok: true, status: 'active', product: 'moss-photo-studio' })
     expect(await provider.deactivate({ key: 'MOSS-E2E-VALID-KEY', instanceId: activated.instanceId })).toEqual({ ok: true })
     expect(server.instances()).toHaveLength(0)
   })
@@ -60,5 +61,12 @@ describe('Moss license portal provider', () => {
     expect(request?.path).toBe('/api/v1/licenses/activate')
     expect(request?.path).not.toContain('MOSS-KEY-6')
     expect(request?.json.key).toBe('MOSS-KEY-6')
+    expect(request?.json.app_slug).toBe('moss-photo-studio')
+  })
+
+  it('returns the product so the app can reject a key for another app', async () => {
+    server.control('foreign-product')
+    const activated = await provider.activate({ key: 'MOSS-KEY-7', instanceName: 'one' })
+    expect(activated).toMatchObject({ ok: false, code: 'license_invalid' })
   })
 })

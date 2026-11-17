@@ -1,6 +1,6 @@
 import http from 'node:http'
 
-export type LicenseScenario = 'active' | 'invalid' | 'limit' | 'expired' | 'down' | 'offline' | 'server-error'
+export type LicenseScenario = 'active' | 'invalid' | 'limit' | 'expired' | 'down' | 'offline' | 'server-error' | 'foreign-product'
 interface Instance { id: string; name: string; createdAt: number }
 
 async function readJson(req: http.IncomingMessage): Promise<Record<string, unknown>> {
@@ -67,6 +67,8 @@ export async function startFakeLicense() {
     }
 
     const key = typeof body.key === 'string' ? body.key : ''
+    const product = scenario === 'foreign-product' ? 'moss-video' : 'moss-photo-studio'
+    const requestedApp = typeof body.app_slug === 'string' ? body.app_slug : null
     if (url.pathname === '/api/v1/licenses/activate') {
       if (!key || key === 'bad' || scenario === 'invalid') {
         json(res, 400, { error: 'invalid_key' })
@@ -74,6 +76,10 @@ export async function startFakeLicense() {
       }
       if (scenario === 'expired') {
         json(res, 410, { error: 'license_expired' })
+        return
+      }
+      if (requestedApp && requestedApp !== product) {
+        json(res, 400, { error: 'invalid_key' })
         return
       }
       if (scenario === 'limit' || instances.size >= 2) {
@@ -86,7 +92,7 @@ export async function startFakeLicense() {
         json(res, 200, {
           activated: true,
           instance: { id: existing.id, name: existing.name },
-          license: { status: 'active', expiresAt: null }
+          license: { status: 'active', product, expiresAt: null }
         })
         return
       }
@@ -96,12 +102,16 @@ export async function startFakeLicense() {
       json(res, 200, {
         activated: true,
         instance: { id: instance.id, name: instance.name },
-        license: { status: 'active', expiresAt: null }
+        license: { status: 'active', product, expiresAt: null }
       })
       return
     }
 
     if (url.pathname === '/api/v1/licenses/validate') {
+      if (requestedApp && requestedApp !== product) {
+        json(res, 200, { valid: false, license: { status: 'inactive', product } })
+        return
+      }
       if (scenario === 'invalid') {
         json(res, 200, { valid: false, license: { status: 'inactive' } })
         return
@@ -115,7 +125,7 @@ export async function startFakeLicense() {
         json(res, 200, { valid: false, license: { status: 'inactive' } })
         return
       }
-      json(res, 200, { valid: true, license: { status: 'active', expiresAt: null } })
+      json(res, 200, { valid: true, license: { status: 'active', product, expiresAt: null } })
       return
     }
 

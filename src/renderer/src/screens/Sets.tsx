@@ -12,6 +12,7 @@ import { SetCard } from '../components/sets/SetCard'
 import { SetNameDialog } from '../components/sets/SetNameDialog'
 import { unwrap, messageOf } from '../lib/ipc'
 import { toast } from '../lib/toast'
+import { useAppStore } from '../store/app'
 
 export function Sets(): React.JSX.Element {
   const navigate = useNavigate()
@@ -19,6 +20,7 @@ export function Sets(): React.JSX.Element {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
+  const canUseStudio = useAppStore((state) => state.canUseStudio)
 
   const load = async (): Promise<void> => {
     setLoading(true)
@@ -54,7 +56,7 @@ export function Sets(): React.JSX.Element {
               </Text>
             </div>
             <div className="ml-auto">
-              <Button variant="primary" onClick={() => setCreateOpen(true)}>
+              <Button variant="primary" disabled={!canUseStudio} onClick={() => setCreateOpen(true)}>
                 <Icon icon={Plus} size="sm" /> New Set
               </Button>
             </div>
@@ -71,7 +73,7 @@ export function Sets(): React.JSX.Element {
               icon={<Icon icon={Layers} size="lg" />}
               title="No Sets yet"
               line="Open any image or product and choose Add to Set, or create a Set now and add things to it."
-              action={<Button variant="secondary" onClick={() => setCreateOpen(true)}>New Set</Button>}
+              action={<Button variant="secondary" disabled={!canUseStudio} onClick={() => setCreateOpen(true)}>New Set</Button>}
             />
           ) : (
             <div className="mt-8 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>

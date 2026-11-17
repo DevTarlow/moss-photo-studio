@@ -18,7 +18,7 @@ export function BootRedirect(): React.JSX.Element {
     if (!settings || !license || ready) return
     let cancelled = false
     const decide = async (): Promise<void> => {
-      if (license.status === 'unlicensed' || license.status === 'offline_unlicensed') {
+      if (license.status === 'unlicensed') {
         if (!initialLicenseValid) {
           navigate('/activation', { replace: true })
           return

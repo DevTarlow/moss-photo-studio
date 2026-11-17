@@ -73,6 +73,7 @@ export function People(): React.JSX.Element {
   const [selectedLookKey, setSelectedLookKey] = useState<string | null>(null)
   const [imagePreviewOpen, setImagePreviewOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
+  const canUseStudio = useAppStore((state) => state.canUseStudio)
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -255,10 +256,10 @@ export function People(): React.JSX.Element {
               <Text type="supporting" color="secondary" className="block">People you can add to your product photos.</Text>
             </div>
             <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-              <Button variant="secondary" disabled={creatingPerson} onClick={() => void createPerson()}>
+              <Button variant="secondary" disabled={creatingPerson || !canUseStudio} onClick={() => void createPerson()}>
                 <Icon icon={Sparkles} size="sm" /> Generate Person Photo
               </Button>
-              <Button variant="primary" onClick={() => setAddOpen(true)}>
+              <Button variant="primary" disabled={!canUseStudio} onClick={() => setAddOpen(true)}>
                 <Icon icon={UserPlus} size="sm" /> Add Portrait
               </Button>
             </div>

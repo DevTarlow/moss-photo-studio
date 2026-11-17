@@ -636,6 +636,15 @@ const migrations: Migration[] = [
       `)
     }
   },
+  {
+    version: 15,
+    up(db) {
+      db.exec(`
+        ALTER TABLE license ADD COLUMN machine_fingerprint TEXT;
+        INSERT OR REPLACE INTO meta (key, value) VALUES ('schemaVersion', '15');
+      `)
+    }
+  },
 ]
 
 export const SCHEMA_VERSION = migrations[migrations.length - 1]!.version

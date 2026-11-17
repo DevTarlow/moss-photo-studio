@@ -134,10 +134,13 @@ export function Activation(): React.JSX.Element {
                   navigate('/library')
                 }}
               >
-                Browse My Library
+                Browse My Library (read-only)
               </button>
             )}
           </div>
+          <p className="hint mt-3">
+            Read-only browsing shows your existing work. Making images, importing photos, and editing need an active license.
+          </p>
           <p className="hint mt-6 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
             Lost it? Check the key email, or open the{' '}
             <button type="button" className="inline-flex items-center gap-1" style={{ color: 'var(--accent)' }} onClick={() => void window.moss.app.openExternal({ url: LICENSE_PORTAL_URL })}>

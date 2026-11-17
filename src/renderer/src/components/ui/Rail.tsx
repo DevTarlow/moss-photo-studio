@@ -19,6 +19,7 @@ import {
 import { Icon, SideNav, SideNavItem, SideNavSection } from '@astryxdesign/core'
 import { settingsSections } from '../../lib/settingsSections'
 import { useWorkspaceStore } from '../../store/workspace'
+import { useAppStore } from '../../store/app'
 
 const settingsIcons = {
   studio: <Icon icon={KeyRound} size="md" strokeWidth={1.75} />,
@@ -52,6 +53,7 @@ export function Rail({
   onToggle: () => void
 }): React.JSX.Element {
   const location = useLocation()
+  const canUseStudio = useAppStore((state) => state.canUseStudio)
   const inSettings = location.pathname.startsWith('/settings')
   const project = useWorkspaceStore((state) => state.project)
   const inWorkspace = location.pathname.startsWith('/project/')
@@ -99,10 +101,10 @@ export function Rail({
         {tools.map((tool) => (
           <SideNavItem
             key={tool.to}
-            label={tool.label}
+            label={canUseStudio ? tool.label : `${tool.label} (reactivate)`}
             icon={tool.icon}
-            href={tool.to}
-            isSelected={tool.id === 'editor' ? editorActive : generatorActive}
+            href={canUseStudio ? tool.to : '/activation'}
+            isSelected={canUseStudio && (tool.id === 'editor' ? editorActive : generatorActive)}
           />
         ))}
       </SideNavSection>

@@ -70,6 +70,7 @@ export function PhotoWorkspace(): React.JSX.Element {
   const settings = useAppStore((state) => state.settings)
   const secrets = useAppStore((state) => state.secrets)
   const canGenerate = useAppStore((state) => state.canGenerate)
+  const canUseStudio = useAppStore((state) => state.canUseStudio)
   const refreshSettings = useAppStore((state) => state.refreshSettings)
   const setMetaKeyOpen = useUiStore((state) => state.setMetaKeyOpen)
   const setBudgetOpen = useUiStore((state) => state.setBudgetOpen)
@@ -302,6 +303,10 @@ export function PhotoWorkspace(): React.JSX.Element {
   }
 
   const pasteImage = async (): Promise<void> => {
+    if (!canUseStudio) {
+      toast.error('Reactivate to use the studio.')
+      return
+    }
     try {
       const result = await unwrap(window.moss.app.readClipboardImage())
       if (!result.bytes || !result.mime) {
@@ -331,6 +336,10 @@ export function PhotoWorkspace(): React.JSX.Element {
   }
 
   const chooseAddedPhoto = async (choice: SourceChoice): Promise<void> => {
+    if (!canUseStudio) {
+      toast.error('Reactivate to use the studio.')
+      return
+    }
     try {
       if (choice.kind === 'product') {
         const imported = await unwrap(window.moss.products.importIntoProject({ productId: choice.productId, projectId: project.id }))
@@ -351,6 +360,10 @@ export function PhotoWorkspace(): React.JSX.Element {
   }
 
   const addPhotoWithFile = async (): Promise<void> => {
+    if (!canUseStudio) {
+      toast.error('Reactivate to use the studio.')
+      return
+    }
     try {
       const result = await unwrap(window.moss.dialogs.importImage({ projectId: project.id, kind: 'source' }))
       if (result?.imageId) {
@@ -447,6 +460,10 @@ export function PhotoWorkspace(): React.JSX.Element {
   }
 
   const applyBatch = async (): Promise<void> => {
+    if (!canUseStudio) {
+      toast.error('Reactivate to use the studio.')
+      return
+    }
     const count = ready.length
     const ok = await confirm({
       title: `Apply this color grade to ${count} images?`,
@@ -477,6 +494,10 @@ export function PhotoWorkspace(): React.JSX.Element {
   }
 
   const addSizeLabel = async (width: number, height: number, unit: 'cm' | 'in'): Promise<void> => {
+    if (!canUseStudio) {
+      toast.error('Reactivate to use the studio.')
+      return
+    }
     if (!selected) return
     setLabelBusy(true)
     try {
@@ -502,6 +523,10 @@ export function PhotoWorkspace(): React.JSX.Element {
   }
 
   const applyAdjust = async (): Promise<void> => {
+    if (!canUseStudio) {
+      setError('Reactivate to use the studio.')
+      return
+    }
     if (!selected) return
     if (isIdentity(adjust)) return
     setApplyBusy(true)
@@ -548,12 +573,16 @@ export function PhotoWorkspace(): React.JSX.Element {
   const changePrimaryDisabled =
     tab === 'change' &&
     (!selected || !text.trim() || text.length > 2000 || !secrets?.hasKey || !canGenerate || (kind === 'model' && !people.some((person) => person.id === personId)))
-  const applyDisabled = isIdentity(adjust) || isRunning || applyBusy
+  const applyDisabled = !canUseStudio || isIdentity(adjust) || isRunning || applyBusy
 
   const commitAction = tab === 'adjust' ? (
-    <Button variant="primary" disabled={applyDisabled} onClick={() => void applyAdjust()}>
-      {applyBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Apply Adjustment · Free
-    </Button>
+    !canUseStudio ? (
+      <Button variant="primary" onClick={() => navigate('/activation')}>Reactivate to Edit</Button>
+    ) : (
+      <Button variant="primary" disabled={applyDisabled} onClick={() => void applyAdjust()}>
+        {applyBusy ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : null} Apply Adjustment · Free
+      </Button>
+    )
   ) : overBudget ? (
     <BudgetWarning limitCents={settings?.budgetCents ?? 0} onRaise={() => setBudgetOpen(true)} />
   ) : !secrets?.hasKey ? (
@@ -576,14 +605,14 @@ export function PhotoWorkspace(): React.JSX.Element {
         <button type="button" data-selected={tab === 'change'} disabled={tabDisabled} onClick={() => setTab('change')}>Change Photo <span className="ml-1 badge pill-sm">AI</span></button>
         <button type="button" data-selected={tab === 'adjust'} disabled={tabDisabled} onClick={() => setTab('adjust')}>Adjust Photo <span className="ml-1 badge pill-sm">Free</span></button>
       </div>
-      {tab === 'change' && (!secrets?.hasKey || !canGenerate) && (
+      {tab === 'change' && (!secrets?.hasKey || !canUseStudio) && (
         <div className="px-4 pt-3">
           <Banner
             status={!secrets?.hasKey ? 'info' : 'warning'}
-            title={!secrets?.hasKey ? 'Add a Meta key to make images' : 'Reactivate to make images'}
+            title={!secrets?.hasKey ? 'Add a Meta key to make images' : 'Reactivate to use the studio'}
             description={!secrets?.hasKey
-              ? 'You can still crop, light, and color for free in Adjust Photo. A key connects Moss to your Meta account for paid changes.'
-              : 'Your library and free adjustments still work. Open License to restore paid image making.'}
+              ? 'A key connects Moss to your Meta account for paid changes.'
+              : 'Your library, copies, and exports still work. Reactivate to make images or edits.'}
             endContent={!secrets?.hasKey ? (
               <Button variant="secondary" size="sm" onClick={() => setMetaKeyOpen(true)}>Add Key</Button>
             ) : (
@@ -928,7 +957,7 @@ export function PhotoWorkspace(): React.JSX.Element {
               <p className="meta">{formatDate(selected?.createdAt ?? Date.now())}{isRunning ? ' · making' : ''}</p>
             </div>
             <div className="ml-auto flex flex-wrap items-center gap-2">
-              <Button variant="ghost" size="sm" disabled={isRunning} onClick={() => setAddPhotoOpen(true)}>
+              <Button variant="ghost" size="sm" disabled={isRunning || !canUseStudio} onClick={() => setAddPhotoOpen(true)}>
                 <Icon icon={Plus} size="sm" /> Add Photo
               </Button>
               <Button variant="ghost" size="sm" disabled={!selected || isRunning} onClick={() => setExportOpen(true)}>

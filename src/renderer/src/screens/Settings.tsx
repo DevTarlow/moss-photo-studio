@@ -566,7 +566,7 @@ function LicenseSection(): React.JSX.Element {
               {appInfo?.devUnlock && <span className="badge" data-tone="danger">DEV UNLOCK</span>}
             </div>
           </div>
-          {license && (license.status === 'expired' || license.status === 'unlicensed' || license.status === 'offline_unlicensed') && (
+          {license && (license.status === 'expired' || license.status === 'unlicensed') && (
             <Button variant="primary" onClick={() => navigate('/activation')}>Open Activation</Button>
           )}
         </div>

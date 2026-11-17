@@ -6,6 +6,7 @@ import { ERROR_MESSAGES } from '@shared/errors'
 import { JobStartError } from '../jobs/queue'
 import { ImageImportError } from '../media/import'
 import { LicenseError } from '../license/controller'
+import { requiresActiveLicense } from '../license/policy'
 import type { Logger } from '../logger'
 
 export function ok<T>(value: T): IpcResult<T> {
@@ -23,12 +24,15 @@ function errorCodeFromFile(error: NodeJS.ErrnoException): ErrorCode | null {
 }
 
 export function registerIpc<C extends IpcChannel>(
-  context: { logger: Logger },
+  context: { logger: Logger; license: { canUseStudio(): Promise<boolean> } },
   channel: C,
   schema: ZodType<IpcRequest<C>>,
   handler: (request: IpcRequest<C>) => Promise<IpcResponse<C>> | IpcResponse<C>
 ): void {
   ipcMain.handle(channel, async (_event, raw: unknown): Promise<IpcResult<IpcResponse<C>>> => {
+    if (requiresActiveLicense(channel) && !(await context.license.canUseStudio())) {
+      return fail('unlicensed')
+    }
     const parsed = schema.safeParse(raw)
     if (!parsed.success) {
       context.logger.warn('ipc', 'invalid_payload', { area: channel })

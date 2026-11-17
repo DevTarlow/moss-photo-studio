@@ -281,7 +281,7 @@ export interface UsageByProject {
   items: Array<{ projectId: string | null; name: string; images: number; spendCents: number }>
 }
 
-export type LicenseStatus = 'unlicensed' | 'licensed' | 'grace' | 'expired' | 'offline_unlicensed'
+export type LicenseStatus = 'unlicensed' | 'licensed' | 'grace' | 'expired'
 
 export interface LicenseState {
   status: LicenseStatus
@@ -368,7 +368,6 @@ export type ErrorCode =
   | 'invalid_request'
   | 'aborted'
   | 'unlicensed'
-  | 'unlicensed_library'
   | 'no_key'
   | 'budget'
   | 'disk_full'

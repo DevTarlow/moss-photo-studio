@@ -23,7 +23,7 @@ These cannot be invented by the app:
 4. **Windows signing certificate**: an Authenticode/EV certificate and its password. electron-builder reads `CSC_LINK` (path or base64) and `CSC_KEY_PASSWORD`.
 5. **macOS Developer ID Application certificate**, plus notarization credentials. electron-builder reads `CSC_LINK`/`CSC_KEY_PASSWORD`; notarization reads `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID` (or an Apple API key).
 6. **Update decision**: the Linux AppImage uses `electron-updater` with GitHub Releases, background downloads, and install on restart. The deb and non-AppImage builds use the portal download page. Windows and macOS still need signing before auto-install can ship.
-7. **Website/legal review**: `mossphotostudio.com` landing page, privacy policy that mentions Meta image generation, and the AI disclosure wording. `docs/privacy.md` is the source of truth for what leaves the computer.
+7. **Website/legal review**: `mossphotostudio.com` landing page, privacy policy that mentions Meta image generation, the AI disclosure wording, and the EULA. `LICENSE` and `docs/eula.md` must be reviewed by counsel, and the product site and post-purchase email must link the EULA. `docs/privacy.md` is the source of truth for what leaves the computer.
 
 ## Update options
 
@@ -65,6 +65,8 @@ npm --prefix portal run check
 npm --prefix portal run build
 MOSS_RELEASE=1 npm run release:gate
 ```
+
+The gate also refuses `MOSS_TEST_BUILD=1` and a missing `LICENSE`/`package.json` license pointer. A release built with test overrides would accept `MOSS_DEV_UNLOCK` and the fake hosts, so that combination must never be published.
 
 Then, after replacing the two public values:
 

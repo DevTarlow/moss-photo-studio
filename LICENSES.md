@@ -1,6 +1,6 @@
 # Licenses and provenance
 
-Moss Photo Studio is supplied as part of Moss Toolbox. The application code is not open source. The package metadata says `UNLICENSED`. You may use the built application under the terms you received it with, but you may not redistribute the source or the bundled reference imagery as your own.
+Moss Photo Studio is proprietary software from Moss Toolbox. Copyright (c) 2026 Moss Toolbox. All rights reserved. The source is published for inspection only; using the app requires a paid license under [docs/eula.md](docs/eula.md). See [LICENSE](LICENSE). You may not redistribute the source, a modified build, or the bundled reference imagery as your own. Third-party components keep the licenses below.
 
 Third-party components keep their own licenses. The full text of each package's license is included in its npm package and, for the packaged application, in the application archive. The fonts and their OFL texts are also copied to `resources/licenses` and packaged with the app.
 

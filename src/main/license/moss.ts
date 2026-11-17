@@ -1,3 +1,4 @@
+import { APP_SLUG } from '@shared/constants'
 import type {
   ActivateOutcome,
   DeactivateOutcome,
@@ -97,7 +98,7 @@ export class MossLicenseProvider implements LicenseProvider {
   async activate(input: { key: string; instanceName: string }): Promise<ActivateOutcome> {
     const result = await postJson(
       `${this.baseUrl}/api/v1/licenses/activate`,
-      { key: input.key, instance_name: input.instanceName },
+      { key: input.key, instance_name: input.instanceName, app_slug: APP_SLUG },
       this.activateTimeoutMs,
       this.fetcher
     )
@@ -114,13 +115,14 @@ export class MossLicenseProvider implements LicenseProvider {
     if (!instanceId) return { ok: false, code: 'unknown' }
     const status = typeof license.status === 'string' ? license.status : 'active'
     if (status !== 'active') return { ok: false, code: 'license_invalid' }
-    return { ok: true, instanceId, status }
+    const product = typeof license.product === 'string' ? license.product : null
+    return { ok: true, instanceId, status, product }
   }
 
   async validate(input: { key: string; instanceId: string }): Promise<ValidateOutcome> {
     const result = await postJson(
       `${this.baseUrl}/api/v1/licenses/validate`,
-      { key: input.key, instance_id: input.instanceId },
+      { key: input.key, instance_id: input.instanceId, app_slug: APP_SLUG },
       this.validateTimeoutMs,
       this.fetcher
     )
@@ -130,7 +132,8 @@ export class MossLicenseProvider implements LicenseProvider {
     if (result.body.valid === true) {
       const license = asRecord(result.body.license)
       const status = typeof license.status === 'string' ? license.status : 'active'
-      return { ok: true, status }
+      const product = typeof license.product === 'string' ? license.product : null
+      return { ok: true, status, product }
     }
     if (result.body.valid === false) return { ok: false, code: 'license_invalid' }
     return { ok: false, code: 'unknown' }
@@ -139,7 +142,7 @@ export class MossLicenseProvider implements LicenseProvider {
   async deactivate(input: { key: string; instanceId: string }): Promise<DeactivateOutcome> {
     const result = await postJson(
       `${this.baseUrl}/api/v1/licenses/deactivate`,
-      { key: input.key, instance_id: input.instanceId },
+      { key: input.key, instance_id: input.instanceId, app_slug: APP_SLUG },
       this.deactivateTimeoutMs,
       this.fetcher
     )
