@@ -62,6 +62,8 @@ test('onboarding saves the first photo as a Product without creating a project',
     await page.getByRole('button', { name: 'View Product' }).click()
     await expect(page.getByRole('heading', { name: 'First product', exact: true })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByRole('button', { name: 'Edit Photo', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Edit Photo (Free)', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Make an Image', exact: true })).toBeVisible()
     await expect(page.getByText('No projects yet')).toBeVisible()
 
     const afterSave = await page.evaluate(async () => {
@@ -131,6 +133,40 @@ test('onboarding brand step previews the newest product after a restart', async 
     await page.getByRole('heading', { name: 'Make it your own' }).waitFor({ timeout: 20_000 })
     await expect(page.getByText('Preview · Resumed Mug')).toBeVisible()
     await expect(page.getByText('Your product.')).toBeVisible()
+    expect(pageErrors).toEqual([])
+  } finally {
+    await app.close().catch(() => undefined)
+    fs.rmSync(userData, { recursive: true, force: true })
+  }
+})
+
+
+test('the ready step explains a missing Meta key and reports skipped steps honestly', async () => {
+  const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'moss-onboarding-ready-'))
+  const { app, page } = await launch(userData)
+
+  try {
+    const pageErrors: string[] = []
+    page.on('pageerror', (error) => pageErrors.push(error.message))
+    await page.waitForTimeout(800)
+    await page.evaluate(async () => {
+      await window.moss.settings.set({ key: 'onboardingDone', value: false })
+      await window.moss.settings.set({ key: 'onboardingStep', value: 4 })
+    })
+    await page.reload()
+    await expect(page.getByRole('heading', { name: "You're ready to make photos." })).toBeVisible({ timeout: 20_000 })
+    const setup = page.getByRole('list', { name: 'Setup steps' })
+    await expect(setup.getByRole('listitem').filter({ hasText: 'Welcome' })).toContainText('Completed')
+    await expect(setup.getByRole('listitem').filter({ hasText: 'Meta Key' })).toContainText('Skipped')
+    await expect(setup.getByRole('listitem').filter({ hasText: 'Product' })).toContainText('Skipped')
+    await expect(setup.getByRole('listitem').filter({ hasText: 'Personalize' })).toContainText('Skipped')
+    await page.getByRole('button', { name: 'Make an Image · Meta Key Needed' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Connect Meta' })
+    await expect(dialog).toBeVisible()
+    expect(await page.evaluate(() => document.getElementById('root')?.hasAttribute('inert'))).toBe(true)
+    await dialog.getByRole('button', { name: 'Not Now' }).click()
+    await expect(dialog).toBeHidden()
+    expect(await page.evaluate(() => document.getElementById('root')?.hasAttribute('inert'))).toBe(false)
     expect(pageErrors).toEqual([])
   } finally {
     await app.close().catch(() => undefined)

@@ -45,22 +45,18 @@ export function TopBar({
             logoLabel="Moss Photo Studio"
             heading={compact ? undefined : 'Moss Photo Studio'}
             headingHref="/library"
-            headerEndContent={
-              canToggleRail && onToggleRail ? (
-                <span className="no-drag inline-flex">
-                  <Tooltip label={railCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
-                    <SideNavCollapseButton
-                      collapsible={{ isCollapsed: railCollapsed, onCollapsedChange: () => onToggleRail() }}
-                      size="sm"
-                    />
-                  </Tooltip>
-                </span>
-              ) : undefined
-            }
           />
         }
         startContent={
           <div className={`no-drag flex min-w-0 items-center gap-2${compact ? ' max-w-[45vw]' : ''}`}>
+            {canToggleRail && onToggleRail && (
+              <Tooltip label={railCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+                <SideNavCollapseButton
+                  collapsible={{ isCollapsed: railCollapsed, onCollapsedChange: () => onToggleRail() }}
+                  size="sm"
+                />
+              </Tooltip>
+            )}
             {backTo && (backText ? (
               <Button
                 label={backText}

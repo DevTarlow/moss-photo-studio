@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { SCENES, SCENE_CATEGORIES } from '@shared/prompts/scenes'
 import { ALL_TEMPLATES, TEMPLATE_GROUPS, QUICK_FIX, templateAsset, templateById } from '@shared/prompts/templates'
-import { CREATE_PERSON_PROMPT, CREATE_PRODUCT_PROMPT, EXAMPLE_SCENES, PERSON_HOLDING_EXAMPLE, STARTERS, exampleTextFor } from '@shared/starters'
+import { CREATE_PERSON_PROMPT, CREATE_PRODUCT_PROMPT, EXAMPLE_GROUPS, EXAMPLE_SCENES, PERSON_HOLDING_EXAMPLE, STARTERS, exampleTextFor } from '@shared/starters'
 import { BUNDLED_PEOPLE, BUNDLED_PERSON_LOOKS } from '@shared/people'
 import { BUNDLED_PRODUCT_SIZE, BUNDLED_PRODUCTS, bundledProductCards, isBundledProduct } from '@shared/products'
 import { wrapScenePrompt, wrapModelPrompt, PROMPT_MAX } from '@shared/prompts/guards'
@@ -117,6 +117,7 @@ describe('image generator examples', () => {
   it('ships eight example scenes with unique keys, assets and short copy', () => {
     expect(EXAMPLE_SCENES).toHaveLength(8)
     expect(new Set(EXAMPLE_SCENES.map((scene) => scene.key)).size).toBe(8)
+    expect(new Set(EXAMPLE_SCENES.map((scene) => scene.group))).toEqual(new Set(EXAMPLE_GROUPS))
     for (const scene of EXAMPLE_SCENES) {
       expect(scene.exampleText.length).toBeGreaterThan(0)
       expect(scene.exampleText.length).toBeLessThanOrEqual(240)

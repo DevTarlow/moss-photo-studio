@@ -54,15 +54,21 @@ test('a scene reference is sent as the second image and never as the product', a
     await page.reload()
     await page.getByRole('link', { name: 'Image Generator', exact: true }).click()
     await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
-    await page.getByRole('button', { name: 'Choose a Product Photo' }).click()
-    await page.getByRole('button', { name: 'Use Scene Product' }).click()
-    await expect(page.getByText('Scene Product', { exact: true })).toBeVisible()
 
+    // A scene can be browsed before a product exists; it waits with a clear
+    // inline prompt until a product photo can use it.
     await page.getByRole('button', { name: 'Choose a Scene' }).click()
     const dialog = page.getByRole('dialog', { name: 'Choose a Scene' })
     await expect(dialog).toBeVisible()
     await dialog.getByRole('button', { name: /Use .* from Windowsill/ }).click()
+    await expect(page.getByText('Add a product photo to use this scene.')).toBeVisible()
+    await expect(page.getByRole('button', { name: /Remove scene reference/ })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Choose a Product Photo' }).click()
+    await page.getByRole('button', { name: 'Use Scene Product' }).click()
+    await expect(page.getByText('Scene Product', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('The setting and light are borrowed; its subject is not.')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Remove product reference Scene Product' })).toBeVisible()
 
     await page.locator('textarea').first().fill('A mug on a calm windowsill')
     await page.getByRole('button', { name: /Make Image/ }).click()

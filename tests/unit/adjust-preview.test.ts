@@ -12,6 +12,8 @@ describe('local adjust preview', () => {
     expect(isIdentity({})).toBe(true)
     expect(isIdentity({ brightness: 0, rotate: 0 })).toBe(true)
     expect(isIdentity({ brightness: 4 })).toBe(false)
+    expect(isIdentity({ highlights: 4 })).toBe(false)
+    expect(isIdentity({ shadows: -4 })).toBe(false)
     expect(isIdentity({ crop: { x: 0, y: 0, width: 1, height: 1 } })).toBe(false)
   })
 

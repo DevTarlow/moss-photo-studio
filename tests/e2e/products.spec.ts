@@ -48,6 +48,11 @@ test('a generated image becomes a reusable product across the editor and generat
     await page.getByRole('link', { name: 'Products', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Open Ceramic Mug' })).toBeVisible()
+    const userProductCard = page.locator('.card').filter({ has: page.getByRole('button', { name: 'Open Ceramic Mug' }) })
+    await userProductCard.hover()
+    await expect(page.getByRole('button', { name: 'Generate a scene with Ceramic Mug' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Edit Ceramic Mug in the Image Editor' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'View projects for Ceramic Mug' })).toBeVisible()
 
     await page.getByRole('link', { name: 'All work', exact: true }).click()
     await page.getByRole('button', { name: 'New project' }).click()

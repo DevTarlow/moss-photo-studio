@@ -79,6 +79,7 @@ export function ProjectCard({
   const [nameBusy, setNameBusy] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
   const menuRef = useRef<HTMLButtonElement>(null)
+  const renameReadyAt = useRef(0)
   const TypeGlyph = TypeIcon[project.type]
   const progress = job ? Math.min(100, job.total ? ((job.done + job.failed) / job.total) * 100 : 0) : 0
   const isDraft = project.imageCount === 0
@@ -109,10 +110,14 @@ export function ProjectCard({
   const startRename = (): void => {
     setNameValue(project.name)
     setEditingName(true)
-    window.requestAnimationFrame(() => {
+    // The dropdown returns focus to its trigger after onSelect. Do not treat
+    // that focus hand-off as the new input blurring, and focus the input once
+    // the menu has finished closing.
+    renameReadyAt.current = Date.now() + 180
+    window.setTimeout(() => {
       nameInputRef.current?.focus()
       nameInputRef.current?.select()
-    })
+    }, 200)
   }
 
   const cancelRename = (): void => {
@@ -123,6 +128,7 @@ export function ProjectCard({
 
   const commitRename = async (refocus = false): Promise<void> => {
     if (!editingName || nameBusy) return
+    if (!refocus && Date.now() < renameReadyAt.current) return
     const value = nameValue.trim()
     if (!value || value === project.name) {
       setEditingName(false)

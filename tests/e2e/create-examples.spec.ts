@@ -101,6 +101,10 @@ test('an example can use the selected product photo or stay as shown', async () 
     // Let the run finish before closing; a running job makes the app ask for
     // confirmation on quit, which would block a headless teardown.
     await expect(page.getByRole('button', { name: /Make Image/ })).toBeEnabled({ timeout: 30_000 })
+
+    await page.getByRole('button', { name: 'Remove product reference Example Product' }).click()
+    await expect(page.getByRole('button', { name: 'Remove product reference Example Product' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Choose a Product Photo' })).toBeVisible()
   } finally {
     await app.close().catch(() => undefined)
     await muse.close().catch(() => undefined)

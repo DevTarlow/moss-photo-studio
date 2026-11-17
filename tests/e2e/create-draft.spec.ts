@@ -104,6 +104,36 @@ test('an untouched Image Generator leaves no project behind', async () => {
     await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByText('1 project', { exact: true })).toBeVisible()
     await expect(page.locator('article.lib-card')).toHaveCount(1)
+
+    // A zero-image project started from a product reads as a draft card with a
+    // prompt snippet, a product pill, and inline renaming.
+    const draftProjectId = await page.evaluate(async () => {
+      const products = await window.moss.products.list()
+      const product = products.ok ? products.data.find((entry) => entry.name === 'Seed product') : null
+      if (!product) return null
+      const created = await window.moss.products.createProject({ productId: product.id, type: 'image' })
+      return created.ok ? created.data.project.id : null
+    })
+    expect(draftProjectId).toBeTruthy()
+    await page.evaluate((id) => { window.location.hash = `#/project/${id}` }, draftProjectId)
+    await expect(page.getByText('DESCRIBE THE IMAGE')).toBeVisible({ timeout: 20_000 })
+    await page.locator('textarea').first().fill('A warm linen table with the seeded mug')
+    await page.getByRole('link', { name: 'All work', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'All work', exact: true })).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('button', { name: 'All', exact: true }).click()
+    await expect(page.getByText('2 projects', { exact: true })).toBeVisible()
+    const draftCard = page.locator('article.lib-card[data-draft="true"]').first()
+    await expect(draftCard.getByText(/A warm linen table with the seeded mug/)).toBeVisible()
+    await expect(draftCard.getByText('Continue draft →')).toBeVisible()
+    await expect(draftCard.getByText('Seed product').first()).toBeVisible()
+    await draftCard.hover()
+    await expect(draftCard.getByRole('button', { name: /Add .* to a Set/ })).toBeDisabled()
+    await draftCard.getByRole('button', { name: /^Actions for / }).click()
+    await page.getByRole('menuitem', { name: 'Rename' }).click()
+    const draftName = draftCard.getByRole('textbox', { name: /Rename / })
+    await draftName.fill('Linen draft')
+    await page.keyboard.press('Enter')
+    await expect(page.getByText('Linen draft', { exact: true }).first()).toBeVisible()
   } finally {
     await app.close().catch(() => undefined)
     fs.rmSync(userData, { recursive: true, force: true })
