@@ -468,10 +468,10 @@ export function RootLayout(): React.JSX.Element {
         case 'open-shortcuts':
           setShortcuts(true)
           break
-        case 'theme-system':
-        case 'theme-light':
-        case 'theme-dark':
-          void setTheme(event.action === 'theme-system' ? 'system' : event.action === 'theme-light' ? 'light' : 'dark').catch(() => toast.error('The theme could not be changed.'))
+        case 'set-theme':
+          if (event.themeId) {
+            void setTheme(event.themeId).catch(() => toast.error('The theme could not be changed.'))
+          }
           break
         case 'undo':
           emitCommand('undo')
@@ -495,14 +495,11 @@ export function RootLayout(): React.JSX.Element {
         case 'actual-size':
           emitCommand('zoom-reset')
           break
-        case 'toggle-theme':
-          void setTheme(settings?.theme === 'dark' ? 'light' : 'dark').catch(() => toast.error('The theme could not be changed.'))
-          break
         default:
           break
       }
     })
-  }, [booted, canUseStudio, location.pathname, navigate, setGuide, setShortcuts, setTheme, settings?.theme, toggleRail])
+  }, [booted, canUseStudio, location.pathname, navigate, setGuide, setShortcuts, setTheme, toggleRail])
 
   useEffect(() => {
     if (location.pathname === '/' && booted) {

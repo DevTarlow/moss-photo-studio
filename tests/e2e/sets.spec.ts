@@ -185,7 +185,7 @@ test('a Set keeps images together and starts new work from them', async () => {
     await page.waitForTimeout(250)
     await noHorizontalOverflow(page)
     await screenshot(page, 'sets-1024-light')
-    await page.evaluate(async () => { await window.moss.settings.set({ key: 'theme', value: 'dark' }) })
+    await page.evaluate(async () => { await window.moss.settings.set({ key: 'theme', value: 'moss-night' }) })
     await page.reload()
     await page.waitForLoadState('domcontentloaded')
     await page.evaluate(() => { window.location.hash = '#/sets' })

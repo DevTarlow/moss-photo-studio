@@ -1,20 +1,25 @@
 #!/usr/bin/env node
 /**
  * Contrast audit for the design tokens, across every foreground/background
- * pair the app actually renders. Fails at WCAG AA: 4.5 for body text, 3 for
- * large text and icons.
+ * pair the app actually renders, for every appearance theme in its own mode.
+ * Fails at WCAG AA: 4.5 for body text, 3 for large text and icons.
  *
- * The audit reads the resolved `mossTheme` (the source of truth) and the app's
- * product tokens in `tokens.css`. Any `var(--theme-token)` alias in that file
- * must resolve in the theme, so a renamed or removed theme token fails here
- * instead of silently rendering an inherited colour.
+ * The audit reads each compiled theme from `theme/built/<id>.js` (the exact
+ * tokens that ship, inheritance already resolved) and the app's product tokens
+ * in `tokens.css`. Any `var(--theme-token)` alias in that file must resolve in
+ * the theme, so a renamed or removed theme token fails here instead of
+ * silently rendering an inherited colour.
+ *
+ * Run `npm run theme:build` first: this audits the built output, not the
+ * sources.
  */
 import fs from 'node:fs'
 
 const cssPath = new URL('../src/renderer/src/styles/tokens.css', import.meta.url)
-const themePath = new URL('../src/renderer/src/theme/mossTheme.ts', import.meta.url)
+const catalogPath = new URL('../src/shared/themes.ts', import.meta.url)
+const builtPath = (id) => new URL(`../src/renderer/src/theme/built/${id}.js`, import.meta.url)
 
-const { mossTheme } = await import(themePath.href)
+const { THEME_IDS, THEME_MODES } = await import(catalogPath.href)
 const css = fs.readFileSync(cssPath, 'utf8')
 
 /** Split `light-dark(a, b)` on its top-level comma; nested rgb()/rgba() stays intact. */
@@ -32,25 +37,6 @@ function splitLightDark(value) {
     }
   }
   return { light: inner.trim(), dark: inner.trim() }
-}
-
-const themeTokens = new Map()
-for (const source of [mossTheme.tokens, mossTheme.localTokens]) {
-  for (const [name, value] of Object.entries(source ?? {})) themeTokens.set(name, splitLightDark(value))
-}
-
-function resolve(raw, seen = new Set()) {
-  const alias = /^var\(\s*(--[\w-]+)\s*\)$/.exec(raw.trim())
-  if (!alias) return splitLightDark(raw)
-  const target = alias[1]
-  if (seen.has(target)) throw new Error(`Circular token alias: ${[...seen, target].join(' -> ')}`)
-  const local = rootTokens[target]
-  if (local !== undefined) return resolve(local, new Set([...seen, target]))
-  const resolved = themeTokens.get(target)
-  if (!resolved) {
-    throw new Error(`tokens.css aliases ${target}, which neither tokens.css nor mossTheme defines`)
-  }
-  return resolved
 }
 
 function blockOrNull(selector) {
@@ -78,17 +64,6 @@ function parseTokens(body) {
 const rootTokens = parseTokens(block(':root'))
 // Mode overrides are optional: a token that uses light-dark() needs no block.
 const overrides = parseTokens(blockOrNull("html[data-theme='dark']") ?? '')
-
-const light = {}
-const dark = {}
-for (const [name, raw] of Object.entries(rootTokens)) {
-  const value = resolve(raw)
-  light[name.slice(2)] = value.light
-  dark[name.slice(2)] = value.dark
-}
-for (const [name, raw] of Object.entries(overrides)) {
-  dark[name.slice(2)] = resolve(raw).dark
-}
 
 const hexToRgb = (hex) => {
   const text = hex.trim()
@@ -161,14 +136,67 @@ const pairs = [
   ['warning', 'surface', 3, 'warning icons']
 ]
 
+function themeTokensFor(theme) {
+  const tokens = new Map()
+  for (const source of [theme.tokens, theme.localTokens]) {
+    for (const [name, value] of Object.entries(source ?? {})) tokens.set(name, splitLightDark(value))
+  }
+  return tokens
+}
+
+function resolve(raw, themeTokens, seen = new Set()) {
+  const alias = /^var\(\s*(--[\w-]+)\s*\)$/.exec(raw.trim())
+  if (!alias) return splitLightDark(raw)
+  const target = alias[1]
+  if (seen.has(target)) throw new Error(`Circular token alias: ${[...seen, target].join(' -> ')}`)
+  const local = rootTokens[target]
+  if (local !== undefined) return resolve(local, themeTokens, new Set([...seen, target]))
+  const resolved = themeTokens.get(target)
+  if (!resolved) {
+    throw new Error(`tokens.css aliases ${target}, which neither tokens.css nor the theme defines`)
+  }
+  return resolved
+}
+
+const hexColor = /^#[\da-fA-F]{3,8}$|^rgba?\(/
+function validateColor(value, label) {
+  if (!hexColor.test(value.trim())) throw new Error(`${label} is not a colour: ${value}`)
+}
+
 let failures = 0
-for (const [themeName, tokens] of [['light', light], ['dark', dark]]) {
+for (const id of THEME_IDS) {
+  const mode = THEME_MODES[id]
+  const themeModule = await import(builtPath(id).href)
+  const theme = Object.values(themeModule).find(
+    (value) => value && typeof value === 'object' && value.__built === true && value.name === id
+  )
+  if (!theme) {
+    console.error(`${id}: no compiled theme named "${id}" in built/${id}.js`)
+    failures += 1
+    continue
+  }
+  const themeTokens = themeTokensFor(theme)
+
+  const light = {}
+  const dark = {}
+  for (const [name, raw] of Object.entries(rootTokens)) {
+    const value = resolve(raw, themeTokens)
+    light[name.slice(2)] = value.light
+    dark[name.slice(2)] = value.dark
+  }
+  for (const [name, raw] of Object.entries(overrides)) {
+    dark[name.slice(2)] = resolve(raw, themeTokens).dark
+  }
+  const tokens = mode === 'dark' ? dark : light
+
+  let themeFailures = 0
+  let pairFailures = 0
   for (const [fgToken, bgToken, minimum, label] of pairs) {
     const fg = tokens[fgToken]
     const bg = tokens[bgToken]
     if (!fg || !bg) {
-      console.error(`${themeName}: missing ${fgToken} or ${bgToken}`)
-      failures += 1
+      console.error(`${id} (${mode}): missing ${fgToken} or ${bgToken}`)
+      pairFailures += 1
       continue
     }
     let effectiveBg = bg
@@ -178,13 +206,30 @@ for (const [themeName, tokens] of [['light', light], ['dark', dark]]) {
       effectiveBg = `rgb(${composited[0]}, ${composited[1]}, ${composited[2]})`
     }
     const value = ratio(fg, effectiveBg)
-    const pass = value >= minimum
-    if (!pass) failures += 1
-    console.log(`${pass ? 'PASS' : 'FAIL'} ${themeName.padEnd(5)} ${value.toFixed(2).padStart(5)} (need ${minimum}) ${fgToken} on ${bgToken} - ${label}`)
+    if (value < minimum) {
+      pairFailures += 1
+      console.error(
+        `FAIL ${id.padEnd(10)} ${mode.padEnd(5)} ${value.toFixed(2).padStart(5)} (need ${minimum}) ${fgToken} on ${bgToken} - ${label}`
+      )
+    }
   }
+  // A malformed value would silently skip a pair, so every reported token must
+  // still parse as a colour.
+  for (const name of ['text', 'bg', 'surface', 'rail', 'accent', 'primary', 'canvas']) {
+    try {
+      validateColor(tokens[name], `${id} ${name}`)
+    } catch (error) {
+      console.error(String(error))
+      themeFailures += 1
+    }
+  }
+  failures += pairFailures + themeFailures
+  console.log(
+    `${pairFailures || themeFailures ? 'FAIL' : 'PASS'} ${id.padEnd(10)} ${mode.padEnd(5)} ${pairs.length - pairFailures}/${pairs.length} pairs`
+  )
 }
 if (failures) {
   console.error(`\n${failures} contrast pair(s) failed.`)
   process.exit(1)
 }
-console.log('\nAll token pairs pass AA.')
+console.log(`\nAll token pairs pass AA across ${THEME_IDS.length} themes.`)

@@ -53,16 +53,6 @@ interface AppStore {
   canUseStudio: boolean
 }
 
-function applyThemeToDocument(theme: ThemeSetting): void {
-  const resolved =
-    theme === 'system'
-      ? window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light'
-      : theme
-  document.documentElement.dataset.theme = resolved
-}
-
 export const useAppStore = create<AppStore>((set, get) => ({
   booted: false,
   bootError: null,
@@ -91,7 +81,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
         unwrap(window.moss.products.list()),
         unwrap(window.moss.scenes.list())
       ])
-      applyThemeToDocument(settings.theme)
       document.documentElement.dataset.density = settings.density
       set({
         booted: true,
@@ -117,7 +106,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
   refreshSettings: async () => {
     const settings = await unwrap(window.moss.settings.all())
-    applyThemeToDocument(settings.theme)
     document.documentElement.dataset.density = settings.density
     set({ settings })
   },
@@ -149,7 +137,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
   setTheme: async (theme) => {
     await unwrap(window.moss.settings.set({ key: 'theme', value: theme }))
-    applyThemeToDocument(theme)
     const settings = get().settings
     if (settings) set({ settings: { ...settings, theme } })
   },
@@ -166,8 +153,3 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setReadonlyBypass: (readonlyBypass) => set({ readonlyBypass }),
   setOnboardingBypass: (onboardingBypass) => set({ onboardingBypass })
 }))
-
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-  const settings = useAppStore.getState().settings
-  if (settings?.theme === 'system') applyThemeToDocument('system')
-})

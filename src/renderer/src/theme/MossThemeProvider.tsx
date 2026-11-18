@@ -1,13 +1,15 @@
-import { forwardRef, useEffect, useState } from 'react'
+import { forwardRef } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { LinkProvider } from '@astryxdesign/core/Link'
 import { Theme } from '@astryxdesign/core/theme'
+import { DEFAULT_THEME_ID, THEME_MODES } from '@shared/themes'
 import { useAppStore } from '../store/app'
-// The built theme (npm run theme:build) carries __built, so Astryx skips runtime
-// style injection; its CSS arrives through styles/index.css. Edit mossTheme.ts,
-// then rebuild — the release gate fails if the two drift.
-import { mossTheme } from './moss'
+// The built themes (npm run theme:build) carry __built, so Astryx skips runtime
+// style injection; their CSS arrives through styles/index.css. Edit
+// palettes.ts or themes/<id>.ts, then rebuild — the release gate fails if the
+// themes and the committed output drift.
+import { THEMES } from './themes'
 
 type RouterLinkProps = Omit<ComponentProps<typeof Link>, 'to'> & { href: string }
 
@@ -22,29 +24,17 @@ const RouterLink = forwardRef<HTMLAnchorElement, RouterLinkProps>(function Route
   return <Link ref={ref} to={href} {...props} />
 })
 
-/** Resolve the saved preference, including the OS preference for `system`. */
-function useResolvedMode(): 'light' | 'dark' {
-  const preference = useAppStore((state) => state.settings?.theme ?? 'light')
-  const [systemDark, setSystemDark] = useState(
-    () => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
-  )
-
-  useEffect(() => {
-    const query = window.matchMedia('(prefers-color-scheme: dark)')
-    const onChange = (): void => setSystemDark(query.matches)
-    query.addEventListener('change', onChange)
-    return () => query.removeEventListener('change', onChange)
-  }, [])
-
-  if (preference === 'light' || preference === 'dark') return preference
-  return systemDark ? 'dark' : 'light'
-}
-
+/**
+ * Each appearance theme has a fixed mode, so the saved id alone decides both
+ * the theme identity (`data-astryx-theme`) and the mode (`data-theme`, which
+ * drives `light-dark()` and the dark elevation token). Before settings load
+ * the app paints the default light look, exactly as it did before.
+ */
 export function MossThemeProvider({ children }: { children: ReactNode }): React.JSX.Element {
-  const mode = useResolvedMode()
+  const themeId = useAppStore((state) => state.settings?.theme ?? DEFAULT_THEME_ID)
 
   return (
-    <Theme theme={mossTheme} mode={mode}>
+    <Theme theme={THEMES[themeId]} mode={THEME_MODES[themeId]}>
       <LinkProvider component={RouterLink}>{children}</LinkProvider>
     </Theme>
   )

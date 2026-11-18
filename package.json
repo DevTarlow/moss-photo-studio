@@ -32,8 +32,8 @@
     "build:test": "MOSS_TEST_BUILD=1 npm run typecheck && MOSS_TEST_BUILD=1 electron-vite build",
     "release:gate": "node scripts/release-gate.mjs",
     "lab": "node scripts/lab/run.mjs",
-    "theme:build": "astryx theme build src/renderer/src/theme/mossTheme.ts --out src/renderer/src/theme/moss-theme.css",
-    "theme:check": "astryx theme build src/renderer/src/theme/mossTheme.ts --out src/renderer/src/theme/moss-theme.css --check"
+    "theme:build": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/theme-build.mjs",
+    "theme:check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/theme-build.mjs --check"
   },
   "dependencies": {
     "@astryxdesign/core": "0.7.11",

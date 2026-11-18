@@ -1,5 +1,7 @@
 import { app, BrowserWindow, Menu, shell } from 'electron'
 import type { MenuItemConstructorOptions } from 'electron'
+import { THEME_IDS, THEME_LABELS } from '@shared/themes'
+import type { ThemeId } from '@shared/themes'
 import type { MenuAction, MenuContext, MenuEvent, Project } from '@shared/types'
 import { APP_NAME } from '@shared/constants'
 
@@ -8,6 +10,7 @@ export function buildAppMenu(options: {
   recent: Project[]
   dev: boolean
   context: MenuContext
+  theme: ThemeId
 }): void {
   const send = (event: MenuEvent): void => {
     const window = options.getWindow()
@@ -20,10 +23,12 @@ export function buildAppMenu(options: {
     enabled,
     click: () => send({ action: menuAction })
   })
-  const theme = (label: string, menuAction: MenuAction): MenuItemConstructorOptions => ({
-    label,
-    click: () => send({ action: menuAction })
-  })
+  const themeItems: MenuItemConstructorOptions[] = THEME_IDS.map((id) => ({
+    label: THEME_LABELS[id],
+    type: 'radio',
+    checked: options.theme === id,
+    click: () => send({ action: 'set-theme', themeId: id })
+  }))
   const recentItems: MenuItemConstructorOptions[] = options.recent.length
     ? options.recent.slice(0, 5).map((project) => ({
         label: project.name,
@@ -87,14 +92,9 @@ export function buildAppMenu(options: {
         { type: 'separator' },
         action('Toggle Rail', 'toggle-rail', 'CmdOrCtrl+B'),
         action('Toggle Panel', 'toggle-panel', 'CmdOrCtrl+Alt+B', options.context.editor),
-        action('Toggle Theme', 'toggle-theme'),
         {
           label: 'Theme',
-          submenu: [
-            theme('System', 'theme-system'),
-            theme('Light', 'theme-light'),
-            theme('Dark', 'theme-dark')
-          ]
+          submenu: themeItems
         },
         ...(options.dev
           ? ([{ type: 'separator' }, { role: 'toggleDevTools' }, { role: 'reload' }] as MenuItemConstructorOptions[])

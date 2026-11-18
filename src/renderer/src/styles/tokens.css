@@ -2,10 +2,12 @@
  * Product tokens for the parts Astryx has no semantic role for: the editor
  * canvas, hairlines over photography, tints, and the app's short names.
  *
- * Every colour the theme already owns is an alias, so `mossTheme` is the only
- * place a palette value is chosen and `html[data-theme]` (written by Astryx
- * `Theme`) is the only place the mode is decided. Values that stay literal are
- * written as `light-dark()` pairs for the same reason: one rule, both modes.
+ * Every colour the theme already owns is an alias (including the rail and the
+ * selection tint, which each appearance theme sets through `--moss-*`), so
+ * `palettes.ts` is the only place a palette value is chosen and
+ * `html[data-theme]` (written by Astryx `Theme` from the theme's mode) is the
+ * only place the mode is decided. Values that stay literal are written as
+ * `light-dark()` pairs for the same reason: one rule, both modes.
  *
  * Add a token here only when the theme genuinely has no role for it.
  */
@@ -14,7 +16,7 @@
   --bg: var(--color-background-body);
   --surface: var(--color-background-surface);
   --surface-2: var(--color-background-muted);
-  --rail: light-dark(#F2EDE4, #0E110B);
+  --rail: var(--moss-rail);
 
   /* Text and lines */
   --text: var(--color-text-primary);
@@ -25,7 +27,7 @@
 
   /* Selection and status */
   --accent: var(--color-accent);
-  --accent-soft: light-dark(rgba(20,83,45,0.10), rgba(134,199,154,0.14));
+  --accent-soft: var(--moss-accent-soft);
   --focus: var(--color-accent);
   --danger: var(--color-error);
   --warning: var(--color-warning);

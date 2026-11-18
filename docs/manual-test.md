@@ -18,7 +18,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 
 ## First run
 
-- Launch with no license. Activation is the first screen; the theme follows the system and the app reports an unavailable keyring truthfully.
+- Launch with no license. Activation is the first screen; it opens in the Moss light theme and the app reports an unavailable keyring truthfully.
 - Activate with a valid test key. Welcome shows “Your personal photo studio.” with a clean focus outline.
 - Welcome offers Set Up AI Images and, beside it, Start with a Photo · Free. The second action goes straight to Add your first product.
 - Your setup distinguishes completed steps (green check) from skipped optional steps (neutral dash), including on Ready. A skipped Meta Key, Product, or Personalize step never shows a green check.
@@ -119,7 +119,7 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 - Logo & Colors: colors, From a Photo, logo, badge corner/size/opacity, default look, preview.
 - **There is no Business section.** `/settings/business` redirects to the Meta connection page.
 - Storage: backup, restore, library path, and the backup status.
-- Appearance: theme and density; preferences persist after restart.
+- Appearance: ten themes (five light, five dark, each with a preview) and density; the chosen theme persists after restart.
 - License, Updates, Privacy, and About work as before. About uses the Meta AI Studio link.
 
 ## License and offline behavior
@@ -137,4 +137,4 @@ On this headless Linux host, run Playwright through Xvfb (`xvfb-run -a npx playw
 - Run axe on activation, onboarding, product hub, editor, adjust preview, generator results, usage, people, scenes, settings, library, Set detail, and open modal/lightbox surfaces. No serious or critical findings. While any modal is open, #root is inert and aria-hidden; closing the last modal restores it.
 - Keyboard: Ctrl/Cmd+K palette, Ctrl/Cmd+1 Image Editor, Ctrl/Cmd+2 Image Generator, Ctrl/Cmd+F search, Ctrl/Cmd+E export, Ctrl/Cmd+Enter primary action, Ctrl/Cmd+B rail, Space original, arrows versions, brackets sliders, double-click sliders to reset, Escape close, ? shortcuts.
 - Check 1440×900, 1024×700, 150% zoom, and 200% zoom with no horizontal overflow, including filtered product and example pills, the canvas toolbar, and left-column commit footers.
-- Check light and dark themes on every main screen.
+- Check a light theme (Moss) and a dark theme (Moss Night) on every main screen, and spot-check the other eight in Appearance.

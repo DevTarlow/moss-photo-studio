@@ -1,5 +1,6 @@
 import path from 'node:path'
-import { BrowserWindow, nativeTheme, screen } from 'electron'
+import { BrowserWindow, screen } from 'electron'
+import { THEME_MODES } from '@shared/themes'
 import type { WindowState } from '@shared/types'
 import type { SettingsStore } from './settings'
 import { appResourceRoot } from './env'
@@ -42,7 +43,8 @@ export function createMainWindow(settings: SettingsStore, logger?: Logger, canCl
   if (state.y !== undefined) {
     state.y = Math.max(area.y, Math.min(state.y, area.y + area.height - state.height))
   }
-  const dark = settings.all().theme === 'dark' || (settings.all().theme === 'system' && nativeTheme.shouldUseDarkColors)
+  const activeTheme = settings.all().theme
+  const dark = THEME_MODES[activeTheme] === 'dark'
   const options: Electron.BrowserWindowConstructorOptions = {
     width: state.width,
     height: state.height,

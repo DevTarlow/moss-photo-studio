@@ -50,5 +50,7 @@ export interface AppContext {
   buildDate: string
   getWindow: () => BrowserWindow | null
   refreshMenu: () => void
+  /** Rebuild the menu (theme radio state) and the native window chrome. */
+  refreshTheme: () => void
   updateMenuContext: (context: MenuContext) => void
 }

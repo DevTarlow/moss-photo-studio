@@ -1,5 +1,6 @@
 import path from 'node:path'
-import { app, BrowserWindow, dialog, nativeTheme, Notification } from 'electron'
+import { app, BrowserWindow, dialog, Notification } from 'electron'
+import { THEME_MODES } from '@shared/themes'
 import { APP_ID, APP_NAME, APP_SLUG, APP_VERSION, DEFAULT_BUDGET_CENTS, EMPTY_MENU_CONTEXT, SUPPORT_EMAIL } from '@shared/constants'
 import type { JobState } from '@shared/types'
 import { runtimeEnv, appResourceRoot, defaultLibraryPath, isReleaseBuild } from './env'
@@ -260,6 +261,7 @@ async function boot(): Promise<void> {
 
   const resolveContext = (): BrowserWindow | null => mainWindow
   let refreshMenu: () => void = () => undefined
+  let refreshTheme: () => void = () => undefined
   context = {
     db,
     logger,
@@ -289,6 +291,7 @@ async function boot(): Promise<void> {
     buildDate: typeof __BUILD_DATE__ === 'string' ? __BUILD_DATE__ : new Date().toISOString(),
     getWindow: resolveContext,
     refreshMenu: () => refreshMenu(),
+    refreshTheme: () => refreshTheme(),
     updateMenuContext: (next) => {
       menuContext = next
       refreshMenu()
@@ -395,10 +398,26 @@ async function boot(): Promise<void> {
       getWindow: () => mainWindow,
       recent: projects.recent(5),
       dev: !app.isPackaged,
-      context: menuContext
+      context: menuContext,
+      theme: settings.all().theme
+    })
+  }
+  // Native title controls follow the active theme's mode, not the OS: the app
+  // no longer has a system-follow theme.
+  const applyThemeChrome = (): void => {
+    if (process.platform !== 'win32' || !mainWindow || mainWindow.isDestroyed()) return
+    const dark = THEME_MODES[settings.all().theme] === 'dark'
+    mainWindow.setTitleBarOverlay({
+      color: dark ? '#131610' : '#FAF7F2',
+      symbolColor: dark ? '#E9E4D6' : '#1C1A17',
+      height: 52
     })
   }
   refreshMenu = rebuildMenu
+  refreshTheme = () => {
+    rebuildMenu()
+    applyThemeChrome()
+  }
   reopenMainWindow = () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.show()
@@ -409,18 +428,6 @@ async function boot(): Promise<void> {
     rebuildMenu()
   }
   rebuildMenu()
-  nativeTheme.on('updated', () => {
-    // The renderer listens to prefers-color-scheme; this keeps native title
-    // controls legible on Windows when the system theme changes.
-    if (mainWindow && process.platform === 'win32') {
-      const dark = nativeTheme.shouldUseDarkColors
-      mainWindow.setTitleBarOverlay({
-        color: dark ? '#131610' : '#FAF7F2',
-        symbolColor: dark ? '#E9E4D6' : '#1C1A17',
-        height: 52
-      })
-    }
-  })
 
   const refreshLicense = (): void => {
     void license

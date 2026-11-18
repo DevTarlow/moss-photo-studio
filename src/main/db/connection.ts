@@ -663,6 +663,19 @@ const migrations: Migration[] = [
       `)
     }
   },
+  {
+    version: 17,
+    up(db) {
+      // Appearance moved from system/light/dark to ten fixed themes. Keep the
+      // look the user already had; a system-follow preference starts on the
+      // light default, matching a fresh install.
+      db.exec(`
+        UPDATE settings SET value = '"moss"' WHERE key = 'theme' AND value IN ('"light"', '"system"');
+        UPDATE settings SET value = '"moss-night"' WHERE key = 'theme' AND value = '"dark"';
+        INSERT OR REPLACE INTO meta (key, value) VALUES ('schemaVersion', '17');
+      `)
+    }
+  },
 ]
 
 export const SCHEMA_VERSION = migrations[migrations.length - 1]!.version
@@ -801,7 +814,7 @@ function seedDefaults(db: Db, libraryPath: string): void {
   const set = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)')
   const seed = db.transaction(() => {
     set.run('deviceId', JSON.stringify(crypto.randomUUID()))
-    set.run('theme', JSON.stringify('light'))
+    set.run('theme', JSON.stringify('moss'))
     set.run('density', JSON.stringify('comfortable'))
     set.run('onboardingStep', JSON.stringify(0))
     set.run('onboardingDone', JSON.stringify(false))

@@ -1,4 +1,5 @@
 import type { Db } from './db/connection'
+import { normalizeTheme } from '@shared/themes'
 import type {
   DensitySetting,
   ExportOptions,
@@ -107,12 +108,14 @@ export class SettingsStore {
 
   all(): SettingsAll {
     const exportDefaults = this.exportDefaults()
-    const theme = this.get<ThemeSetting>('theme', 'light')
+    const theme = this.get<ThemeSetting>('theme', 'moss')
     const density = this.get<DensitySetting>('density', 'comfortable')
     const defaultFormat = this.get<Format>('defaultFormat', 'webp')
     const defaultShape = this.get<Shape>('defaultShape', 'square')
     return {
-      theme: ['system', 'light', 'dark'].includes(theme) ? theme : 'light',
+      // A restored older backup can still carry a pre-picker value; normalize
+      // instead of dropping the user's look.
+      theme: normalizeTheme(theme),
       density: density === 'compact' ? 'compact' : 'comfortable',
       onboardingStep: this.get<number>('onboardingStep', 0),
       onboardingDone: this.get<boolean>('onboardingDone', false),

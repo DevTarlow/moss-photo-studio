@@ -21,6 +21,7 @@ import type {
 } from '@shared/types'
 import { monthBounds } from '@shared/cost'
 import { MAX_LOGO_BYTES, MAX_PERSON_BYTES, MAX_PROMPT } from '@shared/constants'
+import { THEME_IDS } from '@shared/themes'
 import { nextCountedLabel } from '@shared/labels'
 import { safeBaseName } from '@shared/files'
 import { isBundledProduct } from '@shared/products'
@@ -84,7 +85,7 @@ const rendererSettingKeys = [
 ] as const
 
 const settingSchemas: Partial<Record<SettingKey, z.ZodTypeAny>> = {
-  theme: z.enum(['system', 'light', 'dark']),
+  theme: z.enum(THEME_IDS),
   density: z.enum(['comfortable', 'compact']),
   onboardingStep: z.number().int().min(0).max(4),
   onboardingDone: z.boolean(),
@@ -511,6 +512,9 @@ export function registerIpcHandlers(context: AppContext): void {
     const parsed = schema.safeParse(value)
     if (!parsed.success) throw new IpcFault('invalid_payload')
     settings.set(settingKey, parsed.data)
+    // The View menu shows a radio check on the active theme, and Windows owns
+    // the title-bar overlay, so both follow a theme change immediately.
+    if (settingKey === 'theme') context.refreshTheme()
     return { ok: true as const }
   })
 

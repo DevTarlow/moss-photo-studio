@@ -45,7 +45,21 @@ async function launch(): Promise<void> {
   await stubDialogs()
 }
 
-async function setAppTheme(theme: 'light' | 'dark'): Promise<void> {
+/** The appearance catalog, mirrored here so the journey can assert every look. */
+const APP_THEMES = [
+  { id: 'moss', label: 'Moss', mode: 'light' },
+  { id: 'sand', label: 'Sand', mode: 'light' },
+  { id: 'clay', label: 'Clay', mode: 'light' },
+  { id: 'lichen', label: 'Lichen', mode: 'light' },
+  { id: 'stone', label: 'Stone', mode: 'light' },
+  { id: 'moss-night', label: 'Moss Night', mode: 'dark' },
+  { id: 'bark', label: 'Bark', mode: 'dark' },
+  { id: 'pine', label: 'Pine', mode: 'dark' },
+  { id: 'ember', label: 'Ember', mode: 'dark' },
+  { id: 'basalt', label: 'Basalt', mode: 'dark' }
+] as const
+
+async function setAppTheme(theme: (typeof APP_THEMES)[number]['id']): Promise<void> {
   await page.evaluate(async (value) => {
     await window.moss.settings.set({ key: 'theme', value })
   }, theme)
@@ -183,10 +197,10 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await noHorizontalOverflow()
     await screenshot('activation-1024-light')
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1440, 900))
-    await setAppTheme('dark')
+    await setAppTheme('moss-night')
     await expect(page.getByRole('heading', { name: 'Activate Moss Photo Studio' })).toBeVisible({ timeout: 20_000 })
     await screenshot('activation-dark')
-    await setAppTheme('light')
+    await setAppTheme('moss')
     await page.getByLabel('License key').fill('bad')
     await page.getByRole('button', { name: 'Activate', exact: true }).click()
     await expect(page.getByText("That key wasn't accepted. Check it and try again.")).toBeVisible()
@@ -203,10 +217,10 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await expect(page.getByRole('button', { name: 'Set Up AI Images' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Open a Photo' })).toHaveCount(0)
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1440, 900))
-    await setAppTheme('dark')
+    await setAppTheme('moss-night')
     await expect(page.getByRole('heading', { name: 'Your personal photo studio.' })).toBeVisible({ timeout: 20_000 })
     await screenshot('onboarding-dark')
-    await setAppTheme('light')
+    await setAppTheme('moss')
     await expect(page.getByRole('heading', { name: 'Your personal photo studio.' })).toBeVisible({ timeout: 20_000 })
     await page.getByRole('button', { name: 'Set Up AI Images' }).click()
     await expect(page.getByRole('heading', { name: 'Connect Meta' })).toBeVisible()
@@ -566,7 +580,13 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.getByRole('link', { name: 'Logo & Colors', exact: true }).click()
     await expect(page.locator('.brand-preview')).toBeVisible()
     await page.getByRole('link', { name: 'Appearance', exact: true }).click()
-    await page.getByRole('button', { name: 'Dark', exact: true }).click()
+    await expect(page.getByRole('radio')).toHaveCount(APP_THEMES.length)
+    for (const theme of APP_THEMES) {
+      await page.getByRole('radio', { name: theme.label, exact: true }).click()
+      await expect(page.locator('html')).toHaveAttribute('data-astryx-theme', theme.id)
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme.mode)
+    }
+    await page.getByRole('radio', { name: 'Moss Night', exact: true }).click()
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
     await screenshot('settings-dark')
     await page.getByRole('link', { name: 'Products', exact: true }).first().click()
@@ -608,7 +628,7 @@ test.describe.serial('Moss Photo Studio journey', () => {
     await page.waitForTimeout(300)
     await page.getByRole('link', { name: 'Settings', exact: true }).first().click()
     await page.getByRole('link', { name: 'Appearance', exact: true }).click()
-    await page.getByRole('button', { name: 'Light', exact: true }).click()
+    await page.getByRole('radio', { name: 'Moss', exact: true }).click()
     await gotoLibrary()
     await screenshot('library-1024-light')
     await assertNoSeriousA11y('library-1024-light')

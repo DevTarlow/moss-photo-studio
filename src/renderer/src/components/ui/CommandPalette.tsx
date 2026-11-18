@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Command as CommandIcon, CornerDownLeft, Search } from 'lucide-react'
 import { Icon } from '@astryxdesign/core'
 import type { Project } from '@shared/types'
+import { DEFAULT_THEME_ID, THEME_IDS, THEME_LABELS } from '@shared/themes'
 import { unwrap } from '../../lib/ipc'
 import { useAppStore } from '../../store/app'
 import { useUiStore } from '../../store/ui'
@@ -62,6 +63,9 @@ export function CommandPalette(): React.JSX.Element {
 
   const items = useMemo<PaletteItem[]>(() => {
     const list: PaletteItem[] = []
+    const currentTheme = settings?.theme ?? DEFAULT_THEME_ID
+    const nextTheme =
+      THEME_IDS[(THEME_IDS.indexOf(currentTheme) + 1) % THEME_IDS.length] ?? DEFAULT_THEME_ID
     for (const project of projects) {
       list.push({
         id: `project-${project.id}`,
@@ -133,11 +137,11 @@ export function CommandPalette(): React.JSX.Element {
       {
         id: 'theme',
         group: 'Actions',
-        label: 'Toggle theme',
-        hint: settings?.theme === 'dark' ? 'Switch to light' : 'Switch to dark',
+        label: 'Next theme',
+        hint: THEME_LABELS[nextTheme],
         run: async () => {
           setOpen(false)
-          await setTheme(settings?.theme === 'dark' ? 'light' : 'dark').catch(() => toast.error('The theme could not be changed.'))
+          await setTheme(nextTheme).catch(() => toast.error('The theme could not be changed.'))
         }
       }
     )
@@ -169,7 +173,6 @@ export function CommandPalette(): React.JSX.Element {
     })
     return list.filter((item) => fuzzy(`${item.label} ${item.hint ?? ''}`, query))
   }, [people, projects, query, settings?.theme, setOpen, setTheme, navigate])
-
   useEffect(() => {
     setActive((previous) => Math.min(previous, Math.max(0, items.length - 1)))
   }, [items.length])

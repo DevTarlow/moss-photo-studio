@@ -2,15 +2,19 @@ import { defineTheme } from '@astryxdesign/core/theme'
 import { neutralTheme } from '@astryxdesign/theme-neutral'
 
 /**
- * Moss's Astryx theme.
+ * The structure every Moss theme shares: type, motion, radii, elevation, the
+ * semantic status colours, and the component overrides.
  *
- * The product keeps its warm paper / forest-green / burnt-rust identity while
- * Astryx owns component behaviour, state, and accessibility. Local `--moss-*`
- * tokens cover the product-specific values Astryx does not have a semantic role
- * for: the primary call-to-action colour and the dark editor canvas.
+ * Palettes (surfaces, ink, borders, selection, the primary action, the editor
+ * canvas, the rail) live in `palettes.ts`; each theme in `themes/` extends this
+ * base, points at its palette, and is compiled by `npm run theme:build`.
+ *
+ * Status colours stay here so warning and error read the same in every look.
+ * They (and the overlays) keep their `light-dark()` tuples, so a fixed-mode
+ * theme still gets the correct side through `<Theme mode>`.
  */
-export const mossTheme = defineTheme({
-  name: 'moss',
+export const themeBase = defineTheme({
+  name: 'moss-base',
   extends: neutralTheme,
   typography: {
     scale: { base: 14, ratio: 1.2 },
@@ -36,34 +40,14 @@ export const mossTheme = defineTheme({
     '--moss-primary-text': '#FFFFFF',
     '--moss-canvas': ['#20201C', '#0B0B09'],
     '--moss-canvas-text': '#FFFFFF',
-    '--moss-canvas-muted': ['rgba(255,255,255,0.80)', 'rgba(255,255,255,0.80)']
+    '--moss-canvas-muted': ['rgba(255,255,255,0.80)', 'rgba(255,255,255,0.80)'],
+    '--moss-rail': ['#F2EDE4', '#0E110B'],
+    '--moss-accent-soft': ['rgba(20,83,45,0.10)', 'rgba(134,199,154,0.14)']
   },
   tokens: {
-    '--color-background-body': ['#FAF7F2', '#131610'],
-    '--color-background-surface': ['#FFFFFF', '#0C0E09'],
-    '--color-background-card': ['#FFFFFF', '#0C0E09'],
-    '--color-background-popover': ['#FFFFFF', '#0C0E09'],
-    '--color-background-muted': ['#F4EFE6', '#1A2016'],
-
-    '--color-accent': ['#14532D', '#86C79A'],
-    '--color-accent-muted': ['#DCEFE2', '#1E3A26'],
-    '--color-text-accent': ['#14532D', '#86C79A'],
-    '--color-icon-accent': ['#14532D', '#86C79A'],
-    '--color-on-accent': ['#FFFFFF', '#0C0E09'],
-
-    '--color-text-primary': ['#1C1A17', '#E9E4D6'],
-    '--color-text-secondary': ['#5C574E', '#B9B3A2'],
-    '--color-text-disabled': ['#6E675B', '#8F8A7C'],
-    '--color-icon-primary': ['#1C1A17', '#E9E4D6'],
-    '--color-icon-secondary': ['#5C574E', '#B9B3A2'],
-    '--color-icon-disabled': ['#6E675B', '#8F8A7C'],
-
-    '--color-border': ['#E4DCCF', 'rgba(200,190,160,0.18)'],
-    '--color-border-emphasized': ['#D3C8B6', 'rgba(200,190,160,0.30)'],
     '--color-overlay': ['rgba(0,0,0,0.45)', 'rgba(0,0,0,0.55)'],
     '--color-overlay-hover': ['rgba(0,0,0,0.05)', 'rgba(255,255,255,0.05)'],
     '--color-overlay-pressed': ['rgba(0,0,0,0.10)', 'rgba(255,255,255,0.10)'],
-    '--color-skeleton': ['#F4EFE6', '#1A2016'],
     '--color-shadow': ['rgba(20,18,14,0.28)', 'rgba(0,0,0,0.60)'],
     '--color-tint-hover': ['#000000', '#FFFFFF'],
 

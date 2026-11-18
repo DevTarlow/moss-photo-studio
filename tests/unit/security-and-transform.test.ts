@@ -80,11 +80,15 @@ describe('renderer constraints', () => {
   walk(renderer)
 
   it('keeps every color in the token sources', () => {
-    // moss-theme.css is the compiled output of mossTheme.ts, so it is the same
-    // allowed source, not a new place to write colours.
-    const allowed = ['tokens.css', 'mossTheme.ts', 'moss-theme.css']
+    // `styles/tokens.css` plus everything under `theme/` is the palette: the
+    // authored themes and palettes, and their compiled output. No screen or
+    // component may invent a colour.
+    const allowed = (file: string): boolean => {
+      const relative = path.relative(renderer, file)
+      return relative === path.join('styles', 'tokens.css') || relative.startsWith(`theme${path.sep}`)
+    }
     const violations = files
-      .filter((file) => !allowed.includes(path.basename(file)))
+      .filter((file) => !allowed(file))
       .flatMap((file) => {
         const text = fs.readFileSync(file, 'utf8')
         const matches = text.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []

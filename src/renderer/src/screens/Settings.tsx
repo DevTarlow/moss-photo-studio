@@ -21,6 +21,7 @@ import { Button } from '../components/ui/Button'
 import { Field } from '../components/ui/Field'
 import { Segmented } from '../components/ui/Segmented'
 import { useConfirm } from '../components/ui/ConfirmProvider'
+import { ThemePicker } from '../components/settings/ThemePicker'
 import { MuseKeyGuideDialog } from '../components/ui/MuseKeyGuideDialog'
 import { BrandFields } from '../components/brand/BrandFields'
 import { useAppStore } from '../store/app'
@@ -447,16 +448,14 @@ function AppearanceSection(): React.JSX.Element {
       <SettingsTitle title="Appearance" line="How the studio looks and moves." />
       <div className="space-y-4">
         <SectionCard>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="field-label mb-0">Theme</p>
-              <p className="hint">The canvas stays near-black in both themes.</p>
-            </div>
-            <Segmented
-              label="Theme"
+          <div className="min-w-0">
+            <p className="field-label mb-0">Theme</p>
+            <p className="hint">Ten earthy looks. The editor canvas stays near-black in each one.</p>
+          </div>
+          <div className="mt-4">
+            <ThemePicker
               value={settings.theme}
-              onChange={(value) => void setTheme(value).catch(() => toast.error('The theme could not be saved.'))}
-              options={[{ value: 'system' as const, label: 'System' }, { value: 'light' as const, label: 'Light' }, { value: 'dark' as const, label: 'Dark' }]}
+              onChange={(theme) => void setTheme(theme).catch(() => toast.error('The theme could not be saved.'))}
             />
           </div>
         </SectionCard>

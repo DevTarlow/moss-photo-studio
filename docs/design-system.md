@@ -13,20 +13,34 @@ Astryx is beta. Pin exact versions and commit the lockfile; do not upgrade casua
 
 ## Theme
 
-`src/renderer/src/theme/mossTheme.ts` extends the neutral theme with the Moss palette, typography, radii, motion, and component overrides:
+Appearance offers **ten fixed themes**, five light and five dark. Every one is a compiled Astryx theme, so the palette stays the Astryx source of truth and each ships its own scoped CSS (`[data-astryx-theme="<id>"]`).
 
-- **Surfaces:** warm paper `#FAF7F2` in light, near-black `#131610` in dark; surface cards are `#FFFFFF` / `#0C0E09`.
-- **Selection / success / focus:** forest green `#14532D` / `#86C79A`.
-- **Primary action:** burnt rust `#9A3412` / `#B45309`, via the local `--moss-primary` token and a `button` variant override.
-- **Text:** `#1C1A17` / `#E9E4D6` primary; `#5C574E` / `#B9B3A2` secondary; disabled values are dark enough for AA.
+| id | Name | Mode | Feel |
+|---|---|---|---|
+| `moss` | Moss | Light | Warm paper, forest selection, rust action (the original light theme) |
+| `sand` | Sand | Light | Sun-bleached paper, olive selection, ochre action |
+| `clay` | Clay | Light | Terracotta paper, umber selection, kiln action |
+| `lichen` | Lichen | Light | Pale sage paper, deep sage selection, burnt action |
+| `stone` | Stone | Light | Limestone paper, slate-teal selection, sienna action |
+| `moss-night` | Moss Night | Dark | Near-black green, lichen selection, amber action (the original dark theme) |
+| `bark` | Bark | Dark | Espresso, warm wheat selection, copper action |
+| `pine` | Pine | Dark | Deep pine, pale moss selection, copper action |
+| `ember` | Ember | Dark | Soot, ember selection, rust action |
+| `basalt` | Basalt | Dark | Blue-grey stone, pale teal selection, ochre action |
+
+The catalog (ids, labels, modes, legacy mapping) is `src/shared/themes.ts`: no colours, imported by the main process (menu, window chrome), the renderer, and the build/audit scripts.
+
+- `src/renderer/src/theme/themeBase.ts` extends the neutral theme with everything the themes share: typography, motion, radii, elevation, the semantic status colours, and the component overrides.
+- `src/renderer/src/theme/palettes.ts` owns each theme's colours: page, surface, muted, rail, ink, borders, selection, the primary action, and the editor canvas. The `Moss` and `Moss Night` entries are byte-identical to the old light and dark theme, so the selected look does not move.
+- `src/renderer/src/theme/themes/<id>.ts` is one built source per theme: `defineTheme({ name, extends: themeBase, icons: neutralTheme.icons, tokens, localTokens })`. The `neutralTheme` import must stay in that file — `astryx theme build` scrapes the icon registry from the theme source.
+- `MossThemeProvider` reads the saved id, takes its mode from the catalog, and passes the compiled theme to Astryx `Theme`. That single prop pair decides the theme identity and `data-theme`; there is no system-follow and no runtime style injection.
+
 - **Typography:** Inter body, Plus Jakarta Sans headings; base 14px, ratio 1.2.
 - **Radii:** 6px inner, 8px element, 12px container, 16px page.
 - **Motion:** fast 120ms, medium 240ms, slow 400ms; the app follows the OS Reduced Motion preference and has no in-app motion override.
-- **Canvas:** local `--moss-canvas` / `--moss-canvas-text` tokens for the dark editor stage.
+- **Canvas:** local `--moss-canvas` / `--moss-canvas-text` tokens keep the editor stage near-black in every theme.
 
-The theme is applied by `src/renderer/src/theme/MossThemeProvider.tsx`. It resolves the saved `theme` setting, including the OS preference for `system`, passes it to Astryx `Theme`, and wires `LinkProvider` to a small React Router adapter so Astryx links stay inside the hash router.
-
-`src/renderer/src/styles/tokens.css` keeps the app's short names (`--bg`, `--text`, `--accent`) but holds no palette of its own: each semantic name is a `var(--color-…)` alias to a theme token, and the values the theme has no role for (the rail, the canvas, tints, media inks) use `light-dark()` pairs so one rule covers both modes. Elevation is the one exception that still needs an `html[data-theme='dark']` block, because `light-dark()` only accepts colours. Adding a literal palette value to that file means the theme is no longer the source of truth; add a theme token instead.
+`src/renderer/src/styles/tokens.css` keeps the app's short names (`--bg`, `--text`, `--accent`) but holds no palette of its own: each semantic name is a `var(--color-…)` alias to a theme token, and the theme owns the rail (`--moss-rail`) and the selection tint (`--moss-accent-soft`). Only the values the theme has no role for (canvas hairlines, crop dim, media inks) stay literal as `light-dark()` pairs. Elevation is the one exception that still needs an `html[data-theme='dark']` block, because `light-dark()` only accepts colours. Adding a literal palette value to that file means the theme is no longer the source of truth; add a theme token instead.
 
 ## Language and vocabulary
 
@@ -69,11 +83,13 @@ Do not render a lucide component directly (`<Search size={14} />`). Direct SVG b
 @import 'tailwindcss/preflight.css' layer(base);
 @import '@astryxdesign/core/reset.css';
 @import '@astryxdesign/core/astryx.css';
-@import '../theme/moss-theme.css';
+@import '../theme/built/moss.css';
+@import '../theme/built/sand.css';
+/* …one import per theme, alphabetically/by catalog order… */
 @import 'tailwindcss/utilities.css' layer(utilities);
 ```
 
-`@astryxdesign/theme-neutral/theme.css` is not imported. `mossTheme.ts` is the authoring source; `npm run theme:build` compiles it into `moss-theme.css` (static, scoped to `[data-astryx-theme="moss"]`) plus `moss.js`, `moss.d.ts`, and `moss.variants.d.ts`, which are committed. `MossThemeProvider` passes the built module to `Theme`, so `Theme` sees `__built` and skips runtime style injection. Edit the theme source, then rebuild: `npm run theme:check` fails when the committed output is stale, and every release build runs it first.
+`@astryxdesign/theme-neutral/theme.css` is not imported. `palettes.ts` and `themes/<id>.ts` are the authoring sources; `npm run theme:build` compiles each into `theme/built/<id>.css` (static, scoped to its own `[data-astryx-theme]`) plus `<id>.js`, `<id>.d.ts`, and `<id>.variants.d.ts`, which are committed. `MossThemeProvider` passes the built module to `Theme`, so `Theme` sees `__built` and skips runtime style injection. Edit the theme sources, then rebuild: `npm run theme:check` fails when any committed output is stale, and every release build runs it first. `scripts/theme-build.mjs` builds one theme per source file (Astryx refuses `--out` with several files) and reports orphaned output files from renamed themes.
 
 Do not add unlayered global element styles that set `color` or `font` on `button`, `input`, `textarea`, or `select`: they beat every Astryx layer and silently break component state styling. The previous global `color: inherit` rule was removed for this reason.
 
@@ -88,6 +104,7 @@ CSP is unchanged: all Astryx CSS, fonts, and icons are bundled; there are no rem
 | AppFrame, Rail, TopBar | AppShell, SideNav, TopNav | Keep the Electron drag region and platform padding in a wrapper. |
 | Button, IconButton | Button, IconButton, ButtonGroup | Use `label`, `variant`, `isLoading`; no custom loading spinner at call sites. |
 | Chip, pill filters | ToggleButton/ToggleButtonGroup, SegmentedControl | Static metadata uses Token/Badge, not a button. |
+| Appearance theme picker | `RadioList`/`RadioListItem` (`components/settings/ThemePicker`) | Single-choice radio semantics; each row's preview is a nested `Theme`, so the swatch uses real tokens. |
 | Segmented | SegmentedControl/SegmentedControlItem | Radio-group semantics. |
 | Field, TextareaCounter | TextInput, TextArea, Field, FormLayout | Use `status` for inline errors. |
 | Native select, checkbox, range | Selector, CheckboxInput, Slider | No unlabeled native controls. |
@@ -151,9 +168,9 @@ The generator keeps the editor's selection model: the newest result is selected 
 ## Current status
 
 - Foundation, theme, providers, and CSS layer order are in place.
-- Colour has one owner: every semantic name in `tokens.css` aliases the theme, the mode block holds only elevation, and `npm run audit:tokens` reads `mossTheme` so a stale or missing token fails instead of rendering an inherited colour. The audit also covers the selected-row tints and the danger badge used by the generator inspector.
+- Colour has one owner: every semantic name in `tokens.css` aliases the theme, the mode block holds only elevation, and `npm run audit:tokens` reads the ten compiled themes so a stale or missing token fails instead of rendering an inherited colour. The audit runs every theme in its own mode and covers the selected-row tints and the danger badge used by the generator inspector.
 - Every icon renders through Astryx `Icon`; no direct lucide elements remain.
-- The theme ships as static CSS: `npm run theme:build` regenerates `moss-theme.css` and the built module beside it, and release builds refuse to package a stale copy.
+- The themes ship as static CSS: `npm run theme:build` regenerates `theme/built/` and release builds refuse to package a stale copy.
 - The app shell's surfaces come from theme targets, so the rail, header, and top nav no longer depend on `.astryx-*` class selectors in `index.css`.
 - Activation is the first surface fully off the homegrown primitives: Astryx `TextInput` and `Button` replace the local `Field` and `Button` there.
 - Sets use collection cards with a cover/count and a detail grid for images and product sources with explicit Edit Photo, New Image from Reference, and remove actions. Set detail filters source Products from finished work, opens a high-resolution `MediaLightbox` on a card image, moves removal into a card menu with an undo toast, and exports with Original, Square 1:1, and Portrait 4:5 presets. SaveToSetDialog is a small dialog mounted once at the app root and opened from image actions.

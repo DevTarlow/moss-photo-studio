@@ -1,5 +1,7 @@
 import type { Format, Shape } from './shapes'
+import type { ThemeId } from './themes'
 export type { Format, Shape } from './shapes'
+export type { ThemeId, ThemeMode } from './themes'
 
 export type ProjectType = 'photo' | 'image'
 export type ImageKind = 'upload' | 'render' | 'edit' | 'adjust'
@@ -15,7 +17,8 @@ export type BadgeCorner = 'br' | 'bl' | 'tr' | 'tl'
 export type BadgeScale = 's' | 'm' | 'l'
 export type ProjectFilter = 'all' | 'photos' | 'images'
 export type ProjectSort = 'recent' | 'oldest' | 'name'
-export type ThemeSetting = 'system' | 'light' | 'dark'
+/** The saved appearance choice. @see src/shared/themes.ts for the catalog. */
+export type ThemeSetting = ThemeId
 export type DensitySetting = 'comfortable' | 'compact'
 
 export interface Project {
@@ -467,9 +470,7 @@ export type MenuAction =
   | 'open-about'
   | 'open-guide'
   | 'open-shortcuts'
-  | 'theme-system'
-  | 'theme-light'
-  | 'theme-dark'
+  | 'set-theme'
   | 'zoom-in'
   | 'zoom-out'
   | 'zoom-reset'
@@ -482,7 +483,6 @@ export type MenuAction =
   | 'paste-image'
   | 'zoom-scale-in'
   | 'zoom-scale-out'
-  | 'toggle-theme'
 
 export interface MenuContext {
   editor: boolean
@@ -497,6 +497,7 @@ export interface MenuContext {
 export interface MenuEvent {
   action: MenuAction
   projectId?: string
+  themeId?: ThemeId
 }
 
 export interface WindowState {
