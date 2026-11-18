@@ -907,6 +907,24 @@ html[data-density='compact'] .lib-list-row { height: 44px; }
 
 /* Appearance theme previews ------------------------------------------------ */
 @layer components {
+  /* Two columns: the five light looks fill the first column, the five dark
+     looks the second, so each row reads as a day/night pair. The rows stack
+     into one column on a narrow settings pane. */
+  .theme-picker {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(5, auto);
+    grid-auto-flow: column;
+    column-gap: 28px;
+    row-gap: 2px;
+  }
+  @media (max-width: 780px) {
+    .theme-picker {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: none;
+      grid-auto-flow: row;
+    }
+  }
   /* A miniature of the window: rail, page, card, selection dot, primary action.
      Every colour comes from the preview's own nested Astryx theme, so the
      picker cannot drift from what the theme actually renders. */

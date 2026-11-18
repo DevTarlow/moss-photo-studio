@@ -5,7 +5,8 @@ import type { ThemeId } from '@shared/themes'
 import { THEMES } from '../../theme/themes'
 
 /**
- * The appearance picker: one radio row per compiled theme.
+ * The appearance picker: one radio row per compiled theme, two columns so the
+ * five light looks sit beside the five dark ones.
  *
  * Each row renders its preview inside its own nested Astryx `Theme`, so the
  * swatch uses the real tokens and no colour is repeated in this file. Radio
@@ -23,6 +24,9 @@ export function ThemePicker({
     <RadioList
       label="Theme"
       isLabelHidden
+      // `styles/index.css` turns the radio group into a two-column grid; the
+      // catalog order fills the light column first, then the dark one.
+      controlClassName="theme-picker"
       value={value}
       onChange={(next) => {
         // RadioList speaks string values; the options are the theme ids.
