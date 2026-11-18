@@ -463,9 +463,9 @@ export const EXAMPLE_SCENES: readonly ExampleScene[] = [
     group: 'Gifts & seasonal',
     label: 'A jewelry gift box',
     exampleText:
-      'An open black gift box lined with white tissue paper holding a delicate gold necklace, warm light, shallow depth of field, product photo.',
+      'An open small ivory jewelry gift box with a soft cream velvet insert, hinged lid propped up, holding a delicate gold leaf pendant necklace, the whole open box in frame, warm natural light, shallow depth of field, close-up product photo.',
     productText:
-      'An open gift box lined with white tissue paper holding the product, warm light, shallow depth of field, product photo.'
+      'An open small ivory jewelry gift box with a soft cream velvet insert, hinged lid propped up, holding the product, the whole open box in frame, warm natural light, shallow depth of field, close-up product photo.'
   },
   {
     key: 'holiday-table',
