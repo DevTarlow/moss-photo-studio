@@ -136,7 +136,7 @@ The editor and the generator share one workspace grammar: the left column holds 
 - **Priced actions:** the paid commit button and the compact month budget live in a `CommitFooter` at the bottom of the left control column, under the inputs that drive them. The canvas footer carries version/canvas actions instead. The Ctrl/Cmd+Enter shortcut targets `[data-commit-action] .btn-primary`.
 - **Disclosure:** the output settings show a one-line summary at all times and open their controls on demand. The content stays in the DOM with `hidden` so `aria-controls` always resolves. History appears only when a completed make exists.
 - **Constraints:** when a reference removes a choice (a product, person, or scene makes one image at a time), show the constraint as a sentence instead of disabled options. The summary leaves out the count for one image and still shows the frame and format.
-- **Empty states:** one short explanation plus, before the first result, three tips that directly affect picture quality. No illustration dashboards, no counters.
+- **Empty states:** one short explanation plus, before the first result, a description recipe and a few tips that directly affect picture quality. No illustration dashboards, no counters.
 
 ### Canvas toolbar
 

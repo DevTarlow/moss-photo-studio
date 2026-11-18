@@ -199,11 +199,17 @@ export function CreateInspector({
             {showTips && (
               <div className="mt-4 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
                 <p className="section-label">For a better picture</p>
+                <p className="meta mt-2">Write a description of the photo, not a request. Cover four things:</p>
                 <ul className="mt-2 list-disc space-y-1.5 pl-4 text-[12px]" style={{ color: 'var(--text-muted)' }}>
-                  <li>Name the product and what it sits on.</li>
-                  <li>Describe the light and the angle you want.</li>
-                  <li>Add a product photo to keep the product exactly the same.</li>
+                  <li><span style={{ color: 'var(--text)' }}>The product:</span> name it and say what makes it recognisable — shape, colour, material.</li>
+                  <li><span style={{ color: 'var(--text)' }}>The scene:</span> the surface, background, and one or two props.</li>
+                  <li><span style={{ color: 'var(--text)' }}>The light:</span> soft daylight, warm evening light, or a single spotlight.</li>
+                  <li><span style={{ color: 'var(--text)' }}>The framing:</span> close-up, flat lay, straight on, or the whole product in frame.</li>
                 </ul>
+                <p className="meta mt-2">Two or three clear sentences is plenty. Keep to one scene, add a product photo when the exact product matters, and leave out text and logos.</p>
+                <p className="mt-2 rounded-[8px] border px-2.5 py-2 text-[12px]" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
+                  Try: “A ceramic mug on a warm kitchen table, soft morning light, close-up, product photo.”
+                </p>
               </div>
             )}
           </div>
