@@ -31,7 +31,7 @@ import { exportImageToPath, exportOneImage } from '../media/export'
 import { exportSetImages } from '../media/setExport'
 import { openExternalSafely } from '../security'
 import { SCHEMA_VERSION } from '../db/connection'
-import { createBackup, createDiagnostics, inspectBackup, stageRestore } from '../backup'
+import { createBackup, backupFileName, chooseRestoreTarget, createDiagnostics, inspectBackup, stageRestore } from '../backup'
 import { runtimeEnv } from '../env'
 import { registerIpc, registerRaw, IpcFault } from './helpers'
 import { type SettingKey } from '../settings'
@@ -195,13 +195,16 @@ async function saveFileDialog(context: AppContext, options: Electron.SaveDialogO
   return window ? dialog.showSaveDialog(window, options) : dialog.showSaveDialog(options)
 }
 
-async function confirmRestore(context: AppContext, summary: { projects: number; images: number; createdAt: number }): Promise<boolean> {
+async function confirmRestore(
+  context: AppContext,
+  summary: { projects: number; images: number },
+  targetLibrary: string
+): Promise<boolean> {
   const options: Electron.MessageBoxOptions = {
     type: 'warning',
     title: 'Restore this backup?',
     message: `Restore ${summary.projects} ${summary.projects === 1 ? 'project' : 'projects'} and ${summary.images} ${summary.images === 1 ? 'image' : 'images'}?`,
-    detail:
-      'The restored library opens in the folder you choose. The current library stays where it is until the restore finishes. The app restarts to complete it, and your Meta key must be entered again.',
+    detail: `The restored library opens in a new folder:\n${targetLibrary}\n\nYour current library stays where it is. The app restarts to complete it, and your Meta key must be entered again.`,
     buttons: ['Restore', 'Cancel'],
     defaultId: 1,
     cancelId: 1
@@ -209,6 +212,11 @@ async function confirmRestore(context: AppContext, summary: { projects: number; 
   const window = context.getWindow()
   const result = window ? await dialog.showMessageBox(window, options) : await dialog.showMessageBox(options)
   return result.response === 0
+}
+
+function isDiskFull(error: unknown): boolean {
+  const code = (error as NodeJS.ErrnoException | undefined)?.code
+  return code === 'ENOSPC' || code === 'EDQUOT' || code === 'EFBIG'
 }
 
 function csvField(value: string | number | null | undefined): string {
@@ -308,93 +316,130 @@ export function registerIpcHandlers(context: AppContext): void {
     if (context.queue.active().some((job) => job.status === 'running')) {
       throw new IpcFault('already_running', 'Finish the images in progress before backing up.')
     }
-    const pick = await openFolderDialog(context, {
-      title: 'Choose where to save the backup',
-      defaultPath: app.getPath('documents'),
-      properties: ['openDirectory', 'createDirectory']
+    const pick = await saveFileDialog(context, {
+      title: 'Save the Moss backup',
+      defaultPath: path.join(app.getPath('documents'), backupFileName()),
+      filters: [{ name: 'Moss Photo Studio backup', extensions: ['zip'] }]
     })
-    if (pick.canceled || !pick.filePaths[0]) return { created: false }
+    if (pick.canceled || !pick.filePath) return { created: false }
     let result
     try {
       result = await createBackup({
         db: context.db,
-        userDataDir: context.userDataDir,
         libraryPath: context.libraryPath(),
         appVersion: app.getVersion(),
         schemaVersion: SCHEMA_VERSION,
-        parentDir: pick.filePaths[0],
+        destination: pick.filePath,
         logger: context.logger
       })
     } catch (error) {
       if (error instanceof Error && error.message === 'backup_inside_library') {
-        throw new IpcFault('invalid_payload', 'Choose a folder outside the library for the backup.')
+        throw new IpcFault('invalid_payload', 'Choose a location outside the library for the backup.')
+      }
+      if (isDiskFull(error)) {
+        throw new IpcFault(
+          'disk_full',
+          'There is not enough free space to save the backup. Free some space and try again.'
+        )
       }
       throw error
     }
     settings.set('lastBackupAt', Date.now())
-    settings.set('lastBackupDir', path.join(pick.filePaths[0], result.folderName))
-    return { created: true, ...result }
+    settings.set('lastBackupPath', result.filePath)
+    return { created: true, fileName: result.fileName, summary: result.summary }
   })
 
   registerIpc(context, 'backup:restore', voidSchema, async () => {
     if (context.queue.active().some((job) => job.status === 'running')) {
       throw new IpcFault('already_running', 'Finish the images in progress before restoring.')
     }
+    const lastBackup =
+      settings.get<string | null>('lastBackupPath', null) ??
+      settings.get<string | null>('lastBackupDir', null)
     const pick = await openFolderDialog(context, {
-      title: 'Choose a Moss Photo Studio backup folder',
-      defaultPath: settings.get<string | null>('lastBackupDir', null) ?? app.getPath('documents'),
-      properties: ['openDirectory']
+      title: 'Choose a Moss backup (.zip)',
+      defaultPath: lastBackup ?? app.getPath('documents'),
+      properties: ['openFile'],
+      filters: [
+        { name: 'Moss Photo Studio backup', extensions: ['zip'] },
+        { name: 'Older folder backup', extensions: ['json'] }
+      ]
     })
     if (pick.canceled || !pick.filePaths[0]) return { started: false }
+    let source = path.resolve(pick.filePaths[0])
+    if (path.basename(source).toLowerCase() === 'moss-backup.json') source = path.dirname(source)
     let inspected
     try {
-      inspected = await inspectBackup(pick.filePaths[0])
+      inspected = await inspectBackup(source)
     } catch {
-      throw new IpcFault('invalid_payload', 'That folder is not a complete Moss Photo Studio backup.')
+      throw new IpcFault('invalid_payload', 'That file is not a complete Moss Photo Studio backup.')
     }
     if (inspected.summary.schemaVersion > SCHEMA_VERSION) {
       throw new IpcFault('invalid_payload', 'That backup was made by a newer version of Moss Photo Studio.')
     }
-    if (!(await confirmRestore(context, inspected.summary))) return { started: false }
-    const target = await openFolderDialog(context, {
-      title: 'Choose an empty folder for the restored library',
-      defaultPath: app.getPath('documents'),
-      properties: ['openDirectory', 'createDirectory']
-    })
-    if (target.canceled || !target.filePaths[0]) return { started: false }
-    const targetPath = path.resolve(target.filePaths[0])
-    const currentLibrary = path.resolve(context.libraryPath())
-    const backupPath = path.resolve(pick.filePaths[0])
-    const nested = (a: string, b: string): boolean => a === b || a.startsWith(`${b}${path.sep}`) || b.startsWith(`${a}${path.sep}`)
-    if (nested(targetPath, currentLibrary) || nested(targetPath, backupPath)) {
-      throw new IpcFault('invalid_payload', 'Choose a folder away from the current library and the backup.')
+    let target: string
+    try {
+      target = await chooseRestoreTarget({
+        currentLibrary: context.libraryPath(),
+        documentsDir: app.getPath('documents'),
+        userDataDir: context.userDataDir
+      })
+    } catch {
+      throw new IpcFault(
+        'invalid_payload',
+        'The restored library folder could not be created. Free some space or check the folder permissions, then try again.'
+      )
     }
+    if (!(await confirmRestore(context, inspected.summary, target))) return { started: false }
     try {
       await stageRestore({
-        backupDir: pick.filePaths[0],
-        targetLibrary: target.filePaths[0],
+        source,
+        targetLibrary: target,
+        previousLibrary: context.libraryPath(),
         userDataDir: context.userDataDir,
         logger: context.logger
       })
     } catch (error) {
-      if (error instanceof Error && error.message === 'restore_target_not_empty') {
-        throw new IpcFault('invalid_payload', 'Choose an empty folder for the restored library.')
+      if (isDiskFull(error)) {
+        throw new IpcFault(
+          'disk_full',
+          'There is not enough free space to restore the backup. Your current library was left in place.'
+        )
       }
-      throw error
+      if (error instanceof Error && error.message === 'restore_target_not_empty') {
+        throw new IpcFault('invalid_payload', 'That restore folder changed while you were choosing. Try again.')
+      }
+      throw new IpcFault(
+        'invalid_payload',
+        'That backup could not be restored. Your current library was left in place.'
+      )
     }
     // The renderer may show a toast, then the app restarts to swap the database.
     setTimeout(() => {
       app.relaunch()
       app.exit(0)
     }, 500)
-    return { started: true, folderName: inspected.folderName, summary: inspected.summary }
+    return {
+      started: true,
+      fileName: inspected.sourceName,
+      targetLibrary: target,
+      summary: inspected.summary
+    }
   })
 
   registerIpc(context, 'backup:openLast', voidSchema, async () => {
-    const folder = settings.get<string | null>('lastBackupDir', null)
-    if (!folder) throw new IpcFault('not_found')
-    const error = await shell.openPath(folder)
-    if (error) throw new IpcFault('not_found')
+    const stored =
+      settings.get<string | null>('lastBackupPath', null) ??
+      settings.get<string | null>('lastBackupDir', null)
+    if (!stored) throw new IpcFault('not_found')
+    const stat = await fs.stat(stored).catch(() => null)
+    if (!stat) throw new IpcFault('not_found')
+    if (stat.isDirectory()) {
+      const error = await shell.openPath(stored)
+      if (error) throw new IpcFault('not_found')
+    } else {
+      shell.showItemInFolder(stored)
+    }
     return { ok: true as const }
   })
 

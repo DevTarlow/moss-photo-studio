@@ -74,7 +74,7 @@ The library lives under the application data folder shown in **Settings, Storage
 
 Your photos live in one folder.
 
-You can open, copy, or back it up. Settings can create a backup with a consistent database snapshot and a copy of the library. The backup does not include the Meta key or the encrypted secret files.
+You can open, copy, or back it up. Settings saves a backup as one `.zip` file with a consistent database snapshot and a copy of the library. Restore reads that file and opens the restored library in a new folder, leaving the current library where it is. The backup does not include the Meta key or the encrypted secret files. An older folder backup can still be restored by choosing its `moss-backup.json` file.
 
 Product notes are stored in the local library database. When you make an image with that product selected, the notes join the description sent to Meta. They are never sent otherwise.
 

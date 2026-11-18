@@ -29,6 +29,7 @@ export const SETTING_KEYS = [
   'windowState',
   'licenseGraceNotified',
   'lastBackupAt',
+  'lastBackupPath',
   'lastBackupDir',
   'lastDiagnosticsDir'
 ] as const

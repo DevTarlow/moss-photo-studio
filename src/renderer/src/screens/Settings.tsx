@@ -343,7 +343,7 @@ function LibrarySection(): React.JSX.Element {
       const result = await unwrap(window.moss.backup.create())
       if (result.created) {
         await refreshSettings()
-        toast.status(`Backup saved in ${result.folderName ?? 'the folder you chose'}.`)
+        toast.status(`Backup saved as ${result.fileName ?? 'a .zip file'}.`)
       }
     } catch (caught) {
       toast.error(messageOf(caught))
@@ -368,7 +368,7 @@ function LibrarySection(): React.JSX.Element {
     try {
       await unwrap(window.moss.backup.openLast())
     } catch {
-      toast.error('There is no saved backup folder to open yet.')
+      toast.error('There is no saved backup to show yet.')
     }
   }
 
@@ -404,7 +404,7 @@ function LibrarySection(): React.JSX.Element {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="field-label">Backup</p>
-            <p className="hint mt-1">A copy of the library and database in one folder. Your Meta key and secrets are not included.</p>
+            <p className="hint mt-1">One .zip file with the library and its database. Your Meta key and secrets are not included.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" disabled={backingUp} onClick={() => void backupNow()}>
@@ -414,12 +414,15 @@ function LibrarySection(): React.JSX.Element {
               {restoring ? <Icon icon={Loader2} size="sm" className="animate-spin" /> : <Icon icon={HardDriveDownload} size="sm" />} Restore
             </Button>
             <Button variant="ghost" disabled={!settings?.lastBackupAt} onClick={() => void openBackup()}>
-              <Icon icon={FolderOpen} size="sm" /> Open Backup
+              <Icon icon={FolderOpen} size="sm" /> Show Backup
             </Button>
           </div>
         </div>
         <p className="hint mt-3">
           {settings?.lastBackupAt ? `Last backup ${relativeTime(settings.lastBackupAt)}.` : 'No backup has been made yet.'}
+        </p>
+        <p className="hint mt-1">
+          Older folder backups can be restored by choosing their <span className="font-mono">moss-backup.json</span> file.
         </p>
       </SectionCard>
     </div>

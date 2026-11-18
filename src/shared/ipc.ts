@@ -55,8 +55,8 @@ export interface IpcChannels {
   'app:copyLibraryPath': { request: undefined; response: { ok: true } }
   'app:readClipboardImage': { request: undefined; response: { bytes: Uint8Array | null; mime: string | null } }
   'app:reset': { request: undefined; response: { ok: true } }
-  'backup:create': { request: undefined; response: { created: boolean; folderName?: string; summary?: BackupSummary } }
-  'backup:restore': { request: undefined; response: { started: boolean; folderName?: string; summary?: BackupSummary } }
+  'backup:create': { request: undefined; response: { created: boolean; fileName?: string; summary?: BackupSummary } }
+  'backup:restore': { request: undefined; response: { started: boolean; fileName?: string; targetLibrary?: string; summary?: BackupSummary } }
   'backup:openLast': { request: undefined; response: { ok: true } }
   'backup:status': { request: undefined; response: BackupStatus }
   'diagnostics:create': { request: undefined; response: { folderName: string } }
